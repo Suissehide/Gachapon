@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
+  Atom,
   Award,
   BatteryCharging,
   BookOpen,
+  Castle,
   ChevronRight,
   ChevronsUp,
   Coins,
   Crown,
+  Dices,
   Flame,
   Gauge,
   Gift,
@@ -14,6 +17,8 @@ import {
   LifeBuoy,
   ListChecks,
   Network,
+  Shield,
+  Skull,
   Sparkles,
   Star,
   Store,
@@ -34,30 +39,121 @@ export const Route = createFileRoute('/guide')({
   component: GuidePage,
 })
 
+type Icon = ComponentType<{ className?: string }>
+
+// Le texte vit dans `guide:sections.<id>.<key>` ; ce fichier ne décrit que la
+// mise en page. `list` et `cards` pointent sur des objets `{ i1, i2, … }`
+// (check-i18n-parity refuse les tableaux), relus avec `returnObjects` dans
+// l'ordre de leurs clés — ajouter une puce = ajouter `iN` dans les deux
+// locales, sans toucher au code.
+type Block =
+  | { kind: 'p' | 'info' | 'tip' | 'list'; key: string }
+  | { kind: 'cards'; key: string; icons?: [Icon, string][] }
+  | { kind: 'rarities' }
+  | { kind: 'apiLinks' }
+
+interface SectionSpec {
+  id: string
+  icon: Icon
+  blocks: Block[]
+}
+
+const p = (key: string): Block => ({ kind: 'p', key })
+const list = (key = 'list'): Block => ({ kind: 'list', key })
+const info: Block = { kind: 'info', key: 'info' }
+const tip: Block = { kind: 'tip', key: 'tip' }
+const intro = p('intro')
+
 // Les ids sont stables : ils pilotent les ancres `#<id>` et sont indépendants
 // de la langue. Les libellés viennent de `guide:sectionLabels.<id>`.
-const SECTION_IDS = [
-  'monnaies',
-  'tokens',
-  'pulls',
-  'rarete',
-  'piete',
-  'doublon',
-  'boutique',
-  'niveaux',
-  'competences',
-  'campagne',
-  'combat-points',
-  'cartes',
-  'quetes',
-  'succes',
-  'chaine',
-  'recompenses',
-  'classements',
-  'collection',
-  'equipes',
-  'api',
-] as const
+// L'ordre est recopié dans le sommaire de scripts/seo-routes.mjs.
+const SECTIONS: SectionSpec[] = [
+  {
+    id: 'monnaies',
+    icon: Wallet,
+    blocks: [
+      intro,
+      {
+        kind: 'cards',
+        key: 'cards',
+        icons: [
+          [Ticket, 'text-primary'],
+          [Sparkles, 'text-sky-400'],
+          [Coins, 'text-amber-400'],
+          [BatteryCharging, 'text-emerald-400'],
+          [Gauge, 'text-violet-400'],
+          [Network, 'text-fuchsia-400'],
+        ],
+      },
+    ],
+  },
+  { id: 'tokens', icon: Ticket, blocks: [intro, list(), info, tip] },
+  { id: 'pulls', icon: Zap, blocks: [intro, list(), p('skills'), info] },
+  {
+    id: 'rarete',
+    icon: Star,
+    blocks: [
+      intro,
+      { kind: 'rarities' },
+      p('variantIntro'),
+      list(),
+      p('outro'),
+    ],
+  },
+  { id: 'piete', icon: LifeBuoy, blocks: [intro, list(), info] },
+  { id: 'doublon', icon: Sparkles, blocks: [intro, list(), p('uses'), tip] },
+  {
+    id: 'boutique',
+    icon: Store,
+    blocks: [intro, { kind: 'cards', key: 'cards' }],
+  },
+  { id: 'niveaux', icon: Gauge, blocks: [intro, list(), info] },
+  {
+    id: 'competences',
+    icon: Network,
+    blocks: [intro, { kind: 'cards', key: 'cards' }, info],
+  },
+  {
+    id: 'campagne',
+    icon: Swords,
+    blocks: [intro, list(), p('firstClear'), info],
+  },
+  { id: 'elements', icon: Atom, blocks: [intro, list(), tip] },
+  { id: 'tours', icon: Castle, blocks: [intro, list()] },
+  { id: 'combat-points', icon: BatteryCharging, blocks: [intro, list(), tip] },
+  {
+    id: 'cartes',
+    icon: ChevronsUp,
+    blocks: [intro, { kind: 'cards', key: 'cards' }, tip],
+  },
+  {
+    id: 'equipement',
+    icon: Shield,
+    blocks: [intro, list(), p('setsIntro'), list('sets'), info],
+  },
+  { id: 'quetes', icon: ListChecks, blocks: [intro, list()] },
+  { id: 'succes', icon: Award, blocks: [intro, list()] },
+  { id: 'chaine', icon: Flame, blocks: [intro, list()] },
+  { id: 'recompenses', icon: Gift, blocks: [intro, list(), info] },
+  {
+    id: 'classements',
+    icon: Crown,
+    blocks: [intro, { kind: 'cards', key: 'cards' }],
+  },
+  { id: 'collection', icon: Layers, blocks: [intro, list()] },
+  {
+    id: 'equipes',
+    icon: Users,
+    blocks: [intro, list(), p('progression'), list('perks'), info],
+  },
+  { id: 'raid', icon: Skull, blocks: [intro, list()] },
+  {
+    id: 'duels',
+    icon: Dices,
+    blocks: [intro, { kind: 'cards', key: 'cards' }],
+  },
+  { id: 'api', icon: BookOpen, blocks: [intro, list(), { kind: 'apiLinks' }] },
+]
 
 function Section({
   id,
@@ -99,12 +195,21 @@ function Pill({ children }: { children?: ReactNode }) {
   )
 }
 
-function RarityBadge({ rarity, color }: { rarity: string; color: string }) {
+// `children` : texte injecté par <Trans> (`<rare>RARE</rare>`) ; sinon `rarity`.
+function RarityBadge({
+  rarity,
+  color,
+  children,
+}: {
+  rarity?: string
+  color: string
+  children?: ReactNode
+}) {
   return (
     <span
       className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border ${color}`}
     >
-      {rarity}
+      {children ?? rarity}
     </span>
   )
 }
@@ -125,26 +230,119 @@ function TipBox({ children }: { children: ReactNode }) {
   )
 }
 
-function Currency({
-  icon: Icon,
-  name,
-  color,
-  children,
-}: {
-  icon: ComponentType<{ className?: string }>
-  name: string
-  color: string
-  children: ReactNode
-}) {
-  return (
-    <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-      <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
-        <Icon className={`h-4 w-4 ${color}`} />
-        {name}
-      </p>
-      <p>{children}</p>
-    </div>
+const RARITY_COLORS = {
+  COMMON: 'border-border bg-muted text-text-light',
+  UNCOMMON: 'border-green-500/30 bg-green-500/10 text-green-400',
+  RARE: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+  EPIC: 'border-violet-500/30 bg-violet-500/10 text-violet-400',
+  LEGENDARY: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
+} as const
+
+// Balises utilisables dans n'importe quelle chaîne `guide:sections.*`.
+const TRANS_COMPONENTS = {
+  strong: <strong className="text-foreground" />,
+  pill: <Pill />,
+  rare: <RarityBadge color={RARITY_COLORS.RARE} />,
+  epic: <RarityBadge color={RARITY_COLORS.EPIC} />,
+  legendary: <RarityBadge color={RARITY_COLORS.LEGENDARY} />,
+  teamLink: (
+    <Link
+      to="/team"
+      className="text-primary hover:text-primary-light font-semibold"
+    />
+  ),
+}
+
+function SectionBlock({ id, block }: { id: string; block: Block }) {
+  const { t } = useTranslation(['guide', 'discord'])
+
+  if (block.kind === 'rarities') {
+    return (
+      <div className="flex flex-wrap gap-2 my-2">
+        {(Object.keys(RARITY_COLORS) as (keyof typeof RARITY_COLORS)[]).map(
+          (rarity) => (
+            <RarityBadge
+              key={rarity}
+              rarity={rarity}
+              color={RARITY_COLORS[rarity]}
+            />
+          ),
+        )}
+      </div>
+    )
+  }
+
+  if (block.kind === 'apiLinks') {
+    return (
+      <div className="flex flex-wrap gap-3 mt-2">
+        <Link
+          to="/api-docs"
+          className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+        >
+          {t('discord:header.apiReferenceLink')}
+        </Link>
+        <Link
+          to="/discord"
+          className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+        >
+          {t('sections.api.discordGuideLink')}
+        </Link>
+      </div>
+    )
+  }
+
+  const base = `sections.${id}.${block.key}`
+  const text = (key: string) => (
+    <Trans t={t} i18nKey={key} components={TRANS_COMPONENTS} />
   )
+
+  switch (block.kind) {
+    case 'p':
+      return <p>{text(base)}</p>
+    case 'info':
+      return <InfoBox>{text(base)}</InfoBox>
+    case 'tip':
+      return <TipBox>{text(base)}</TipBox>
+    case 'list': {
+      const items = t(base, { returnObjects: true }) as Record<string, string>
+      return (
+        <ul className="space-y-1.5">
+          {Object.keys(items).map((k) => (
+            <li key={k}>• {text(`${base}.${k}`)}</li>
+          ))}
+        </ul>
+      )
+    }
+    case 'cards': {
+      const cards = t(base, { returnObjects: true }) as Record<
+        string,
+        { title: string; text: string }
+      >
+      return (
+        <div
+          className={
+            block.icons ? 'grid gap-3 sm:grid-cols-2 mt-1' : 'space-y-3 mt-1'
+          }
+        >
+          {Object.entries(cards).map(([k, card], i) => {
+            const [CardIcon, color] = block.icons?.[i] ?? []
+            return (
+              <div
+                key={k}
+                className="rounded-lg border border-border/50 bg-card px-4 py-3"
+              >
+                <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                  {CardIcon && <CardIcon className={`h-4 w-4 ${color}`} />}
+                  {card.title}
+                </p>
+                <p>{text(`${base}.${k}.text`)}</p>
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+  }
 }
 
 function GuidePage() {
@@ -185,7 +383,7 @@ function GuidePage() {
                 {t('toc.heading')}
               </p>
               <ul className="space-y-1">
-                {SECTION_IDS.map((id) => (
+                {SECTIONS.map(({ id }) => (
                   <li key={id}>
                     <a
                       href={`#${id}`}
@@ -202,977 +400,23 @@ function GuidePage() {
 
           {/* Content */}
           <main className="flex-1 min-w-0">
-            {/* Les monnaies */}
-            <Section
-              id="monnaies"
-              icon={Wallet}
-              title={t('sectionLabels.monnaies')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.monnaies.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2 mt-1">
-                <Currency
-                  icon={Ticket}
-                  name={t('sections.monnaies.currencies.gachaTokens.name')}
-                  color="text-primary"
-                >
-                  {t('sections.monnaies.currencies.gachaTokens.description')}
-                </Currency>
-                <Currency
-                  icon={Sparkles}
-                  name={t('sections.monnaies.currencies.dust.name')}
-                  color="text-sky-400"
-                >
-                  {t('sections.monnaies.currencies.dust.description')}
-                </Currency>
-                <Currency
-                  icon={Coins}
-                  name={t('sections.monnaies.currencies.gold.name')}
-                  color="text-amber-400"
-                >
-                  <Trans
-                    t={t}
-                    i18nKey="sections.monnaies.currencies.gold.description"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </Currency>
-                <Currency
-                  icon={BatteryCharging}
-                  name={t('sections.monnaies.currencies.combatPoints.name')}
-                  color="text-emerald-400"
-                >
-                  {t('sections.monnaies.currencies.combatPoints.description')}
-                </Currency>
-                <Currency
-                  icon={Gauge}
-                  name={t('sections.monnaies.currencies.xp.name')}
-                  color="text-violet-400"
-                >
-                  {t('sections.monnaies.currencies.xp.description')}
-                </Currency>
-                <Currency
-                  icon={Network}
-                  name={t('sections.monnaies.currencies.skillPoints.name')}
-                  color="text-fuchsia-400"
-                >
-                  {t('sections.monnaies.currencies.skillPoints.description')}
-                </Currency>
-              </div>
-            </Section>
-
-            {/* Tokens */}
-            <Section
-              id="tokens"
-              icon={Ticket}
-              title={t('sectionLabels.tokens')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.tokens.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.tokens.capBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>• {t('sections.tokens.regenBullet')}</li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.tokens.topbarBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-              </ul>
-              <InfoBox>
-                <Trans
-                  t={t}
-                  i18nKey="sections.tokens.info"
-                  components={{ strong: <strong /> }}
-                />
-              </InfoBox>
-              <TipBox>{t('sections.tokens.tip')}</TipBox>
-            </Section>
-
-            {/* Pulls */}
-            <Section id="pulls" icon={Zap} title={t('sectionLabels.pulls')}>
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.pulls.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>• {t('sections.pulls.instantBullet')}</li>
-                <li>• {t('sections.pulls.resultBullet')}</li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.pulls.pityBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-              </ul>
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.pulls.skillsParagraph"
-                  components={{
-                    rareBadge: (
-                      <RarityBadge
-                        rarity="RARE"
-                        color="border-blue-500/30 bg-blue-500/10 text-blue-400"
-                      />
-                    ),
-                    epicBadge: (
-                      <RarityBadge
-                        rarity="EPIC"
-                        color="border-violet-500/30 bg-violet-500/10 text-violet-400"
-                      />
-                    ),
-                    legendaryBadge: (
-                      <RarityBadge
-                        rarity="LEGENDARY"
-                        color="border-amber-500/30 bg-amber-500/10 text-amber-400"
-                      />
-                    ),
-                    freePull: <strong className="text-foreground" />,
-                    goldenBall: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-            </Section>
-
-            {/* Raretés & variantes */}
-            <Section id="rarete" icon={Star} title={t('sectionLabels.rarete')}>
-              <p>{t('sections.rarete.intro')}</p>
-              <div className="flex flex-wrap gap-2 my-2">
-                <RarityBadge
-                  rarity="COMMON"
-                  color="border-border bg-muted text-text-light"
-                />
-                <RarityBadge
-                  rarity="UNCOMMON"
-                  color="border-green-500/30 bg-green-500/10 text-green-400"
-                />
-                <RarityBadge
-                  rarity="RARE"
-                  color="border-blue-500/30 bg-blue-500/10 text-blue-400"
-                />
-                <RarityBadge
-                  rarity="EPIC"
-                  color="border-violet-500/30 bg-violet-500/10 text-violet-400"
-                />
-                <RarityBadge
-                  rarity="LEGENDARY"
-                  color="border-amber-500/30 bg-amber-500/10 text-amber-400"
-                />
-              </div>
-              <p className="mt-3">
-                <Trans
-                  t={t}
-                  i18nKey="sections.rarete.variantIntro"
-                  components={{
-                    strong1: <strong className="text-foreground" />,
-                    strong2: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <div className="space-y-2 mt-2">
-                <div className="flex items-start gap-2">
-                  <Pill>{t('sections.rarete.variants.normal.name')}</Pill>
-                  <span>
-                    {t('sections.rarete.variants.normal.description')}
-                  </span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Pill>{t('sections.rarete.variants.brilliant.name')}</Pill>
-                  <span>
-                    {t('sections.rarete.variants.brilliant.description')}
-                  </span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Pill>{t('sections.rarete.variants.holographic.name')}</Pill>
-                  <span>
-                    {t('sections.rarete.variants.holographic.description')}
-                  </span>
-                </div>
-              </div>
-              <p className="mt-2">{t('sections.rarete.ratesOutro')}</p>
-            </Section>
-
-            {/* Pitié */}
-            <Section
-              id="piete"
-              icon={LifeBuoy}
-              title={t('sectionLabels.piete')}
-            >
-              <p>{t('sections.piete.intro')}</p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.piete.thresholdBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.piete.resetBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>• {t('sections.piete.personalBullet')}</li>
-              </ul>
-              <InfoBox>
-                <Trans
-                  t={t}
-                  i18nKey="sections.piete.info"
-                  components={{ strong: <strong /> }}
-                />
-              </InfoBox>
-            </Section>
-
-            {/* Doublons & poussière */}
-            <Section
-              id="doublon"
-              icon={Sparkles}
-              title={t('sectionLabels.doublon')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.doublon.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                    strong2: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.doublon.rarityBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.doublon.variantsBullet"
-                    components={{
-                      brilliantPill: <Pill />,
-                      holoPill: <Pill />,
-                    }}
-                  />
-                </li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.doublon.recycleBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-              </ul>
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.doublon.usesParagraph"
-                  components={{
-                    strong1: <strong className="text-foreground" />,
-                    strong2: <strong className="text-foreground" />,
-                    strong3: <strong className="text-foreground" />,
-                    strong4: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <TipBox>{t('sections.doublon.tip')}</TipBox>
-            </Section>
-
-            {/* Boutique du jour & Vœu */}
-            <Section
-              id="boutique"
-              icon={Store}
-              title={t('sectionLabels.boutique')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.boutique.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <div className="space-y-3 mt-1">
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1">
-                    {t('sections.boutique.dailyShop.title')}
-                  </p>
-                  <p>
-                    <Trans
-                      t={t}
-                      i18nKey="sections.boutique.dailyShop.description"
-                      components={{
-                        strong1: <strong className="text-foreground" />,
-                        strong2: <strong className="text-foreground" />,
-                      }}
-                    />
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1">
-                    {t('sections.boutique.wish.title')}
-                  </p>
-                  <p>
-                    <Trans
-                      t={t}
-                      i18nKey="sections.boutique.wish.description"
-                      components={{
-                        strong1: <strong className="text-foreground" />,
-                        strong2: <strong className="text-foreground" />,
-                      }}
-                    />
-                  </p>
-                </div>
-              </div>
-              <InfoBox>
-                <Trans
-                  t={t}
-                  i18nKey="sections.boutique.info"
-                  components={{
-                    strong1: <strong />,
-                    strong2: <strong />,
-                  }}
-                />
-              </InfoBox>
-            </Section>
-
-            {/* Niveaux & XP */}
-            <Section
-              id="niveaux"
-              icon={Gauge}
-              title={t('sectionLabels.niveaux')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.niveaux.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                    strong2: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>• {t('sections.niveaux.curveBullet')}</li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.niveaux.skillPointsBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>• {t('sections.niveaux.xpBoostBullet')}</li>
-              </ul>
-              <InfoBox>
-                <Trans
-                  t={t}
-                  i18nKey="sections.niveaux.info"
-                  components={{
-                    strong1: <strong />,
-                    strong2: <strong />,
-                  }}
-                />
-              </InfoBox>
-            </Section>
-
-            {/* Arbre de compétences */}
-            <Section
-              id="competences"
-              icon={Network}
-              title={t('sectionLabels.competences')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.competences.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                    strong2: <strong className="text-foreground" />,
-                    strong3: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <p>{t('sections.competences.domainsIntro')}</p>
-              <div className="space-y-3 mt-1">
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                    <Star className="h-4 w-4 text-primary" />{' '}
-                    {t('sections.competences.domains.luck.title')}
-                  </p>
-                  <p>{t('sections.competences.domains.luck.description')}</p>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                    <Coins className="h-4 w-4 text-amber-400" />{' '}
-                    {t('sections.competences.domains.economy.title')}
-                  </p>
-                  <p>{t('sections.competences.domains.economy.description')}</p>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                    <Gauge className="h-4 w-4 text-violet-400" />{' '}
-                    {t('sections.competences.domains.progression.title')}
-                  </p>
-                  <p>
-                    {t('sections.competences.domains.progression.description')}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                    <Swords className="h-4 w-4 text-emerald-400" />{' '}
-                    {t('sections.competences.domains.combat.title')}
-                  </p>
-                  <p>{t('sections.competences.domains.combat.description')}</p>
-                </div>
-              </div>
-              <InfoBox>
-                <Trans
-                  t={t}
-                  i18nKey="sections.competences.info"
-                  components={{ strong: <strong /> }}
-                />
-              </InfoBox>
-            </Section>
-
-            {/* Campagne & combats */}
-            <Section
-              id="campagne"
-              icon={Swords}
-              title={t('sectionLabels.campagne')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.campagne.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                    strong2: <strong className="text-foreground" />,
-                    strong3: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.campagne.teamBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                      strong2: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.campagne.prepBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                      advantagePill: <Pill />,
-                      evenPill: <Pill />,
-                      riskyPill: <Pill />,
-                    }}
-                  />
-                </li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.campagne.turnBasedBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-              </ul>
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.campagne.firstClearParagraph"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <InfoBox>
-                <Trans
-                  t={t}
-                  i18nKey="sections.campagne.info"
-                  components={{ strong: <strong /> }}
-                />
-              </InfoBox>
-            </Section>
-
-            {/* Points de combat */}
-            <Section
-              id="combat-points"
-              icon={BatteryCharging}
-              title={t('sectionLabels.combat-points')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.combat-points.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.combat-points.insufficientBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>• {t('sections.combat-points.skillsBullet')}</li>
-              </ul>
-              <TipBox>{t('sections.combat-points.tip')}</TipBox>
-            </Section>
-
-            {/* Améliorer ses cartes */}
-            <Section
-              id="cartes"
-              icon={ChevronsUp}
-              title={t('sectionLabels.cartes')}
-            >
-              <p>{t('sections.cartes.intro')}</p>
-              <div className="space-y-3 mt-1">
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1">
-                    {t('sections.cartes.level.title')}
-                  </p>
-                  <p>
-                    <Trans
-                      t={t}
-                      i18nKey="sections.cartes.level.description"
-                      components={{
-                        strong: <strong className="text-foreground" />,
-                      }}
-                    />
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1">
-                    {t('sections.cartes.ascension.title')}
-                  </p>
-                  <p>
-                    <Trans
-                      t={t}
-                      i18nKey="sections.cartes.ascension.description"
-                      components={{
-                        strong1: <strong className="text-foreground" />,
-                        strong2: <strong className="text-foreground" />,
-                        strong3: <strong className="text-foreground" />,
-                        strong4: <strong className="text-foreground" />,
-                        strong5: <strong className="text-foreground" />,
-                      }}
-                    />
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1">
-                    {t('sections.cartes.equipment.title')}
-                  </p>
-                  <p>
-                    <Trans
-                      t={t}
-                      i18nKey="sections.cartes.equipment.description"
-                      components={{
-                        weaponPill: <Pill />,
-                        armorPill: <Pill />,
-                        accessoryPill: <Pill />,
-                        strong: <strong className="text-foreground" />,
-                      }}
-                    />
-                  </p>
-                </div>
-              </div>
-              <TipBox>{t('sections.cartes.tip')}</TipBox>
-            </Section>
-
-            {/* Quêtes */}
-            <Section
-              id="quetes"
-              icon={ListChecks}
-              title={t('sectionLabels.quetes')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.quetes.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.quetes.typesBullet"
-                    components={{
-                      strong1: <strong className="text-foreground" />,
-                      strong2: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.quetes.claimBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.quetes.perfectWeekBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-              </ul>
-            </Section>
-
-            {/* Succès */}
-            <Section id="succes" icon={Award} title={t('sectionLabels.succes')}>
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.succes.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>• {t('sections.succes.progressBullet')}</li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.succes.filterBullet"
-                    components={{
-                      allPill: <Pill />,
-                      unlockedPill: <Pill />,
-                      lockedPill: <Pill />,
-                    }}
-                  />
-                </li>
-                <li>• {t('sections.succes.rewardsBullet')}</li>
-              </ul>
-            </Section>
-
-            {/* Chaîne de connexion */}
-            <Section id="chaine" icon={Flame} title={t('sectionLabels.chaine')}>
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.chaine.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                    strong2: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.chaine.milestonesBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>• {t('sections.chaine.consistencyBullet')}</li>
-              </ul>
-            </Section>
-
-            {/* Récompenses */}
-            <Section
-              id="recompenses"
-              icon={Gift}
-              title={t('sectionLabels.recompenses')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.recompenses.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                    strong2: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>• {t('sections.recompenses.claimBullet')}</li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.recompenses.cardBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-              </ul>
-              <InfoBox>{t('sections.recompenses.info')}</InfoBox>
-            </Section>
-
-            {/* Classements */}
-            <Section
-              id="classements"
-              icon={Crown}
-              title={t('sectionLabels.classements')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.classements.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <div className="space-y-2 mt-1">
-                <div className="flex items-start gap-2">
-                  <Pill>{t('sections.classements.collectors.title')}</Pill>
-                  <span>
-                    {t('sections.classements.collectors.description')}
-                  </span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Pill>{t('sections.classements.teams.title')}</Pill>
-                  <span>{t('sections.classements.teams.description')}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Pill>{t('sections.classements.combat.title')}</Pill>
-                  <span>{t('sections.classements.combat.description')}</span>
-                </div>
-              </div>
-            </Section>
-
-            {/* Collection */}
-            <Section
-              id="collection"
-              icon={Layers}
-              title={t('sectionLabels.collection')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.collection.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.collection.filterBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>• {t('sections.collection.variantsLookBullet')}</li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.collection.cardSheetBullet"
-                    components={{
-                      strong1: <strong className="text-foreground" />,
-                      strong2: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.collection.publicProfileBullet"
-                    components={{
-                      profilePill: <Pill>/profile/&lt;username&gt;</Pill>,
-                    }}
-                  />
-                </li>
-              </ul>
-            </Section>
-
-            {/* Équipes */}
-            <Section
-              id="equipes"
-              icon={Users}
-              title={t('sectionLabels.equipes')}
-            >
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.equipes.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                    teamLink: (
-                      <Link
-                        to="/team"
-                        className="text-primary underline underline-offset-2"
-                      />
-                    ),
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.equipes.ownerBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-                <li>• {t('sections.equipes.inviteBullet')}</li>
-                <li>• {t('sections.equipes.invitationBullet')}</li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.equipes.leaderboardBullet"
-                    components={{
-                      strong: <strong className="text-foreground" />,
-                    }}
-                  />
-                </li>
-              </ul>
-            </Section>
-
-            {/* API & Discord */}
-            <Section id="api" icon={BookOpen} title={t('sections.api.title')}>
-              <p>
-                <Trans
-                  t={t}
-                  i18nKey="sections.api.intro"
-                  components={{
-                    strong: <strong className="text-foreground" />,
-                  }}
-                />
-              </p>
-              <ul className="space-y-1.5">
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.api.authBullet"
-                    components={{ apiKeyPill: <Pill>X-API-Key</Pill> }}
-                  />
-                </li>
-                <li>
-                  •{' '}
-                  <Trans
-                    t={t}
-                    i18nKey="sections.api.endpointsBullet"
-                    components={{
-                      pullsPill: <Pill>POST /pulls</Pill>,
-                      collectionPill: <Pill>GET /collection</Pill>,
-                      leaderboardPill: <Pill>GET /leaderboard</Pill>,
-                    }}
-                  />
-                </li>
-              </ul>
-              <div className="flex flex-wrap gap-3 mt-2">
-                <Link
-                  to="/api-docs"
-                  className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
-                >
-                  {t('discord:header.apiReferenceLink')}
-                </Link>
-                <Link
-                  to="/discord"
-                  className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  {t('sections.api.discordGuideLink')}
-                </Link>
-              </div>
-            </Section>
+            {SECTIONS.map(({ id, icon, blocks }) => (
+              <Section
+                key={id}
+                id={id}
+                icon={icon}
+                title={
+                  id === 'api'
+                    ? t('sections.api.title')
+                    : t(`sectionLabels.${id}`)
+                }
+              >
+                {blocks.map((block, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: liste statique, jamais réordonnée
+                  <SectionBlock key={i} id={id} block={block} />
+                ))}
+              </Section>
+            ))}
           </main>
         </div>
 

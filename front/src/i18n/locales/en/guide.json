@@ -4,24 +4,27 @@
   },
   "header": {
     "title": "Player guide",
-    "intro": "Gachapon blends two game loops: <collect>collecting</collect> cards by pulling capsules, and <battle>battling</battle> with them in the campaign to progress. Here's everything you need to get started and play smart."
+    "intro": "Gachapon has two loops: you <collect>pull capsules</collect> to fill your collection, and you <battle>send your cards into battle</battle> in the campaign, the towers and team raids. This guide explains how it all works."
   },
   "toc": {
     "heading": "Contents"
   },
   "sectionLabels": {
-    "monnaies": "Currencies",
-    "tokens": "Tokens & regen",
+    "monnaies": "Resources",
+    "tokens": "Tokens",
     "pulls": "Pulling a capsule",
     "rarete": "Rarities & variants",
-    "piete": "Pity system",
+    "piete": "Pity",
     "doublon": "Duplicates & dust",
-    "boutique": "Daily shop & Wishes",
-    "niveaux": "Levels & XP",
+    "boutique": "Shop",
+    "niveaux": "Account level",
     "competences": "Skill tree",
     "campagne": "Campaign & battles",
-    "combat-points": "Combat points",
+    "elements": "Elements",
+    "tours": "Towers",
+    "combat-points": "Energy",
     "cartes": "Upgrading your cards",
+    "equipement": "Equipment",
     "quetes": "Quests",
     "succes": "Achievements",
     "chaine": "Login streak",
@@ -29,222 +32,317 @@
     "classements": "Leaderboards",
     "collection": "Collection",
     "equipes": "Teams",
+    "raid": "Team raid",
+    "duels": "Duels & bets",
     "api": "API & Discord"
   },
   "sections": {
     "monnaies": {
-      "intro": "Five resources drive the game. Your balance of each is shown live in the <strong>topbar</strong>.",
-      "currencies": {
-        "gachaTokens": {
-          "name": "Gacha tokens",
-          "description": "The currency for pulls. Every capsule costs one token. They regenerate on their own up to a cap."
+      "intro": "Six resources. Tokens, energy, dust and gold are shown in the <strong>top bar</strong>; unspent skill points show up as a badge on the Skills link.",
+      "cards": {
+        "i1": {
+          "title": "Tokens",
+          "text": "One token, one capsule. They refill on their own up to a cap."
         },
-        "dust": {
-          "name": "Dust",
-          "description": "Earned from duplicates. Used in the daily shop, for wishes, to level up your cards, and to reset your skill tree."
+        "i2": {
+          "title": "Dust",
+          "text": "Comes from recycling duplicates, quests, the login streak and level milestones. Spent in the daily shop, on wishes, energy packs and boosts, on levelling your cards, and on resetting the skill tree."
         },
-        "gold": {
-          "name": "Gold",
-          "description": "Earned in battle and from quests. Mainly used to raise the <strong>level</strong> of your cards."
+        "i3": {
+          "title": "Gold",
+          "text": "Earned in battles and raids. Spent on your cards' <strong>level</strong>, on upgrading equipment, and on token packs."
         },
-        "combatPoints": {
-          "name": "Combat points",
-          "description": "The campaign's energy. Regenerates over time up to a cap; every battle or farm run uses some."
+        "i4": {
+          "title": "Energy",
+          "text": "Your combat points. Every campaign or tower battle costs some; it refills on its own up to a cap."
         },
-        "xp": {
-          "name": "XP & level",
-          "description": "Earned by pulling and battling. Leveling up unlocks skill points and milestone rewards."
+        "i5": {
+          "title": "XP & level",
+          "text": "Earned by pulling and fighting. Your account goes up to level 100."
         },
-        "skillPoints": {
-          "name": "Skill points",
-          "description": "Earned by leveling up. Invest them in the skill tree for permanent passive bonuses."
+        "i6": {
+          "title": "Skill points",
+          "text": "One per level, plus bonuses at some milestones. You spend them in the skill tree."
         }
       }
     },
     "tokens": {
-      "intro": "<strong>Gacha tokens</strong> are the game's action currency — every capsule pull uses one. They regenerate automatically over time, with nothing to do on your end.",
-      "capBullet": "Your token stock has a <strong>cap</strong>: tokens earned beyond it are lost. Come back regularly.",
-      "regenBullet": "Regeneration is continuous: your balance is recalculated on the fly every time you log in.",
-      "topbarBullet": "The <strong>topbar</strong> shows your balance and the time until your next token.",
-      "info": "You can also get tokens from the <strong>Shop</strong> (token packs) or events. Some skills speed up regeneration, raise the cap, or give a chance at a bonus token.",
-      "tip": "Tip: log in regularly to avoid hitting the cap and losing accumulated tokens."
+      "intro": "Every pull costs a <strong>token</strong>. They refill continuously, even while you're offline.",
+      "list": {
+        "i1": "Your stock has a <strong>cap</strong>. Tokens regenerated past it are lost, unless you have the <strong>Overflow</strong> skill, which turns them into dust.",
+        "i2": "The top bar shows your balance and the time until the next token."
+      },
+      "info": "Other ways to get tokens: <strong>token packs</strong> in the shop (paid in gold), quests, the login streak, level milestones and the raid. Several skills and the Token flow team bonus speed up regeneration or raise the cap.",
+      "tip": "Spend your tokens before you hit the cap, or invest in the cap early if you don't drop by often."
     },
     "pulls": {
-      "intro": "A pull uses 1 token and gives you a random card from the active pool. Every card has a <strong>drop weight</strong>: the higher the weight, the more likely the card.",
-      "instantBullet": "The pull is instant — the result shows up live over WebSocket.",
-      "resultBullet": "The result includes the card, its variant, whether it's a duplicate, and the dust earned.",
-      "pityBullet": "Your <strong>pity</strong> counter updates after every pull (see the dedicated section).",
-      "skillsParagraph": "Several skills affect pulls: they boost the odds of <rareBadge></rareBadge> <epicBadge></epicBadge> <legendaryBadge></legendaryBadge> rarities, buff variant odds, give a chance at a <freePull>free pull</freePull>, or trigger a <goldenBall>golden ball</goldenBall> that forces a minimum rarity."
+      "intro": "A pull costs one token and gives you a random card from the active sets. Each card has a <strong>weight</strong>: the higher it is, the more often the card drops.",
+      "list": {
+        "i1": "You can pull one at a time, or ten at once with <pill>Pull x10</pill>.",
+        "i2": "The result shows the card, its variant, and whether it's new to you.",
+        "i3": "Your <strong>pity</strong> counter goes up with every pull (see below)."
+      },
+      "skills": "Several skills affect pulls: they raise the odds of <rare>RARE</rare> <epic>EPIC</epic> <legendary>LEGENDARY</legendary> cards and of variants, give a chance of a <strong>free pull</strong>, or trigger a <strong>golden ball</strong> that forces a minimum rarity. <strong>Wish Granted</strong> can swap the card you pulled for one from your wishlist, of the same rarity.",
+      "info": "The shop also sells <strong>boosts</strong>: for a few pulls, they raise the odds of the higher rarities."
     },
     "rarete": {
-      "intro": "Every card belongs to one of five rarities, from most common to rarest:",
-      "variantIntro": "Cards of <strong1>RARE, EPIC, and LEGENDARY</strong1> rarity can appear in a special version called a <strong2>variant</strong2>:",
-      "variants": {
-        "normal": {
-          "name": "NORMAL",
-          "description": "The card's standard version, the most common one."
-        },
-        "brilliant": {
-          "name": "BRILLIANT",
-          "description": "The brilliant version — generates more dust as a duplicate."
-        },
-        "holographic": {
-          "name": "HOLOGRAPHIC",
-          "description": "The holographic version — the rarest variant, generates even more dust."
-        }
+      "intro": "There are five rarities, from most to least common:",
+      "variantIntro": "A <strong>RARE, EPIC or LEGENDARY</strong> card can drop as a <strong>variant</strong>:",
+      "list": {
+        "i1": "<pill>NORMAL</pill> the standard version, by far the most common.",
+        "i2": "<pill>BRILLIANT</pill> rarer, with an animated shine.",
+        "i3": "<pill>HOLOGRAPHIC</pill> the rarest of the three, with a rainbow sheen."
       },
-      "ratesOutro": "Variant odds depend on rarity: a Legendary is more likely to be Holographic than a Rare. Exact rates are configured by the admins."
+      "outro": "The higher the rarity, the more often variants drop: a legendary is more likely to be holographic than a rare. Each variant counts as a separate card: pulling the brilliant version of a card you own in normal is not a duplicate."
     },
     "piete": {
-      "intro": "The pity system guarantees that no player can pull forever without getting a Legendary card. A counter increases with every pull that isn't a Legendary.",
-      "thresholdBullet": "When the counter <strong>reaches the threshold</strong>, the next pull is guaranteed Legendary.",
-      "resetBullet": "Getting a Legendary — before the threshold or thanks to pity — <strong>resets the counter to zero</strong>.",
-      "personalBullet": "Pity is personal: it isn't shared, and it persists across sessions.",
-      "info": "Your pity counter is visible on your profile. A dedicated skill lets you <strong>lower the threshold</strong> to hit Legendaries more often."
+      "intro": "Pity guarantees a legendary after a set number of pulls. A counter goes up with every pull that doesn't give one.",
+      "list": {
+        "i1": "When the counter <strong>reaches the threshold</strong>, your next pull is a legendary.",
+        "i2": "Any legendary, from pity or not, <strong>resets the counter to zero</strong>.",
+        "i3": "The counter is yours alone and carries over between sessions."
+      },
+      "info": "Your counter is shown on the <strong>Play</strong> page and in the rate details. The <strong>Fate</strong> skill lowers the threshold."
     },
     "doublon": {
-      "intro": "If you pull a card you already own, that's a <strong>duplicate</strong>. It isn't added a second time to your collection — instead, you get <strong2>dust</strong2>.",
-      "rarityBullet": "The amount depends on the <strong>rarity</strong> of the duplicated card: a Legendary yields far more than a Common.",
-      "variantsBullet": "The <brilliantPill>BRILLIANT</brilliantPill> and <holoPill>HOLOGRAPHIC</holoPill> variants multiply the dust earned.",
-      "recycleBullet": "You can also <strong>recycle</strong> extra copies from your collection to convert duplicates into dust.",
-      "usesParagraph": "Dust is an all-purpose currency: it's used for the <strong1>daily shop</strong1>, for <strong2>wishes</strong2>, to <strong3>level up your cards</strong3>, and to <strong4>reset</strong4> your skill tree.",
-      "tip": "A skill multiplies the dust received on every duplicate. It's one of the best investments once your collection is well-stocked and duplicates start piling up."
+      "intro": "When you pull a card you already own, in the same variant, it's a <strong>duplicate</strong>: the copy goes on your stack, nothing is lost.",
+      "list": {
+        "i1": "Duplicates are used for <strong>ascension</strong>: moving a card up to the next tier costs one.",
+        "i2": "You can also <strong>recycle</strong> a duplicate into dust from the collection. The amount depends on rarity.",
+        "i3": "<strong>Recycle everything</strong> converts all your spare copies at once, up to the rarity you pick (normal variant only)."
+      },
+      "uses": "Dust is spent in the <strong>daily shop</strong>, on <strong>wishes</strong>, on <strong>levelling your cards</strong>, on energy packs and boosts, and on <strong>resetting</strong> the skill tree.",
+      "tip": "Keep duplicates of the cards you fight with: without them, no ascension. The Recycling skill increases the dust you get."
     },
     "boutique": {
-      "intro": "The <strong>Shop</strong> lets you spend your dust to target specific cards, instead of relying only on pull luck.",
-      "dailyShop": {
-        "title": "Daily shop",
-        "description": "A card selection that refreshes every day, buyable with dust (price based on rarity). The \"New pull in…\" counter shows when it refreshes. Some skills can <strong1>add slots</strong1> and <strong2>lower prices</strong2>."
-      },
-      "wish": {
-        "title": "Wishlist",
-        "description": "Keep <strong1>several cards of your choice</strong1> on your wishlist, then buy them with dust whenever you want: no waiting, but full price — pricier than the daily shop, and shop discounts don't apply. You start with <strong2>2 slots</strong2>, and a skill raises that to 5."
-      },
-      "info": "The Shop also carries <strong1>token packs</strong1> and temporary <strong2>boosts</strong2> to speed up your progress."
+      "intro": "The <strong>shop</strong> lets you target specific cards instead of leaving everything to chance, and sells resources.",
+      "cards": {
+        "i1": {
+          "title": "Daily shop",
+          "text": "A selection of cards that renews every day at midnight (UTC), bought with dust, priced by rarity. Skills add slots, lower prices and raise the rarities on offer."
+        },
+        "i2": {
+          "title": "Wishes",
+          "text": "Set aside the cards you want and buy them with dust whenever you like, with no wait. It's full price: more expensive than the daily shop, no discounts, and always the normal variant. You start with <strong>2 slots</strong>, up to 5 with the Collector skill."
+        },
+        "i3": {
+          "title": "Packs & boosts",
+          "text": "<strong>Token packs</strong> cost gold. <strong>Energy packs</strong> cost dust, are limited per day, and can take your energy past its cap. <strong>Boosts</strong>, paid in dust, raise the odds of the higher rarities for a few pulls. There are cosmetics too."
+        }
+      }
     },
     "niveaux": {
-      "intro": "Your <strong>account level</strong> rises with the <strong2>XP</strong2> you earn by pulling capsules and winning battles.",
-      "curveBullet": "The XP required increases with each level, following a curve.",
-      "skillPointsBullet": "Leveling up grants <strong>skill points</strong> and milestone rewards to claim.",
-      "xpBoostBullet": "Some skills increase the XP earned per pull and per battle.",
-      "info": "Don't confuse your <strong1>account level</strong1> (your overall progress) with a <strong2>card's level</strong2> (its combat power, see \"Upgrading your cards\")."
+      "intro": "Your <strong>account level</strong> goes up with the XP you earn by pulling and fighting, up to level 100.",
+      "list": {
+        "i1": "Every level gives a <strong>skill point</strong>. Levels 10, 25, 50, 75 and 100 also give bonus points and a bundle of tokens and dust.",
+        "i2": "Every level-up <strong>refills your energy</strong> to the max.",
+        "i3": "Skills raise the XP you get from pulling (Fervor) and fighting (Veteran)."
+      },
+      "info": "Don't mix up your <strong>account level</strong> (your progress) and a <strong>card's level</strong> (its combat power, see \"Upgrading your cards\")."
     },
     "competences": {
-      "intro": "The <strong>skill tree</strong> replaces the old upgrades. You invest the <strong2>skill points</strong2> earned from leveling up in it; every node unlocks a <strong3>permanent passive bonus</strong3>.",
-      "domainsIntro": "Skills cover four broad areas:",
-      "domains": {
-        "luck": {
-          "title": "Pulls & luck",
-          "description": "Boosts rarities, variants, the golden ball, the free-pull chance, and lowers the pity threshold."
+      "intro": "You spend <strong>skill points</strong> in the tree; each node gives a <strong>permanent bonus</strong>. The full tree costs exactly what you earn up to level 100. It has four branches:",
+      "cards": {
+        "i1": {
+          "title": "Flux",
+          "text": "Your tokens: regeneration, cap, bonus tokens, free pulls, Overflow, and pull XP."
         },
-        "economy": {
-          "title": "Economy",
-          "description": "Speeds up regeneration and raises the token cap, grants bonus tokens, multiplies dust, lowers shop prices, and increases gold earned."
+        "i2": {
+          "title": "Fortune",
+          "text": "Luck: rarity odds, golden ball, Wish Granted, pity threshold (Fate), variant rates (Prism) and the daily energy pack limit (Opulence)."
         },
-        "progression": {
-          "title": "Progression",
-          "description": "Increases pull and battle XP, and adds daily shop slots and wishlist slots."
+        "i3": {
+          "title": "Collection",
+          "text": "Dust and the shop: recycling, discounts, the dust cost of card levels, gold prices, daily shop rarities and slots, wish slots."
         },
-        "combat": {
+        "i4": {
           "title": "Combat",
-          "description": "Increases the cap and regeneration of combat points, reduces the farm cost, and improves the equipment drop rate."
+          "text": "Energy (cap and regeneration), gold earned, multiple battle cost, combat XP, drops, and equipment (upgrades and selling)."
         }
       },
-      "info": "You can <strong>reset</strong> the tree at any time for dust: all your points are returned and can be redistributed. Handy for trying a new build."
+      "info": "You can <strong>reset</strong> the tree at any time for dust, based on how many points you've invested: every point comes back to you."
     },
     "campagne": {
-      "intro": "The <strong>Campaign</strong> is the battle loop. You progress through themed <strong2>chapters</strong2> — Plains, Whispering Forest, Ashes, Ocean, Crystals, Volcano, Tundra, Abyss, Rift — each split into increasingly difficult <strong3>stages</strong3>.",
-      "teamBullet": "Every stage is played with your <strong>battle team</strong> (up to 3 cards). Some stages are <strong2>Boss</strong2> fights (1v3).",
-      "prepBullet": "The <strong>Preparation</strong> screen shows the opponents, rewards, energy cost, and a power verdict: <advantagePill>Advantage</advantagePill> <evenPill>Even</evenPill> <riskyPill>Risky</riskyPill>.",
-      "turnBasedBullet": "Battles are <strong>turn-based</strong>: your cards use their stats (HP, ATK, DEF, SPD), passives, and equipment.",
-      "firstClearParagraph": "The <strong>first clear</strong> of a stage gives guaranteed rewards (gold, dust, XP, and sometimes a guaranteed piece of equipment or card). Replaying an already-cleared stage gives repeatable rewards, with a chance to drop equipment and cards.",
-      "info": "<strong>Farm ×3</strong> (sweep) automatically replays an already-cleared stage several times at once, for energy — great for stacking up gold and dust without replaying every battle."
+      "intro": "The <strong>campaign</strong> has nine chapters (Plains, Whispering Forest, Ashes, Ocean, Crystals, Volcano, Tundra, Abyss, Rift), each with 10 stages that get harder as you go.",
+      "list": {
+        "i1": "You fight with a team of <strong>up to three cards</strong>. Bosses take on your three cards alone.",
+        "i2": "The <strong>preparation</strong> screen shows the enemies, the rewards, the energy cost and a verdict: <pill>Advantage</pill> <pill>Balanced</pill> <pill>Risky</pill>.",
+        "i3": "Battles play out automatically: speed (SPD) fills each card's action gauge. If time runs out, it's a <strong>draw</strong>, and the energy is spent anyway.",
+        "i4": "Each card has eight stats: HP, ATK, DEF, SPD, crit rate, crit damage, armor penetration and lifesteal. On top of that come its passive, its element and its equipment.",
+        "i5": "You have a separate team for the campaign, each of the four towers and the raid. Any mode you haven't set up uses your campaign team."
+      },
+      "firstClear": "Your <strong>first clear</strong> of a stage gives guaranteed rewards (gold, dust, XP, sometimes a piece of equipment or a card). Replaying a stage you've already won gives repeatable rewards, with a chance of drops.",
+      "info": "On a stage you've already won, <strong>Multiple battle</strong> chains several fights at once (×1 or ×5) for the matching energy."
+    },
+    "elements": {
+      "intro": "Every card and every monster has an <strong>element</strong>. Attacking with the advantage deals more damage; attacking at a disadvantage deals less.",
+      "list": {
+        "i1": "Fire beats Nature, Nature beats Earth, Earth beats Water, Water beats Fire.",
+        "i2": "Light and Dark sit outside the cycle: each one has the advantage over the other.",
+        "i3": "Your cards go for enemies weak to their element first.",
+        "i4": "A chapter's boss has an element that none of the chapter's monsters have: plan a different team for it."
+      },
+      "tip": "The element guide opens from the campaign and tower headers, and the collection can be filtered by element."
+    },
+    "tours": {
+      "intro": "There are four <strong>towers</strong>, one per element: Ember (fire), Prism (water), Sap (nature) and Monolith (earth). Each has 10 floors that unlock in order.",
+      "list": {
+        "i1": "Each tower drops one type of equipment the campaign doesn't: Gloves (Ember), Boots (Prism), Amulet (Sap), Belt (Monolith).",
+        "i2": "Every win gives you a piece; the higher the floor, the better the rarity.",
+        "i3": "Battles cost energy. A floor you've already cleared can be replayed with multiple battle, as in the campaign.",
+        "i4": "A tower's monsters share its element: a team that counters it starts with a big advantage."
+      }
     },
     "combat-points": {
-      "intro": "<strong>Combat points</strong> (\"energy\") are to the campaign what tokens are to pulls. They regenerate passively up to a cap, shown in the topbar.",
-      "insufficientBullet": "Every battle and every farm run uses some. With no energy left, the button reads <strong>\"Not enough energy\"</strong>.",
-      "skillsBullet": "Some skills speed up their regeneration, raise the cap, and reduce the farm cost.",
-      "tip": "Spend your energy before it hits the cap: beyond that, regenerated points are lost, just like tokens."
+      "intro": "<strong>Energy</strong> (combat points) is to battles what tokens are to pulls: it refills on its own up to a cap, shown in the top bar.",
+      "list": {
+        "i1": "Every campaign or tower battle costs some. Without energy, the button reads <strong>\"Not enough energy\"</strong>.",
+        "i2": "Every account level-up refills it to the max.",
+        "i3": "Energy packs from the shop can take it past the cap.",
+        "i4": "Skills in the Combat branch speed up its regeneration, raise the cap and lower the cost of multiple battles."
+      },
+      "tip": "At the cap, regenerated energy is lost: spend it before then."
     },
     "cartes": {
-      "intro": "To hold up against advanced stages, your cards need to grow stronger. Three levers combine, all managed from a card's detail sheet.",
-      "level": {
-        "title": "Level",
-        "description": "Raise a card's <strong>level</strong> with gold and dust: its stats (HP, ATK, DEF, SPD) increase with every level, up to its tier's cap."
+      "intro": "To keep up with later stages, your cards need to get stronger. Everything happens on the card's sheet.",
+      "cards": {
+        "i1": {
+          "title": "Level",
+          "text": "Raise a card's <strong>level</strong> with gold and dust: its stats go up with every level, up to its tier's cap."
+        },
+        "i2": {
+          "title": "Tier & ascension",
+          "text": "There are 7 tiers of 10 levels. At the top of a tier, <strong>ascension</strong> uses one duplicate of the card and raises its level cap. Its <strong>passive</strong> gets stronger up to tier 6; after that, only stats keep growing."
+        }
       },
-      "ascension": {
-        "title": "Tier & ascension",
-        "description": "Once a card is at the top of its <strong1>tier</strong1>, <strong2>ascending it</strong2> consumes a <strong3>duplicate</strong3> to move to the next tier and raise its level cap. Its <strong4>passive</strong4> also grows stronger with each tier, up to a point — beyond that, it stays fixed and only the stats keep improving. Once the max tier is reached, progression continues through <strong5>equipment</strong5>."
+      "tip": "After a loss: rethink your team's lineup and elements, or level up your cards before going back."
+    },
+    "equipement": {
+      "intro": "Every card has <strong>7 slots</strong>: Weapon, Armor, Ring, Amulet, Gloves, Boots and Belt. Each piece has a rarity, a main stat and sub-stats.",
+      "list": {
+        "i1": "The <strong>campaign</strong> drops Weapons, Armor and Rings; the <strong>towers</strong> drop the other four types.",
+        "i2": "You <strong>upgrade</strong> a piece with gold. At certain levels it gains a sub-stat or improves one.",
+        "i3": "Pieces you don't need can be <strong>sold</strong> for gold."
       },
-      "equipment": {
-        "title": "Equipment",
-        "description": "Every card has 3 slots — <weaponPill>Weapon</weaponPill> <armorPill>Armor</armorPill> <accessoryPill>Accessory</accessoryPill>. Pieces drop in battle (and from bosses), have a rarity, and add stat bonuses. Equip or remove them from the <strong>Equipment</strong> page."
+      "setsIntro": "Every piece belongs to a <strong>set</strong>. Wearing enough pieces of the same set <strong>on the same card</strong> activates its bonus:",
+      "sets": {
+        "i1": "<strong>Wrath</strong> (4 pieces): crit damage",
+        "i2": "<strong>Leech</strong> (4 pieces): lifesteal",
+        "i3": "<strong>Vigilance</strong> (3 pieces): crit rate",
+        "i4": "<strong>Breakthrough</strong> (3 pieces): armor penetration",
+        "i5": "<strong>Assault</strong> (3 pieces): attack",
+        "i6": "<strong>Colossus</strong> (2 pieces): HP",
+        "i7": "<strong>Celerity</strong> (2 pieces): speed"
       },
-      "tip": "After a defeat, two reflexes: rethink your team composition, or level up your cards before heading back to the front."
+      "info": "With 7 slots, a card can stack several sets (4 + 3, 3 + 2 + 2…). Sets are counted card by card: two cards wearing two Wrath pieces each activate nothing. The <strong>Set bonuses</strong> button sums it all up."
     },
     "quetes": {
-      "intro": "<strong>Quests</strong> give you concrete goals rewarded with tokens, dust, gold, and XP. They progress automatically as you play.",
-      "typesBullet": "<strong1>Weekly</strong1> quests reset every Monday; <strong2>One-shot</strong2> quests are done just once.",
-      "claimBullet": "A completed quest switches to \"Claimed\" once you click <strong>Claim</strong>.",
-      "perfectWeekBullet": "Completing every weekly quest unlocks the <strong>Perfect Week</strong> bonus."
+      "intro": "<strong>Quests</strong> give you goals rewarded with tokens, dust and sometimes XP. They progress on their own as you play.",
+      "list": {
+        "i1": "<strong>Weekly</strong> quests are drawn every Monday (UTC); <strong>One-shot</strong> quests can only be done once.",
+        "i2": "Collect a finished quest with <strong>Claim</strong>, on the Quests page.",
+        "i3": "Finishing every weekly quest unlocks the <strong>Perfect week</strong> bonus, with gold and XP."
+      }
     },
     "succes": {
-      "intro": "<strong>Achievements</strong> are long-term goals unlocked by your actions: pulls, leveling up, login streaks, team membership, and many more.",
-      "progressBullet": "Their progress is shown (e.g. \"4 / 10\").",
-      "filterBullet": "Filter them by <allPill>All</allPill> <unlockedPill>Unlocked</unlockedPill> <lockedPill>Locked</lockedPill>.",
-      "rewardsBullet": "Rewards can include cards, tokens, dust, and XP."
+      "intro": "<strong>Achievements</strong> are long-term goals: pulls, rarities obtained, level, login streak, campaign chapters and bosses, flawless wins, sets, recycling…",
+      "list": {
+        "i1": "Their progress is shown (for example \"4 / 10\").",
+        "i2": "Filter them with <pill>All</pill> <pill>Unlocked</pill> <pill>To unlock</pill>.",
+        "i3": "Rewards can include cards, tokens, dust and XP."
+      }
     },
     "chaine": {
-      "intro": "Log in <strong>every day</strong> to extend your streak. A missed day resets it to zero, but your <strong2>best streak</strong2> stays saved.",
-      "milestonesBullet": "<strong>Streak milestones</strong> grant rewards (tokens, dust, gold, XP).",
-      "consistencyBullet": "It's the simplest way to build up resources over time: consistency pays off."
+      "intro": "Log in <strong>every day</strong> to grow your streak. Missing a day resets it; your <strong>best streak</strong> is kept.",
+      "list": {
+        "i1": "Every streak day gives you something, and days 3, 7, 14 and 30 give more (tokens, dust, XP)."
+      }
     },
     "recompenses": {
-      "intro": "Many systems drop off <strong>rewards to claim</strong>: quests, leveling up, login streaks, achievements, and events. They pile up in the notification <strong2>bell</strong2>.",
-      "claimBullet": "Claim them one by one, or all at once — quest rewards are claimed separately, from the Quests page.",
-      "cardBullet": "Some contain a <strong>card</strong> revealed when you claim it.",
-      "info": "Remember to go claim them: the bell's badge shows how many rewards are waiting for you."
+      "intro": "Level-ups, the login streak, achievements, the raid and events drop <strong>rewards to collect</strong> in the notification <strong>bell</strong>.",
+      "list": {
+        "i1": "Claim them one by one or all at once. Quest rewards are claimed on the Quests page instead.",
+        "i2": "Some contain a <strong>card</strong>, revealed when you claim it."
+      },
+      "info": "The badge on the bell shows how many rewards are waiting for you."
     },
     "classements": {
-      "intro": "<strong>Leaderboards</strong> show where you stand against other players, across three categories:",
-      "collectors": {
-        "title": "Collectors",
-        "description": "Ranks by completion rate, distinct cards, and variants."
-      },
-      "teams": {
-        "title": "Teams",
-        "description": "Ranks teams by collective completion."
-      },
-      "combat": {
-        "title": "Combat",
-        "description": "Ranks by the furthest chapter and stage reached in the campaign."
+      "intro": "Three <strong>leaderboards</strong>:",
+      "cards": {
+        "i1": {
+          "title": "Collectors",
+          "text": "Completion rate, distinct cards and variants."
+        },
+        "i2": {
+          "title": "Teams",
+          "text": "The team's combined completion, then variants and number of pulls."
+        },
+        "i3": {
+          "title": "Combat",
+          "text": "Campaign progress; ties are broken by your campaign team's power."
+        }
       }
     },
     "collection": {
-      "intro": "Your <strong>collection</strong> gathers every unique card you've obtained. Each card appears there only once, no matter how many times you've pulled it.",
-      "filterBullet": "You can filter by <strong>rarity, variant, or set</strong>.",
-      "variantsLookBullet": "Brilliant and Holographic cards have a distinct visual look.",
-      "cardSheetBullet": "A card's detail sheet lets you set it as a <strong1>wish</strong1>, <strong2>recycle</strong2> it, level it up, and ascend it.",
-      "publicProfileBullet": "Your public profile is accessible to everyone via <profilePill></profilePill>."
+      "intro": "Your <strong>collection</strong> holds the cards you own, one entry per card and per variant.",
+      "list": {
+        "i1": "Filter by rarity, variant, set or element, group by rarity, element or set, and sort by power, level, duplicates or name.",
+        "i2": "You can show every card in the game, including the ones you're missing.",
+        "i3": "A card's sheet lets you level it up, ascend it, manage its equipment, recycle it or add it to your wishlist.",
+        "i4": "Your profile, collection included, is visible to other players."
+      }
     },
     "equipes": {
-      "intro": "<strong>Teams</strong> let you play with your friends. You can create or join a team from the <teamLink>Teams</teamLink> page.",
-      "ownerBullet": "Every team has an <strong>owner</strong> and members.",
-      "inviteBullet": "The owner can invite players by username.",
-      "invitationBullet": "Invitations have a validity period; the member accepts or declines them.",
-      "leaderboardBullet": "The team's collective completion appears on the <strong>Teams leaderboard</strong>."
+      "intro": "A <strong>team</strong> is a group of players who progress together. Create one or join one from the <teamLink>Teams</teamLink> page; you can be in up to three teams.",
+      "list": {
+        "i1": "Three roles: <strong>leader</strong>, <strong>officer</strong> and <strong>member</strong>. The leader can hand the role over.",
+        "i2": "The leader and officers invite by username or email; an invitation expires after 48 hours.",
+        "i3": "A team can open itself to <strong>applications</strong>: it then shows up in the directory, where any player can apply. The leader and officers accept or decline."
+      },
+      "progression": "<strong>Team progression</strong>: every week, members earn team points (raid damage, pulls, duels and bets won). These points level the team up, and each level gives a point to put into one of four bonuses:",
+      "perks": {
+        "i1": "<strong>Token flow</strong>: faster token regeneration for every member",
+        "i2": "<strong>Raid cadence</strong>: extra raid attacks every day",
+        "i3": "<strong>XP banner</strong>: more campaign XP",
+        "i4": "<strong>Shared forge</strong>: cheaper equipment upgrades"
+      },
+      "info": "The leader and officers assign the points; only the leader can reset them."
+    },
+    "raid": {
+      "intro": "Every week, your team takes on a <strong>raid boss</strong> whose element changes from week to week. It's in the Raid tab of the team page.",
+      "list": {
+        "i1": "Each member has a limited number of <strong>attacks per day</strong>; the Raid cadence bonus adds more.",
+        "i2": "Every member's damage fills a shared bar.",
+        "i3": "At 25, 50, 75 and 100% of the bar, every participant gets a reward (tokens, gold, dust, and an epic card at 100%), once per week and per team. It lands in the bell.",
+        "i4": "Beating the raid raises next week's difficulty; a week without a win lowers it. Boss HP is calculated as if the team had at least 10 members."
+      }
+    },
+    "duels": {
+      "intro": "Two ways for teammates to go head to head, from the team page.",
+      "cards": {
+        "i1": {
+          "title": "Pull duel",
+          "text": "You challenge a teammate: your next pulls count, each on your own side. The higher score wins and takes the cards the other player pulled. The higher the rarity, the more a card is worth, and a brilliant counts one and a half times. On a tie, everyone keeps their cards. While the duel runs, the counted cards can't be recycled."
+        },
+        "i2": {
+          "title": "Bets",
+          "text": "You stake dust on a teammate's next pulls: will they get at least one card of a given rarity? The odds are shown before you confirm, and other teammates can raise on your side or against you, which moves them. The house takes a cut. If the target doesn't pull before the deadline, stakes are refunded."
+        }
+      }
     },
     "api": {
       "title": "Public API & Discord bot",
-      "intro": "Gachapon exposes a <strong>public API</strong> documented with OpenAPI 3.1. You can use it to build your own Discord bot, tracking tools, or integrate Gachapon into other services.",
-      "authBullet": "Authentication goes through an <apiKeyPill></apiKeyPill> header — generate your key in Settings.",
-      "endpointsBullet": "Available endpoints: <pullsPill></pullsPill>, <collectionPill></collectionPill>, <leaderboardPill></leaderboardPill>, and more.",
-      "discordGuideLink": "Discord Bot Guide →"
+      "intro": "Gachapon has a <strong>public API</strong>, documented in OpenAPI 3.1, to plug a Discord bot or your own tools into your account.",
+      "list": {
+        "i1": "Authentication uses the <pill>X-API-Key</pill> header: generate your key in Settings.",
+        "i2": "A few endpoints: <pill>POST /pulls</pill>, <pill>GET /users/:id/collection</pill>, <pill>GET /leaderboard/collectors</pill>."
+      },
+      "discordGuideLink": "Discord bot guide →"
     }
   },
   "cta": {
-    "title": "Ready to get started?",
-    "subtitle": "Create your account for free and pull your first capsule.",
-    "button": "Play for free →"
+    "title": "Your turn.",
+    "subtitle": "Create your account and pull your first capsule.",
+    "button": "Play →"
   }
 }

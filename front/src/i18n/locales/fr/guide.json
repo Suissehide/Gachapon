@@ -4,24 +4,27 @@
   },
   "header": {
     "title": "Guide du joueur",
-    "intro": "Gachapon mêle deux boucles de jeu : <collect>collectionner</collect> des cartes en tirant des capsules, et les <battle>faire combattre</battle> dans la campagne pour progresser. Voici tout ce qu'il faut savoir pour débuter et optimiser."
+    "intro": "Gachapon a deux boucles : tu <collect>tires des capsules</collect> pour remplir ta collection, et tu <battle>fais combattre tes cartes</battle> en campagne, dans les tours et en raid d'équipe. Ce guide explique comment tout ça fonctionne."
   },
   "toc": {
     "heading": "Sommaire"
   },
   "sectionLabels": {
-    "monnaies": "Les monnaies",
-    "tokens": "Jetons & régénération",
+    "monnaies": "Les ressources",
+    "tokens": "Jetons",
     "pulls": "Tirer une capsule",
     "rarete": "Raretés & variantes",
-    "piete": "Système de pitié",
+    "piete": "Pitié",
     "doublon": "Doublons & poussière",
-    "boutique": "Boutique du jour & Vœu",
-    "niveaux": "Niveaux & XP",
+    "boutique": "Boutique",
+    "niveaux": "Niveau du compte",
     "competences": "Arbre de compétences",
     "campagne": "Campagne & combats",
-    "combat-points": "Points de combat",
+    "elements": "Éléments",
+    "tours": "Tours",
+    "combat-points": "Énergie",
     "cartes": "Améliorer ses cartes",
+    "equipement": "Équipement",
     "quetes": "Quêtes",
     "succes": "Succès",
     "chaine": "Chaîne de connexion",
@@ -29,222 +32,317 @@
     "classements": "Classements",
     "collection": "Collection",
     "equipes": "Équipes",
+    "raid": "Raid d'équipe",
+    "duels": "Duels & paris",
     "api": "API & Discord"
   },
   "sections": {
     "monnaies": {
-      "intro": "Cinq ressources rythment la partie. Ton solde de chacune est affiché en temps réel dans la <strong>topbar</strong>.",
-      "currencies": {
-        "gachaTokens": {
-          "name": "Jetons gacha",
-          "description": "La monnaie des tirages. Chaque capsule coûte un jeton. Ils se régénèrent tout seuls jusqu'à un plafond."
+      "intro": "Six ressources. Les jetons, l'énergie, la poussière et l'or s'affichent dans la <strong>barre du haut</strong> ; tes points de compétence non dépensés apparaissent en pastille sur le lien Compétences.",
+      "cards": {
+        "i1": {
+          "title": "Jetons",
+          "text": "Un jeton, une capsule. Ils se rechargent seuls jusqu'à un plafond."
         },
-        "dust": {
-          "name": "Poussière",
-          "description": "Obtenue via les doublons. Sert à la boutique du jour, au Vœu, à monter tes cartes et à réinitialiser l'arbre de compétences."
+        "i2": {
+          "title": "Poussière",
+          "text": "Vient du recyclage des doublons, des quêtes, de la chaîne de connexion et des paliers de niveau. Sert à la boutique du jour, aux vœux, aux packs d'énergie, aux boosts, à monter tes cartes et à réinitialiser l'arbre de compétences."
         },
-        "gold": {
-          "name": "Or",
-          "description": "Gagné en combat et via les quêtes. Sert principalement à monter le <strong>niveau</strong> de tes cartes."
+        "i3": {
+          "title": "Or",
+          "text": "Gagné en combat et en raid. Sert à monter le <strong>niveau</strong> de tes cartes, à améliorer ton équipement et à acheter des packs de jetons."
         },
-        "combatPoints": {
-          "name": "Points de combat",
-          "description": "L'énergie de la campagne. Se régénère avec le temps jusqu'à un plafond ; chaque combat ou farm en consomme."
+        "i4": {
+          "title": "Énergie",
+          "text": "Les points de combat. Chaque combat en campagne ou en tour en consomme ; elle se recharge seule jusqu'à un plafond."
         },
-        "xp": {
-          "name": "XP & niveau",
-          "description": "Gagnée en tirant et en combattant. Monter de niveau débloque des points de compétence et des récompenses de palier."
+        "i5": {
+          "title": "XP & niveau",
+          "text": "Gagnée en tirant et en combattant. Ton compte monte jusqu'au niveau 100."
         },
-        "skillPoints": {
-          "name": "Points de compétence",
-          "description": "Obtenus en montant de niveau. À investir dans l'arbre de compétences pour des bonus passifs permanents."
+        "i6": {
+          "title": "Points de compétence",
+          "text": "Un par niveau, plus des bonus à certains paliers. Ils se dépensent dans l'arbre de compétences."
         }
       }
     },
     "tokens": {
-      "intro": "Les <strong>jetons gacha</strong> sont la monnaie d'action du jeu — chaque tirage de capsule en consomme un. Ils se régénèrent automatiquement au fil du temps, sans rien faire de ta part.",
-      "capBullet": "Le stock de jetons a un <strong>plafond</strong> : les jetons accumulés au-delà sont perdus. Reviens régulièrement.",
-      "regenBullet": "La régénération est continue : le solde est recalculé à la volée à chaque connexion.",
-      "topbarBullet": "La <strong>topbar</strong> affiche ton solde et le délai avant le prochain jeton.",
-      "info": "Tu peux aussi obtenir des jetons via la <strong>Boutique</strong> (packs de tokens) ou des événements. Certaines compétences accélèrent la régénération, augmentent le plafond, ou donnent une chance de jeton bonus.",
-      "tip": "Conseil : connecte-toi régulièrement pour éviter de dépasser le plafond et de perdre des jetons accumulés."
+      "intro": "Chaque tirage coûte un <strong>jeton</strong>. Ils se rechargent en continu, même quand tu n'es pas connecté.",
+      "list": {
+        "i1": "Ton stock a un <strong>plafond</strong>. Au-delà, les jetons régénérés sont perdus, sauf avec la compétence <strong>Trop-plein</strong>, qui les convertit en poussière.",
+        "i2": "La barre du haut affiche ton solde et le temps avant le prochain jeton."
+      },
+      "info": "Autres sources de jetons : les <strong>packs de jetons</strong> de la boutique (payés en or), les quêtes, la chaîne de connexion, les paliers de niveau et le raid. Plusieurs compétences et le bonus d'équipe Flux de jetons accélèrent la régénération ou relèvent le plafond.",
+      "tip": "Dépense tes jetons avant d'atteindre le plafond, ou investis tôt dans le plafond si tu ne passes pas souvent."
     },
     "pulls": {
-      "intro": "Un tirage consomme 1 jeton et te donne une carte aléatoire issue du pool actif. Chaque carte possède un <strong>poids de drop</strong> : plus le poids est élevé, plus la carte est probable.",
-      "instantBullet": "Le tirage est instantané, le résultat s'affiche en direct via WebSocket.",
-      "resultBullet": "Le résultat inclut la carte, sa variante, si c'est un doublon, et la poussière gagnée.",
-      "pityBullet": "Ton compteur de <strong>pitié</strong> est mis à jour après chaque tirage (voir section dédiée).",
-      "skillsParagraph": "Plusieurs compétences influencent le tirage : elles multiplient les chances des raretés <rareBadge></rareBadge> <epicBadge></epicBadge> <legendaryBadge></legendaryBadge>, dopent les variantes, offrent une chance de <freePull>tirage gratuit</freePull>, ou déclenchent une <goldenBall>boule dorée</goldenBall> qui force une rareté minimale."
+      "intro": "Un tirage coûte un jeton et donne une carte au hasard parmi les sets actifs. Chaque carte a un <strong>poids</strong> : plus il est élevé, plus elle sort souvent.",
+      "list": {
+        "i1": "Tu peux tirer à l'unité ou par dix avec <pill>Tirage x10</pill>.",
+        "i2": "Le résultat indique la carte, sa variante et si elle est nouvelle pour toi.",
+        "i3": "Ton compteur de <strong>pitié</strong> avance à chaque tirage (voir plus bas)."
+      },
+      "skills": "Plusieurs compétences agissent sur le tirage : elles augmentent les chances <rare>RARE</rare> <epic>EPIC</epic> <legendary>LEGENDARY</legendary> et celles des variantes, donnent une chance de <strong>tirage gratuit</strong>, ou déclenchent une <strong>boule dorée</strong> qui force une rareté minimale. <strong>Vœu exaucé</strong> peut remplacer la carte tirée par une carte de ton vœu, de même rareté.",
+      "info": "La boutique vend aussi des <strong>boosts</strong> : pendant quelques tirages, ils augmentent les chances des raretés hautes."
     },
     "rarete": {
-      "intro": "Chaque carte appartient à une des cinq raretés, du plus commun au plus rare :",
-      "variantIntro": "Les cartes de rareté <strong1>RARE, EPIC et LEGENDARY</strong1> peuvent apparaître en version spéciale appelée <strong2>variante</strong2> :",
-      "variants": {
-        "normal": {
-          "name": "NORMAL",
-          "description": "Version standard de la carte, la plus fréquente."
-        },
-        "brilliant": {
-          "name": "BRILLANT",
-          "description": "Version brillante — génère plus de poussière en doublon."
-        },
-        "holographic": {
-          "name": "HOLOGRAPHIQUE",
-          "description": "Version holographique — la plus rare des variantes, génère encore plus de poussière."
-        }
+      "intro": "Il y a cinq raretés, de la plus courante à la plus rare :",
+      "variantIntro": "Une carte <strong>RARE, EPIC ou LEGENDARY</strong> peut sortir dans une <strong>variante</strong> :",
+      "list": {
+        "i1": "<pill>NORMALE</pill> la version standard, de loin la plus fréquente.",
+        "i2": "<pill>BRILLANTE</pill> plus rare, avec un éclat animé.",
+        "i3": "<pill>HOLOGRAPHIQUE</pill> la plus rare des trois, avec un reflet arc-en-ciel."
       },
-      "ratesOutro": "Les taux de variante dépendent de la rareté : une Legendary a plus de chances d'être Holographique qu'une Rare. Les taux exacts sont configurés par les administrateurs."
+      "outro": "Plus la rareté est haute, plus les variantes sortent souvent : une légendaire a plus de chances d'être holographique qu'une rare. Chaque variante compte comme une carte à part : tirer la version brillante d'une carte que tu as en normale n'est pas un doublon."
     },
     "piete": {
-      "intro": "Le système de pitié garantit qu'aucun joueur ne peut tirer indéfiniment sans obtenir de carte Legendary. Un compteur s'incrémente à chaque tirage sans Legendary.",
-      "thresholdBullet": "Quand le compteur <strong>atteint le seuil</strong>, le prochain tirage est garanti Legendary.",
-      "resetBullet": "Obtenir une Legendary — avant le seuil ou grâce à la pitié — <strong>remet le compteur à zéro</strong>.",
-      "personalBullet": "La pitié est personnelle : elle ne se partage pas et persiste entre les sessions.",
-      "info": "Ton compteur de pitié est visible dans ton profil. Une compétence dédiée permet d'<strong>abaisser le seuil</strong> pour tomber sur des Legendary plus souvent."
+      "intro": "La pitié garantit une légendaire au bout d'un certain nombre de tirages. Un compteur avance à chaque tirage qui n'en donne pas.",
+      "list": {
+        "i1": "Quand le compteur <strong>atteint le seuil</strong>, le tirage suivant est une légendaire.",
+        "i2": "Toute légendaire, qu'elle vienne de la pitié ou non, <strong>remet le compteur à zéro</strong>.",
+        "i3": "Le compteur t'est propre et se conserve d'une session à l'autre."
+      },
+      "info": "Ton compteur est affiché sur la page <strong>Jouer</strong> et dans le détail des taux. La compétence <strong>Destin</strong> abaisse le seuil."
     },
     "doublon": {
-      "intro": "Si tu tires une carte que tu possèdes déjà, c'est un <strong>doublon</strong>. Tu ne l'ajoutes pas une deuxième fois à ta collection : à la place, tu reçois de la <strong2>poussière</strong2>.",
-      "rarityBullet": "Le montant dépend de la <strong>rareté</strong> de la carte doublonnée : une Legendary rapporte bien plus qu'une Common.",
-      "variantsBullet": "Les variantes <brilliantPill>BRILLANT</brilliantPill> et <holoPill>HOLOGRAPHIQUE</holoPill> multiplient la poussière gagnée.",
-      "recycleBullet": "Tu peux aussi <strong>recycler</strong> des exemplaires en trop depuis la collection pour convertir des doublons en poussière.",
-      "usesParagraph": "La poussière est une monnaie polyvalente : elle sert à la <strong1>boutique du jour</strong1>, au <strong2>Vœu</strong2>, à <strong3>monter tes cartes</strong3> et à <strong4>réinitialiser</strong4> ton arbre de compétences.",
-      "tip": "Une compétence multiplie la poussière reçue sur chaque doublon. C'est l'un des meilleurs investissements quand ta collection est déjà bien fournie et que les doublons s'accumulent."
+      "intro": "Quand tu tires une carte que tu as déjà, dans la même variante, c'est un <strong>doublon</strong> : l'exemplaire s'ajoute à ta pile, rien n'est perdu.",
+      "list": {
+        "i1": "Les doublons servent à <strong>l'ascension</strong> : faire passer une carte au palier suivant en consomme un.",
+        "i2": "Tu peux aussi <strong>recycler</strong> un doublon en poussière depuis la collection. Le montant dépend de la rareté.",
+        "i3": "<strong>Tout recycler</strong> convertit d'un coup tes exemplaires en trop, jusqu'à la rareté que tu choisis (variante normale uniquement)."
+      },
+      "uses": "La poussière sert à la <strong>boutique du jour</strong>, aux <strong>vœux</strong>, à <strong>monter tes cartes</strong>, aux packs d'énergie et aux boosts, et à <strong>réinitialiser</strong> l'arbre de compétences.",
+      "tip": "Garde des doublons des cartes que tu fais combattre : sans eux, pas d'ascension. La compétence Recyclage augmente la poussière reçue."
     },
     "boutique": {
-      "intro": "La <strong>Boutique</strong> te permet de dépenser ta poussière pour cibler des cartes précises, plutôt que de compter uniquement sur le hasard des tirages.",
-      "dailyShop": {
-        "title": "Boutique du jour",
-        "description": "Une sélection de cartes renouvelée chaque jour, achetables à la poussière (prix selon la rareté). Le compteur « Nouveau tirage dans… » indique le renouvellement. Des compétences peuvent <strong1>ajouter des emplacements</strong1> et <strong2>réduire les prix</strong2>."
-      },
-      "wish": {
-        "title": "Vœu",
-        "description": "Garde <strong1>plusieurs cartes de ton choix</strong1> en vœu, puis achète-les à la poussière quand tu veux : aucun délai, mais le plein tarif — plus cher qu'en boutique du jour, et les remises de boutique ne s'y appliquent pas. Tu as <strong2>2 emplacements</strong2>, et une compétence les porte jusqu'à 5."
-      },
-      "info": "La Boutique héberge aussi les <strong1>packs de tokens</strong1> et des <strong2>boosts</strong2> temporaires pour accélérer ta progression."
+      "intro": "La <strong>boutique</strong> te laisse viser des cartes précises au lieu de tout laisser au hasard, et vend des ressources.",
+      "cards": {
+        "i1": {
+          "title": "Boutique du jour",
+          "text": "Une sélection de cartes renouvelée chaque jour à minuit (UTC), à acheter en poussière, prix selon la rareté. Des compétences ajoutent des emplacements, baissent les prix et relèvent les raretés proposées."
+        },
+        "i2": {
+          "title": "Vœu",
+          "text": "Mets de côté les cartes que tu veux et achète-les en poussière quand tu veux, sans délai. C'est le plein tarif : plus cher qu'en boutique du jour, sans remise, et toujours en variante normale. Tu as <strong>2 emplacements</strong> au départ, jusqu'à 5 avec la compétence Collectionneur."
+        },
+        "i3": {
+          "title": "Packs & boosts",
+          "text": "Les <strong>packs de jetons</strong> se paient en or. Les <strong>packs d'énergie</strong> se paient en poussière, en nombre limité par jour, et peuvent faire dépasser ton plafond d'énergie. Les <strong>boosts</strong>, en poussière, augmentent les chances des raretés hautes pendant quelques tirages. Il y a aussi des cosmétiques."
+        }
+      }
     },
     "niveaux": {
-      "intro": "Ton <strong>niveau de compte</strong> progresse avec l'<strong2>XP</strong2> que tu gagnes en tirant des capsules et en remportant des combats.",
-      "curveBullet": "La quantité d'XP requise augmente à chaque palier selon une courbe.",
-      "skillPointsBullet": "Monter de niveau octroie des <strong>points de compétence</strong> et des récompenses de palier à récupérer.",
-      "xpBoostBullet": "Des compétences augmentent l'XP gagnée par tirage et par combat.",
-      "info": "Ne confonds pas le <strong1>niveau de ton compte</strong1> (ta progression globale) et le <strong2>niveau d'une carte</strong2> (sa puissance en combat, voir « Améliorer ses cartes »)."
+      "intro": "Ton <strong>niveau de compte</strong> monte avec l'XP gagnée en tirant et en combattant, jusqu'au niveau 100.",
+      "list": {
+        "i1": "Chaque niveau donne un <strong>point de compétence</strong>. Les niveaux 10, 25, 50, 75 et 100 donnent en plus des points bonus et un lot de jetons et de poussière.",
+        "i2": "Chaque montée de niveau <strong>recharge ton énergie</strong> au maximum.",
+        "i3": "Des compétences augmentent l'XP gagnée en tirant (Ferveur) et en combattant (Vétéran)."
+      },
+      "info": "À ne pas confondre : le <strong>niveau du compte</strong> (ta progression) et le <strong>niveau d'une carte</strong> (sa puissance en combat, voir « Améliorer ses cartes »)."
     },
     "competences": {
-      "intro": "L'<strong>arbre de compétences</strong> remplace les anciennes améliorations. Tu y investis les <strong2>points de compétence</strong2> gagnés en montant de niveau ; chaque nœud débloque un <strong3>bonus passif permanent</strong3>.",
-      "domainsIntro": "Les compétences couvrent quatre grands domaines :",
-      "domains": {
-        "luck": {
-          "title": "Tirage & chance",
-          "description": "Booste les raretés, les variantes, la boule dorée, la chance de tirage gratuit, et abaisse le seuil de pitié."
+      "intro": "Tu dépenses tes <strong>points de compétence</strong> dans l'arbre ; chaque nœud donne un <strong>bonus permanent</strong>. L'arbre complet coûte exactement ce que tu gagnes jusqu'au niveau 100. Il a quatre branches :",
+      "cards": {
+        "i1": {
+          "title": "Flux",
+          "text": "Tes jetons : régénération, plafond, jetons bonus, tirages gratuits, Trop-plein, et l'XP de tirage."
         },
-        "economy": {
-          "title": "Économie",
-          "description": "Accélère la régénération et augmente le plafond de jetons, donne des jetons bonus, multiplie la poussière, réduit les prix de boutique et augmente l'or gagné."
+        "i2": {
+          "title": "Fortune",
+          "text": "Le hasard : chances de rareté, boule dorée, Vœu exaucé, seuil de pitié (Destin), taux de variantes (Prisme) et limite quotidienne de packs d'énergie (Opulence)."
         },
-        "progression": {
-          "title": "Progression",
-          "description": "Augmente l'XP de tirage et de combat, ajoute des emplacements à la boutique du jour et des emplacements de Vœu."
+        "i3": {
+          "title": "Collection",
+          "text": "La poussière et la boutique : recyclage, remises, coût en poussière des niveaux de carte, prix en or, raretés et emplacements de la boutique du jour, emplacements de vœu."
         },
-        "combat": {
+        "i4": {
           "title": "Combat",
-          "description": "Augmente le plafond et la régénération des points de combat, réduit le coût du farm et améliore le taux de drop d'équipement."
+          "text": "L'énergie (plafond et régénération), l'or gagné, le coût du combat multiple, l'XP de combat, les drops et l'équipement (amélioration et revente)."
         }
       },
-      "info": "Tu peux <strong>réinitialiser</strong> l'arbre à tout moment contre de la poussière : tous tes points sont rendus et redistribuables. Pratique pour tester une nouvelle orientation."
+      "info": "Tu peux <strong>réinitialiser</strong> l'arbre à tout moment contre de la poussière, selon le nombre de points investis : tous tes points te sont rendus."
     },
     "campagne": {
-      "intro": "La <strong>Campagne</strong> est la boucle de combat. Tu progresses à travers des <strong2>chapitres</strong2> thématiques — Plaines, Forêt des Murmures, Cendres, Océan, Cristaux, Volcan, Toundra, Abysses, Faille — chacun découpé en <strong3>étapes</strong3> de plus en plus difficiles.",
-      "teamBullet": "Chaque étape se joue avec ton <strong>équipe de combat</strong> (jusqu'à 3 cartes). Certaines étapes sont des <strong2>Boss</strong2> (1v3).",
-      "prepBullet": "L'écran de <strong>Préparation</strong> affiche les adversaires, les récompenses, le coût en énergie et un verdict de puissance : <advantagePill>Avantage</advantagePill> <evenPill>Équilibré</evenPill> <riskyPill>Risqué</riskyPill>.",
-      "turnBasedBullet": "Le combat est <strong>au tour par tour</strong> : tes cartes utilisent leurs stats (PV, ATQ, DEF, VIT), leurs passifs et leur équipement.",
-      "firstClearParagraph": "Le <strong>premier passage</strong> d'une étape offre des récompenses garanties (or, poussière, XP, et parfois un équipement ou une carte garantis). Rejouer une étape déjà nettoyée rapporte des récompenses répétables, avec des chances de drop d'équipement et de cartes.",
-      "info": "<strong>Farm ×3</strong> (balayage) rejoue automatiquement une étape déjà nettoyée plusieurs fois d'un coup, contre de l'énergie — idéal pour accumuler or et poussière sans rejouer chaque combat."
+      "intro": "La <strong>campagne</strong> compte neuf chapitres (Plaines, Forêt des Murmures, Cendres, Océan, Cristaux, Volcan, Toundra, Abysses, Faille) de 10 étapes chacun, de plus en plus difficiles.",
+      "list": {
+        "i1": "Tu combats avec une équipe de <strong>trois cartes maximum</strong>. Les boss affrontent seuls tes trois cartes.",
+        "i2": "L'écran de <strong>préparation</strong> montre les adversaires, les récompenses, le coût en énergie et un verdict : <pill>Avantage</pill> <pill>Équilibré</pill> <pill>Risqué</pill>.",
+        "i3": "Le combat se déroule automatiquement : la vitesse (VIT) remplit la jauge d'action de chaque carte. Si le temps imparti s'écoule, c'est un <strong>match nul</strong>, et l'énergie est quand même dépensée.",
+        "i4": "Chaque carte a huit stats : PV, ATQ, DEF, VIT, chance et dégâts critiques, pénétration d'armure et vol de vie. S'y ajoutent son passif, son élément et son équipement.",
+        "i5": "Tu as une équipe séparée pour la campagne, chacune des quatre tours et le raid. Un mode que tu n'as pas configuré reprend ton équipe de campagne."
+      },
+      "firstClear": "Le <strong>premier passage</strong> d'une étape donne des récompenses garanties (or, poussière, XP, parfois une pièce d'équipement ou une carte). Rejouer une étape déjà gagnée rapporte des récompenses répétables, avec des chances de drop.",
+      "info": "Sur une étape déjà gagnée, <strong>Combat multiple</strong> enchaîne plusieurs combats d'un coup (×1 ou ×5), contre l'énergie correspondante."
+    },
+    "elements": {
+      "intro": "Chaque carte et chaque monstre a un <strong>élément</strong>. Attaquer avec l'avantage fait plus de dégâts, attaquer avec le désavantage en fait moins.",
+      "list": {
+        "i1": "Feu bat Nature, Nature bat Terre, Terre bat Eau, Eau bat Feu.",
+        "i2": "Lumière et Ténèbres sont hors cycle : chacune a l'avantage sur l'autre.",
+        "i3": "Tes cartes visent en priorité les ennemis faibles contre leur élément.",
+        "i4": "Le boss d'un chapitre a un élément qu'aucun monstre du chapitre ne porte : prévois une équipe différente pour lui."
+      },
+      "tip": "Le guide des éléments s'ouvre depuis l'en-tête de la campagne et des tours, et la collection se filtre par élément."
+    },
+    "tours": {
+      "intro": "Il y a quatre <strong>tours</strong>, une par élément : Braise (feu), Prisme (eau), Sève (nature) et Monolithe (terre). Chacune a 10 étages, qui se débloquent dans l'ordre.",
+      "list": {
+        "i1": "Chaque tour lâche un type d'équipement que la campagne ne donne pas : Gants (Braise), Bottes (Prisme), Amulette (Sève), Ceinture (Monolithe).",
+        "i2": "Chaque victoire rapporte une pièce ; plus l'étage est haut, meilleure est la rareté.",
+        "i3": "Les combats coûtent de l'énergie. Un étage déjà gagné se rejoue en combat multiple, comme en campagne.",
+        "i4": "Les monstres d'une tour sont de son élément : une équipe qui le contre part avec un gros avantage."
+      }
     },
     "combat-points": {
-      "intro": "Les <strong>points de combat</strong> (l'« énergie ») sont à la campagne ce que les jetons sont aux tirages. Ils se régénèrent passivement jusqu'à un plafond, affiché dans la topbar.",
-      "insufficientBullet": "Chaque combat et chaque farm en consomme. Sans énergie, le bouton indique <strong>« Énergie insuffisante »</strong>.",
-      "skillsBullet": "Des compétences accélèrent leur régénération, augmentent le plafond, et réduisent le coût du farm.",
-      "tip": "Dépense ton énergie avant qu'elle n'atteigne le plafond : au-delà, les points régénérés sont perdus, exactement comme les jetons."
+      "intro": "L'<strong>énergie</strong> (points de combat) est aux combats ce que les jetons sont aux tirages : elle se recharge seule jusqu'à un plafond, visible dans la barre du haut.",
+      "list": {
+        "i1": "Chaque combat en campagne ou en tour en consomme. Sans énergie, le bouton indique <strong>« Énergie insuffisante »</strong>.",
+        "i2": "Chaque montée de niveau du compte la recharge au maximum.",
+        "i3": "Les packs d'énergie de la boutique peuvent la faire dépasser le plafond.",
+        "i4": "Les compétences de la branche Combat accélèrent sa régénération, relèvent le plafond et réduisent le coût du combat multiple."
+      },
+      "tip": "Au plafond, l'énergie régénérée est perdue : dépense-la avant."
     },
     "cartes": {
-      "intro": "Pour tenir face aux étapes avancées, tes cartes doivent gagner en puissance. Trois leviers se combinent, gérés depuis la fiche d'une carte.",
-      "level": {
-        "title": "Niveau",
-        "description": "Monte le <strong>niveau</strong> d'une carte contre de l'or et de la poussière : ses stats (PV, ATQ, DEF, VIT) augmentent à chaque niveau, jusqu'au plafond de son palier."
+      "intro": "Pour tenir face aux étapes avancées, tes cartes doivent monter en puissance. Tout se gère depuis la fiche de la carte.",
+      "cards": {
+        "i1": {
+          "title": "Niveau",
+          "text": "Monte le <strong>niveau</strong> d'une carte avec de l'or et de la poussière : ses stats augmentent à chaque niveau, jusqu'au plafond de son palier."
+        },
+        "i2": {
+          "title": "Palier & ascension",
+          "text": "Il y a 7 paliers de 10 niveaux. Au sommet d'un palier, <strong>l'ascension</strong> consomme un doublon de la carte et relève son plafond de niveau. Son <strong>passif</strong> se renforce jusqu'au palier 6 ; ensuite, seules les stats progressent."
+        }
       },
-      "ascension": {
-        "title": "Palier & ascension",
-        "description": "Une fois une carte au sommet de son <strong1>palier</strong1>, <strong2>l'ascensionner</strong2> consomme un <strong3>doublon</strong3> pour passer au palier suivant et relever son plafond de niveau. Son <strong4>passif</strong4> gagne aussi en puissance à chaque palier, jusqu'à un certain point : au-delà, il reste fixe et seules les stats continuent de progresser. Une fois le palier maximum atteint, la progression passe par <strong5>l'équipement</strong5>."
+      "tip": "Après une défaite : revois la composition et les éléments de ton équipe, ou monte tes cartes avant d'y retourner."
+    },
+    "equipement": {
+      "intro": "Chaque carte a <strong>7 emplacements</strong> : Arme, Armure, Anneau, Amulette, Gants, Bottes et Ceinture. Chaque pièce a une rareté, une stat principale et des stats secondaires.",
+      "list": {
+        "i1": "La <strong>campagne</strong> lâche les Armes, Armures et Anneaux ; les <strong>tours</strong> lâchent les quatre autres types.",
+        "i2": "Tu <strong>améliores</strong> une pièce avec de l'or. À certains niveaux, elle gagne une stat secondaire ou en renforce une.",
+        "i3": "Les pièces dont tu n'as pas besoin se <strong>vendent</strong> contre de l'or."
       },
-      "equipment": {
-        "title": "Équipement",
-        "description": "Chaque carte dispose de 3 emplacements — <weaponPill>Arme</weaponPill> <armorPill>Armure</armorPill> <accessoryPill>Accessoire</accessoryPill>. Les pièces tombent en combat (et sur les boss), ont une rareté, et ajoutent des bonus de stats. Équipe-les ou retire-les depuis la page <strong>Équipement</strong>."
+      "setsIntro": "Chaque pièce appartient à un <strong>set</strong>. Porter assez de pièces du même set <strong>sur la même carte</strong> active son bonus :",
+      "sets": {
+        "i1": "<strong>Fureur</strong> (4 pièces) : dégâts critiques",
+        "i2": "<strong>Sangsue</strong> (4 pièces) : vol de vie",
+        "i3": "<strong>Affût</strong> (3 pièces) : chance de critique",
+        "i4": "<strong>Percée</strong> (3 pièces) : pénétration d'armure",
+        "i5": "<strong>Assaut</strong> (3 pièces) : attaque",
+        "i6": "<strong>Colosse</strong> (2 pièces) : PV",
+        "i7": "<strong>Célérité</strong> (2 pièces) : vitesse"
       },
-      "tip": "Après une défaite, deux réflexes : revoir la composition de ton équipe, ou monter le niveau de tes cartes avant de retourner au front."
+      "info": "Avec 7 emplacements, une carte peut cumuler plusieurs sets (4 + 3, 3 + 2 + 2…). Le compte se fait carte par carte : deux cartes qui portent chacune deux pièces de Fureur n'activent rien. Le bouton <strong>Bonus de sets</strong> récapitule tout."
     },
     "quetes": {
-      "intro": "Les <strong>quêtes</strong> te donnent des objectifs concrets récompensés en jetons, poussière, or et XP. Elles progressent automatiquement au fil de tes actions.",
-      "typesBullet": "Les <strong1>Hebdomadaires</strong1> se renouvellent chaque lundi ; les <strong2>One-shot</strong2> ne se font qu'une seule fois.",
-      "claimBullet": "Une quête terminée passe « Récupéré » une fois que tu as cliqué sur <strong>Réclamer</strong>.",
-      "perfectWeekBullet": "Compléter toutes les hebdomadaires débloque le bonus <strong>Semaine parfaite</strong>."
+      "intro": "Les <strong>quêtes</strong> donnent des objectifs récompensés en jetons, poussière et parfois XP. Elles avancent toutes seules pendant que tu joues.",
+      "list": {
+        "i1": "Les <strong>hebdomadaires</strong> sont tirées au sort chaque lundi (UTC) ; les <strong>One-shot</strong> ne se font qu'une fois.",
+        "i2": "Une quête terminée se récupère avec <strong>Réclamer</strong>, sur la page Quêtes.",
+        "i3": "Finir toutes les hebdomadaires débloque le bonus <strong>Semaine parfaite</strong>, avec de l'or et de l'XP."
+      }
     },
     "succes": {
-      "intro": "Les <strong>succès</strong> sont des objectifs à long terme débloqués par tes actions : tirages, montées de niveau, chaîne de connexion, appartenance à une équipe, et bien d'autres.",
-      "progressBullet": "Leur progression est visible (par ex. « 4 / 10 »).",
-      "filterBullet": "Filtre-les par <allPill>Tous</allPill> <unlockedPill>Réussis</unlockedPill> <lockedPill>À débloquer</lockedPill>.",
-      "rewardsBullet": "Les récompenses peuvent inclure des cartes, des jetons, de la poussière et de l'XP."
+      "intro": "Les <strong>succès</strong> sont des objectifs à long terme : tirages, raretés obtenues, niveau, chaîne de connexion, chapitres et boss de campagne, victoires sans perte, sets, recyclage…",
+      "list": {
+        "i1": "Leur progression est affichée (par exemple « 4 / 10 »).",
+        "i2": "Filtre-les avec <pill>Tous</pill> <pill>Réussis</pill> <pill>À débloquer</pill>.",
+        "i3": "Les récompenses peuvent contenir des cartes, des jetons, de la poussière et de l'XP."
+      }
     },
     "chaine": {
-      "intro": "Connecte-toi <strong>chaque jour</strong> pour allonger ta chaîne. Un jour manqué la remet à zéro, mais ta <strong2>meilleure chaîne</strong2> reste conservée.",
-      "milestonesBullet": "Des <strong>paliers de chaîne</strong> octroient des récompenses (jetons, poussière, or, XP).",
-      "consistencyBullet": "C'est le moyen le plus simple d'accumuler des ressources sur la durée : la régularité paie."
+      "intro": "Connecte-toi <strong>chaque jour</strong> pour allonger ta chaîne. Un jour manqué la remet à zéro ; ta <strong>meilleure chaîne</strong> reste enregistrée.",
+      "list": {
+        "i1": "Chaque jour de chaîne rapporte quelque chose, et les jours 3, 7, 14 et 30 rapportent davantage (jetons, poussière, XP)."
+      }
     },
     "recompenses": {
-      "intro": "De nombreux systèmes déposent des <strong>récompenses à récupérer</strong> : quêtes, montées de niveau, chaîne de connexion, succès et événements. Elles s'accumulent dans la <strong2>cloche</strong2> de notifications.",
-      "claimBullet": "Réclame-les une par une, ou tout d'un coup — les récompenses de quête se réclament séparément, depuis la page Quêtes.",
-      "cardBullet": "Certaines contiennent une <strong>carte</strong> révélée à la réclamation.",
-      "info": "Pense à passer les récupérer : la pastille de la cloche t'indique combien de récompenses t'attendent."
+      "intro": "Les montées de niveau, la chaîne de connexion, les succès, le raid et les événements déposent des <strong>récompenses à récupérer</strong> dans la <strong>cloche</strong> de notifications.",
+      "list": {
+        "i1": "Réclame-les une par une ou toutes d'un coup. Les récompenses de quête, elles, se réclament sur la page Quêtes.",
+        "i2": "Certaines contiennent une <strong>carte</strong>, révélée quand tu la réclames."
+      },
+      "info": "La pastille de la cloche indique combien de récompenses t'attendent."
     },
     "classements": {
-      "intro": "Les <strong>classements</strong> te situent face aux autres joueurs sur trois axes :",
-      "collectors": {
-        "title": "Collectionneurs",
-        "description": "Classe par taux de complétion, cartes distinctes et variantes."
-      },
-      "teams": {
-        "title": "Équipes",
-        "description": "Classe les équipes par complétion collective."
-      },
-      "combat": {
-        "title": "Combats",
-        "description": "Classe par chapitre et étape les plus avancés atteints en campagne."
+      "intro": "Trois <strong>classements</strong> :",
+      "cards": {
+        "i1": {
+          "title": "Collectionneurs",
+          "text": "Taux de complétion, cartes distinctes et variantes."
+        },
+        "i2": {
+          "title": "Équipes",
+          "text": "Complétion collective de l'équipe, puis variantes et nombre de tirages."
+        },
+        "i3": {
+          "title": "Combats",
+          "text": "Avancée en campagne ; à égalité, la puissance de ton équipe de campagne."
+        }
       }
     },
     "collection": {
-      "intro": "Ta <strong>collection</strong> regroupe toutes les cartes uniques que tu as obtenues. Chaque carte n'y apparaît qu'une fois, quel que soit le nombre de fois où tu l'as tirée.",
-      "filterBullet": "Tu peux filtrer par <strong>rareté, variante ou set</strong>.",
-      "variantsLookBullet": "Les cartes Brillant et Holographique ont une apparence visuelle distincte.",
-      "cardSheetBullet": "La fiche d'une carte permet de la définir comme <strong1>Vœu</strong1>, de la <strong2>recycler</strong2>, de la monter en niveau et de l'ascensionner.",
-      "publicProfileBullet": "Ton profil public est accessible à tous via <profilePill></profilePill>."
+      "intro": "Ta <strong>collection</strong> regroupe les cartes que tu possèdes, une entrée par carte et par variante.",
+      "list": {
+        "i1": "Filtre par rareté, variante, set ou élément, regroupe par rareté, élément ou set, et trie par puissance, niveau, doublons ou nom.",
+        "i2": "Tu peux afficher toutes les cartes du jeu, y compris celles qui te manquent.",
+        "i3": "La fiche d'une carte permet de la monter en niveau, de l'ascensionner, de gérer son équipement, de la recycler ou de l'ajouter à ton vœu.",
+        "i4": "Ton profil, avec ta collection, est visible par les autres joueurs."
+      }
     },
     "equipes": {
-      "intro": "Les <strong>équipes</strong> te permettent de jouer avec tes amis. Tu peux créer ou rejoindre une équipe via la page <teamLink>Équipes</teamLink>.",
-      "ownerBullet": "Chaque équipe a un <strong>owner</strong> et des membres.",
-      "inviteBullet": "L'owner peut inviter des joueurs par username.",
-      "invitationBullet": "Les invitations ont une durée de validité ; le membre les accepte ou les refuse.",
-      "leaderboardBullet": "La complétion collective de l'équipe apparaît dans le <strong>classement Équipes</strong>."
+      "intro": "Une <strong>équipe</strong> regroupe des joueurs qui progressent ensemble. Crée-la ou rejoins-en une depuis la page <teamLink>Équipes</teamLink> ; tu peux faire partie de trois équipes au maximum.",
+      "list": {
+        "i1": "Trois rôles : <strong>chef</strong>, <strong>officier</strong> et <strong>membre</strong>. Le chef peut céder son rôle.",
+        "i2": "Le chef et les officiers invitent par pseudo ou par e-mail ; une invitation expire au bout de 48 h.",
+        "i3": "Une équipe peut s'ouvrir aux <strong>candidatures</strong> : elle apparaît alors dans l'annuaire, où n'importe quel joueur peut postuler. Le chef et les officiers acceptent ou refusent."
+      },
+      "progression": "<strong>Progression d'équipe</strong> : chaque semaine, les membres gagnent des points d'équipe (dégâts de raid, tirages, duels et paris gagnés). Ces points font monter l'équipe de niveau, et chaque niveau donne un point à placer dans l'un de ces quatre bonus :",
+      "perks": {
+        "i1": "<strong>Flux de jetons</strong> : régénération de jetons plus rapide pour chaque membre",
+        "i2": "<strong>Cadence de raid</strong> : des attaques de raid en plus chaque jour",
+        "i3": "<strong>Bannière d'XP</strong> : plus d'XP de campagne",
+        "i4": "<strong>Forge commune</strong> : amélioration d'équipement moins chère"
+      },
+      "info": "Le chef et les officiers répartissent les points ; seul le chef peut les réinitialiser."
+    },
+    "raid": {
+      "intro": "Chaque semaine, ton équipe affronte un <strong>boss de raid</strong>, dont l'élément change d'une semaine à l'autre. Il se trouve dans l'onglet Raid de la page d'équipe.",
+      "list": {
+        "i1": "Chaque membre a un nombre limité d'<strong>attaques par jour</strong> ; le bonus Cadence de raid en ajoute.",
+        "i2": "Les dégâts de tous les membres remplissent une barre commune.",
+        "i3": "À 25, 50, 75 et 100 % de la barre, chaque participant reçoit une récompense (jetons, or, poussière, et une carte épique à 100 %), une fois par semaine et par équipe. Elle arrive dans la cloche.",
+        "i4": "Un raid gagné augmente la difficulté de la semaine suivante ; une semaine sans victoire la fait redescendre. Les PV du boss sont calculés comme si l'équipe avait au moins 10 membres."
+      }
+    },
+    "duels": {
+      "intro": "Entre coéquipiers, deux façons de se mesurer, depuis la page d'équipe.",
+      "cards": {
+        "i1": {
+          "title": "Duel de tirage",
+          "text": "Tu défies un coéquipier : vos prochains tirages comptent, chacun de votre côté. Le meilleur score l'emporte et rafle les cartes tirées par l'autre. Plus la rareté est haute, plus la carte vaut, et une brillante compte une fois et demie. En cas d'égalité, chacun garde ses cartes. Pendant le duel, les cartes comptées ne peuvent pas être recyclées."
+        },
+        "i2": {
+          "title": "Paris",
+          "text": "Tu mises de la poussière sur les prochains tirages d'un coéquipier : sortira-t-il au moins une carte d'une rareté donnée ? La cote s'affiche avant de valider, et d'autres coéquipiers peuvent renchérir de ton côté ou contre toi, ce qui la fait bouger. La maison prélève une commission. Si la cible ne tire rien avant l'échéance, les mises sont remboursées."
+        }
+      }
     },
     "api": {
       "title": "API publique & bot Discord",
-      "intro": "Gachapon expose une <strong>API publique</strong> documentée en OpenAPI 3.1. Tu peux l'utiliser pour créer ton propre bot Discord, des outils de suivi, ou intégrer Gachapon dans d'autres services.",
-      "authBullet": "L'authentification se fait via un header <apiKeyPill></apiKeyPill> — génère ta clé dans Paramètres.",
-      "endpointsBullet": "Endpoints disponibles : <pullsPill></pullsPill>, <collectionPill></collectionPill>, <leaderboardPill></leaderboardPill> et plus.",
+      "intro": "Gachapon a une <strong>API publique</strong>, documentée en OpenAPI 3.1, pour brancher un bot Discord ou tes propres outils sur ton compte.",
+      "list": {
+        "i1": "L'authentification passe par l'en-tête <pill>X-API-Key</pill> : génère ta clé dans les Paramètres.",
+        "i2": "Quelques endpoints : <pill>POST /pulls</pill>, <pill>GET /users/:id/collection</pill>, <pill>GET /leaderboard/collectors</pill>."
+      },
       "discordGuideLink": "Guide bot Discord →"
     }
   },
   "cta": {
-    "title": "Prêt à commencer ?",
-    "subtitle": "Crée ton compte gratuitement et tire ta première capsule.",
-    "button": "Jouer gratuitement →"
+    "title": "À toi de jouer.",
+    "subtitle": "Crée ton compte et tire ta première capsule.",
+    "button": "Jouer →"
   }
 }

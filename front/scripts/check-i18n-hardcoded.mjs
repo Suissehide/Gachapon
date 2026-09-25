@@ -471,9 +471,13 @@ const EXCEPTIONS = [
   },
   {
     files: ['src/routes/guide.tsx'],
-    pattern: /const SECTION_IDS = \[[\s\S]*?\] as const/g,
+    // Les ids vivent dans les `{ id: '…', icon, blocks }` de `SECTIONS`
+    // depuis que le guide est piloté par les données (ex-`SECTION_IDS`).
+    // Forme `id: '<slug>'` uniquement : un slug en minuscules et tirets ne
+    // peut pas masquer une phrase.
+    pattern: /\bid: '[a-z-]+'/g,
     reason:
-      "Liste des identifiants d'ancre du guide (`#campagne`, `#cartes`…). Ce " +
+      "Identifiants d'ancre du guide (`#campagne`, `#cartes`…). Ce " +
       "sont des fragments d'URL, pas des libellés : le fichier le dit lui-même " +
       '(« Les ids sont stables : ils pilotent les ancres `#<id>` et sont ' +
       'indépendants de la langue. Les libellés viennent de ' +

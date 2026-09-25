@@ -138,15 +138,15 @@ export const SEO_ROUTES = [
     navLabel: { fr: 'Guide du joueur', en: 'Player guide' },
     title: { fr: 'Guide du joueur — Gachapon', en: 'Player guide — Gachapon' },
     description: {
-      fr: "Tout ce qu'il faut savoir sur Gachapon : jetons, tirages, raretés, pitié, poussière, boutique du jour, arbre de compétences, campagne & combats, amélioration des cartes, quêtes, succès, classements et API publique.",
-      en: 'Everything you need to know about Gachapon: tokens, pulls, rarities, pity, dust, the daily shop, the skill tree, campaign & battles, card upgrades, quests, achievements, leaderboards, and the public API.',
+      fr: "Comment fonctionne Gachapon : jetons, tirages, raretés, pitié, poussière, boutique, arbre de compétences, campagne, éléments, tours, équipement, équipes, raid, duels et API publique.",
+      en: 'How Gachapon works: tokens, pulls, rarities, pity, dust, the shop, the skill tree, the campaign, elements, towers, equipment, teams, raids, duels, and the public API.',
     },
     sitemap: { changefreq: 'monthly', priority: '0.8' },
     staticBlock: {
       heading: { fr: 'Guide du joueur', en: 'Player guide' },
       lead: {
-        fr: "Gachapon mêle deux boucles de jeu : collectionner des cartes en tirant des capsules, et les faire combattre dans la campagne pour progresser. Voici tout ce qu'il faut savoir pour débuter et optimiser.",
-        en: "Gachapon blends two game loops: collecting cards by pulling capsules, and battling with them in the campaign to progress. Here's everything you need to get started and play smart.",
+        fr: "Gachapon a deux boucles : tu tires des capsules pour remplir ta collection, et tu fais combattre tes cartes en campagne, dans les tours et en raid d'équipe. Ce guide explique comment tout ça fonctionne.",
+        en: 'Gachapon has two loops: you pull capsules to fill your collection, and you send your cards into battle in the campaign, the towers and team raids. This guide explains how it all works.',
       },
       sections: [
         {
@@ -154,18 +154,21 @@ export const SEO_ROUTES = [
           // Reprend SECTION_IDS dans src/routes/guide.tsx, dans l'ordre, et
           // les libellés de guide:sectionLabels.<id> des deux locales.
           items: [
-            { fr: 'Les monnaies', en: 'Currencies' },
-            { fr: 'Jetons & régénération', en: 'Tokens & regen' },
+            { fr: 'Les ressources', en: 'Resources' },
+            { fr: 'Jetons', en: 'Tokens' },
             { fr: 'Tirer une capsule', en: 'Pulling a capsule' },
             { fr: 'Raretés & variantes', en: 'Rarities & variants' },
-            { fr: 'Système de pitié', en: 'Pity system' },
+            { fr: 'Pitié', en: 'Pity' },
             { fr: 'Doublons & poussière', en: 'Duplicates & dust' },
-            { fr: 'Boutique du jour & Vœu', en: 'Daily shop & Wishes' },
-            { fr: 'Niveaux & XP', en: 'Levels & XP' },
+            { fr: 'Boutique', en: 'Shop' },
+            { fr: 'Niveau du compte', en: 'Account level' },
             { fr: 'Arbre de compétences', en: 'Skill tree' },
             { fr: 'Campagne & combats', en: 'Campaign & battles' },
-            { fr: 'Points de combat', en: 'Combat points' },
+            { fr: 'Éléments', en: 'Elements' },
+            { fr: 'Tours', en: 'Towers' },
+            { fr: 'Énergie', en: 'Energy' },
             { fr: 'Améliorer ses cartes', en: 'Upgrading your cards' },
+            { fr: 'Équipement', en: 'Equipment' },
             { fr: 'Quêtes', en: 'Quests' },
             { fr: 'Succès', en: 'Achievements' },
             { fr: 'Chaîne de connexion', en: 'Login streak' },
@@ -173,6 +176,8 @@ export const SEO_ROUTES = [
             { fr: 'Classements', en: 'Leaderboards' },
             { fr: 'Collection', en: 'Collection' },
             { fr: 'Équipes', en: 'Teams' },
+            { fr: 'Raid d\'équipe', en: 'Team raid' },
+            { fr: 'Duels & paris', en: 'Duels & bets' },
             { fr: 'API & Discord', en: 'API & Discord' },
           ],
         },
