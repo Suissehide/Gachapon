@@ -9,7 +9,10 @@ export const resendVerificationRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       config: { rateLimit: { max: 5, timeWindow: 15 * 60 * 1000 } },
-      schema: { body: resendVerificationBodySchema },
+      schema: {
+        summary: 'Resend the verification email',
+        body: resendVerificationBodySchema,
+      },
     },
     async (request, reply) => {
       await authDomain.resendVerification(request.body.email)

@@ -19,8 +19,11 @@ import {
   pullBatchResponseSchema,
   pullResponseSchema,
   pullsHistoryQuerySchema,
+  pullsHistoryResponseSchema,
   pullsRecentQuerySchema,
+  pullsRecentResponseSchema,
   tokensBalanceResponseSchema,
+  tokensNextAtResponseSchema,
 } from '../../schemas/gacha.schemas'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -79,7 +82,10 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pulls',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 201: pullResponseSchema } },
+      schema: {
+        summary: 'Pull one capsule',
+        response: { 201: pullResponseSchema },
+      },
     },
     async (request, reply) => {
       const result = await gachaDomain.pull(request.user.userID)
@@ -189,6 +195,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Pull a batch of capsules',
         body: pullBatchBodySchema,
         response: { 201: pullBatchResponseSchema },
       },
@@ -293,7 +300,10 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/tokens/balance',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: tokensBalanceResponseSchema } },
+      schema: {
+        summary: 'Get my token balance',
+        response: { 200: tokensBalanceResponseSchema },
+      },
     },
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
@@ -342,7 +352,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   // GET /tokens/next-at — quand le prochain token sera prêt
   fastify.get(
     '/tokens/next-at',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Get when my next token regenerates',
+        response: { 200: tokensNextAtResponseSchema },
+      },
+    },
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
       if (!user) {
@@ -382,7 +398,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pulls/history',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { querystring: pullsHistoryQuerySchema },
+      schema: {
+        summary: 'List my pull history',
+        querystring: pullsHistoryQuerySchema,
+        response: { 200: pullsHistoryResponseSchema },
+      },
     },
     async (request) => {
       const { page, limit } = request.query
@@ -418,7 +438,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pulls/recent',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { querystring: pullsRecentQuerySchema },
+      schema: {
+        summary: 'List recent pulls from all players',
+        querystring: pullsRecentQuerySchema,
+        response: { 200: pullsRecentResponseSchema },
+      },
     },
     async (request) => {
       const { limit, before, teamId, rarities } = request.query
@@ -446,7 +470,12 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   // GET /pulls/rates — taux de drop de base par rareté (public, hors bonus)
   fastify.get(
     '/pulls/rates',
-    { schema: { response: { 200: dropRatesResponseSchema } } },
+    {
+      schema: {
+        summary: 'Get base drop rates by rarity',
+        response: { 200: dropRatesResponseSchema },
+      },
+    },
     async () => {
       const cards = await cardRepository.findAllActive()
       return { rates: computeDropRates(cards) }

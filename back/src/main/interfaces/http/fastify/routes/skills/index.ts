@@ -15,7 +15,10 @@ export const skillsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/skills',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { summary: 'Get the skill tree and invested points' },
+    },
     (request) => skillTreeDomain.getState(request.user.userID),
   )
 
@@ -23,7 +26,10 @@ export const skillsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/skills/:nodeId/invest',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: nodeIdParamSchema },
+      schema: {
+        summary: 'Invest a skill point in a node',
+        params: nodeIdParamSchema,
+      },
     },
     (request) =>
       skillInvestDomain.invest(request.user.userID, request.params.nodeId),
@@ -33,7 +39,10 @@ export const skillsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/skills/invest-batch',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: investBatchBodySchema },
+      schema: {
+        summary: 'Invest skill points in several nodes',
+        body: investBatchBodySchema,
+      },
     },
     (request) =>
       skillInvestBatchDomain.investBatch(
@@ -44,7 +53,10 @@ export const skillsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.post(
     '/skills/reset',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { summary: 'Reset the skill tree' },
+    },
     (request) => skillResetDomain.reset(request.user.userID),
   )
 }

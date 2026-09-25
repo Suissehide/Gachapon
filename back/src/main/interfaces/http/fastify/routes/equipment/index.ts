@@ -19,7 +19,10 @@ export const equipmentRouter: FastifyPluginCallbackZod = (fastify) => {
     '/equipment',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: equipmentListResponseSchema } },
+      schema: {
+        summary: "List the user's equipment",
+        response: { 200: equipmentListResponseSchema },
+      },
     },
     (request) => equipmentDomain.listUserEquipment(request.user.userID),
   )
@@ -29,7 +32,7 @@ export const equipmentRouter: FastifyPluginCallbackZod = (fastify) => {
     '/equipment/sets',
     {
       schema: {
-        tags: ['equipment'],
+        summary: 'List equipment sets and their bonuses',
         response: { 200: equipmentSetsResponseSchema },
       },
     },
@@ -41,6 +44,7 @@ export const equipmentRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Equip a piece of equipment on a card',
         params: equipmentIdParamSchema,
         body: equipmentEquipBodySchema,
         response: { 200: equipmentEquipResponseSchema },
@@ -59,6 +63,7 @@ export const equipmentRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Unequip a piece of equipment',
         params: equipmentIdParamSchema,
         response: { 200: equipmentUnequipResponseSchema },
       },
@@ -75,6 +80,7 @@ export const equipmentRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Upgrade a piece of equipment',
         params: equipmentIdParamSchema,
         response: { 200: equipmentUpgradeResponseSchema },
       },
@@ -91,6 +97,7 @@ export const equipmentRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Salvage equipment pieces',
         body: equipmentSalvageBodySchema,
         response: { 200: equipmentSalvageResponseSchema },
       },

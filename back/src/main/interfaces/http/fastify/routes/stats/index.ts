@@ -16,7 +16,12 @@ const publicStatsSchema = z.object({
 export const statsRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.get(
     '/stats',
-    { schema: { tags: ['Stats'], response: { 200: publicStatsSchema } } },
+    {
+      schema: {
+        summary: 'Get public site statistics',
+        response: { 200: publicStatsSchema },
+      },
+    },
     () => {
       return fastify.iocContainer.statsRepository.getPublicStats()
     },

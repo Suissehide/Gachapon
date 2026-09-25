@@ -12,7 +12,10 @@ export const refreshRouter: FastifyPluginCallbackZod = (fastify) => {
   // un 401 pendant la fenêtre bloquée déconnecterait un utilisateur valide.
   fastify.post(
     '/',
-    { config: { rateLimit: { max: 30, timeWindow: 60 * 1000 } } },
+    {
+      config: { rateLimit: { max: 30, timeWindow: 60 * 1000 } },
+      schema: { summary: 'Refresh session tokens' },
+    },
     async (request, reply) => {
       const refreshToken = request.cookies.refresh_token
       if (!refreshToken) {

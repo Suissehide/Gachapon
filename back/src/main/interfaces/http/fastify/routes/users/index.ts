@@ -33,7 +33,10 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     '/users/search',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { querystring: usersSearchQuerySchema },
+      schema: {
+        summary: 'Search users by username',
+        querystring: usersSearchQuerySchema,
+      },
     },
     async (request) => {
       const users = await userRepository.searchByUsername(
@@ -49,6 +52,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: "Get a user's public profile",
         params: usersProfileParamSchema,
         response: { 200: userProfileResponseSchema },
       },
@@ -88,6 +92,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: "Get a user's featured cards",
         params: usersProfileParamSchema,
         response: { 200: featuredCardsResponseSchema },
       },
@@ -107,6 +112,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: "Get a user's set completion progress",
         params: usersProfileParamSchema,
         response: { 200: setsProgressionResponseSchema },
       },
@@ -124,6 +130,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Set my featured profile cards',
         body: setFeaturedCardsBodySchema,
         response: { 200: setFeaturedCardsResponseSchema },
       },
@@ -142,6 +149,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Change my username',
         body: updateUsernameBodySchema,
         response: { 200: updateUsernameResponseSchema },
       },
@@ -160,6 +168,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Change my preferred language',
         body: updateLocaleBodySchema,
         response: { 200: updateLocaleResponseSchema },
       },

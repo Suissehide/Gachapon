@@ -14,7 +14,12 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/authorize',
-    { schema: { querystring: oauthAuthorizeQuerySchema } },
+    {
+      schema: {
+        summary: 'Start Discord OAuth sign-in',
+        querystring: oauthAuthorizeQuerySchema,
+      },
+    },
     (request, reply) => {
       const state = randomBytes(16).toString('hex')
       reply.setCookie('oauth_state', state, {
@@ -33,7 +38,7 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.get(
     '/callback',
     {
-      schema: { querystring: discordOAuthCallbackQuerySchema },
+      schema: { hide: true, querystring: discordOAuthCallbackQuerySchema },
     },
     async (request, reply) => {
       const { code, state, error } = request.query

@@ -13,7 +13,10 @@ export const achievementsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: achievementsListResponseSchema } },
+      schema: {
+        summary: 'List achievements with progress',
+        response: { 200: achievementsListResponseSchema },
+      },
     },
     (request) => achievementsDomain.listForUser(request.user.userID),
   )
@@ -23,7 +26,10 @@ export const achievementsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/families',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: achievementsFamiliesResponseSchema } },
+      schema: {
+        summary: 'List achievement family summaries',
+        response: { 200: achievementsFamiliesResponseSchema },
+      },
     },
     (request) => achievementsDomain.listFamilies(request.user.userID),
   )

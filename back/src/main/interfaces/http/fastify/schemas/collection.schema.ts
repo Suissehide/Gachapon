@@ -1,6 +1,7 @@
 import { z } from 'zod/v4'
 
 import { unlockedAchievementSchema } from './achievements.schemas'
+import { cardElementEnum } from './admin-cards.schema'
 
 export const collectionCardsQuerySchema = z.object({
   setId: z.string().optional(),
@@ -33,4 +34,30 @@ export const collectionRecycleAllResponseSchema = z.object({
   newDustTotal: z.number().int(),
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
   skippedEngaged: z.number().int(),
+})
+
+export const userCollectionResponseSchema = z.object({
+  cards: z.array(
+    z.object({
+      id: z.string(),
+      card: z.object({
+        id: z.string(),
+        name: z.string(),
+        imageUrl: z.string().nullable(),
+        rarity: z.string(),
+        element: cardElementEnum.nullable(),
+        set: z.object({ id: z.string(), name: z.string() }),
+        baseHp: z.number().int(),
+        baseAtk: z.number().int(),
+        baseDef: z.number().int(),
+        baseSpd: z.number().int(),
+        passiveKey: z.string().nullable(),
+      }),
+      variant: z.string(),
+      quantity: z.number().int(),
+      level: z.number().int(),
+      palier: z.number().int(),
+      obtainedAt: z.string(),
+    }),
+  ),
 })

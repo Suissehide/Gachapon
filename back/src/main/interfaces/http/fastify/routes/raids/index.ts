@@ -16,7 +16,7 @@ export const raidsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Raid'],
+        summary: 'Get the current team raid',
         params: raidTeamParamSchema,
         response: { 200: raidViewResponseSchema },
       },
@@ -29,7 +29,7 @@ export const raidsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Raid'],
+        summary: 'List member contributions to the team raid',
         params: raidTeamParamSchema,
         response: { 200: raidContributionsResponseSchema },
       },
@@ -47,7 +47,7 @@ export const raidsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Raid'],
+        summary: 'Attack the team raid boss',
         params: raidTeamParamSchema,
         response: { 200: raidAttackResponseSchema },
       },

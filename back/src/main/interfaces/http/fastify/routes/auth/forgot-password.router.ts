@@ -9,7 +9,10 @@ export const forgotPasswordRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       config: { rateLimit: { max: 5, timeWindow: 15 * 60 * 1000 } },
-      schema: { body: forgotPasswordBodySchema },
+      schema: {
+        summary: 'Request a password reset email',
+        body: forgotPasswordBodySchema,
+      },
     },
     async (request, reply) => {
       await authDomain.forgotPassword(request.body.email)

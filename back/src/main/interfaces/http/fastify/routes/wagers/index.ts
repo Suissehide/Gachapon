@@ -26,7 +26,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'List team duels and bets',
         params: wagersTeamParamSchema,
         response: { 200: wagersViewResponseSchema },
       },
@@ -43,7 +43,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'List my pending and recently settled duels',
         response: { 200: myPendingDuelsResponseSchema },
       },
     },
@@ -64,7 +64,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'List active bets targeting me',
         response: { 200: myTargetedBetsResponseSchema },
       },
     },
@@ -78,7 +78,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'Challenge a teammate to a duel',
         params: wagersTeamParamSchema,
         body: proposeDuelBodySchema,
         response: { 201: duelViewSchema },
@@ -101,7 +101,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'Get both hands of a settled duel',
         params: duelParamSchema,
         response: { 200: duelHandsResponseSchema },
       },
@@ -134,7 +134,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'Accept a duel challenge',
         params: duelParamSchema,
         response: { 200: duelViewSchema },
       },
@@ -152,7 +152,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'Decline a duel challenge',
         params: duelParamSchema,
         response: { 200: duelViewSchema },
       },
@@ -170,7 +170,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'Cancel a pending duel challenge',
         params: duelParamSchema,
         response: { 200: duelViewSchema },
       },
@@ -188,7 +188,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'List cards transferred by a duel',
         params: duelParamSchema,
         response: { 200: duelTransfersResponseSchema },
       },
@@ -223,7 +223,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'Join an open bet',
         params: betParamSchema,
         body: joinBetBodySchema,
         response: { 201: betViewSchema },
@@ -246,7 +246,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'Get the odds quote for a bet',
         params: wagersTeamParamSchema,
         querystring: betQuoteQuerySchema,
         response: { 200: betQuoteResponseSchema },
@@ -266,7 +266,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Wagers'],
+        summary: 'Place a bet on a teammate',
         params: wagersTeamParamSchema,
         body: placeBetBodySchema,
         response: { 201: betViewSchema },

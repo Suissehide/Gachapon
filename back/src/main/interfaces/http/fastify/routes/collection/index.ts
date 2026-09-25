@@ -11,6 +11,7 @@ import {
   collectionRecycleBodySchema,
   collectionRecycleResponseSchema,
   collectionUserIdParamSchema,
+  userCollectionResponseSchema,
 } from '../../schemas/collection.schema'
 
 export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -27,7 +28,10 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/sets',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { summary: 'List active card sets' },
+    },
     async () => {
       const sets = await cardRepository.findActiveSets()
       return { sets }
@@ -38,7 +42,10 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     '/cards',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { querystring: collectionCardsQuerySchema },
+      schema: {
+        summary: 'List cards in the catalog',
+        querystring: collectionCardsQuerySchema,
+      },
     },
     async (request) => {
       const cards = await cardRepository.findAll({
@@ -62,7 +69,10 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     '/cards/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: collectionCardIdParamSchema },
+      schema: {
+        summary: 'Get a card by ID',
+        params: collectionCardIdParamSchema,
+      },
     },
     async (request) => {
       const card = await cardRepository.findById(request.params.id)
@@ -77,7 +87,11 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     '/users/:id/collection',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: collectionUserIdParamSchema },
+      schema: {
+        summary: "Get a user's card collection",
+        params: collectionUserIdParamSchema,
+        response: { 200: userCollectionResponseSchema },
+      },
     },
     async (request) => {
       const user = await userRepository.findById(request.params.id)
@@ -117,6 +131,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Recycle copies of a card into dust',
         body: collectionRecycleBodySchema,
         response: { 200: collectionRecycleResponseSchema },
       },
@@ -131,6 +146,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Recycle all duplicates up to a rarity',
         body: collectionRecycleAllBodySchema,
         response: { 200: collectionRecycleAllResponseSchema },
       },

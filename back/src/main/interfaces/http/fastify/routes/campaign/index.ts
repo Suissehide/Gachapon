@@ -15,7 +15,10 @@ export const campaignRouter: FastifyPluginCallbackZod = (fastify) => {
     '/campaign',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: campaignResponseSchema } },
+      schema: {
+        summary: 'Get campaign chapters and progress',
+        response: { 200: campaignResponseSchema },
+      },
     },
     (request) => campaignDomain.getCampaign(request.user.userID),
   )
@@ -25,6 +28,7 @@ export const campaignRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Fight a campaign stage',
         params: stageIdParamSchema,
         response: { 200: battleResponseSchema },
       },
@@ -38,6 +42,7 @@ export const campaignRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Sweep a cleared campaign stage',
         params: stageIdParamSchema,
         body: sweepBodySchema,
         response: { 200: sweepResponseSchema },

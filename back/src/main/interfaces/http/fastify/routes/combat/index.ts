@@ -30,7 +30,10 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
     '/combat/points',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: combatPointsResponseSchema } },
+      schema: {
+        summary: 'Get combat energy points',
+        response: { 200: combatPointsResponseSchema },
+      },
     },
     (request) => combatPointsTx.getView(request.user.userID),
   )
@@ -39,7 +42,10 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
     '/combat/teams',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: combatTeamsResponseSchema } },
+      schema: {
+        summary: 'List all saved combat teams',
+        response: { 200: combatTeamsResponseSchema },
+      },
     },
     async (request) => {
       const all = await combatTeamTx.getAllResolved(request.user.userID)
@@ -59,6 +65,7 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Get the combat team for a mode',
         params: combatTeamKeyParamSchema,
         response: { 200: combatTeamResponseSchema },
       },
@@ -77,6 +84,7 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Save the combat team for a mode',
         params: combatTeamKeyParamSchema,
         body: combatTeamPutBodySchema,
         response: { 200: combatTeamResponseSchema },
@@ -96,7 +104,11 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
     '/combat/teams/:key',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: combatTeamKeyParamSchema, response: { 204: z.null() } },
+      schema: {
+        summary: 'Clear the combat team for a mode',
+        params: combatTeamKeyParamSchema,
+        response: { 204: z.null() },
+      },
     },
     async (request, reply) => {
       await combatTeamTx.clearForKey(request.user.userID, request.params.key)
@@ -112,6 +124,7 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
         fastify.requireRole('SUPER_ADMIN'),
       ],
       schema: {
+        hide: true,
         body: combatDebugBattleBodySchema,
         response: { 200: combatDebugBattleResponseSchema },
       },

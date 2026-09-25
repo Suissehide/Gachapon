@@ -13,6 +13,7 @@ export const registerRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       config: { rateLimit: { max: 5, timeWindow: 15 * 60 * 1000 } },
       schema: {
+        summary: 'Create an account',
         body: registerBodySchema,
         response: { 201: registerResponseSchema },
       },

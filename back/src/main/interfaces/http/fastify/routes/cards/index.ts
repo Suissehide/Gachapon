@@ -20,6 +20,7 @@ export const cardsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Convert duplicate copies of a card into dust',
         params: cardDustConvertParamsSchema,
         body: cardDustConvertBodySchema,
         response: { 200: cardDustConvertResponseSchema },
@@ -41,6 +42,7 @@ export const cardsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Level up an owned card',
         params: cardLevelUpParamsSchema,
         body: cardLevelUpBodySchema,
         response: { 200: cardLevelUpResponseSchema },
@@ -62,6 +64,7 @@ export const cardsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Ascend an owned card to the next tier',
         params: cardAscendParamsSchema,
         response: { 200: cardAscendResponseSchema },
       },

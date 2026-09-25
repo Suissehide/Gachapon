@@ -9,7 +9,10 @@ export const streakRouter: FastifyPluginCallbackZod = (fastify) => {
     '/summary',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: streakSummaryResponseSchema } },
+      schema: {
+        summary: 'Get login streak and 30-day reward cycle',
+        response: { 200: streakSummaryResponseSchema },
+      },
     },
     async (request) => {
       const { userRepository, streakMilestoneRepository } = fastify.iocContainer

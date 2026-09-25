@@ -9,7 +9,10 @@ export const resetPasswordAuthRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       config: { rateLimit: { max: 10, timeWindow: 15 * 60 * 1000 } },
-      schema: { body: resetPasswordBodySchema },
+      schema: {
+        summary: 'Reset password with a token',
+        body: resetPasswordBodySchema,
+      },
     },
     async (request, reply) => {
       await authDomain.resetPassword(

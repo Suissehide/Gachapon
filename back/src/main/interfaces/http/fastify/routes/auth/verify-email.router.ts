@@ -14,6 +14,7 @@ export const verifyEmailRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       config: { rateLimit: { max: 10, timeWindow: 15 * 60 * 1000 } },
       schema: {
+        summary: 'Verify email and log in',
         body: verifyEmailBodySchema,
         response: { 200: userResponseSchema },
       },

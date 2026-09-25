@@ -1,11 +1,23 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import {
+  collectorsLeaderboardResponseSchema,
+  combatLeaderboardResponseSchema,
+  teamsLeaderboardResponseSchema,
+} from '../../schemas/leaderboard.schema'
+
 export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
   const { leaderboardDomain } = fastify.iocContainer
 
   fastify.get(
     '/leaderboard/collectors',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Get the collectors leaderboard',
+        response: { 200: collectorsLeaderboardResponseSchema },
+      },
+    },
     async (request) => {
       return await leaderboardDomain.getCollectorsLeaderboard(
         request.user.userID,
@@ -15,7 +27,13 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/leaderboard/teams',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Get the teams leaderboard',
+        response: { 200: teamsLeaderboardResponseSchema },
+      },
+    },
     async (request) => {
       return await leaderboardDomain.getTeamsLeaderboard(request.user.userID)
     },
@@ -23,7 +41,13 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/leaderboard/combat',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Get the combat leaderboard',
+        response: { 200: combatLeaderboardResponseSchema },
+      },
+    },
     async (request) => {
       return await leaderboardDomain.getCombatLeaderboard(request.user.userID)
     },

@@ -12,6 +12,7 @@ export const loginRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       schema: {
+        summary: 'Log in with email and password',
         body: loginBodySchema,
         response: {
           200: userResponseSchema,

@@ -86,7 +86,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { tags: ['Team'], response: { 200: teamListResponseSchema } },
+      schema: {
+        summary: 'List my teams',
+        response: { 200: teamListResponseSchema },
+      },
     },
     async (request) => ({
       teams: await teamDomain.listMyTeams(request.user.userID),
@@ -98,7 +101,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'Create a team',
         body: teamCreateBodySchema,
         response: { 201: teamResponseSchema },
       },
@@ -120,7 +123,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'Browse the team directory',
         querystring: directoryQuerySchema,
         response: { 200: directoryResponseSchema },
       },
@@ -134,7 +137,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'Get team details',
         params: teamIdParamSchema,
         response: { 200: teamDetailResponseSchema },
       },
@@ -148,7 +151,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'List team members',
         params: teamIdParamSchema,
         response: { 200: teamMembersResponseSchema },
       },
@@ -161,7 +164,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'List team raid history',
         params: teamIdParamSchema,
         response: { 200: teamRaidHistoryResponseSchema },
       },
@@ -179,7 +182,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'Apply to join a team',
         params: teamIdParamSchema,
         response: { 201: myJoinRequestSchema },
       },
@@ -223,7 +226,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id/join-requests/me',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { tags: ['Team'], params: teamIdParamSchema },
+      schema: {
+        summary: 'Cancel my join request to a team',
+        params: teamIdParamSchema,
+      },
     },
     async (request, reply) => {
       await recruitmentDomain.cancel(request.params.id, request.user.userID)
@@ -236,7 +242,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'List pending join requests for a team',
         params: teamIdParamSchema,
         response: { 200: teamJoinRequestsResponseSchema },
       },
@@ -254,7 +260,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'List my join requests',
         response: { 200: myJoinRequestsResponseSchema },
       },
     },
@@ -268,7 +274,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'Accept a join request',
         params: joinRequestIdParamSchema,
         response: { 200: joinRequestDecisionResponseSchema },
       },
@@ -295,7 +301,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'Decline a join request',
         params: joinRequestIdParamSchema,
         response: { 200: joinRequestDecisionResponseSchema },
       },
@@ -320,7 +326,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        tags: ['Team'],
+        summary: 'Update a team',
         params: teamIdParamSchema,
         body: teamUpdateBodySchema,
         response: { 200: teamResponseSchema },
@@ -338,7 +344,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema },
+      schema: { summary: 'Delete a team', params: teamIdParamSchema },
     },
     async (request, reply) => {
       await teamDomain.deleteTeam(request.params.id, request.user.userID)
@@ -350,7 +356,11 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id/invite',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema, body: teamInviteBodySchema },
+      schema: {
+        summary: 'Invite a user to a team',
+        params: teamIdParamSchema,
+        body: teamInviteBodySchema,
+      },
     },
     async (request, reply) => {
       const invitation = await teamDomain.inviteMember(
@@ -371,7 +381,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/invitations/:token',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamTokenParamSchema },
+      schema: {
+        summary: 'Get an invitation addressed to me',
+        params: teamTokenParamSchema,
+      },
     },
     async (request) => {
       // 403 si le compte connecté n'est pas le destinataire — la lecture est
@@ -395,7 +408,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/me/invitations',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { summary: 'List my pending team invitations' },
+    },
     async (request) => {
       const { invitationRepository, userRepository } = fastify.iocContainer
       const me = await userRepository.findById(request.user.userID)
@@ -425,7 +441,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/invitations/:token/accept',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamTokenParamSchema },
+      schema: {
+        summary: 'Accept a team invitation',
+        params: teamTokenParamSchema,
+      },
     },
     async (request) => {
       await teamDomain.acceptInvitation(
@@ -440,7 +459,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/invitations/:token/decline',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamTokenParamSchema },
+      schema: {
+        summary: 'Decline a team invitation',
+        params: teamTokenParamSchema,
+      },
     },
     async (request) => {
       await teamDomain.declineInvitation(
@@ -455,7 +477,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id/members/:userId/remove',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamUserIdParamSchema },
+      schema: {
+        summary: 'Remove a member from a team',
+        params: teamUserIdParamSchema,
+      },
     },
     async (request, reply) => {
       await teamDomain.removeMember(
@@ -472,6 +497,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: "Change a team member's role",
         params: teamUserIdParamSchema,
         body: teamMemberRoleUpdateBodySchema,
       },
@@ -491,7 +517,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id/leave',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema },
+      schema: { summary: 'Leave a team', params: teamIdParamSchema },
     },
     async (request, reply) => {
       await teamDomain.leaveTeam(request.params.id, request.user.userID)
@@ -503,7 +529,11 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id/transfer',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema, body: teamTransferBodySchema },
+      schema: {
+        summary: 'Transfer team ownership',
+        params: teamIdParamSchema,
+        body: teamTransferBodySchema,
+      },
     },
     async (request, reply) => {
       await teamDomain.transferOwnership(
@@ -519,7 +549,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id/invitations',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema },
+      schema: {
+        summary: 'List invitations sent by a team',
+        params: teamIdParamSchema,
+      },
     },
     async (request) => {
       const teamRepo = fastify.iocContainer.teamRepository
@@ -557,7 +590,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/invitations/:token/resend',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamTokenParamSchema },
+      schema: {
+        summary: 'Resend a team invitation email',
+        params: teamTokenParamSchema,
+      },
     },
     async (request, reply) => {
       await teamDomain.resendInvitationEmail(
@@ -572,7 +608,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/invitations/:token/cancel',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamTokenParamSchema },
+      schema: {
+        summary: 'Cancel a pending team invitation',
+        params: teamTokenParamSchema,
+      },
     },
     async (request, reply) => {
       const { invitationRepository, teamRepository } = fastify.iocContainer
@@ -603,7 +642,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/invitations/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamInvitationIdParamSchema },
+      schema: {
+        summary: 'Delete a cancelled or expired invitation',
+        params: teamInvitationIdParamSchema,
+      },
     },
     async (request, reply) => {
       const { invitationRepository, teamRepository } = fastify.iocContainer
@@ -637,6 +679,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Rank team members by collection score',
         params: teamIdParamSchema,
         querystring: teamRankingQuerySchema,
       },
@@ -710,6 +753,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Spend a team perk point',
         params: teamIdParamSchema,
         body: teamPerkSpendBodySchema,
         response: { 200: teamPerksResponseSchema },
@@ -734,6 +778,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Reset team perks',
         params: teamIdParamSchema,
         response: { 200: teamPerksResponseSchema },
       },

@@ -111,3 +111,51 @@ export const tokensBalanceResponseSchema = z.object({
   pityCurrent: z.number().int(),
   pityThreshold: z.number().int(),
 })
+
+// ── GET /tokens/next-at ─────────────────────────────────────────────────────
+
+export const tokensNextAtResponseSchema = z.object({
+  nextTokenAt: z.string().nullable(),
+  tokens: z.number().int(),
+})
+
+// ── GET /pulls/history (réponse) ────────────────────────────────────────────
+
+export const pullsHistoryResponseSchema = z.object({
+  pulls: z.array(
+    z.object({
+      id: z.string(),
+      pulledAt: z.string(),
+      wasDuplicate: z.boolean(),
+      dustEarned: z.number().int(),
+      card: z.object({
+        id: z.string(),
+        name: z.string(),
+        imageUrl: z.string().nullable(),
+        rarity: z.string(),
+        variant: z.string(),
+      }),
+    }),
+  ),
+  total: z.number().int(),
+  page: z.number().int(),
+  limit: z.number().int(),
+})
+
+// ── GET /pulls/recent (réponse) ─────────────────────────────────────────────
+
+export const pullsRecentResponseSchema = z.object({
+  entries: z.array(
+    z.object({
+      username: z.string(),
+      cardName: z.string(),
+      rarity: z.string(),
+      variant: z.string(),
+      cardId: z.string(),
+      imageUrl: z.string().nullable(),
+      setName: z.string(),
+      pulledAt: z.string(),
+    }),
+  ),
+  hasMore: z.boolean(),
+})

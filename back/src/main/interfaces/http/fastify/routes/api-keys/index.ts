@@ -12,7 +12,7 @@ export const apiKeysRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: createApiKeyBodySchema },
+      schema: { summary: 'Create an API key', body: createApiKeyBodySchema },
     },
     async (request, reply) => {
       const key = await apiKeyRepository.create(
@@ -32,6 +32,7 @@ export const apiKeysRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       onRequest: [fastify.verifySessionCookie],
+      schema: { summary: 'List my API keys' },
     },
     async (request) => {
       const keys = await apiKeyRepository.findByUser(request.user.userID)
@@ -48,7 +49,7 @@ export const apiKeysRouter: FastifyPluginCallbackZod = (fastify) => {
     '/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: apiKeyIdParamSchema },
+      schema: { summary: 'Revoke an API key', params: apiKeyIdParamSchema },
     },
     async (request, reply) => {
       await apiKeyRepository.delete(request.params.id, request.user.userID)

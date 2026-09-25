@@ -32,7 +32,10 @@ export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/daily-shop',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { summary: "Get today's daily card shop" },
+    },
     async (request) => {
       const result = await dailyShopDomain.getOrGenerate(request.user.userID)
       return { ...result, items: resolveItems(result.items) }
@@ -43,7 +46,10 @@ export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
     '/daily-shop/:itemId/buy',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: dailyShopItemIdParamSchema },
+      schema: {
+        summary: 'Buy a card from the daily shop',
+        params: dailyShopItemIdParamSchema,
+      },
     },
     async (request) => {
       const result = await dailyShopDomain.buy(

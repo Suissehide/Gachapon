@@ -14,7 +14,10 @@ export const meRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: userResponseSchema } },
+      schema: {
+        summary: 'Get the current user',
+        response: { 200: userResponseSchema },
+      },
     },
     async (request) => {
       const userId = request.user.userID

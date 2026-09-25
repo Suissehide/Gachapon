@@ -14,7 +14,12 @@ export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/authorize',
-    { schema: { querystring: oauthAuthorizeQuerySchema } },
+    {
+      schema: {
+        summary: 'Start Google OAuth sign-in',
+        querystring: oauthAuthorizeQuerySchema,
+      },
+    },
     (request, reply) => {
       const state = randomBytes(16).toString('hex')
       reply.setCookie('oauth_state', state, {
@@ -33,7 +38,7 @@ export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.get(
     '/callback',
     {
-      schema: { querystring: oauthCallbackQuerySchema },
+      schema: { hide: true, querystring: oauthCallbackQuerySchema },
     },
     async (request, reply) => {
       const { code, state } = request.query

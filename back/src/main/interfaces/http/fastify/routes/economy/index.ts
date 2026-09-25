@@ -130,7 +130,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
     '/economy/config',
     {
       schema: {
-        tags: ['Economy'],
+        summary: 'Get the economy configuration',
         response: { 200: economyConfigResponseSchema },
       },
     },

@@ -41,7 +41,10 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pending',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: pendingRewardsResponseSchema } },
+      schema: {
+        summary: 'List pending rewards',
+        response: { 200: pendingRewardsResponseSchema },
+      },
     },
     (request) => {
       return rewardsDomain.getPending(request.user.userID)
@@ -54,6 +57,7 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Claim a pending reward',
         params: claimRewardParamsSchema,
         response: { 200: claimResultSchema },
       },
@@ -72,7 +76,10 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/claim-all',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: claimResultSchema, 204: noBodySchema } },
+      schema: {
+        summary: 'Claim all pending rewards',
+        response: { 200: claimResultSchema, 204: noBodySchema },
+      },
     },
     async (request, reply) => {
       const result = await rewardsDomain.claimAll(request.user.userID)
@@ -89,6 +96,7 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'List claimed reward history',
         querystring: rewardsHistoryQuerySchema,
         response: { 200: rewardsHistoryResponseSchema },
       },

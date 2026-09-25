@@ -18,7 +18,10 @@ export const towerRouter: FastifyPluginCallbackZod = (fastify) => {
     '/tower',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: towersResponseSchema } },
+      schema: {
+        summary: 'List elemental towers and progress',
+        response: { 200: towersResponseSchema },
+      },
     },
     async (request) => {
       const towers = await towerDomain.listTowers(request.user.userID)
@@ -36,6 +39,7 @@ export const towerRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Get an elemental tower with its floors',
         params: towerElementParamSchema,
         response: { 200: towerViewResponseSchema },
       },
@@ -49,6 +53,7 @@ export const towerRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Sweep a cleared tower floor',
         params: towerFloorParamSchema,
         body: towerSweepBodySchema,
         response: { 200: towerSweepResponseSchema },
@@ -68,6 +73,7 @@ export const towerRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Fight a tower floor',
         params: towerFloorParamSchema,
         response: { 200: towerBattleResponseSchema },
       },

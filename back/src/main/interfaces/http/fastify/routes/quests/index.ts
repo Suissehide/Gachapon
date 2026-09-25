@@ -52,7 +52,10 @@ export const questsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/quests',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: questsStateResponseSchema } },
+      schema: {
+        summary: 'Get weekly and one-shot quest progress',
+        response: { 200: questsStateResponseSchema },
+      },
     },
     async (request) => {
       const state = await questsDomain.getStateForUser(request.user.userID)

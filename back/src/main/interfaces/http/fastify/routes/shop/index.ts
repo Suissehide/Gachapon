@@ -16,7 +16,10 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
     '/shop',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: getShopResponseSchema } },
+      schema: {
+        summary: 'List shop items with prices and active boosts',
+        response: { 200: getShopResponseSchema },
+      },
     },
     async (request) => {
       const userId = request.user.userID
@@ -85,7 +88,10 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/shop/machines',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { summary: 'List machines owned by the user' },
+    },
     async (request) => {
       const purchases =
         await fastify.iocContainer.postgresOrm.prisma.purchase.findMany({
@@ -108,6 +114,7 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Buy a shop item',
         params: shopItemIdParamSchema,
         response: { 200: buyShopItemResponseSchema },
       },

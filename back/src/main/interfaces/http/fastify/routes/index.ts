@@ -27,17 +27,76 @@ import { wagersRouter } from './wagers'
 import { wishlistRouter } from './wishlist'
 import { wsRouter } from './ws'
 
+// Regroupement de la référence API (/api-docs) : le tag se déduit du chemin,
+// au plus long préfixe — un endpoint ne porte jamais de `tags` à la main.
+// Les tags eux-mêmes (ordre + descriptions) sont déclarés dans
+// `plugins/swagger.plugin.ts`.
+const TAG_BY_PATH_PREFIX: [prefix: string, tag: string][] = [
+  ['/auth', 'Auth'],
+  ['/api-keys', 'API keys'],
+  ['/pulls', 'Gacha'],
+  ['/tokens', 'Gacha'],
+  ['/users/:id/collection', 'Collection'],
+  ['/collection', 'Collection'],
+  ['/cards', 'Collection'],
+  ['/sets', 'Collection'],
+  ['/wishlist', 'Wishlist'],
+  ['/users', 'Users'],
+  ['/leaderboard', 'Leaderboard'],
+  ['/streak', 'Progression'],
+  ['/quests', 'Progression'],
+  ['/achievements', 'Progression'],
+  ['/rewards', 'Progression'],
+  ['/skills', 'Progression'],
+  ['/shop', 'Shop'],
+  ['/daily-shop', 'Shop'],
+  ['/combat', 'Combat'],
+  ['/equipment', 'Combat'],
+  ['/campaign', 'Campaign'],
+  ['/tower', 'Tower'],
+  ['/teams/:id/raid', 'Raid'],
+  ['/teams/:id/bets', 'Wagers'],
+  ['/teams/:id/duels', 'Wagers'],
+  ['/teams/:id/wagers', 'Wagers'],
+  ['/me/bets', 'Wagers'],
+  ['/me/duels', 'Wagers'],
+  ['/teams', 'Teams'],
+  ['/me', 'Teams'],
+  ['/invitations', 'Teams'],
+  ['/join-requests', 'Teams'],
+  ['/economy', 'Game data'],
+  ['/stats', 'Game data'],
+]
+
+function tagForPath(url: string): string | undefined {
+  let best: [string, string] | undefined
+  for (const entry of TAG_BY_PATH_PREFIX) {
+    const [prefix] = entry
+    const matches = url === prefix || url.startsWith(`${prefix}/`)
+    if (matches && (!best || prefix.length > best[0].length)) {
+      best = entry
+    }
+  }
+  return best?.[1]
+}
+
 export const routes: FastifyPluginAsyncZod = async (fastify) => {
-  fastify.get('/', async () => ({
+  fastify.get('/', { schema: { hide: true } }, async () => ({
     name: 'Gachapon API',
     status: 'running',
     version: '1.0.0',
   }))
-  fastify.get('/health', async () => ({ status: 'ok' }))
+  fastify.get('/health', { schema: { hide: true } }, async () => ({
+    status: 'ok',
+  }))
 
   // Annotate protected routes with security schemes in the OpenAPI spec.
   // Only detects verifySessionCookie when passed directly in route onRequest options.
   fastify.addHook('onRoute', (route) => {
+    const tag = tagForPath(route.url)
+    if (tag) {
+      route.schema = { ...route.schema, tags: [tag] }
+    }
     const onRequest = Array.isArray(route.onRequest)
       ? route.onRequest
       : route.onRequest

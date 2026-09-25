@@ -16,7 +16,10 @@ export const wishlistRouter: FastifyPluginCallbackZod = (fastify) => {
     '/wishlist',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: wishlistStatusResponseSchema } },
+      schema: {
+        summary: 'Get my wishlist',
+        response: { 200: wishlistStatusResponseSchema },
+      },
     },
     async (request) => {
       const status = await wishlistDomain.getStatus(request.user.userID)
@@ -34,7 +37,10 @@ export const wishlistRouter: FastifyPluginCallbackZod = (fastify) => {
     '/wishlist/:cardId',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: wishlistCardParamsSchema },
+      schema: {
+        summary: 'Add a card to my wishlist',
+        params: wishlistCardParamsSchema,
+      },
     },
     async (request, reply) => {
       await wishlistDomain.addWish(request.user.userID, request.params.cardId)
@@ -46,7 +52,10 @@ export const wishlistRouter: FastifyPluginCallbackZod = (fastify) => {
     '/wishlist/:cardId',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: wishlistCardParamsSchema },
+      schema: {
+        summary: 'Remove a card from my wishlist',
+        params: wishlistCardParamsSchema,
+      },
     },
     async (request, reply) => {
       await wishlistDomain.removeWish(
@@ -62,6 +71,7 @@ export const wishlistRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        summary: 'Buy a wishlisted card',
         params: wishlistCardParamsSchema,
         response: { 200: wishlistPurchaseResponseSchema },
       },
