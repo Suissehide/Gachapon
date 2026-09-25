@@ -12,9 +12,55 @@ const DEV_PASSWORD = 'Password123!'
 const IMPORT_CARDS_API_KEY =
   'gp_0b598bdc94b6247e86cad4646fe11a110ba530c9079bdaba940971106ca1abd0'
 
-export async function seedUsers(
-  tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
+type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
+
+// Prod : SEED_ADMIN_EMAIL + SEED_ADMIN_PASSWORD définis → un seul SUPER_ADMIN
+// avec ces identifiants, ni comptes de démo, ni équipe, ni clé API (le mot de
+// passe et la clé ci-dessus sont publics dans le dépôt). La clé d'import se
+// crée ensuite depuis l'UI, une fois connecté.
+export async function seedUsers(tx: Tx) {
+  const adminEmail = process.env.SEED_ADMIN_EMAIL
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD
+
+  if (adminEmail || adminPassword) {
+    return { admin: await seedProdAdmin(tx, adminEmail, adminPassword) }
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'NODE_ENV=production : SEED_ADMIN_EMAIL et SEED_ADMIN_PASSWORD sont requis (refus de créer les comptes de démo)',
+    )
+  }
+
+  return seedDevUsers(tx)
+}
+
+async function seedProdAdmin(
+  tx: Tx,
+  email: string | undefined,
+  password: string | undefined,
 ) {
+  if (!email || !password) {
+    throw new Error('SEED_ADMIN_EMAIL et SEED_ADMIN_PASSWORD vont ensemble')
+  }
+  if (password.length < 12) {
+    throw new Error('SEED_ADMIN_PASSWORD doit faire au moins 12 caractères')
+  }
+
+  const admin = await tx.user.create({
+    data: {
+      username: process.env.SEED_ADMIN_USERNAME ?? 'admin',
+      email,
+      passwordHash: await bcrypt.hash(password, SALT_ROUNDS),
+      emailVerifiedAt: new Date(),
+      role: 'SUPER_ADMIN',
+    },
+  })
+
+  console.log(`  SUPER_ADMIN "${admin.username}" créé (${admin.email})`)
+  return admin
+}
+
+async function seedDevUsers(tx: Tx) {
   const hash = await bcrypt.hash(DEV_PASSWORD, SALT_ROUNDS)
 
   // Super admin
