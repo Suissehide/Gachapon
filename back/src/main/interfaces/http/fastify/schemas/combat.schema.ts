@@ -1,5 +1,6 @@
 import { z } from 'zod/v4'
 
+import { MAX_PALIER } from '../../../../domain/card-leveling/card-leveling.domain'
 import { COMBAT_TEAM_KEY_TUPLE } from '../../../../domain/combat/combat-team-keys'
 
 export const combatTeamPutBodySchema = z.object({
@@ -69,7 +70,7 @@ const simulatorUnitSchema = z.object({
   attackPattern: attackPatternEnum,
   passiveKey: z.string().nullable(),
   element: z.string().nullable().optional(),
-  palier: z.number().int().min(1).max(6),
+  palier: z.number().int().min(1).max(MAX_PALIER),
   // Défaut 100 : préserve la compatibilité des charges utiles existantes de
   // cette route de debug admin, où mitigationRef n'était pas encore envoyé.
   mitigationRef: z.number().positive().default(100),

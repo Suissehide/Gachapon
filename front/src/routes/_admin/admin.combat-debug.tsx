@@ -15,6 +15,10 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import i18n from '../../i18n/index.ts'
 import { useDebugBattle } from '../../queries/useDebugBattle'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 
 export const Route = createFileRoute('/_admin/admin/combat-debug')({
   component: DebugBattlePage,
@@ -215,6 +219,7 @@ function TeamPanel({
   idPrefix: string
 }) {
   const { t } = useTranslation('admin')
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const addUnit = () => {
     if (team.length >= 3) {
       return
@@ -349,7 +354,9 @@ function TeamPanel({
                 label={t('combatDebug.tierLabel')}
                 value={unit.palier}
                 onChange={(v) =>
-                  updateUnit(i, { palier: Math.max(1, Math.min(6, v)) })
+                  updateUnit(i, {
+                    palier: Math.max(1, Math.min(economy.card.maxPalier, v)),
+                  })
                 }
               />
             </div>

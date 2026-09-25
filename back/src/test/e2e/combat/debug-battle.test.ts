@@ -159,4 +159,15 @@ describe('POST /combat/debug/battle', () => {
     expect(res2.statusCode).toBe(200)
     expect(res1.json()).toEqual(res2.json())
   })
+
+  it('accepts a palier-7 unit (card max palier)', async () => {
+    const teamA = sampleTeam('A').map((u) => ({ ...u, palier: 7 }))
+    const res = await app.inject({
+      method: 'POST',
+      url: '/combat/debug/battle',
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { teamA, teamB: sampleTeam('B'), seed: 'palier-7' },
+    })
+    expect(res.statusCode).toBe(200)
+  })
 })
