@@ -1,5 +1,4 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../libs/utils.ts'
@@ -10,8 +9,6 @@ interface PaginationProps {
   page: number
   pageCount: number
   onPageChange: (page: number) => void
-  /** Action propre à l'écran, posée à droite des flèches (ex. « Ma position »). */
-  extra?: ReactNode
   className?: string
 }
 
@@ -24,7 +21,6 @@ export function Pagination({
   page,
   pageCount,
   onPageChange,
-  extra,
   className,
 }: PaginationProps) {
   const { t } = useTranslation('common')
@@ -57,7 +53,6 @@ export function Pagination({
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
-      {extra}
     </nav>
   )
 }

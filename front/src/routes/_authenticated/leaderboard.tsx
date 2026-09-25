@@ -7,7 +7,6 @@ import { ScopeCard } from '../../components/leaderboard/ScopeCard'
 import { YouBar } from '../../components/leaderboard/YouBar'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { PageShell } from '../../components/shared/PageShell'
-import { Button } from '../../components/ui/button.tsx'
 import { Pagination } from '../../components/ui/pagination.tsx'
 import type {
   CollectorEntry,
@@ -56,7 +55,6 @@ function totalKnown<E>(data: LeaderboardResponse<E> | undefined): number {
 function pageWindow(
   data: LeaderboardResponse<unknown> | undefined,
   page: number,
-  myRank: number | null | undefined,
 ) {
   const totalCount = data?.totalCount ?? 0
   const pageSize = data?.pageSize ?? 1
@@ -64,13 +62,13 @@ function pageWindow(
   const rangeTo = rangeFrom + (data?.entries.length ?? 0) - 1
   return {
     totalCount,
+    pageSize,
     pageCount: Math.ceil(totalCount / pageSize),
     rangeFrom,
     rangeTo,
     // « 11–20 sur 47 » seulement quand il y a vraiment plusieurs pages ;
     // sinon « 7 collectionneurs » dit déjà tout.
     showRange: totalCount > pageSize && rangeTo >= rangeFrom,
-    myPage: myRank ? Math.ceil(myRank / pageSize) : null,
   }
 }
 
@@ -223,10 +221,10 @@ function LeaderboardPage() {
   const activeLoading = activePageQ.isLoading
 
   const page = pages[activeTab]
-  // Mon rang vient de la carte « ma position » (page 1), qui le connaît
-  // même quand je ne figure pas sur la page affichée.
-  const { totalCount, pageCount, rangeFrom, rangeTo, showRange, myPage } =
-    pageWindow(activeData, page, scopes[activeTab].mine?.rank)
+  const { totalCount, pageSize, pageCount, rangeFrom, rangeTo, showRange } =
+    pageWindow(activeData, page)
+  // « Y aller » de la barre « toi » : ouvre la page où tombe mon rang.
+  const jumpToRank = (rank: number) => setPage(Math.ceil(rank / pageSize))
 
   const isMe = (entry: CollectorEntry | TeamEntry | CombatEntry) => {
     if (!me) {
@@ -353,14 +351,6 @@ function LeaderboardPage() {
         page={page}
         pageCount={pageCount}
         onPageChange={setPage}
-        extra={
-          myPage !== null &&
-          myPage !== page && (
-            <Button variant="pill" size="pill" onClick={() => setPage(myPage)}>
-              {t('page.jumpToMe')}
-            </Button>
-          )
-        }
       />
 
       {/* Split rendering by mode for type-safe YouBar (discriminated union).
@@ -372,6 +362,7 @@ function LeaderboardPage() {
           entry={collectorsPageQ.data.currentUserEntry}
           entries={collectorsPageQ.data.entries}
           total={totalKnown(collectorsPageQ.data)}
+          onJump={jumpToRank}
         />
       )}
       {activeTab === 'teams' && teamsPageQ.data?.currentUserEntry && (
@@ -380,6 +371,7 @@ function LeaderboardPage() {
           entry={teamsPageQ.data.currentUserEntry}
           entries={teamsPageQ.data.entries}
           total={totalKnown(teamsPageQ.data)}
+          onJump={jumpToRank}
         />
       )}
       {activeTab === 'combat' && combatPageQ.data?.currentUserEntry && (
@@ -388,6 +380,7 @@ function LeaderboardPage() {
           entry={combatPageQ.data.currentUserEntry}
           entries={combatPageQ.data.entries}
           total={totalKnown(combatPageQ.data)}
+          onJump={jumpToRank}
         />
       )}
     </PageShell>

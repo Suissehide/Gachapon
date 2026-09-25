@@ -33,7 +33,6 @@
     "noRankYetCombat": "Get a team to enter the leaderboard",
     "entriesCountHeader": "{{count}} {{tabTitle}}",
     "entriesRangeHeader": "{{from}}–{{to}} of {{total}} {{tabTitle}}",
-    "jumpToMe": "My position",
     "loading": "Loading…",
     "emptyState": "No ranking yet — check back after the first pulls."
   },
@@ -70,6 +69,6 @@
     "rankOfTotal": "{{rankOrdinal}} out of {{total}}",
     "tierLabel": "TIER",
     "powerLabel": "POWER",
-    "climb": "Climb"
+    "goThere": "Go there"
   }
 }

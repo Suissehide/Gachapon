@@ -33,7 +33,6 @@
     "noRankYetCombat": "Équipe-toi pour entrer au classement",
     "entriesCountHeader": "{{count}} {{tabTitle}}",
     "entriesRangeHeader": "{{from}}–{{to}} sur {{total}} {{tabTitle}}",
-    "jumpToMe": "Ma position",
     "loading": "Chargement…",
     "emptyState": "Pas encore de classement — reviens après les premiers tirages."
   },
@@ -70,6 +69,6 @@
     "rankOfTotal": "{{rankOrdinal}} sur {{total}}",
     "tierLabel": "PALIER",
     "powerLabel": "FORCE",
-    "climb": "Grimper"
+    "goThere": "Y aller"
   }
 }

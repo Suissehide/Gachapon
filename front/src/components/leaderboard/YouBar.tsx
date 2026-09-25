@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -10,6 +9,7 @@ import type {
 import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber, ordinal } from '../../libs/utils.ts'
 import { FoilAvatar } from '../profile/arcade/FoilAvatar'
+import { Button } from '../ui/button.tsx'
 import { MedalRank } from './MedalRank'
 
 type Props =
@@ -18,18 +18,24 @@ type Props =
       entry: CollectorEntry
       entries: CollectorEntry[]
       total: number
+      /** Ouvre la page du classement où je figure. */
+      onJump: (rank: number) => void
     }
   | {
       mode: 'teams'
       entry: TeamEntry
       entries: TeamEntry[]
       total: number
+      /** Ouvre la page du classement où je figure. */
+      onJump: (rank: number) => void
     }
   | {
       mode: 'combat'
       entry: CombatEntry
       entries: CombatEntry[]
       total: number
+      /** Ouvre la page du classement où je figure. */
+      onJump: (rank: number) => void
     }
 
 const fmt = (n: number) => formatNumber(n, currentLocale())
@@ -55,10 +61,9 @@ function refAbove<E extends { rank: number }>(
 export function YouBar(props: Props) {
   const { t } = useTranslation('leaderboard')
   const locale = currentLocale()
-  const { mode, entry, entries, total } = props
-  if (entry.rank === 1) {
-    return null
-  }
+  // Pas de sortie anticipée au 1er rang : la barre ne s'affiche que quand je
+  // ne suis PAS sur la page affichée, et même premier, « Y aller » y ramène.
+  const { mode, entry, entries, total, onJump } = props
 
   const above = refAbove(entry, entries)
   const aboveRank = above?.rank ?? entry.rank - 1
@@ -105,8 +110,6 @@ export function YouBar(props: Props) {
           { lab: t('youBar.powerLabel'), val: fmt(entry.combatPower) },
         ]
 
-  const ctaTo: '/play' | '/combat' = mode === 'combat' ? '/combat' : '/play'
-
   return (
     <div
       className="sticky bottom-4 mt-[18px] flex flex-col gap-4 rounded-[18px] p-[16px_22px] shadow-[0_16px_40px_-12px_rgba(27,23,38,0.5)] sm:flex-row sm:items-center sm:justify-between"
@@ -145,16 +148,15 @@ export function YouBar(props: Props) {
             </span>
           </div>
         ))}
-        <Link
-          to={ctaTo}
-          className="inline-flex items-center gap-2 rounded-[12px] px-5 py-3 text-[15px] font-bold text-white shadow-[0_8px_22px_rgba(236,72,153,0.4)] transition-[transform,box-shadow] duration-200 hover:-translate-y-[2px] hover:shadow-[0_12px_26px_rgba(236,72,153,0.5)] motion-reduce:transform-none motion-reduce:transition-none"
-          style={{
-            background: 'linear-gradient(135deg, #f59e0b, #ec4899)',
-          }}
+        <Button
+          variant="gradient"
+          size="action"
+          onClick={() => onJump(entry.rank)}
+          className="gap-2 px-5 py-3 text-[15px] transition-[transform,box-shadow] duration-200 hover:-translate-y-[2px] motion-reduce:transform-none motion-reduce:transition-none"
         >
-          {t('youBar.climb')}
-          <ChevronRight size={16} />
-        </Link>
+          {t('youBar.goThere')}
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   )
