@@ -1,10 +1,10 @@
 {
   "hero": {
-    "tagline": "Attrape. Collectionne. Échange.",
-    "titleLine1": "Une nouvelle manière",
-    "titleLine2": "de collectionner.",
-    "subtitle": "Gachapon transforme le plaisir de collection en une expérience élégante, immersive et profondément sociale. Chaque tirage, mémorable.",
-    "joinButton": "Rejoindre Gachapon",
+    "tagline": "Jeu de cartes à collectionner",
+    "titleLine1": "Tire des capsules.",
+    "titleLine2": "Garde les cartes.",
+    "subtitle": "Tes jetons se rechargent au fil de la journée. Chaque jeton te donne une capsule avec une carte dedans, de commune à légendaire. Tu les collectionnes, tu les fais monter en niveau, et tu les fais combattre au tour par tour.",
+    "joinButton": "Jouer",
     "scrollAriaLabel": "Défiler vers la suite"
   },
   "marquee": {
@@ -12,86 +12,86 @@
     "discovery": "DÉCOUVERTE"
   },
   "experience": {
-    "eyebrow": "L'expérience",
-    "titleLine1": "Une",
-    "titleHighlight": "expérience",
-    "titleLine3": "maîtrisée.",
+    "eyebrow": "La machine",
+    "titleLine1": "Un jeton,",
+    "titleHighlight": "une capsule,",
+    "titleLine3": "une carte.",
     "phrases": {
-      "gesture": "Un geste.",
-      "capture": "Une capture.",
-      "discovery": "Une découverte."
+      "gesture": "Choisis ta machine.",
+      "capture": "Tire.",
+      "discovery": "Ouvre la capsule."
     },
-    "description": "Chaque jour, recevez vos tokens et accédez à une machine à pince 3D, conçue pour offrir un moment de tension et de révélation unique. Rien n'est laissé au hasard, sauf ce qui doit l'être."
+    "description": "Il y a deux machines en 3D : un distributeur de capsules et une machine à pince. Si tu veux juste voir ta carte, il existe aussi un mode sans animation."
   },
   "rarity": {
     "eyebrow": "Les variantes",
-    "titleLine1": "La rareté,",
-    "titleHighlight": "redéfinie.",
-    "description": "Tu as des doublons ? Transforme-les en poussière ou échange-les avec d’autres joueurs pour compléter ta collection plus vite. Le vrai défi, ce n’est pas d’obtenir des icônes... c’est d’obtenir les bonnes.",
+    "titleLine1": "Même carte,",
+    "titleHighlight": "trois finitions.",
+    "description": "À partir de rare, une carte peut sortir en holographique ou en brillante au lieu de standard. Les doublons ne sont pas perdus : ils se transforment en poussière, qui achète les cartes qui te manquent dans la boutique du jour.",
     "variants": {
       "standard": {
         "name": "Standard",
-        "description": "La forme essentielle. Une base soignée, où chaque détail compte."
+        "description": "La version normale. La plupart de tes cartes ressembleront à ça."
       },
       "holographic": {
         "name": "Holographique",
-        "description": "Des reflets subtils qui évoluent avec la lumière. Une présence plus vivante."
+        "description": "Un reflet arc-en-ciel sur l'illustration. Seulement sur les cartes rares, épiques et légendaires."
       },
       "brilliant": {
         "name": "Brillante",
-        "description": "Une intensité rare. Animations, éclat et profondeur pour une révélation inoubliable."
+        "description": "La finition la plus rare, avec un éclat animé et sa propre révélation."
       }
     }
   },
   "community": {
-    "eyebrow": "Ensemble",
-    "titleLine1": "Pensé pour",
-    "titleHighlight": "le collectif.",
+    "eyebrow": "Au-delà de la machine",
+    "titleLine1": "Tes cartes",
+    "titleHighlight": "se battent aussi.",
     "teams": {
       "title": "Équipes",
-      "description": "Créez une équipe restreinte, comparez, progressez ensemble. Gachapon n'est pas seulement une expérience individuelle — c'est un espace d'échange, de stratégie et d'observation."
+      "description": "Monte une équipe avec tes amis. Chaque semaine, vous attaquez le même boss de raid ensemble, et vous pouvez vous défier en duel et parier sur le résultat."
     },
-    "collection": {
-      "title": "Collection vivante",
-      "description": "Construisez au fil du temps, complétez des ensembles. Les pièces manquantes restent visibles, en attente — elles racontent ce qu'il reste à accomplir."
+    "campaign": {
+      "title": "Campagne",
+      "description": "Neuf chapitres de combats au tour par tour, avec une équipe de trois cartes maximum. Stats, passifs, équipement et éléments comptent tous."
     },
-    "economy": {
-      "title": "Une économie maîtrisée",
+    "progression": {
+      "title": "Progression",
       "points": {
-        "duplicates": "Les doublons deviennent de la poussière",
-        "dust": "La poussière ouvre de nouvelles possibilités",
-        "impact": "Chaque décision a un impact"
+        "cards": "Les cartes montent en niveau et s'équipent",
+        "skills": "Ton compte a son propre arbre de compétences",
+        "dust": "Les doublons deviennent de la poussière"
       }
     },
-    "identity": {
-      "title": "Une identité visible",
-      "description": "Chaque profil est une signature. Collections visibles, pièces rares mises en avant, progression mesurable. Vous ne collectionnez pas seulement des icônes — vous construisez une présence."
+    "tower": {
+      "title": "Tour",
+      "description": "Une tour par élément, et chaque étage est plus dur que le précédent. C'est là que tu vois jusqu'où ton équipe peut vraiment aller."
     }
   },
   "explainer": {
     "eyebrow": "Comment ça marche",
-    "title": "Un jeu de collection inspiré des capsules japonaises.",
+    "title": "Un jeu de cartes inspiré des machines à capsules japonaises.",
     "intro": {
       "strong": "Gachapon",
-      "rest": " est un jeu de cartes à collectionner gratuit, jouable directement dans le navigateur. Inspiré des distributeurs automatiques de capsules (\"gashapon\") populaires au Japon, il transpose la mécanique de tirage aléatoire dans une expérience numérique : tu reçois des jetons chaque jour, tu les utilises pour tirer une capsule, et tu découvres ce qu'elle contient — une carte commune, peu commune, rare, épique ou légendaire."
+      "rest": " est un jeu de cartes à collectionner inspiré des gashapon, les distributeurs de capsules qu'on trouve partout au Japon : tu reçois des jetons chaque jour, tu en dépenses un pour une capsule, et tu l'ouvres pour découvrir une carte commune, peu commune, rare, épique ou légendaire."
     },
     "dust": {
-      "before": "Plus tu joues, plus ta collection grandit. Les doublons se transforment en",
+      "before": "Les doublons se transforment en",
       "dustTerm": "poussière",
-      "middle": ", une ressource secondaire qui te permet d'acheter des cartes spécifiques dans la boutique quotidienne, d'améliorer ton arbre de compétences, ou de convertir certaines variantes. Le système de",
+      "middle": ", que tu dépenses dans la boutique du jour pour acheter des cartes précises, ou dans ton arbre de compétences. Un compteur de",
       "pityTerm": "pitié",
-      "after": "garantit qu'aucune série de tirages malchanceux ne dure éternellement : plus tu tires sans obtenir de carte rare, plus la prochaine pull garantit un palier de rareté."
+      "after": "fait que la malchance a une fin : si tu enchaînes trop de tirages sans carte rare, la suivante est garantie."
     },
     "variants": {
-      "before": "Trois variantes visuelles existent —",
+      "before": "Chaque carte existe en trois finitions :",
       "standardTerm": "standard",
       "comma": ",",
       "brilliantTerm": "brillante",
       "andJoin": " et ",
       "holographicTerm": "holographique",
-      "after": " — chacune avec ses propres effets de révélation. Les cartes holographiques et brillantes sont disponibles uniquement à partir des raretés élevées, ce qui en fait les pièces les plus recherchées des collections."
+      "after": ". Seules les cartes rares et au-delà peuvent sortir en holographique ou en brillante, et même là, ça reste peu fréquent."
     },
-    "outro": "Gachapon est aussi pensé pour être joué en groupe : tu peux rejoindre une équipe, comparer tes progrès, et accéder à une API publique ainsi qu'à un bot Discord pour suivre tes tirages depuis l'extérieur du site. L'accès est immédiat, sans téléchargement, et entièrement gratuit.",
+    "outro": "Tes cartes sont aussi tes combattants : campagne, tour, raid d'équipe et duels. Pour suivre tes tirages en dehors du site, il y a une API publique et un bot Discord.",
     "guideLink": "Lire le guide complet"
   },
   "faq": {
@@ -99,12 +99,11 @@
     "title": "Les questions fréquentes."
   },
   "finalCta": {
-    "title": "Commencez.",
-    "line1": "L'accès est immédiat.",
-    "line2": "Prêt à tenter ta chance ?"
+    "title": "Essaie.",
+    "line1": "Inscris-toi, récupère tes jetons, tire une capsule."
   },
   "footer": {
-    "tagline": "Attrape. Collectionne. Échange. Une expérience élégante, immersive et sociale.",
+    "tagline": "Un jeu de cartes à collectionner inspiré des machines à capsules japonaises.",
     "accessHeading": "Accès",
     "createAccount": "Créer un compte",
     "login": "Se connecter",

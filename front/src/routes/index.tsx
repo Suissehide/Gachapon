@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ChevronDown, Package, Sparkles, User, Users } from 'lucide-react'
+import { Castle, ChevronDown, Sparkles, Swords, Users } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -412,7 +412,7 @@ function LandingPage() {
         speed={24}
       />
 
-      {/* ── COLLECTIF + COLLECTION ────────────────────────────────── */}
+      {/* ── COMBAT ────────────────────────────────────────────────── */}
       <section className="relative z-10 px-6 lg:px-10 py-8">
         <div className="max-w-5xl mx-auto">
           <div className="mb-12">
@@ -444,32 +444,32 @@ function LandingPage() {
               </p>
             </Card>
 
-            {/* Collection vivante */}
+            {/* Campagne */}
             <Card className="lg:col-span-2 p-8 border-accent/20 bg-linear-to-br from-accent/6 via-card to-card relative overflow-hidden">
               <div
                 className="absolute -right-4 -bottom-4 h-16 w-16 rounded-full opacity-15"
                 style={{ background: BALLS.cyan.bg }}
               />
-              <Package className="h-5 w-5 text-accent mb-5 relative z-10" />
+              <Swords className="h-5 w-5 text-accent mb-5 relative z-10" />
               <h3 className="text-sm font-black text-foreground mb-3 relative z-10">
-                {t('community.collection.title')}
+                {t('community.campaign.title')}
               </h3>
               <p className="text-sm leading-relaxed text-text-light relative z-10">
-                {t('community.collection.description')}
+                {t('community.campaign.description')}
               </p>
             </Card>
 
-            {/* Économie */}
+            {/* Progression */}
             <Card className="lg:col-span-2 p-7 border-border/50">
               <Sparkles className="h-5 w-5 text-foreground/60 mb-4" />
               <h3 className="text-sm font-black text-foreground mb-3">
-                {t('community.economy.title')}
+                {t('community.progression.title')}
               </h3>
               <div className="flex flex-col gap-2">
                 {[
-                  t('community.economy.points.duplicates'),
-                  t('community.economy.points.dust'),
-                  t('community.economy.points.impact'),
+                  t('community.progression.points.cards'),
+                  t('community.progression.points.skills'),
+                  t('community.progression.points.dust'),
                 ].map((line) => (
                   <p
                     key={line}
@@ -482,18 +482,18 @@ function LandingPage() {
               </div>
             </Card>
 
-            {/* Identité */}
+            {/* Tour */}
             <Card className="lg:col-span-3 p-7 border-border/50 relative overflow-hidden">
               <div
                 className="absolute -right-6 top-1/2 -translate-y-1/2 h-20 w-20 rounded-full opacity-10"
                 style={{ background: BALLS.holo.bg }}
               />
-              <User className="h-5 w-5 text-amber-600 mb-4" />
+              <Castle className="h-5 w-5 text-amber-600 mb-4" />
               <h3 className="text-sm font-black text-foreground mb-3 relative z-10">
-                {t('community.identity.title')}
+                {t('community.tower.title')}
               </h3>
               <p className="text-sm leading-relaxed text-text-light relative z-10">
-                {t('community.identity.description')}
+                {t('community.tower.description')}
               </p>
             </Card>
           </div>
@@ -636,11 +636,8 @@ function LandingPage() {
             <h2 className="font-black leading-[0.9] tracking-tight text-[clamp(2.8rem,6vw,4.5rem)] text-foreground mb-4">
               {t('finalCta.title')}
             </h2>
-            <p className="text-base text-text-light mb-2">
-              {t('finalCta.line1')}
-            </p>
             <p className="text-base text-text-light mb-10">
-              {t('finalCta.line2')}
+              {t('finalCta.line1')}
             </p>
             <Button
               size="lg"

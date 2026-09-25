@@ -36,12 +36,12 @@ export const SEO_ROUTES = [
     path: '/',
     navLabel: { fr: 'Accueil', en: 'Home' },
     title: {
-      fr: 'Gachapon — Attrape. Collectionne. Échange.',
-      en: 'Gachapon — Catch. Collect. Trade.',
+      fr: 'Gachapon — Jeu de cartes à collectionner',
+      en: 'Gachapon — Card collecting game',
     },
     description: {
-      fr: 'Gachapon est un jeu de cartes à collectionner en ligne, gratuit et inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares, échange avec ta communauté.',
-      en: 'Gachapon is a free online trading card game inspired by Japanese capsule machines. Pull capsules, discover rare cards, and trade with your community.',
+      fr: 'Gachapon est un jeu de cartes à collectionner inspiré des machines à capsules japonaises. Tire des capsules, complète ta collection et fais combattre tes cartes.',
+      en: 'Gachapon is a card collecting game based on Japanese capsule machines. Pull capsules, fill out your collection, and send your cards into battle.',
     },
     sitemap: { changefreq: 'weekly', priority: '1.0' },
     // `heading` et `lead` recopient le hero de src/routes/index.tsx (que son
@@ -49,12 +49,12 @@ export const SEO_ROUTES = [
     // `heading` = home:hero.titleLine1 + titleLine2, `lead` = hero.subtitle.
     staticBlock: {
       heading: {
-        fr: 'Une nouvelle manière de collectionner.',
-        en: 'A new way to collect.',
+        fr: 'Tire des capsules. Garde les cartes.',
+        en: 'Pull capsules. Keep the cards.',
       },
       lead: {
-        fr: 'Gachapon transforme le plaisir de collection en une expérience élégante, immersive et profondément sociale. Chaque tirage, mémorable.',
-        en: 'Gachapon turns the joy of collecting into an elegant, immersive, and deeply social experience. Every pull, memorable.',
+        fr: 'Tes jetons se rechargent au fil de la journée. Chaque jeton te donne une capsule avec une carte dedans, de commune à légendaire. Tu les collectionnes, tu les fais monter en niveau, et tu les fais combattre au tour par tour.',
+        en: 'Tokens refill through the day. Each one gets you a capsule with a card inside, from common to legendary. Collect them, level them up, and put them to work in turn-based fights.',
       },
       faq: true,
     },

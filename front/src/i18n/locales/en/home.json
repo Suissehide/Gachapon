@@ -1,10 +1,10 @@
 {
   "hero": {
-    "tagline": "Catch. Collect. Trade.",
-    "titleLine1": "A new way",
-    "titleLine2": "to collect.",
-    "subtitle": "Gachapon turns the joy of collecting into an elegant, immersive, and deeply social experience. Every pull, memorable.",
-    "joinButton": "Join Gachapon",
+    "tagline": "Card collecting game",
+    "titleLine1": "Pull capsules.",
+    "titleLine2": "Keep the cards.",
+    "subtitle": "Tokens refill through the day. Each one gets you a capsule with a card inside, from common to legendary. Collect them, level them up, and put them to work in turn-based fights.",
+    "joinButton": "Play",
     "scrollAriaLabel": "Scroll down"
   },
   "marquee": {
@@ -12,99 +12,98 @@
     "discovery": "DISCOVERY"
   },
   "experience": {
-    "eyebrow": "The experience",
-    "titleLine1": "An",
-    "titleHighlight": "experience",
-    "titleLine3": "mastered.",
+    "eyebrow": "The machine",
+    "titleLine1": "One token,",
+    "titleHighlight": "one capsule,",
+    "titleLine3": "one card.",
     "phrases": {
-      "gesture": "A gesture.",
-      "capture": "A capture.",
-      "discovery": "A discovery."
+      "gesture": "Pick a machine.",
+      "capture": "Pull.",
+      "discovery": "Open the capsule."
     },
-    "description": "Every day, claim your tokens and step up to a 3D claw machine, built for a moment of tension and revelation like no other. Nothing is left to chance — except what has to be."
+    "description": "There are two 3D machines, a capsule dispenser and a claw machine. If you just want to see the card, there's also a mode with no animation at all."
   },
   "rarity": {
-    "eyebrow": "The variants",
-    "titleLine1": "Rarity,",
-    "titleHighlight": "redefined.",
-    "description": "Got duplicates? Turn them into dust or trade them with other players to complete your collection faster. The real challenge isn't collecting icons... it's collecting the right ones.",
+    "eyebrow": "Variants",
+    "titleLine1": "Same card,",
+    "titleHighlight": "three finishes.",
+    "description": "From rare upwards, a card can drop holographic or brilliant instead of standard. Duplicates aren't wasted: they turn into dust, which buys the cards you're missing in the daily shop.",
     "variants": {
       "standard": {
         "name": "Standard",
-        "description": "The essential form. A clean base where every detail counts."
+        "description": "The regular version. Most of your cards will look like this."
       },
       "holographic": {
         "name": "Holographic",
-        "description": "Subtle shimmer that shifts with the light. A more vivid presence."
+        "description": "A rainbow foil over the art. Only on rare, epic and legendary cards."
       },
       "brilliant": {
         "name": "Brilliant",
-        "description": "Rare intensity. Animation, shine, and depth for an unforgettable reveal."
+        "description": "The rarest finish, with animated shine and its own reveal."
       }
     }
   },
   "community": {
-    "eyebrow": "Together",
-    "titleLine1": "Built for",
-    "titleHighlight": "the collective.",
+    "eyebrow": "Beyond the machine",
+    "titleLine1": "Your cards",
+    "titleHighlight": "also fight.",
     "teams": {
       "title": "Teams",
-      "description": "Create a small team, compare, and progress together. Gachapon isn't just a solo experience — it's a space for exchange, strategy, and observation."
+      "description": "Start a team with your friends. Every week you go after the same raid boss together, and you can challenge each other to duels and bet on the outcome."
     },
-    "collection": {
-      "title": "A living collection",
-      "description": "Build it over time, complete full sets. Missing pieces stay visible, waiting — a reminder of what's left to achieve."
+    "campaign": {
+      "title": "Campaign",
+      "description": "Nine chapters of turn-based fights with a team of up to three cards. Stats, passives, gear and elements all count."
     },
-    "economy": {
-      "title": "A balanced economy",
+    "progression": {
+      "title": "Progression",
       "points": {
-        "duplicates": "Duplicates become dust",
-        "dust": "Dust unlocks new possibilities",
-        "impact": "Every decision matters"
+        "cards": "Cards level up and wear gear",
+        "skills": "Your account has its own skill tree",
+        "dust": "Duplicates turn into dust"
       }
     },
-    "identity": {
-      "title": "A visible identity",
-      "description": "Every profile is a signature. Visible collections, rare pieces on display, measurable progress. You're not just collecting icons — you're building a presence."
+    "tower": {
+      "title": "Tower",
+      "description": "One tower per element, and each floor is harder than the last. This is where you find out how far your team can really go."
     }
   },
   "explainer": {
     "eyebrow": "How it works",
-    "title": "A collection game inspired by Japanese capsule toys.",
+    "title": "A card game based on Japanese capsule machines.",
     "intro": {
       "strong": "Gachapon",
-      "rest": " is a free trading card game, playable directly in your browser. Inspired by the capsule vending machines (\"gashapon\") popular in Japan, it brings the mechanics of random draws into a digital experience: you get tokens every day, use them to open a capsule, and discover what's inside — a common, uncommon, rare, epic, or legendary card."
+      "rest": " is a card collecting game based on gashapon, the capsule vending machines you find all over Japan: you get tokens every day, spend one on a capsule, and open it to find a card: common, uncommon, rare, epic or legendary."
     },
     "dust": {
-      "before": "The more you play, the more your collection grows. Duplicates turn into",
+      "before": "Duplicates turn into",
       "dustTerm": "dust",
-      "middle": ", a secondary resource that lets you buy specific cards from the daily shop, upgrade your skill tree, or convert certain variants. The",
+      "middle": ", which you spend in the daily shop on specific cards, or on your skill tree. A",
       "pityTerm": "pity",
-      "after": "system guarantees that no unlucky streak lasts forever: the longer you go without pulling a rare card, the more the next pull guarantees a rarity tier."
+      "after": "counter makes sure bad luck runs out: go too long without a rare card and the next one is guaranteed."
     },
     "variants": {
-      "before": "Three visual variants exist —",
+      "before": "Cards come in three finishes:",
       "standardTerm": "standard",
       "comma": ",",
       "brilliantTerm": "brilliant",
       "andJoin": " and ",
       "holographicTerm": "holographic",
-      "after": " — each with its own reveal effect. Holographic and brilliant cards are only available from higher rarities, making them the most sought-after pieces in any collection."
+      "after": ". Only rare cards and above can drop holographic or brilliant, and even then it doesn't happen often."
     },
-    "outro": "Gachapon is also built to be played with others: you can join a team, compare your progress, and access a public API as well as a Discord bot to track your pulls from outside the site. Access is instant, with nothing to download, and completely free.",
+    "outro": "Your cards are also your fighters: campaign, tower, team raid and duels. If you want to track your pulls outside the site, there's a public API and a Discord bot.",
     "guideLink": "Read the full guide"
   },
   "faq": {
     "eyebrow": "FAQ",
-    "title": "Frequently asked questions."
+    "title": "Common questions."
   },
   "finalCta": {
-    "title": "Get started.",
-    "line1": "Access is instant.",
-    "line2": "Ready to try your luck?"
+    "title": "Give it a try.",
+    "line1": "Sign up, grab your tokens, pull a capsule."
   },
   "footer": {
-    "tagline": "Catch. Collect. Trade. An elegant, immersive, and social experience.",
+    "tagline": "A card collecting game based on Japanese capsule machines.",
     "accessHeading": "Access",
     "createAccount": "Create an account",
     "login": "Sign in",
