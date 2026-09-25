@@ -5,6 +5,10 @@ import { ACHIEVEMENT_DEFINITIONS } from '../content/achievements.definitions'
 import { campaignStageLabel } from '../content/campaign.definitions'
 import { CARDS, HUMAN_CARD_SET } from '../content/cards.definitions'
 import { buildEquipmentCatalog } from '../content/equipment.definitions'
+import {
+  IMPORTED_CARD_NAMES,
+  IMPORTED_CARD_SETS,
+} from '../content/imported-cards.definitions'
 import { RAID_BOSS_NAME_EN } from '../content/raid.definitions'
 import { SHOP_ITEMS } from '../content/shop.definitions'
 import {
@@ -228,12 +232,20 @@ export class ContentTranslationsBootstrap {
   // PAS `id` : c'est un uuid généré, voir `indexByImageCode`.
   // ---------------------------------------------------------------------
   async #backfillCards(): Promise<number> {
+    // Humains du seed + les 17 familles importées par l'API : le code
+    // d'image identifie les deux de la même façon.
+    const targets = [
+      ...CARDS.map((c) => ({ id: c.id, nameEn: c.nameEn })),
+      ...Object.entries(IMPORTED_CARD_NAMES).map(([id, c]) => ({
+        id,
+        nameEn: c.nameEn,
+      })),
+    ]
+    // Toutes les cartes illustrées plutôt qu'un OR de ~600 `endsWith` : le
+    // catalogue entier tient en quelques centaines de lignes, et le code ne
+    // se lit qu'en fin de clé (le préfixe de stockage dépend de `NODE_ENV`).
     const rows = await this.#orm.prisma.card.findMany({
-      // `endsWith` et non `in` sur la clé complète : le préfixe de stockage
-      // dépend de `NODE_ENV`, le suffixe `/<code>.png` non.
-      where: {
-        OR: CARDS.map((c) => ({ imageUrl: { endsWith: `/${c.id}.png` } })),
-      },
+      where: { imageUrl: { not: null } },
       select: { id: true, imageUrl: true, nameFr: true, nameEn: true },
     })
     const byCode = indexByImageCode(rows, (message) =>
@@ -241,7 +253,7 @@ export class ContentTranslationsBootstrap {
     )
 
     let updated = 0
-    for (const def of CARDS) {
+    for (const def of targets) {
       const row = byCode.get(def.id)
       if (!row) {
         continue
@@ -264,13 +276,14 @@ export class ContentTranslationsBootstrap {
   }
 
   // ---------------------------------------------------------------------
-  // CardSet — pas de clé stable en base (id = uuid seedé) : une seule
-  // définition existe (`HUMAN_CARD_SET`), rapprochée par nameFr comme
-  // SkillBranch/SkillNode/ShopItem ci-dessous.
+  // CardSet — pas de clé stable en base (id = uuid seedé ou généré par
+  // l'import) : rapproché par nameFr comme SkillBranch/SkillNode/ShopItem
+  // ci-dessous. Le set Humains vient du seed, les 17 autres de l'import.
   // ---------------------------------------------------------------------
   async #backfillCardSet(): Promise<number> {
+    const definitions = [HUMAN_CARD_SET, ...IMPORTED_CARD_SETS]
     const rows = await this.#orm.prisma.cardSet.findMany({
-      where: { nameFr: HUMAN_CARD_SET.nameFr },
+      where: { nameFr: { in: definitions.map((d) => d.nameFr) } },
       select: {
         id: true,
         nameFr: true,
@@ -279,39 +292,41 @@ export class ContentTranslationsBootstrap {
         descriptionEn: true,
       },
     })
-    const row = this.#findByNameFr(rows, HUMAN_CARD_SET.nameFr, 'cardSet')
-    if (!row) {
-      return 0
-    }
 
     let updated = 0
-    if (
-      await this.#applyIfEligible({
-        current: row.nameEn,
-        currentFr: row.nameFr,
-        target: HUMAN_CARD_SET.nameEn,
-        write: () =>
-          this.#orm.prisma.cardSet.update({
-            where: { id: row.id },
-            data: { nameEn: HUMAN_CARD_SET.nameEn },
-          }),
-      })
-    ) {
-      updated++
-    }
-    if (
-      await this.#applyIfEligible({
-        current: row.descriptionEn,
-        currentFr: row.descriptionFr,
-        target: HUMAN_CARD_SET.descriptionEn,
-        write: () =>
-          this.#orm.prisma.cardSet.update({
-            where: { id: row.id },
-            data: { descriptionEn: HUMAN_CARD_SET.descriptionEn },
-          }),
-      })
-    ) {
-      updated++
+    for (const def of definitions) {
+      const row = this.#findByNameFr(rows, def.nameFr, 'cardSet')
+      if (!row) {
+        continue
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.nameEn,
+          currentFr: row.nameFr,
+          target: def.nameEn,
+          write: () =>
+            this.#orm.prisma.cardSet.update({
+              where: { id: row.id },
+              data: { nameEn: def.nameEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.descriptionEn,
+          currentFr: row.descriptionFr,
+          target: def.descriptionEn,
+          write: () =>
+            this.#orm.prisma.cardSet.update({
+              where: { id: row.id },
+              data: { descriptionEn: def.descriptionEn },
+            }),
+        })
+      ) {
+        updated++
+      }
     }
     return updated
   }

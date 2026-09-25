@@ -7,6 +7,10 @@ import {
   HUMAN_CARD_SET,
   IMAGE_PREFIX,
 } from '../../main/domain/content/cards.definitions'
+import {
+  IMPORTED_CARD_NAMES,
+  IMPORTED_CARD_SETS,
+} from '../../main/domain/content/imported-cards.definitions'
 import { RAID_BOSS_NAME, RAID_BOSS_NAME_EN } from '../../main/domain/content/raid.definitions'
 import { runWithLocale } from '../../main/infra/i18n/locale-context'
 import { buildTestApp } from '../helpers/build-test-app'
@@ -179,6 +183,28 @@ describe('backfill des traductions au démarrage', () => {
       expect(second.updated).toBe(0)
     })
 
+    it("backfille une carte importée par l'API (famille hors seed), clé d'image de prod", async () => {
+      const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
+      const def = IMPORTED_CARD_NAMES['CEN-035']
+      if (!def) throw new Error('CEN-035 introuvable dans IMPORTED_CARD_NAMES')
+      // Tel que l'écrivait import-cards.mjs avant les traductions : le
+      // français dans les deux colonnes, sous le préfixe de prod.
+      const { id } = await postgresOrm.prisma.card.create({
+        data: {
+          setId: cardSetId,
+          nameFr: def.nameFr,
+          nameEn: def.nameFr,
+          imageUrl: 'cards/centaurs/CEN-035.png',
+          rarity: 'LEGENDARY',
+        },
+      })
+
+      await contentTranslationsBootstrap.bootstrap()
+
+      const raw = await postgresOrm.prisma.card.findUniqueOrThrow({ where: { id } })
+      expect(raw.nameEn).toBe('Chiron the Sage')
+    })
+
     it('ignore une carte absente des définitions (créée en prod) et laisse le repli faire son travail', async () => {
       const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
       // Clé d'image telle que la fabrique `POST /admin/cards` : `cards/<slug>`,
@@ -254,6 +280,27 @@ describe('backfill des traductions au démarrage', () => {
       })
       expect(row.nameEn).toBe(HUMAN_CARD_SET.nameEn)
       expect(row.descriptionEn).toBe(HUMAN_CARD_SET.descriptionEn)
+    })
+
+    it("backfille un set créé par l'import (famille hors seed)", async () => {
+      const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
+      const def = IMPORTED_CARD_SETS.find((s) => s.folder === 'centaurs')
+      if (!def) throw new Error('centaurs introuvable dans IMPORTED_CARD_SETS')
+      const { id } = await postgresOrm.prisma.cardSet.create({
+        data: {
+          nameFr: def.nameFr,
+          nameEn: def.nameFr,
+          descriptionFr: def.descriptionFr,
+          descriptionEn: def.descriptionFr,
+        },
+      })
+
+      await contentTranslationsBootstrap.bootstrap()
+
+      const row = await postgresOrm.prisma.cardSet.findUniqueOrThrow({ where: { id } })
+      expect(row.nameEn).toBe('Centaurs')
+      expect(row.descriptionEn).toBe(def.descriptionEn)
+      await postgresOrm.prisma.cardSet.delete({ where: { id } })
     })
   })
 

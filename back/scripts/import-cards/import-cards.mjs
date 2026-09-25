@@ -19,10 +19,12 @@
  * API BILINGUE : depuis le lot i18n, /admin/sets et /admin/cards exigent
  * `nameFr` ET `nameEn` (le pont d'écriture mono-langue `name` a disparu, un
  * `name` seul renvoie 400). families.json et cards-data.json ne portent
- * qu'un nom français : on envoie donc la même chaîne dans les deux langues.
- * Le contenu importé apparaîtra alors dans l'écran d'administration des
- * traductions manquantes, catégorie « identique » — c'est exactement son
- * rôle, et le seul moyen de garder une trace de ce qui reste à traduire.
+ * qu'un nom français : l'anglais vient de
+ * src/main/domain/content/imported-cards.definitions.ts, la source que lit
+ * aussi le bootstrap de traductions au démarrage du back. Une carte ou un set
+ * absent de ce fichier part avec le français dans les deux langues (et un
+ * avertissement) : il apparaîtra dans l'écran d'administration des
+ * traductions manquantes, catégorie « identique ».
  *
  * Idempotent : une carte dont la clé d'image (…/<ID>.png) existe déjà dans le
  * set est ignorée. Relancer le script ne crée pas de doublons.
@@ -88,6 +90,21 @@ const FAMILIES = Object.fromEntries(
     .filter(([slug, famille]) => !slug.startsWith('_') && famille.set)
     .map(([slug, famille]) => [slug, famille.set]),
 )
+
+// Chargé tel quel grâce au type stripping de Node : le fichier n'a ni import
+// ni syntaxe TypeScript non effaçable.
+const { IMPORTED_CARD_NAMES, IMPORTED_CARD_SETS } = await import(
+  '../../src/main/domain/content/imported-cards.definitions.ts'
+)
+const SET_TEXT_EN = Object.fromEntries(IMPORTED_CARD_SETS.map((s) => [s.folder, s]))
+
+function cardNameEn(card) {
+  const en = IMPORTED_CARD_NAMES[card.id]?.nameEn
+  if (!en) {
+    console.warn(`  ⚠ ${card.id} « ${card.name} » sans traduction anglaise : nom français recopié`)
+  }
+  return en ?? card.name
+}
 
 const imagePrefix = (folder) =>
   ENV === 'prod' ? `cards/${folder}` : `staging/cards/${folder}`
@@ -158,9 +175,9 @@ async function ensureSet(folder) {
   const created = await api('POST', '/admin/sets', {
     json: {
       nameFr: setName,
-      nameEn: setName,
+      nameEn: SET_TEXT_EN[folder]?.nameEn ?? setName,
       descriptionFr: description,
-      descriptionEn: description,
+      descriptionEn: SET_TEXT_EN[folder]?.descriptionEn ?? description,
       isActive: true,
     },
   })
@@ -195,7 +212,7 @@ async function createCard(setId, card) {
   const buildForm = () => {
     const form = new FormData()
     form.append('nameFr', card.name)
-    form.append('nameEn', card.name)
+    form.append('nameEn', cardNameEn(card))
     form.append('setId', setId)
     form.append('rarity', card.rarity)
     form.append('dropWeight', String(dropWeightFor(card)))

@@ -6,6 +6,10 @@ import {
 } from '../content/campaign.definitions'
 import { CARDS, HUMAN_CARD_SET } from '../content/cards.definitions'
 import { buildEquipmentCatalog } from '../content/equipment.definitions'
+import {
+  IMPORTED_CARD_NAMES,
+  IMPORTED_CARD_SETS,
+} from '../content/imported-cards.definitions'
 import { RAID_BOSS_NAME, RAID_BOSS_NAME_EN } from '../content/raid.definitions'
 import { SHOP_ITEMS } from '../content/shop.definitions'
 import {
@@ -67,6 +71,13 @@ export function deliberateIdenticalValues(): ReadonlySet<string> {
   }
   add(HUMAN_CARD_SET.nameFr, HUMAN_CARD_SET.nameEn)
   add(HUMAN_CARD_SET.descriptionFr, HUMAN_CARD_SET.descriptionEn)
+  for (const card of Object.values(IMPORTED_CARD_NAMES)) {
+    add(card.nameFr, card.nameEn)
+  }
+  for (const set of IMPORTED_CARD_SETS) {
+    add(set.nameFr, set.nameEn)
+    add(set.descriptionFr, set.descriptionEn)
+  }
 
   for (const a of ACHIEVEMENT_DEFINITIONS) {
     add(a.nameFr, a.nameEn)
