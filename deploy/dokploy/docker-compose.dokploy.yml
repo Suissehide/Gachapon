@@ -37,6 +37,11 @@ services:
       - REDIS_URL=${REDIS_URL}
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX}
       - RATE_LIMIT_TIME_WINDOW=${RATE_LIMIT_TIME_WINDOW}
+      # Lus uniquement par `npx prisma db seed` (compte SUPER_ADMIN initial).
+      # Vides hors seed : le seed refuse alors de tourner en production.
+      - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL:-}
+      - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-}
+      - SEED_ADMIN_USERNAME=${SEED_ADMIN_USERNAME:-admin}
       # Pas de fallback vers mailpit : un SMTP_HOST absent doit se solder par un
       # envoi qui echoue, jamais par un attrape-mail qui avale silencieusement
       # les liens de verification et de reinitialisation de mot de passe.
