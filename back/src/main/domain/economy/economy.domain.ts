@@ -93,7 +93,12 @@ export function calculateTokens(
     const nextTokenAt = new Date(
       ref.getTime() + regenIntervalMinutes * 60 * 1000,
     )
-    return { tokens: currentTokens, newLastTokenAt: ref, nextTokenAt, overflow: 0 }
+    return {
+      tokens: currentTokens,
+      newLastTokenAt: ref,
+      nextTokenAt,
+      overflow: 0,
+    }
   }
 
   const now = Date.now()
@@ -103,7 +108,12 @@ export function calculateTokens(
 
   if (gained <= 0) {
     const nextTokenAt = new Date(ref.getTime() + msPerToken)
-    return { tokens: currentTokens, newLastTokenAt: ref, nextTokenAt, overflow: 0 }
+    return {
+      tokens: currentTokens,
+      newLastTokenAt: ref,
+      nextTokenAt,
+      overflow: 0,
+    }
   }
 
   // Bonus tokens: MULTI_TOKEN_CHANCE — each time-gained token has a chance to grant a free extra.

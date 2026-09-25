@@ -236,11 +236,7 @@ export interface IDuelDomain {
   ): Promise<DuelView>
   decline(teamId: string, duelId: string, userId: string): Promise<DuelView>
   cancel(teamId: string, duelId: string, userId: string): Promise<DuelView>
-  listForTeam(
-    teamId: string,
-    userId: string,
-    now?: Date,
-  ): Promise<WagersView>
+  listForTeam(teamId: string, userId: string, now?: Date): Promise<WagersView>
   /**
    * Les cartes raflees sur un duel REGLE de l'equipe. Lecture paresseuse :
    * l'historique en sert vingt, et charger leurs cartes avec la vue ferait
@@ -252,10 +248,7 @@ export interface IDuelDomain {
     userId: string,
   ): Promise<DuelTransferView[]>
   /** Les defis PENDING adresses au joueur, toutes equipes confondues. */
-  listPendingForOpponent(
-    userId: string,
-    now?: Date,
-  ): Promise<PendingDuelView[]>
+  listPendingForOpponent(userId: string, now?: Date): Promise<PendingDuelView[]>
   /** Mes duels regles recemment, toutes equipes confondues. */
   listRecentSettledForUser(
     userId: string,
