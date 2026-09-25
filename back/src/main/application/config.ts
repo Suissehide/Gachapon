@@ -70,6 +70,11 @@ const configSchema = z.object({
     .string()
     .default('60000')
     .transform((v) => Number.parseInt(v, 10)),
+  // Redis : les compteurs survivent aux redéploiements et restent communs si
+  // le back tourne un jour sur plusieurs instances. `memory` sert aux e2e, où
+  // chaque suite doit repartir de compteurs vides (l'index Redis est partagé
+  // par tout le run et 85 suites s'inscrivent depuis 127.0.0.1).
+  rateLimitStore: z.enum(['redis', 'memory']).default('redis'),
 
   smtpHost: z.string().default('localhost'),
   smtpPort: z
@@ -109,6 +114,7 @@ const envVarNames = [
   'DISCORD_REDIRECT_URI',
   'RATE_LIMIT_MAX',
   'RATE_LIMIT_TIME_WINDOW',
+  'RATE_LIMIT_STORE',
   'SMTP_HOST',
   'SMTP_PORT',
   'SMTP_SECURE',

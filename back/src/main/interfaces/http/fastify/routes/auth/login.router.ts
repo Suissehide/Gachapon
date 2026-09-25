@@ -11,6 +11,7 @@ export const loginRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.post(
     '/',
     {
+      config: { rateLimit: { max: 10, timeWindow: 15 * 60 * 1000 } },
       schema: {
         summary: 'Log in with email and password',
         body: loginBodySchema,

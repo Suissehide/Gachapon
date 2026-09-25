@@ -50,6 +50,13 @@ class FastifyHttpServer implements HttpServer {
       exposeHeadRoutes: false,
       forceCloseConnections: 'idle',
       requestTimeout: 3000,
+      // Le back est derrière Traefik (un seul saut) : sans ça, `request.ip`
+      // vaut l'IP du conteneur Traefik pour tout le monde et chaque limite
+      // « par IP » du rate limit devient une limite partagée par tout le site.
+      // `1` et non `true` : `true` lirait l'entrée la plus à gauche de
+      // X-Forwarded-For, que le client écrit lui-même. À passer à 2 si un CDN
+      // s'intercale un jour devant Traefik.
+      trustProxy: 1,
     }
 
     this.fastify = Fastify(fastifyOptions)

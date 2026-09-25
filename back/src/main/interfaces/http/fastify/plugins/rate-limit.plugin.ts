@@ -16,10 +16,16 @@ const rateLimitErrorResponseBuilder = (context: {
 }
 
 const rateLimitPlugin = fastifyPlugin(async (fastify: FastifyInstance) => {
-  const { config } = fastify.iocContainer
+  const { config, redisClient } = fastify.iocContainer
   await fastify.register(fastifyRateLimit, {
     max: config.rateLimitMax,
     timeWindow: config.rateLimitTimeWindow,
+    ...(config.rateLimitStore === 'redis' && {
+      redis: redisClient.client,
+      // Redis tombé : on laisse passer plutôt que de rendre tout le site en
+      // 500. Le rate limit est un garde-fou, pas une dépendance critique.
+      skipOnError: true,
+    }),
     allowList: (request) => {
       const url = request.url.split('?')[0] ?? request.url
       return url === '/' || url === '/health' || url.startsWith('/api-docs')
