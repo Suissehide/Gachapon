@@ -82,6 +82,11 @@
     "streakSummary": "Daily streak, best streak, and reward milestones.",
     "pullsRecent": "Feed of recent pulls (name, rarity, variant, player).",
     "pullsHistory": "Paginated pull history for the account.",
+    "quests": "Daily and weekly quests, with their progress.",
+    "rewardsPending": "Rewards waiting to be claimed (achievements, streaks, quests…).",
+    "rewardsClaimAll": "Claim every pending reward at once.",
+    "userProfile": "A player's public profile: level, featured cards, stats.",
+    "leaderboardCombat": "Combat ranking: tier reached and team power.",
     "stats": "Global stats: players, pulls, cards, pulls today…",
     "pullsRates": "Base drop rates by rarity.",
     "economyConfig": "The full economy config: costs, pity, variant rates, XP."

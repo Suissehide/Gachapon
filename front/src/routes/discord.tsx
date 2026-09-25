@@ -321,7 +321,7 @@ export async function handlePull(interaction) {
   await interaction.editReply({
     embeds: [{
       title: \`\${variantEmoji} \${card.name}\`,
-      description: \`**Set :** \${card.set.name}\\n**Variante :** \${variantLabel}\\n**Jetons restants :** \${tokensRemaining}\`,
+      description: \`**Rareté :** \${card.rarity}\\n**Set :** \${card.set.name}\\n**Variante :** \${variantLabel}\\n**Jetons restants :** \${tokensRemaining}\`,
       color: card.variant === 'BRILLIANT' ? 0xf59e0b
         : card.variant === 'HOLOGRAPHIC' ? 0x818cf8
         : 0x94a3b8,
@@ -457,6 +457,25 @@ client.login(process.env.DISCORD_TOKEN)`}
               </EndpointRef>
               <EndpointRef method="get" path="/pulls/history" auth="key">
                 {t('endpoints.pullsHistory')}
+              </EndpointRef>
+              <EndpointRef method="get" path="/quests" auth="key">
+                {t('endpoints.quests')}
+              </EndpointRef>
+              <EndpointRef method="get" path="/rewards/pending" auth="key">
+                {t('endpoints.rewardsPending')}
+              </EndpointRef>
+              <EndpointRef method="post" path="/rewards/claim-all" auth="key">
+                {t('endpoints.rewardsClaimAll')}
+              </EndpointRef>
+              <EndpointRef
+                method="get"
+                path="/users/{username}/profile"
+                auth="key"
+              >
+                {t('endpoints.userProfile')}
+              </EndpointRef>
+              <EndpointRef method="get" path="/leaderboard/combat" auth="key">
+                {t('endpoints.leaderboardCombat')}
               </EndpointRef>
               <EndpointRef method="get" path="/stats" auth="public">
                 {t('endpoints.stats')}

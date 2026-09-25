@@ -82,6 +82,11 @@
     "streakSummary": "Série quotidienne, meilleur streak et paliers de récompense.",
     "pullsRecent": "Feed des derniers tirages (nom, rareté, variante, joueur).",
     "pullsHistory": "Historique paginé des tirages du compte.",
+    "quests": "Quêtes du jour et de la semaine, avec leur progression.",
+    "rewardsPending": "Récompenses en attente de réclamation (succès, séries, quêtes…).",
+    "rewardsClaimAll": "Réclame toutes les récompenses en attente d'un coup.",
+    "userProfile": "Profil public d'un joueur : niveau, cartes vedettes, statistiques.",
+    "leaderboardCombat": "Classement combat : palier atteint et puissance d'équipe.",
     "stats": "Statistiques globales : joueurs, tirages, cartes, tirages du jour…",
     "pullsRates": "Taux de drop de base par rareté.",
     "economyConfig": "Toute la config d'économie : coûts, pitié, taux de variantes, XP."
