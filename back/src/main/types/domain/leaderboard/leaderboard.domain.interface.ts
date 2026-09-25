@@ -35,6 +35,8 @@ export type CombatEntry = {
 export type LeaderboardResponse<E> = {
   entries: E[]
   currentUserEntry: E | null
+  /** Nombre total de classés, pas seulement le top renvoyé dans `entries`. */
+  totalCount: number
   /** Set only by the teams endpoint — lets the front highlight "my team"
    *  even when it's in the top entries (no other way to know). */
   currentUserTeamId?: string | null

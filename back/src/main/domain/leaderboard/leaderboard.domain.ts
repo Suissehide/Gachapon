@@ -57,10 +57,12 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       await this.#leaderboardRepository.countActiveCards()
     const totalPossibleVariants = total - variantEligible + variantEligible * 3
 
-    const topRows =
-      await this.#leaderboardRepository.getCollectorRankingWithLevel(
+    const [topRows, totalCount] = await Promise.all([
+      this.#leaderboardRepository.getCollectorRankingWithLevel(
         LEADERBOARD_TOP_N,
-      )
+      ),
+      this.#leaderboardRepository.countCollectors(),
+    ])
     const topUserIds = topRows.map((r) => r.userId)
 
     const includesMe = topUserIds.includes(currentUserId)
@@ -119,7 +121,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
     }
 
-    return { entries, currentUserEntry }
+    return { entries, currentUserEntry, totalCount }
   }
 
   /**
@@ -267,6 +269,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       return {
         entries: [],
         currentUserEntry: null,
+        totalCount: 0,
         currentUserTeamId: myTeamId,
       }
     }
@@ -284,7 +287,12 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
     }
 
-    return { entries, currentUserEntry, currentUserTeamId: myTeamId }
+    return {
+      entries,
+      currentUserEntry,
+      totalCount: scored.length,
+      currentUserTeamId: myTeamId,
+    }
   }
 
   async getCombatLeaderboard(
@@ -301,7 +309,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       : [...activeUserIds, currentUserId]
 
     if (candidateIds.length === 0) {
-      return { entries: [], currentUserEntry: null }
+      return { entries: [], currentUserEntry: null, totalCount: 0 }
     }
 
     const [progressMap, combatCardsMap, users, baseStatsCfg] =
@@ -393,6 +401,6 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
     }
 
-    return { entries, currentUserEntry }
+    return { entries, currentUserEntry, totalCount: scored.length }
   }
 }

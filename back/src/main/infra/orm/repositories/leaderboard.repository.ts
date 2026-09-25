@@ -82,6 +82,13 @@ export class LeaderboardRepository implements ILeaderboardRepository {
     return rows[0] ?? null
   }
 
+  async countCollectors(): Promise<number> {
+    const rows = await this.#prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(DISTINCT "userId")::bigint AS count FROM "UserCard"
+    `
+    return Number(rows[0]?.count ?? 0)
+  }
+
   async countCollectorsAhead(
     userId: string,
     distinctCards: number,

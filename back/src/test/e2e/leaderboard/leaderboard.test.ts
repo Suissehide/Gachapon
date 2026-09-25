@@ -46,6 +46,8 @@ describe('Leaderboard routes', () => {
     expect(res.statusCode).toBe(200)
     const body = res.json()
     expect(Array.isArray(body.entries)).toBe(true)
+    // Le total couvre tous les classés, pas seulement le top renvoyé.
+    expect(body.totalCount).toBeGreaterThanOrEqual(body.entries.length)
     expect(body.entries.length).toBeLessThanOrEqual(10)
     // currentUserEntry is null if user is in entries OR has no cards yet.
     expect(body).toHaveProperty('currentUserEntry')
@@ -83,6 +85,8 @@ describe('Leaderboard routes', () => {
     expect(res.statusCode).toBe(200)
     const body = res.json()
     expect(Array.isArray(body.entries)).toBe(true)
+    // Le total couvre tous les classés, pas seulement le top renvoyé.
+    expect(body.totalCount).toBeGreaterThanOrEqual(body.entries.length)
     expect(body).toHaveProperty('currentUserEntry')
     expect(body).toHaveProperty('currentUserTeamId')
     for (const e of body.entries) {
@@ -119,6 +123,8 @@ describe('Leaderboard routes', () => {
     expect(res.statusCode).toBe(200)
     const body = res.json()
     expect(Array.isArray(body.entries)).toBe(true)
+    // Le total couvre tous les classés, pas seulement le top renvoyé.
+    expect(body.totalCount).toBeGreaterThanOrEqual(body.entries.length)
     expect(body).toHaveProperty('currentUserEntry')
     for (const e of body.entries) {
       expect(e).toMatchObject({

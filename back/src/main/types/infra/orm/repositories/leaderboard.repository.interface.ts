@@ -46,6 +46,8 @@ export interface ILeaderboardRepository {
   getCurrentUserCollectorRow(
     userId: string,
   ): Promise<CollectorRankingRowWithLevel | null>
+  /** Joueurs qui possèdent au moins une carte — ceux que le classement range. */
+  countCollectors(): Promise<number>
   countCollectorsAhead(
     userId: string,
     distinctCards: number,

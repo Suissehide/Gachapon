@@ -35,6 +35,8 @@ export type CombatEntry = {
 export type LeaderboardResponse<E> = {
   entries: E[]
   currentUserEntry: E | null
+  /** Nombre total de classés, au-delà du top renvoyé dans `entries`. */
+  totalCount: number
   /** Set only by the teams endpoint. */
   currentUserTeamId?: string | null
 }

@@ -47,13 +47,7 @@ const TAB_TITLE_KEY: Record<Tab, string> = {
 }
 
 function totalKnown<E>(data: LeaderboardResponse<E> | undefined): number {
-  if (!data) {
-    return 0
-  }
-  // We don't get a global "count" from the API on purpose (top-N only).
-  // For display, "X joueurs classés" uses entries.length when currentUserEntry
-  // is null, else entries.length + 1. Real total isn't worth a 4th endpoint.
-  return data.entries.length + (data.currentUserEntry ? 1 : 0)
+  return data?.totalCount ?? 0
 }
 
 function LeaderboardPage() {
