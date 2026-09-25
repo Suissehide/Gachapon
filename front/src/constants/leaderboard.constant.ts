@@ -1,5 +1,3 @@
-export const LEADERBOARD_TOP_N = 10
-
 export type LeaderboardUserMini = {
   id: string
   username: string
@@ -35,8 +33,11 @@ export type CombatEntry = {
 export type LeaderboardResponse<E> = {
   entries: E[]
   currentUserEntry: E | null
-  /** Nombre total de classés, au-delà du top renvoyé dans `entries`. */
+  /** Nombre total de classés, au-delà de la page renvoyée dans `entries`. */
   totalCount: number
+  /** Page renvoyée (base 1) et taille de page, fixée par le serveur. */
+  page: number
+  pageSize: number
   /** Set only by the teams endpoint. */
   currentUserTeamId?: string | null
 }

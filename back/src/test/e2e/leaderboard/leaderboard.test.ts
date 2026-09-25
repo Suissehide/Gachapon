@@ -279,6 +279,112 @@ describe('Leaderboard routes', () => {
     })
   })
 
+  // ── PAGINATION ──────────────────────────────────────────────────────────
+  // La base est partagée avec les autres fichiers e2e : on ne connaît pas le
+  // total, on vérifie donc des invariants qui tiennent quel qu'il soit.
+  describe('pagination', () => {
+    type Page = {
+      entries: Array<{ rank: number; user: { id: string } }>
+      currentUserEntry: { rank: number; user: { id: string } } | null
+      totalCount: number
+      page: number
+      pageSize: number
+    }
+    let myUserId: string
+
+    const fetchPage = async (path: string, page: number) => {
+      const res = await app.inject({
+        method: 'GET',
+        url: `${path}?page=${page}`,
+        headers: { cookie: cookies },
+      })
+      expect(res.statusCode).toBe(200)
+      return res.json() as Page
+    }
+
+    beforeAll(async () => {
+      const { postgresOrm } = (app as any).iocContainer
+      const me = await postgresOrm.prisma.user.findUniqueOrThrow({
+        where: { email: `lb${suffix}@test.com` },
+      })
+      myUserId = me.id
+      const set = await postgresOrm.prisma.cardSet.create({
+        data: { nameFr: `LbPageSet${suffix}`, nameEn: `LbPageSet${suffix}`, isActive: false },
+      })
+      const card = await postgresOrm.prisma.card.create({
+        data: {
+          nameFr: `LbPageCard${suffix}`,
+          nameEn: `LbPageCard${suffix}`,
+          rarity: 'COMMON',
+          dropWeight: 10,
+          setId: set.id,
+        },
+      })
+      // Douze collectionneurs STRICTEMENT à égalité avec moi (une carte, une
+      // variante) : de quoi remplir plus d'une page, et forcer le départage.
+      const tied = await Promise.all(
+        Array.from({ length: 12 }, (_, i) =>
+          postgresOrm.prisma.user.create({
+            data: {
+              email: `lbpage${i}-${suffix}@test.com`,
+              username: `lbpage${i}${suffix}`,
+              emailVerifiedAt: new Date(),
+            },
+          }),
+        ),
+      )
+      await postgresOrm.prisma.userCard.createMany({
+        data: [myUserId, ...tied.map((u: { id: string }) => u.id)].map(
+          (userId) => ({ userId, cardId: card.id, variant: 'NORMAL', quantity: 1 }),
+        ),
+      })
+    })
+
+    it('collectionneurs : les pages couvrent tout le classement, sans doublon ni trou', async () => {
+      const first = await fetchPage('/leaderboard/collectors', 1)
+      expect(first.totalCount).toBeGreaterThan(first.pageSize)
+      const pages = Math.ceil(first.totalCount / first.pageSize)
+      const seen: Page['entries'] = []
+      for (let p = 1; p <= pages; p++) {
+        const body = await fetchPage('/leaderboard/collectors', p)
+        expect(body.page).toBe(p)
+        seen.push(...body.entries)
+      }
+      expect(seen.map((e) => e.rank)).toEqual(
+        Array.from({ length: first.totalCount }, (_, i) => i + 1),
+      )
+      expect(new Set(seen.map((e) => e.user.id)).size).toBe(first.totalCount)
+
+      // Hors de la page demandée, mon rang (calculé à part) doit tomber
+      // exactement là où le parcours des pages m'a trouvé — égalités comprises.
+      const myRank = seen.find((e) => e.user.id === myUserId)?.rank
+      expect(myRank).toBeDefined()
+      const otherPage = Math.ceil((myRank as number) / first.pageSize) === 1 ? 2 : 1
+      const other = await fetchPage('/leaderboard/collectors', otherPage)
+      expect(other.currentUserEntry?.rank).toBe(myRank)
+    })
+
+    it.each([
+      '/leaderboard/collectors',
+      '/leaderboard/teams',
+      '/leaderboard/combat',
+    ])('%s — page au-delà du total : liste vide, total inchangé', async (path) => {
+      const first = await fetchPage(path, 1)
+      const far = await fetchPage(path, 9999)
+      expect(far.entries).toEqual([])
+      expect(far.totalCount).toBe(first.totalCount)
+    })
+
+    it.each(['0', '-1', 'abc'])('page=%s — 400', async (page) => {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/leaderboard/collectors?page=${page}`,
+        headers: { cookie: cookies },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+  })
+
   // ── OLD ENDPOINT IS GONE ────────────────────────────────────────────────
   it('GET /leaderboard — 404 (old endpoint removed)', async () => {
     const res = await app.inject({

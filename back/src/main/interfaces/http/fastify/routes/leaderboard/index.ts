@@ -3,6 +3,7 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import {
   collectorsLeaderboardResponseSchema,
   combatLeaderboardResponseSchema,
+  leaderboardQuerySchema,
   teamsLeaderboardResponseSchema,
 } from '../../schemas/leaderboard.schema'
 
@@ -14,6 +15,7 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        querystring: leaderboardQuerySchema,
         summary: 'Get the collectors leaderboard',
         response: { 200: collectorsLeaderboardResponseSchema },
       },
@@ -21,6 +23,7 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       return await leaderboardDomain.getCollectorsLeaderboard(
         request.user.userID,
+        request.query.page,
       )
     },
   )
@@ -30,12 +33,16 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        querystring: leaderboardQuerySchema,
         summary: 'Get the teams leaderboard',
         response: { 200: teamsLeaderboardResponseSchema },
       },
     },
     async (request) => {
-      return await leaderboardDomain.getTeamsLeaderboard(request.user.userID)
+      return await leaderboardDomain.getTeamsLeaderboard(
+        request.user.userID,
+        request.query.page,
+      )
     },
   )
 
@@ -44,12 +51,16 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        querystring: leaderboardQuerySchema,
         summary: 'Get the combat leaderboard',
         response: { 200: combatLeaderboardResponseSchema },
       },
     },
     async (request) => {
-      return await leaderboardDomain.getCombatLeaderboard(request.user.userID)
+      return await leaderboardDomain.getCombatLeaderboard(
+        request.user.userID,
+        request.query.page,
+      )
     },
   )
 }

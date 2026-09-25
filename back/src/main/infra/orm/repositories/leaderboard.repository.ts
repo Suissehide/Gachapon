@@ -48,8 +48,15 @@ export class LeaderboardRepository implements ILeaderboardRepository {
     })
   }
 
+  /**
+   * Le `userId` en dernier critère rend l'ordre TOTAL : sans lui, deux
+   * joueurs à égalité pourraient s'échanger d'une requête à l'autre et
+   * apparaître sur deux pages (ou sur aucune). `countCollectorsAhead`
+   * applique le même départage, pour que le rang hors page tombe juste.
+   */
   getCollectorRankingWithLevel(
     limit: number,
+    offset: number,
   ): Promise<CollectorRankingRowWithLevel[]> {
     return this.#prisma.$queryRaw<CollectorRankingRowWithLevel[]>`
       SELECT
@@ -60,8 +67,9 @@ export class LeaderboardRepository implements ILeaderboardRepository {
       FROM "UserCard" uc
       JOIN "User" u ON u."id" = uc."userId"
       GROUP BY uc."userId", u."level"
-      ORDER BY COUNT(DISTINCT uc."cardId") DESC, COUNT(*) DESC
+      ORDER BY COUNT(DISTINCT uc."cardId") DESC, COUNT(*) DESC, uc."userId" ASC
       LIMIT ${limit}
+      OFFSET ${offset}
     `
   }
 
@@ -94,8 +102,8 @@ export class LeaderboardRepository implements ILeaderboardRepository {
     distinctCards: number,
     totalVariants: number,
   ): Promise<number> {
-    // Strict "ahead of me": higher distinctCards OR (equal distinct AND higher variants).
-    // Use the same lexicographic order as getCollectorRankingWithLevel.
+    // Strict "ahead of me", in the exact order of getCollectorRankingWithLevel:
+    // more distinct cards, then more variants, then the userId tiebreaker.
     const rows = await this.#prisma.$queryRaw<{ count: bigint }[]>`
       SELECT COUNT(*)::bigint AS count FROM (
         SELECT "userId",
@@ -108,6 +116,11 @@ export class LeaderboardRepository implements ILeaderboardRepository {
         AND (
           sub."d" > ${distinctCards}
           OR (sub."d" = ${distinctCards} AND sub."v" > ${totalVariants})
+          OR (
+            sub."d" = ${distinctCards}
+            AND sub."v" = ${totalVariants}
+            AND sub."userId" < ${userId}
+          )
         )
     `
     return Number(rows[0]?.count ?? 0)

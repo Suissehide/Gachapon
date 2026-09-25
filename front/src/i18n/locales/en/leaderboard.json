@@ -32,6 +32,8 @@
     "mineSubCombat": "Tier {{palier}} · power {{power}}",
     "noRankYetCombat": "Get a team to enter the leaderboard",
     "entriesCountHeader": "{{count}} {{tabTitle}}",
+    "entriesRangeHeader": "{{from}}–{{to}} of {{total}} {{tabTitle}}",
+    "jumpToMe": "My position",
     "loading": "Loading…",
     "emptyState": "No ranking yet — check back after the first pulls."
   },

@@ -43,12 +43,16 @@ export const collectorsLeaderboardResponseSchema = z.object({
   entries: z.array(collectorEntrySchema),
   currentUserEntry: collectorEntrySchema.nullable(),
   totalCount: z.number().int(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
 })
 
 export const teamsLeaderboardResponseSchema = z.object({
   entries: z.array(teamEntrySchema),
   currentUserEntry: teamEntrySchema.nullable(),
   totalCount: z.number().int(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
   currentUserTeamId: z.string().nullable().optional(),
 })
 
@@ -56,4 +60,10 @@ export const combatLeaderboardResponseSchema = z.object({
   entries: z.array(combatEntrySchema),
   currentUserEntry: combatEntrySchema.nullable(),
   totalCount: z.number().int(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
+})
+
+export const leaderboardQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
 })

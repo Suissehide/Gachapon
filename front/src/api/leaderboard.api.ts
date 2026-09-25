@@ -21,19 +21,19 @@ async function getJson<T>(path: string, errorMsg: string): Promise<T> {
 }
 
 export const LeaderboardApi = {
-  getCollectors: () =>
+  getCollectors: (page: number) =>
     getJson<LeaderboardResponse<CollectorEntry>>(
-      LEADERBOARD_ROUTES.collectors,
+      `${LEADERBOARD_ROUTES.collectors}?page=${page}`,
       i18n.t('leaderboard:apiTitles.operations.loadCollectors'),
     ),
-  getTeams: () =>
+  getTeams: (page: number) =>
     getJson<LeaderboardResponse<TeamEntry>>(
-      LEADERBOARD_ROUTES.teams,
+      `${LEADERBOARD_ROUTES.teams}?page=${page}`,
       i18n.t('leaderboard:apiTitles.operations.loadTeams'),
     ),
-  getCombat: () =>
+  getCombat: (page: number) =>
     getJson<LeaderboardResponse<CombatEntry>>(
-      LEADERBOARD_ROUTES.combat,
+      `${LEADERBOARD_ROUTES.combat}?page=${page}`,
       i18n.t('leaderboard:apiTitles.operations.loadCombat'),
     ),
 }

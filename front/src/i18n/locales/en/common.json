@@ -104,5 +104,11 @@
   },
   "devReveal": {
     "title": "Reveal preview (dev) — click a card to play the burst"
+  },
+  "pagination": {
+    "ariaLabel": "Pagination",
+    "previous": "Previous page",
+    "next": "Next page",
+    "pageOf": "Page {{page}} / {{pageCount}}"
   }
 }

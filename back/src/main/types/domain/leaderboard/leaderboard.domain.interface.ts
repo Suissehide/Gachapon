@@ -35,24 +35,30 @@ export type CombatEntry = {
 export type LeaderboardResponse<E> = {
   entries: E[]
   currentUserEntry: E | null
-  /** Nombre total de classés, pas seulement le top renvoyé dans `entries`. */
+  /** Nombre total de classés, pas seulement la page renvoyée dans `entries`. */
   totalCount: number
+  /** Page renvoyée (base 1) et taille de page — de quoi paginer côté front. */
+  page: number
+  pageSize: number
   /** Set only by the teams endpoint — lets the front highlight "my team"
    *  even when it's in the top entries (no other way to know). */
   currentUserTeamId?: string | null
 }
 
-export const LEADERBOARD_TOP_N = 10
+export const LEADERBOARD_PAGE_SIZE = 10
 
 export interface ILeaderboardDomain {
   getCollectorsLeaderboard(
     currentUserId: string,
+    page: number,
   ): Promise<LeaderboardResponse<CollectorEntry>>
   getTeamsLeaderboard(
     currentUserId: string,
+    page: number,
   ): Promise<LeaderboardResponse<TeamEntry>>
   getCombatLeaderboard(
     currentUserId: string,
+    page: number,
   ): Promise<LeaderboardResponse<CombatEntry>>
   /**
    * Rang de l'équipe dans le classement d'équipes ci-dessus — même barème,

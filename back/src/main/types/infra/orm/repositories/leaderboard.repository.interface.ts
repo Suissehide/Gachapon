@@ -42,6 +42,7 @@ export interface ILeaderboardRepository {
   countActiveCards(): Promise<ActiveCardCounts>
   getCollectorRankingWithLevel(
     limit: number,
+    offset: number,
   ): Promise<CollectorRankingRowWithLevel[]>
   getCurrentUserCollectorRow(
     userId: string,

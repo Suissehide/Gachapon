@@ -7,7 +7,7 @@ import type {
   LeaderboardResponse,
   TeamEntry,
 } from '../../types/domain/leaderboard/leaderboard.domain.interface'
-import { LEADERBOARD_TOP_N } from '../../types/domain/leaderboard/leaderboard.domain.interface'
+import { LEADERBOARD_PAGE_SIZE } from '../../types/domain/leaderboard/leaderboard.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type {
   CollectorRankingRowWithLevel,
@@ -52,14 +52,17 @@ export class LeaderboardDomain implements ILeaderboardDomain {
 
   async getCollectorsLeaderboard(
     currentUserId: string,
+    page: number,
   ): Promise<LeaderboardResponse<CollectorEntry>> {
+    const offset = (page - 1) * LEADERBOARD_PAGE_SIZE
     const { total, variantEligible } =
       await this.#leaderboardRepository.countActiveCards()
     const totalPossibleVariants = total - variantEligible + variantEligible * 3
 
     const [topRows, totalCount] = await Promise.all([
       this.#leaderboardRepository.getCollectorRankingWithLevel(
-        LEADERBOARD_TOP_N,
+        LEADERBOARD_PAGE_SIZE,
+        offset,
       ),
       this.#leaderboardRepository.countCollectors(),
     ])
@@ -103,7 +106,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
     }
 
-    const entries = topRows.map((r, i) => toEntry(r, i + 1))
+    const entries = topRows.map((r, i) => toEntry(r, offset + i + 1))
 
     let currentUserEntry: CollectorEntry | null = null
     if (!includesMe) {
@@ -121,7 +124,13 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
     }
 
-    return { entries, currentUserEntry, totalCount }
+    return {
+      entries,
+      currentUserEntry,
+      totalCount,
+      page,
+      pageSize: LEADERBOARD_PAGE_SIZE,
+    }
   }
 
   /**
@@ -253,7 +262,9 @@ export class LeaderboardDomain implements ILeaderboardDomain {
 
   async getTeamsLeaderboard(
     currentUserId: string,
+    page: number,
   ): Promise<LeaderboardResponse<TeamEntry>> {
+    const offset = (page - 1) * LEADERBOARD_PAGE_SIZE
     const myTeamId =
       await this.#leaderboardRepository.getTeamIdForUser(currentUserId)
     let scored = await this.#rankedTeams()
@@ -270,13 +281,15 @@ export class LeaderboardDomain implements ILeaderboardDomain {
         entries: [],
         currentUserEntry: null,
         totalCount: 0,
+        page,
+        pageSize: LEADERBOARD_PAGE_SIZE,
         currentUserTeamId: myTeamId,
       }
     }
 
     const entries: TeamEntry[] = scored
-      .slice(0, LEADERBOARD_TOP_N)
-      .map((s, i) => ({ rank: i + 1, ...s }))
+      .slice(offset, offset + LEADERBOARD_PAGE_SIZE)
+      .map((s, i) => ({ rank: offset + i + 1, ...s }))
 
     let currentUserEntry: TeamEntry | null = null
     if (myTeamId && !entries.find((e) => e.team.id === myTeamId)) {
@@ -291,13 +304,17 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       entries,
       currentUserEntry,
       totalCount: scored.length,
+      page,
+      pageSize: LEADERBOARD_PAGE_SIZE,
       currentUserTeamId: myTeamId,
     }
   }
 
   async getCombatLeaderboard(
     currentUserId: string,
+    page: number,
   ): Promise<LeaderboardResponse<CombatEntry>> {
+    const offset = (page - 1) * LEADERBOARD_PAGE_SIZE
     const [maxPalier, stagesOrdered, activeUserIds] = await Promise.all([
       this.#leaderboardRepository.countCampaignStages(),
       this.#leaderboardRepository.getAllCampaignStagesOrdered(),
@@ -309,7 +326,13 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       : [...activeUserIds, currentUserId]
 
     if (candidateIds.length === 0) {
-      return { entries: [], currentUserEntry: null, totalCount: 0 }
+      return {
+        entries: [],
+        currentUserEntry: null,
+        totalCount: 0,
+        page,
+        pageSize: LEADERBOARD_PAGE_SIZE,
+      }
     }
 
     const [progressMap, combatCardsMap, users, baseStatsCfg] =
@@ -389,8 +412,8 @@ export class LeaderboardDomain implements ILeaderboardDomain {
     }
 
     const entries = scored
-      .slice(0, LEADERBOARD_TOP_N)
-      .map((s, i) => toEntry(s, i + 1))
+      .slice(offset, offset + LEADERBOARD_PAGE_SIZE)
+      .map((s, i) => toEntry(s, offset + i + 1))
 
     let currentUserEntry: CombatEntry | null = null
     if (!entries.find((e) => e.user.id === currentUserId)) {
@@ -401,6 +424,12 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
     }
 
-    return { entries, currentUserEntry, totalCount: scored.length }
+    return {
+      entries,
+      currentUserEntry,
+      totalCount: scored.length,
+      page,
+      pageSize: LEADERBOARD_PAGE_SIZE,
+    }
   }
 }

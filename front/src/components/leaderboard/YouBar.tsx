@@ -45,7 +45,11 @@ function refAbove<E extends { rank: number }>(
   if (above) {
     return above
   }
-  return entries[entries.length - 1] ?? null
+  // Repli sur la dernière ligne affichée — seulement si elle me précède :
+  // sur une page plus loin que moi, elle est DERRIÈRE, et l'écart n'a plus
+  // de sens.
+  const last = entries[entries.length - 1]
+  return last && last.rank < entry.rank ? last : null
 }
 
 export function YouBar(props: Props) {

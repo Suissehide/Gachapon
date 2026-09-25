@@ -7,6 +7,8 @@ import { ScopeCard } from '../../components/leaderboard/ScopeCard'
 import { YouBar } from '../../components/leaderboard/YouBar'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { PageShell } from '../../components/shared/PageShell'
+import { Button } from '../../components/ui/button.tsx'
+import { Pagination } from '../../components/ui/pagination.tsx'
 import type {
   CollectorEntry,
   CombatEntry,
@@ -14,7 +16,7 @@ import type {
   TeamEntry,
 } from '../../constants/leaderboard.constant'
 import { currentLocale } from '../../i18n/index.ts'
-import { formatNumber } from '../../libs/utils.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import {
   useCollectorsLeaderboard,
   useCombatLeaderboard,
@@ -50,6 +52,28 @@ function totalKnown<E>(data: LeaderboardResponse<E> | undefined): number {
   return data?.totalCount ?? 0
 }
 
+/** Où se situe la page affichée dans le classement complet. */
+function pageWindow(
+  data: LeaderboardResponse<unknown> | undefined,
+  page: number,
+  myRank: number | null | undefined,
+) {
+  const totalCount = data?.totalCount ?? 0
+  const pageSize = data?.pageSize ?? 1
+  const rangeFrom = (page - 1) * pageSize + 1
+  const rangeTo = rangeFrom + (data?.entries.length ?? 0) - 1
+  return {
+    totalCount,
+    pageCount: Math.ceil(totalCount / pageSize),
+    rangeFrom,
+    rangeTo,
+    // « 11–20 sur 47 » seulement quand il y a vraiment plusieurs pages ;
+    // sinon « 7 collectionneurs » dit déjà tout.
+    showRange: totalCount > pageSize && rangeTo >= rangeFrom,
+    myPage: myRank ? Math.ceil(myRank / pageSize) : null,
+  }
+}
+
 function LeaderboardPage() {
   const { t } = useTranslation('leaderboard')
   const locale = currentLocale()
@@ -58,9 +82,23 @@ function LeaderboardPage() {
   const countLabelFor = (mode: Tab, count: number) =>
     t(COUNT_LABEL_KEY[mode], { count })
   const me = useAuthStore((s) => s.user)
+  // Les cartes du haut (leader, ma position) lisent TOUJOURS la page 1 :
+  // le leader, c'est la première ligne de la première page, pas de celle
+  // qu'on feuillette. La liste, elle, suit la page de son onglet — et
+  // partage le cache de la page 1 tant qu'on n'a pas bougé.
   const collectorsQ = useCollectorsLeaderboard()
   const teamsQ = useTeamsLeaderboard()
   const combatQ = useCombatLeaderboard()
+  const [pages, setPages] = useState<Record<Tab, number>>({
+    collectors: 1,
+    teams: 1,
+    combat: 1,
+  })
+  const setPage = (page: number) =>
+    setPages((prev) => ({ ...prev, [activeTab]: page }))
+  const collectorsPageQ = useCollectorsLeaderboard(pages.collectors)
+  const teamsPageQ = useTeamsLeaderboard(pages.teams)
+  const combatPageQ = useCombatLeaderboard(pages.combat)
 
   const scopes = useMemo(
     () => ({
@@ -173,18 +211,22 @@ function LeaderboardPage() {
     ],
   )
 
-  const activeData =
+  const activePageQ =
     activeTab === 'collectors'
-      ? collectorsQ.data
+      ? collectorsPageQ
       : activeTab === 'teams'
-        ? teamsQ.data
-        : combatQ.data
-  const activeLoading =
-    activeTab === 'collectors'
-      ? collectorsQ.isLoading
-      : activeTab === 'teams'
-        ? teamsQ.isLoading
-        : combatQ.isLoading
+        ? teamsPageQ
+        : combatPageQ
+  const activeData = activePageQ.data as
+    | LeaderboardResponse<unknown>
+    | undefined
+  const activeLoading = activePageQ.isLoading
+
+  const page = pages[activeTab]
+  // Mon rang vient de la carte « ma position » (page 1), qui le connaît
+  // même quand je ne figure pas sur la page affichée.
+  const { totalCount, pageCount, rangeFrom, rangeTo, showRange, myPage } =
+    pageWindow(activeData, page, scopes[activeTab].mine?.rank)
 
   const isMe = (entry: CollectorEntry | TeamEntry | CombatEntry) => {
     if (!me) {
@@ -253,22 +295,34 @@ function LeaderboardPage() {
       </div>
 
       <div className="mx-1 mt-[26px] mb-3 flex items-center justify-between font-mono text-[10px] tracking-[0.18em] text-[rgba(27,23,38,0.55)]">
-        <span>
-          {t('page.entriesCountHeader', {
-            count: activeData?.entries.length ?? 0,
-            tabTitle: tabTitle(activeTab).toUpperCase(),
-          })}
+        <span className="uppercase">
+          {showRange
+            ? t('page.entriesRangeHeader', {
+                from: rangeFrom,
+                to: rangeTo,
+                total: totalCount,
+                tabTitle: tabTitle(activeTab),
+              })
+            : t('page.entriesCountHeader', {
+                count: totalCount,
+                tabTitle: tabTitle(activeTab),
+              })}
         </span>
         <span className="opacity-[0.55]">{t(HEAD_RIGHT_KEY[activeTab])}</span>
       </div>
 
-      <div className="flex flex-col gap-[10px]">
+      <div
+        className={cn(
+          'flex flex-col gap-[10px] transition-opacity',
+          activePageQ.isPlaceholderData && 'opacity-60',
+        )}
+      >
         {activeLoading && !activeData && (
           <div className="flex h-32 items-center justify-center text-sm text-[rgba(27,23,38,0.5)]">
             {t('page.loading')}
           </div>
         )}
-        {activeData?.entries.length === 0 && !activeLoading && (
+        {activeData?.totalCount === 0 && !activeLoading && (
           <div className="rounded-[16px] border border-[rgba(27,23,38,0.06)] bg-white p-10 text-center text-sm text-[rgba(27,23,38,0.5)]">
             {t('page.emptyState')}
           </div>
@@ -276,7 +330,7 @@ function LeaderboardPage() {
 
         {/* Split rendering by mode for type-safe LeaderRow (discriminated union) */}
         {activeTab === 'collectors' &&
-          collectorsQ.data?.entries.map((e) => (
+          collectorsPageQ.data?.entries.map((e) => (
             <LeaderRow
               key={e.user.id}
               mode="collectors"
@@ -285,38 +339,55 @@ function LeaderboardPage() {
             />
           ))}
         {activeTab === 'teams' &&
-          teamsQ.data?.entries.map((e) => (
+          teamsPageQ.data?.entries.map((e) => (
             <LeaderRow key={e.team.id} mode="teams" entry={e} isMe={isMe(e)} />
           ))}
         {activeTab === 'combat' &&
-          combatQ.data?.entries.map((e) => (
+          combatPageQ.data?.entries.map((e) => (
             <LeaderRow key={e.user.id} mode="combat" entry={e} isMe={isMe(e)} />
           ))}
       </div>
 
-      {/* Split rendering by mode for type-safe YouBar (discriminated union) */}
-      {activeTab === 'collectors' && collectorsQ.data?.currentUserEntry && (
+      <Pagination
+        className="mt-5"
+        page={page}
+        pageCount={pageCount}
+        onPageChange={setPage}
+        extra={
+          myPage !== null &&
+          myPage !== page && (
+            <Button variant="pill" size="pill" onClick={() => setPage(myPage)}>
+              {t('page.jumpToMe')}
+            </Button>
+          )
+        }
+      />
+
+      {/* Split rendering by mode for type-safe YouBar (discriminated union).
+          `currentUserEntry` n'est rempli que si je ne suis PAS sur la page
+          affichée : la barre suit donc la page, pas seulement le top. */}
+      {activeTab === 'collectors' && collectorsPageQ.data?.currentUserEntry && (
         <YouBar
           mode="collectors"
-          entry={collectorsQ.data.currentUserEntry}
-          entries={collectorsQ.data.entries}
-          total={totalKnown(collectorsQ.data)}
+          entry={collectorsPageQ.data.currentUserEntry}
+          entries={collectorsPageQ.data.entries}
+          total={totalKnown(collectorsPageQ.data)}
         />
       )}
-      {activeTab === 'teams' && teamsQ.data?.currentUserEntry && (
+      {activeTab === 'teams' && teamsPageQ.data?.currentUserEntry && (
         <YouBar
           mode="teams"
-          entry={teamsQ.data.currentUserEntry}
-          entries={teamsQ.data.entries}
-          total={totalKnown(teamsQ.data)}
+          entry={teamsPageQ.data.currentUserEntry}
+          entries={teamsPageQ.data.entries}
+          total={totalKnown(teamsPageQ.data)}
         />
       )}
-      {activeTab === 'combat' && combatQ.data?.currentUserEntry && (
+      {activeTab === 'combat' && combatPageQ.data?.currentUserEntry && (
         <YouBar
           mode="combat"
-          entry={combatQ.data.currentUserEntry}
-          entries={combatQ.data.entries}
-          total={totalKnown(combatQ.data)}
+          entry={combatPageQ.data.currentUserEntry}
+          entries={combatPageQ.data.entries}
+          total={totalKnown(combatPageQ.data)}
         />
       )}
     </PageShell>

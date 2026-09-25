@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { LeaderboardApi } from '../api/leaderboard.api.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
@@ -16,10 +16,13 @@ export type {
 const STALE = 5 * 60 * 1000
 const REFETCH_ON_MOUNT = 'always' as const
 
-export const useCollectorsLeaderboard = () => {
+export const useCollectorsLeaderboard = (page = 1) => {
   const query = useQuery({
-    queryKey: ['leaderboard', 'collectors'],
-    queryFn: LeaderboardApi.getCollectors,
+    queryKey: ['leaderboard', 'collectors', page],
+    queryFn: () => LeaderboardApi.getCollectors(page),
+    // Au changement de page, la page précédente reste affichée jusqu'à
+    // l'arrivée de la suivante : pas de liste qui s'effondre puis revient.
+    placeholderData: keepPreviousData,
     staleTime: STALE,
     refetchOnMount: REFETCH_ON_MOUNT,
   })
@@ -33,10 +36,13 @@ export const useCollectorsLeaderboard = () => {
   return query
 }
 
-export const useTeamsLeaderboard = () => {
+export const useTeamsLeaderboard = (page = 1) => {
   const query = useQuery({
-    queryKey: ['leaderboard', 'teams'],
-    queryFn: LeaderboardApi.getTeams,
+    queryKey: ['leaderboard', 'teams', page],
+    queryFn: () => LeaderboardApi.getTeams(page),
+    // Au changement de page, la page précédente reste affichée jusqu'à
+    // l'arrivée de la suivante : pas de liste qui s'effondre puis revient.
+    placeholderData: keepPreviousData,
     staleTime: STALE,
     refetchOnMount: REFETCH_ON_MOUNT,
   })
@@ -50,10 +56,13 @@ export const useTeamsLeaderboard = () => {
   return query
 }
 
-export const useCombatLeaderboard = () => {
+export const useCombatLeaderboard = (page = 1) => {
   const query = useQuery({
-    queryKey: ['leaderboard', 'combat'],
-    queryFn: LeaderboardApi.getCombat,
+    queryKey: ['leaderboard', 'combat', page],
+    queryFn: () => LeaderboardApi.getCombat(page),
+    // Au changement de page, la page précédente reste affichée jusqu'à
+    // l'arrivée de la suivante : pas de liste qui s'effondre puis revient.
+    placeholderData: keepPreviousData,
     staleTime: STALE,
     refetchOnMount: REFETCH_ON_MOUNT,
   })
