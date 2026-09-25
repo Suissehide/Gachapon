@@ -111,6 +111,39 @@ describe('POST /cards/:userCardId/level-up', () => {
     expect(res.statusCode).toBe(400)
   })
 
+  it('levels up a palier-7 card past level 60 (61 → 62)', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const set = await postgresOrm.prisma.cardSet.findFirst({
+      where: { nameFr: `LvlSet${suffix}` },
+    })
+    const card = await postgresOrm.prisma.card.findFirst({
+      where: { setId: set!.id },
+    })
+    const highUc = await postgresOrm.prisma.userCard.create({
+      data: {
+        userId,
+        cardId: card!.id,
+        variant: 'HOLOGRAPHIC',
+        quantity: 1,
+        level: 61,
+        palier: 7,
+      },
+    })
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { gold: 1000000, dust: 1000000 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/cards/${highUc.id}/level-up`,
+      headers: { cookie: cookies },
+      payload: { targetLevel: 62 },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().newLevel).toBe(62)
+  })
+
   it('refuses when not enough gold', async () => {
     const { postgresOrm } = (app as any).iocContainer
     await postgresOrm.prisma.user.update({

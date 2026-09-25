@@ -1,5 +1,10 @@
 import { z } from 'zod'
 
+import {
+  MAX_PALIER,
+  maxLevelInPalier,
+} from '../../../../domain/card-leveling/card-leveling.domain'
+
 export const cardDustConvertParamsSchema = z.object({
   userCardId: z.string().uuid(),
 })
@@ -18,7 +23,7 @@ export const cardLevelUpParamsSchema = z.object({
 })
 
 export const cardLevelUpBodySchema = z.object({
-  targetLevel: z.number().int().min(2).max(60),
+  targetLevel: z.number().int().min(2).max(maxLevelInPalier(MAX_PALIER)),
 })
 
 export const cardLevelUpResponseSchema = z.object({
