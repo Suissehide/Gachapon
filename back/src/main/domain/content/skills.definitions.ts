@@ -124,7 +124,7 @@ export const SKILL_NODE_TEXT = {
   prisme: {
     nameFr: 'Prisme',
     nameEn: 'Prism',
-    descriptionFr: 'Augmente les chances de variantes Brillant/Holo',
+    descriptionFr: 'Augmente les chances de variantes Brillante/Holo',
     descriptionEn: 'Increases the odds of Brilliant/Holo variants',
   },
   recyclage: {

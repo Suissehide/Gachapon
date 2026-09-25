@@ -39,9 +39,8 @@ const RARITY_HEX: Record<string, string> = {
   LEGENDARY: '#f59e0b',
 }
 
-// `common:cardVariant.*` : accord MASCULIN, comme le libellé sous la carte de
-// l'écran de révélation. Le féminin (« Brillante ») vit dans
-// `common:variant.*`, lu par CardZoomOverlay.
+// `common:cardVariant.*` : même libellé que sous la carte de l'écran de
+// révélation. « Brillante » partout, accordé à « carte ».
 const VARIANT_LABELS: Record<string, { label: string; className: string }> = {
   BRILLIANT: {
     label: i18n.t('common:cardVariant.brilliant'),

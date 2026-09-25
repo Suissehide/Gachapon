@@ -35,11 +35,11 @@
       },
       "holographic": {
         "name": "Holographic",
-        "description": "A rainbow foil over the art. Only on rare, epic and legendary cards."
+        "description": "A rainbow foil over the art. The rarest of the three, only on rare, epic and legendary cards."
       },
       "brilliant": {
         "name": "Brilliant",
-        "description": "The rarest finish, with animated shine and its own reveal."
+        "description": "An animated shine and its own reveal."
       }
     }
   },

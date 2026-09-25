@@ -897,9 +897,8 @@ type CardProps = {
   registerRef: (el: HTMLDivElement | null) => void
 }
 
-// `common:cardVariant.*` porte l'accord MASCULIN (« Brillant ») ; la variante
-// féminine vit dans `common:variant.*` (« Brillante », CardZoomOverlay). Deux
-// jeux volontaires, même motif que `cardRarity`/`rarity` (rapport tâche 6).
+// `common:cardVariant.*` : « Brillante » partout, accordé à « carte » — le
+// même mot que `common:variant.*` (CardZoomOverlay).
 const VARIANT_LABELS: Record<string, string> = {
   BRILLIANT: i18n.t('common:cardVariant.brilliant'),
   HOLOGRAPHIC: i18n.t('common:cardVariant.holographic'),

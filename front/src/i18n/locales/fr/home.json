@@ -35,11 +35,11 @@
       },
       "holographic": {
         "name": "Holographique",
-        "description": "Un reflet arc-en-ciel sur l'illustration. Seulement sur les cartes rares, épiques et légendaires."
+        "description": "Un reflet arc-en-ciel sur l'illustration. La plus rare des trois, seulement sur les cartes rares, épiques et légendaires."
       },
       "brilliant": {
         "name": "Brillante",
-        "description": "La finition la plus rare, avec un éclat animé et sa propre révélation."
+        "description": "Un éclat animé et sa propre révélation."
       }
     }
   },
