@@ -74,12 +74,20 @@ describe('conversion d’un invité par email', () => {
     expect(login.statusCode).toBe(200)
   })
 
-  it('409 EMAIL_TAKEN si l’email appartient déjà à un compte', async () => {
+  it('409 EMAIL_TAKEN si l’email appartient déjà à un compte VÉRIFIÉ', async () => {
     const taken = `taken${suffix}@test.com`
     await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: { username: `tk${suffix}`, email: taken, password: 'Password123!' },
+    })
+    // `register` seul laisse le compte non vérifié (jeton valide 24h) : ce
+    // cas est couvert par le test « inscription non vérifiée en cours »
+    // plus bas, avec un 409 différent (pas EMAIL_TAKEN). Ici on simule un
+    // compte déjà VÉRIFIÉ, seul cas qui bloque définitivement.
+    await prisma().user.update({
+      where: { email: taken },
+      data: { emailVerifiedAt: new Date() },
     })
     const { cookies } = await createGuest(app)
     const res = await upgrade(cookies, taken)
@@ -92,8 +100,16 @@ describe('conversion d’un invité par email', () => {
     const email = `race${suffix}@test.com`
     expect((await upgrade(cookies, email)).statusCode).toBe(202)
 
+    // Compte VÉRIFIÉ : seule une adresse définitivement prise doit bloquer
+    // la conversion et effacer pendingEmail (voir les deux tests suivants
+    // pour le cas d'une inscription non vérifiée).
     await prisma().user.create({
-      data: { username: `race${suffix}`, email, locale: 'EN' },
+      data: {
+        username: `race${suffix}`,
+        email,
+        locale: 'EN',
+        emailVerifiedAt: new Date(),
+      },
     })
 
     const { emailVerificationToken } = await prisma().user.findUniqueOrThrow({
@@ -132,6 +148,62 @@ describe('conversion d’un invité par email', () => {
       .map((c) => c.split(';')[0])
       .join('; ')
     expect((await upgrade(cookies, `x${suffix}@test.com`)).statusCode).toBe(403)
+  })
+
+  it('une inscription non vérifiée et expirée cède la place à la conversion', async () => {
+    const staleEmail = `stale${suffix}@test.com`
+    const stale = await prisma().user.create({
+      data: {
+        username: `stale${suffix}`,
+        email: staleEmail,
+        locale: 'EN',
+        emailVerificationToken: 'expired-token-stale',
+        emailVerificationTokenExpiresAt: new Date(Date.now() - 1000),
+      },
+    })
+
+    const { cookies, body } = await createGuest(app)
+    const res = await upgrade(cookies, staleEmail)
+    expect(res.statusCode).toBe(202)
+
+    // La ligne fantôme a été supprimée, pas seulement ignorée.
+    const staleAfter = await prisma().user.findUnique({
+      where: { id: stale.id },
+    })
+    expect(staleAfter).toBeNull()
+
+    const pending = await prisma().user.findUniqueOrThrow({
+      where: { id: body.id },
+    })
+    const verify = await app.inject({
+      method: 'POST',
+      url: '/auth/verify-email',
+      payload: { token: pending.emailVerificationToken },
+    })
+    expect(verify.statusCode).toBe(200)
+
+    const done = await prisma().user.findUniqueOrThrow({
+      where: { id: body.id },
+    })
+    expect(done.role).toBe('USER')
+    expect(done.email).toBe(staleEmail)
+  })
+
+  it('409 (pas EMAIL_TAKEN) si une inscription non vérifiée est encore en cours pour cet email', async () => {
+    const pendingEmail = `pendingsignup${suffix}@test.com`
+    await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        username: `ps${suffix}`,
+        email: pendingEmail,
+        password: 'Password123!',
+      },
+    })
+    const { cookies } = await createGuest(app)
+    const res = await upgrade(cookies, pendingEmail)
+    expect(res.statusCode).toBe(409)
+    expect(res.json().code).toBeUndefined()
   })
 
   it('429 si on renvoie avant 2 minutes', async () => {

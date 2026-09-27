@@ -227,8 +227,21 @@ export class AuthDomain implements AuthDomainInterface {
       })
       return emailTaken(errorMessage('auth.pendingEmailTaken'))
     }
-    if (await this.#userRepository.findByEmail(pendingEmail)) {
+    // Même règle qu'à la demande (`GuestDomain#requestEmailUpgrade`) et
+    // qu'à `register` : seul un compte VÉRIFIÉ, ou une inscription non
+    // vérifiée dont le jeton n'a pas expiré, bloque la conversion. Une
+    // inscription non vérifiée et expirée est éphémère : on la supprime et
+    // on continue, sinon elle squatterait l'email pour toujours.
+    const existing = await this.#userRepository.findByEmail(pendingEmail)
+    if (existing?.emailVerifiedAt) {
       throw await taken()
+    }
+    if (existing && !existing.emailVerifiedAt) {
+      const expiresAt = existing.emailVerificationTokenExpiresAt
+      if (expiresAt && expiresAt > new Date()) {
+        throw Boom.conflict(errorMessage('auth.unverifiedAccountPending'))
+      }
+      await this.#userRepository.deleteUnverifiedByEmail(pendingEmail)
     }
     try {
       const converted = await this.#userRepository.update(userId, {

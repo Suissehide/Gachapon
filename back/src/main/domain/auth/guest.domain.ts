@@ -128,8 +128,20 @@ export class GuestDomain implements GuestDomainInterface {
     // Le normalizerExtension n'abaisse que `email` : `pendingEmail` est
     // normalisé ici, pour que la copie vers `email` au clic reste cohérente.
     const email = input.email.toLowerCase()
-    if (await this.#userRepository.findByEmail(email)) {
+    // Même règle qu'`AuthDomain#register` : un compte vérifié bloque, un
+    // compte non vérifié dont le jeton a expiré est éphémère et cède la
+    // place (sinon une inscription jamais confirmée squatterait l'email à
+    // vie et bloquerait toute conversion future).
+    const existing = await this.#userRepository.findByEmail(email)
+    if (existing?.emailVerifiedAt) {
       throw emailTaken(errorMessage('auth.emailAlreadyInUse'))
+    }
+    if (existing && !existing.emailVerifiedAt) {
+      const expiresAt = existing.emailVerificationTokenExpiresAt
+      if (expiresAt && expiresAt > new Date()) {
+        throw Boom.conflict(errorMessage('auth.unverifiedAccountPending'))
+      }
+      await this.#userRepository.deleteUnverifiedByEmail(email)
     }
     const token = randomUUID()
     await this.#userRepository.update(user.id, {
