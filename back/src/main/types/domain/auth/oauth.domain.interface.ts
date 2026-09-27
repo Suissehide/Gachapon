@@ -3,7 +3,9 @@ import type { TokenPair } from './auth.types'
 
 export type OAuthProviderName = 'google' | 'discord'
 
-export type OAuthMode = 'login' | 'register'
+export type OAuthMode = 'login' | 'register' | 'link'
+
+export type OAuthUserInfo = { id: string; email: string; username: string }
 
 export interface OAuthDomainInterface {
   getAuthorizationUrl(
@@ -14,5 +16,16 @@ export interface OAuthDomainInterface {
   handleCallback(
     provider: OAuthProviderName,
     code: string,
-  ): Promise<{ user: UserEntity; tokens: TokenPair; isNew: boolean }>
+    linkUserId?: string,
+  ): Promise<{
+    user: UserEntity
+    tokens: TokenPair
+    isNew: boolean
+    linked: boolean
+  }>
+  linkGuest(
+    guestId: string,
+    provider: OAuthProviderName,
+    info: { id: string; email: string },
+  ): Promise<UserEntity>
 }

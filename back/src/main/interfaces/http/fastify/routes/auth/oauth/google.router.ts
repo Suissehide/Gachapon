@@ -7,7 +7,7 @@ import {
   oauthAuthorizeQuerySchema,
   oauthCallbackQuerySchema,
 } from '../../../schemas/auth.schemas'
-import { setTokenCookies } from '../helpers'
+import { completeOAuthCallback } from '../helpers'
 
 export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
   const { oauthDomain, config } = fastify.iocContainer
@@ -20,7 +20,7 @@ export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
         querystring: oauthAuthorizeQuerySchema,
       },
     },
-    (request, reply) => {
+    async (request, reply) => {
       const state = randomBytes(16).toString('hex')
       reply.setCookie('oauth_state', state, {
         httpOnly: true,
@@ -29,6 +29,22 @@ export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
         path: '/',
         sameSite: 'lax',
       })
+      if (request.query.mode === 'link') {
+        // Lie la popup OAuth à l'invité connecté. Cookie SIGNÉ : un tiers ne
+        // peut pas y écrire l'id d'un autre invité.
+        await fastify.verifySessionCookie(request)
+        if (request.user.role !== 'GUEST') {
+          throw Boom.forbidden(errorMessage('auth.guestOnly'))
+        }
+        reply.setCookie('oauth_link', request.user.userID, {
+          httpOnly: true,
+          secure: true,
+          signed: true,
+          maxAge: 600,
+          path: '/',
+          sameSite: 'lax',
+        })
+      }
       return reply.redirect(
         oauthDomain.getAuthorizationUrl('google', state, request.query.mode),
       )
@@ -40,7 +56,7 @@ export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       schema: { hide: true, querystring: oauthCallbackQuerySchema },
     },
-    async (request, reply) => {
+    (request, reply) => {
       const { code, state } = request.query
       if (
         !request.cookies.oauth_state ||
@@ -48,10 +64,14 @@ export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
       ) {
         throw Boom.forbidden(errorMessage('auth.oauthInvalidState'))
       }
-      const { tokens } = await oauthDomain.handleCallback('google', code)
-      setTokenCookies(reply, tokens)
-      reply.clearCookie('oauth_state', { path: '/' })
-      return reply.redirect(`${config.frontUrl}/oauth/success`)
+      return completeOAuthCallback(
+        oauthDomain,
+        'google',
+        code,
+        request,
+        reply,
+        config.frontUrl,
+      )
     },
   )
 }

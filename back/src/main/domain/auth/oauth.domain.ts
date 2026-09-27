@@ -7,19 +7,27 @@ import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
 import type { IocContainer } from '../../types/application/ioc'
+import type { IActivityDomain } from '../../types/domain/activity/activity.domain.interface'
 import type { AuthDomainInterface } from '../../types/domain/auth/auth.domain.interface'
 import type { TokenPair } from '../../types/domain/auth/auth.types'
 import type {
   OAuthDomainInterface,
   OAuthMode,
   OAuthProviderName,
+  OAuthUserInfo,
 } from '../../types/domain/auth/oauth.domain.interface'
 import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 
-type OAuthUserInfo = { id: string; email: string; username: string }
+/** Conflit de liaison : l'appelant redirige vers `?link_error=account_exists`. */
+export class OAuthLinkConflictError extends Error {
+  constructor() {
+    super('OAUTH_LINK_CONFLICT')
+    this.name = 'OAuthLinkConflictError'
+  }
+}
 
 export class OAuthDomain implements OAuthDomainInterface {
   readonly #config: Config
@@ -29,6 +37,7 @@ export class OAuthDomain implements OAuthDomainInterface {
   readonly #postgresOrm: PostgresOrm
   readonly #streakDomain: StreakDomainInterface
   readonly #configService: ConfigServiceInterface
+  readonly #activityDomain: IActivityDomain
 
   constructor({
     config,
@@ -38,6 +47,7 @@ export class OAuthDomain implements OAuthDomainInterface {
     postgresOrm,
     streakDomain,
     configService,
+    activityDomain,
   }: IocContainer) {
     this.#config = config
     this.#userRepository = userRepository
@@ -46,6 +56,7 @@ export class OAuthDomain implements OAuthDomainInterface {
     this.#postgresOrm = postgresOrm
     this.#streakDomain = streakDomain
     this.#configService = configService
+    this.#activityDomain = activityDomain
   }
 
   getAuthorizationUrl(
@@ -61,9 +72,9 @@ export class OAuthDomain implements OAuthDomainInterface {
           response_type: 'code',
           scope: 'openid email profile',
           state,
-          // Force the consent screen on sign-up; let returning users
-          // through the default (silent) flow on login.
-          ...(mode === 'register' ? { prompt: 'consent' } : {}),
+          // Force the consent screen on sign-up and on account linking; let
+          // returning users through the default (silent) flow on login.
+          ...(mode !== 'login' ? { prompt: 'consent' } : {}),
         },
       )}`
     }
@@ -74,9 +85,10 @@ export class OAuthDomain implements OAuthDomainInterface {
         response_type: 'code',
         scope: 'identify email',
         state,
-        // Sign-up must show the consent screen; login attempts silent
-        // auth and falls back to consent via the callback on access_denied.
-        prompt: mode === 'register' ? 'consent' : 'none',
+        // Sign-up and account linking must show the consent screen; login
+        // attempts silent auth and falls back to consent via the callback
+        // on access_denied.
+        prompt: mode !== 'login' ? 'consent' : 'none',
       })}`
     }
     throw Boom.badRequest(errorMessage('auth.unknownProvider'))
@@ -85,11 +97,23 @@ export class OAuthDomain implements OAuthDomainInterface {
   async handleCallback(
     provider: OAuthProviderName,
     code: string,
-  ): Promise<{ user: UserEntity; tokens: TokenPair; isNew: boolean }> {
+    linkUserId?: string,
+  ): Promise<{
+    user: UserEntity
+    tokens: TokenPair
+    isNew: boolean
+    linked: boolean
+  }> {
     const userInfo =
       provider === 'google'
         ? await this.#fetchGoogleUser(code)
         : await this.#fetchDiscordUser(code)
+
+    if (linkUserId) {
+      const user = await this.linkGuest(linkUserId, provider, userInfo)
+      const tokens = await this.#authDomain.generateTokenPair(user)
+      return { user, tokens, isNew: false, linked: true }
+    }
 
     const prismaProvider =
       provider === 'google' ? OAuthProvider.GOOGLE : OAuthProvider.DISCORD
@@ -111,7 +135,7 @@ export class OAuthDomain implements OAuthDomainInterface {
         console.error('[StreakDomain] updateStreak failed:', err)
       }
       const tokens = await this.#authDomain.generateTokenPair(user)
-      return { user, tokens, isNew: false }
+      return { user, tokens, isNew: false, linked: false }
     }
 
     let user = await this.#userRepository.findByEmail(userInfo.email)
@@ -150,7 +174,62 @@ export class OAuthDomain implements OAuthDomainInterface {
       console.error('[StreakDomain] updateStreak failed:', err)
     }
     const tokens = await this.#authDomain.generateTokenPair(resolvedUser)
-    return { user: resolvedUser, tokens, isNew }
+    return { user: resolvedUser, tokens, isNew, linked: false }
+  }
+
+  /**
+   * Rattache un compte OAuth à un invité : plus jamais de fusion ni de
+   * liaison automatique par email (règle du plan). Un email déjà possédé
+   * bloque — sauf s'il s'agit d'une inscription par mot de passe jamais
+   * vérifiée et dont le jeton a expiré (même règle que
+   * `GuestDomain#requestEmailUpgrade` / `AuthDomain#convertGuest`) : cette
+   * ligne est éphémère et cède la place. Un compte créé par OAuth
+   * (`passwordHash === null`) n'a jamais `emailVerifiedAt` ni de jeton — il
+   * doit bloquer quand même, d'où le test explicite sur `passwordHash`.
+   */
+  async linkGuest(
+    guestId: string,
+    provider: OAuthProviderName,
+    info: { id: string; email: string },
+  ): Promise<UserEntity> {
+    const guest = await this.#userRepository.findById(guestId)
+    if (!guest || guest.role !== 'GUEST') {
+      throw Boom.forbidden(errorMessage('auth.guestOnly'))
+    }
+    const prismaProvider =
+      provider === 'google' ? OAuthProvider.GOOGLE : OAuthProvider.DISCORD
+    const email = info.email.toLowerCase()
+    const [linked, owner] = await Promise.all([
+      this.#oauthAccountRepository.findByProvider(prismaProvider, info.id),
+      this.#userRepository.findByEmail(email),
+    ])
+    if (linked) {
+      throw new OAuthLinkConflictError()
+    }
+    if (owner) {
+      const tokenPending =
+        !!owner.emailVerificationTokenExpiresAt &&
+        owner.emailVerificationTokenExpiresAt > new Date()
+      const blocks =
+        owner.emailVerifiedAt !== null ||
+        owner.passwordHash === null ||
+        tokenPending
+      if (blocks) {
+        throw new OAuthLinkConflictError()
+      }
+      await this.#userRepository.deleteUnverifiedByEmail(email)
+    }
+    const user = await this.#userRepository.update(guest.id, {
+      email,
+      role: 'USER',
+    })
+    await this.#oauthAccountRepository.create(user.id, prismaProvider, info.id)
+    void this.#activityDomain.record('GUEST_CONVERTED', {
+      userId: user.id,
+      username: user.username,
+      payload: { method: prismaProvider },
+    })
+    return user
   }
 
   async #fetchGoogleUser(code: string): Promise<OAuthUserInfo> {

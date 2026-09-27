@@ -46,7 +46,7 @@ export const registerResponseSchema = z.object({
 // ── OAuth ──────────────────────────────────────────────────────────────────
 
 export const oauthAuthorizeQuerySchema = z.object({
-  mode: z.enum(['login', 'register']).default('login'),
+  mode: z.enum(['login', 'register', 'link']).default('login'),
 })
 
 export const oauthCallbackQuerySchema = z.object({
