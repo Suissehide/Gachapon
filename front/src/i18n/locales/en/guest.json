@@ -34,7 +34,8 @@
     "conflict": "This account already exists. Signing in to it will abandon your guest progress.",
     "loginInstead": "Sign in to this account",
     "emailUnverified": "Your Google/Discord account has no verified email: verify it with them or use an email here instead.",
-    "linked": "Account saved: your progress is kept."
+    "linked": "Account saved: your progress is kept.",
+    "linkFailed": "Linking failed, try again."
   },
   "link": {
     "google": "Save with Google",

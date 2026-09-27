@@ -34,7 +34,8 @@
     "conflict": "Ce compte existe déjà. Te connecter dessus abandonnera ta progression invitée.",
     "loginInstead": "Se connecter à ce compte",
     "emailUnverified": "Ton compte Google/Discord n'a pas d'email vérifié : vérifie-le chez eux ou utilise un email ici.",
-    "linked": "Compte sauvegardé : ta progression est conservée."
+    "linked": "Compte sauvegardé : ta progression est conservée.",
+    "linkFailed": "La liaison a échoué, réessaie."
   },
   "link": {
     "google": "Sauvegarder avec Google",

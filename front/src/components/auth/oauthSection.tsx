@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import DiscordIcon from '../../assets/icons/discord.svg?react'
 import GoogleIcon from '../../assets/icons/google.svg?react'
 import { apiUrl } from '../../constants/config.constant.ts'
+import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
+import { useToast } from '../../hooks/useToast.ts'
 import { useAuthStore, useIsGuest } from '../../stores/auth.store'
 import { useAuthDialogStore } from '../../stores/authDialog.store'
 import { Button } from '../ui/button.tsx'
@@ -21,7 +23,11 @@ export function OAuthDivider() {
   )
 }
 
-type OAuthLinkResult = 'linked' | 'account_exists' | 'email_unverified'
+type OAuthLinkResult =
+  | 'linked'
+  | 'account_exists'
+  | 'email_unverified'
+  | 'failed'
 
 export function OAuthButtons({
   action,
@@ -36,11 +42,24 @@ export function OAuthButtons({
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const setDialogOpen = useAuthDialogStore((s) => s.setOpen)
   const isGuest = useIsGuest()
+  const { toast } = useToast()
 
   const handleLinkError = (reason?: string) => {
     onLinked?.(
-      reason === 'email_unverified' ? 'email_unverified' : 'account_exists',
+      reason === 'email_unverified' || reason === 'account_exists'
+        ? reason
+        : 'failed',
     )
+  }
+
+  // Connexion/inscription refusée par le back (seul motif aujourd'hui :
+  // email non vérifié chez le fournisseur).
+  const handleOAuthError = () => {
+    toast({
+      title: t('oauth.errorTitle'),
+      message: t('oauth.emailUnverified'),
+      severity: TOAST_SEVERITY.ERROR,
+    })
   }
 
   const handleOAuthSuccess = () => {
@@ -84,13 +103,19 @@ export function OAuthButtons({
         linked?: boolean
         reason?: string
       }
-      if (data?.type !== 'oauth-link-error' && data?.type !== 'oauth-success') {
+      if (
+        data?.type !== 'oauth-link-error' &&
+        data?.type !== 'oauth-error' &&
+        data?.type !== 'oauth-success'
+      ) {
         return
       }
       window.removeEventListener('message', listener)
       popup.close()
       if (data.type === 'oauth-link-error') {
         handleLinkError(data.reason)
+      } else if (data.type === 'oauth-error') {
+        handleOAuthError()
       } else {
         handleOAuthSuccess()
       }

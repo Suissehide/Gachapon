@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { TeamsApi } from '../../api/teams.api'
 import { type FeedEntry, useLiveFeed } from '../../hooks/useLiveFeed'
 import { cn } from '../../libs/utils.ts'
+import { useIsGuest } from '../../stores/auth.store.ts'
 import { Select } from '../ui/input.tsx'
 import { FeedEntryRow } from './FeedEntry'
 
@@ -17,11 +18,15 @@ export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
   const [epicOnly, setEpicOnly] = useState(false)
   const [teamId, setTeamId] = useState<string | undefined>()
   const sentinelRef = useRef<HTMLDivElement>(null)
+  const isGuest = useIsGuest()
 
+  // Un invité n'a pas d'équipe : `GET /teams` lui répond GUEST_FORBIDDEN,
+  // et chaque tentative (retries, refetch au focus) afficherait un toast.
   const { data: teamsData } = useQuery({
     queryKey: ['teams'],
     queryFn: TeamsApi.getMyTeams,
     staleTime: 5 * 60_000,
+    enabled: !isGuest,
   })
   const teams = teamsData?.teams ?? []
 

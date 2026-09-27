@@ -11,10 +11,14 @@ import { useAuthDialogStore } from '../../stores/authDialog.store.ts'
 import { OAuthButtons, OAuthDivider } from '../auth/oauthSection.tsx'
 import { Button } from '../ui/button.tsx'
 
-type LinkIssue = 'account_exists' | 'email_unverified'
+type LinkIssue = 'account_exists' | 'email_unverified' | 'failed'
 
 function isLinkIssue(value: string | undefined): value is LinkIssue {
-  return value === 'account_exists' || value === 'email_unverified'
+  return (
+    value === 'account_exists' ||
+    value === 'email_unverified' ||
+    value === 'failed'
+  )
 }
 
 /**
@@ -107,6 +111,12 @@ export function GuestAccountCard({
       {linkIssue === 'email_unverified' && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
           <p className="text-text">{t('account.emailUnverified')}</p>
+        </div>
+      )}
+
+      {linkIssue === 'failed' && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
+          <p className="text-text">{t('account.linkFailed')}</p>
         </div>
       )}
 
