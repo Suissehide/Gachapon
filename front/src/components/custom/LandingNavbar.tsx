@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { discordInviteUrl } from '../../constants/config.constant'
+import { usePlayAsGuest } from '../../queries/useGuest.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import { useAuthDialogStore } from '../../stores/authDialog.store'
 import { AuthDialog } from '../auth/authDialog'
@@ -18,7 +19,7 @@ import {
 } from './MobileMenu.tsx'
 
 export function LandingNavbar() {
-  const { t } = useTranslation(['layout', 'about', 'home'])
+  const { t } = useTranslation(['layout', 'about', 'home', 'guest'])
 
   const NAV_ITEMS = [
     { to: '/guide' as const, label: t('layout:landingNav.guide') },
@@ -64,6 +65,7 @@ export function LandingNavbar() {
   } = useAuthDialogStore()
 
   const { menuOpen, setMenuOpen, closeMenu } = useMobileMenu()
+  const { play, isPending } = usePlayAsGuest()
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -200,10 +202,18 @@ export function LandingNavbar() {
                   {t('home:footer.login')}
                 </Button>
                 <Button
+                  variant="ghost"
                   onClick={openRegister}
-                  className="flex rounded-full h-9 text-sm px-4 lg:px-5 shadow-sm shadow-primary/20"
+                  className="hidden lg:flex text-sm text-text-light"
                 >
                   {t('layout:landingNav.signUpButton')}
+                </Button>
+                <Button
+                  onClick={play}
+                  disabled={isPending}
+                  className="flex rounded-full h-9 text-sm px-4 lg:px-5 shadow-sm shadow-primary/20"
+                >
+                  {t('guest:play')}
                 </Button>
               </>
             )}

@@ -9,6 +9,7 @@ import { SeoHead } from '../components/shared/SeoHead.tsx'
 import { Button } from '../components/ui/button.tsx'
 import { Card } from '../components/ui/card.tsx'
 import { currentLocale } from '../i18n/index.ts'
+import { usePlayAsGuest } from '../queries/useGuest.ts'
 import { useAuthDialogStore } from '../stores/authDialog.store'
 
 export const Route = createFileRoute('/')({
@@ -166,8 +167,9 @@ const FLOATING_BALLS: Array<{
 // ── Component ─────────────────────────────────────────────────────────────────
 
 function LandingPage() {
-  const { t } = useTranslation('home')
+  const { t } = useTranslation(['home', 'guest'])
   const { openLogin, openRegister } = useAuthDialogStore()
+  const { play, isPending } = usePlayAsGuest()
 
   // Aplatie une fois par rendu : `FAQ_ITEMS` porte les deux langues (une seule
   // copie, partagée avec scripts/prerender-seo.mjs, pour que le HTML statique
@@ -262,11 +264,23 @@ function LandingPage() {
             >
               <Button
                 size="lg"
-                onClick={openRegister}
+                onClick={play}
+                disabled={isPending}
                 className="rounded-full px-8 shadow-lg shadow-primary/20"
               >
-                {t('hero.joinButton')}
+                {t('guest:play')}
               </Button>
+              <p className="text-xs text-text-light">
+                {t('guest:playHint')}{' '}
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={openRegister}
+                  className="h-auto p-0 text-xs"
+                >
+                  {t('footer.createAccount')}
+                </Button>
+              </p>
             </div>
           </div>
 
@@ -641,10 +655,11 @@ function LandingPage() {
             </p>
             <Button
               size="lg"
-              onClick={openRegister}
+              onClick={play}
+              disabled={isPending}
               className="rounded-full px-10 shadow-lg shadow-primary/20"
             >
-              {t('hero.joinButton')}
+              {t('guest:play')}
             </Button>
           </Card>
         </div>

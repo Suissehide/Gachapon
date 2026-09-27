@@ -8,8 +8,9 @@ import { useAchievementUnlockStore } from './achievementUnlock.store.ts'
 export type AuthUser = {
   id: string
   username: string
-  email: string
-  role: string
+  email: string | null
+  pendingEmail: string | null
+  role: 'USER' | 'SUPER_ADMIN' | 'GUEST'
   tokens: number
   dust: number
   gold: number
@@ -23,7 +24,7 @@ type MeResponse = AuthUser & {
   unlockedAchievements?: UnlockedAchievement[]
 }
 
-type AuthState = {
+export type AuthState = {
   user: AuthUser | null
   isLoading: boolean
   isAuthenticated: boolean
@@ -65,3 +66,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setUser: (user) => set({ user, isAuthenticated: true, isLoading: false }),
 }))
+
+export const selectIsGuest = (s: AuthState) => s.user?.role === 'GUEST'
+
+/** Vrai pour un compte invité (joue sans email, pas de fonctions sociales). */
+export const useIsGuest = () => useAuthStore(selectIsGuest)

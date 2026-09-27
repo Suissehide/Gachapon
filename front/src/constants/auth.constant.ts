@@ -7,4 +7,6 @@ export const AUTH_ROUTES = {
   resendVerification: '/auth/resend-verification',
   forgotPassword: '/auth/forgot-password',
   resetPassword: '/auth/reset-password',
+  guest: '/auth/guest',
+  guestUpgrade: '/auth/guest/upgrade',
 } as const

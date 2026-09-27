@@ -13,6 +13,7 @@ import discordEn from './locales/en/discord.json'
 import equipmentEn from './locales/en/equipment.json'
 import errorsEn from './locales/en/errors.json'
 import gachaEn from './locales/en/gacha.json'
+import guestEn from './locales/en/guest.json'
 import guideEn from './locales/en/guide.json'
 import homeEn from './locales/en/home.json'
 import layoutEn from './locales/en/layout.json'
@@ -45,6 +46,7 @@ import discordFr from './locales/fr/discord.json'
 import equipmentFr from './locales/fr/equipment.json'
 import errorsFr from './locales/fr/errors.json'
 import gachaFr from './locales/fr/gacha.json'
+import guestFr from './locales/fr/guest.json'
 import guideFr from './locales/fr/guide.json'
 import homeFr from './locales/fr/home.json'
 import layoutFr from './locales/fr/layout.json'
@@ -365,6 +367,7 @@ void i18next.use(initReactI18next).init({
       streak: streakFr,
       equipment: equipmentFr,
       gacha: gachaFr,
+      guest: guestFr,
       quests: questsFr,
       leaderboard: leaderboardFr,
       home: homeFr,
@@ -399,6 +402,7 @@ void i18next.use(initReactI18next).init({
       streak: streakEn,
       equipment: equipmentEn,
       gacha: gachaEn,
+      guest: guestEn,
       quests: questsEn,
       leaderboard: leaderboardEn,
       home: homeEn,
@@ -436,6 +440,7 @@ void i18next.use(initReactI18next).init({
     'streak',
     'equipment',
     'gacha',
+    'guest',
     'quests',
     'leaderboard',
     'home',

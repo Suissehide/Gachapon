@@ -321,6 +321,7 @@ const NAMESPACES = [
   'streak',
   'equipment',
   'gacha',
+  'guest',
   'quests',
   'leaderboard',
   'home',

@@ -1,0 +1,12 @@
+{
+  "play": "Jouer",
+  "playHint": "Sans compte : ta progression est sauvegardée sur ce navigateur",
+  "limit": {
+    "title": "Crée un compte pour continuer",
+    "message": "Trop de parties invitées ont été lancées depuis ta connexion aujourd'hui."
+  },
+  "errors": {
+    "createTitle": "Impossible de lancer la partie",
+    "upgradeTitle": "Impossible de sauvegarder ta progression"
+  }
+}

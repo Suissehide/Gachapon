@@ -1,0 +1,12 @@
+{
+  "play": "Play",
+  "playHint": "No account needed: your progress is saved in this browser",
+  "limit": {
+    "title": "Create an account to continue",
+    "message": "Too many guest games were started from your connection today."
+  },
+  "errors": {
+    "createTitle": "Could not start the game",
+    "upgradeTitle": "Could not save your progress"
+  }
+}
