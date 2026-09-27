@@ -69,7 +69,10 @@ export function OAuthButtons({
     }
     if (action === 'link') {
       await fetchMe()
-      popup.location.href = authorizeUrl
+      // L'utilisateur a pu fermer la popup pendant le `await` ci-dessus.
+      if (!popup.closed) {
+        popup.location.href = authorizeUrl
+      }
     }
     const listener = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) {

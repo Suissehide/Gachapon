@@ -63,7 +63,16 @@ export function GuestAccountCard({
         (err: unknown) => {
           if (err instanceof EmailTakenError) {
             setLinkIssue('account_exists')
+            return
           }
+          // 409 sans code (inscription classique déjà en attente pour cet
+          // email), 429 (cooldown), réseau/5xx… : pas de bannière dédiée,
+          // mais le message serveur déjà traduit ne doit pas être avalé.
+          toast({
+            title: t('errors.upgradeTitle'),
+            message: (err as Error).message,
+            severity: TOAST_SEVERITY.ERROR,
+          })
         },
       ),
   })
