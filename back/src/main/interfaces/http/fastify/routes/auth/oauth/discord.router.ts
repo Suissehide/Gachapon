@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import Boom from '@hapi/boom'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import {
@@ -24,6 +25,65 @@ const LINK_COOKIE_OPTS = {
 
 export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
   const { oauthDomain, config } = fastify.iocContainer
+
+  /**
+   * Discord renvoie `error=access_denied` quand `prompt=none` échoue (pas
+   * encore autorisé) : on relance le flux avec l'écran de consentement.
+   */
+  const restartWithConsent = (
+    request: FastifyRequest,
+    reply: FastifyReply,
+    state: string | undefined,
+  ) => {
+    // Même contrôle que le chemin normal : sans lui, n'importe quelle URL
+    // `?error=…` forgée relançait un aller-retour de consentement et
+    // ré-signait le cookie de liaison.
+    if (
+      !state ||
+      !request.cookies.oauth_state ||
+      request.cookies.oauth_state !== state
+    ) {
+      throw Boom.forbidden(errorMessage('auth.oauthInvalidState'))
+    }
+    reply.clearCookie('oauth_state', { path: '/' })
+    const fallbackState = randomBytes(16).toString('hex')
+    reply.setCookie('oauth_state', fallbackState, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 600,
+      path: '/',
+      sameSite: 'lax',
+    })
+    // Un flux `link` en cours survit à ce repli : on reporte la liaison
+    // sur le nouveau `state` (même cookie signé, nouvelle valeur), sinon
+    // le second aller-retour la perdrait silencieusement. Seulement si le
+    // cookie appartient à CE round-trip : un cookie orphelin d'un autre
+    // `state` n'est jamais ré-signé (voir `oauth-link-cookie.ts`).
+    const rawLink = request.cookies.oauth_link
+    const decoded = decodeLinkCookie(
+      rawLink ? request.unsignCookie(rawLink) : null,
+    )
+    if (decoded && decoded.state === state) {
+      reply.setCookie(
+        'oauth_link',
+        encodeLinkCookie(decoded.userId, fallbackState),
+        LINK_COOKIE_OPTS,
+      )
+    } else if (rawLink) {
+      reply.clearCookie('oauth_link', { path: '/' })
+    }
+    const consentUrl = `https://discord.com/api/oauth2/authorize?${new URLSearchParams(
+      {
+        client_id: config.discordClientId,
+        redirect_uri: config.discordRedirectUri,
+        response_type: 'code',
+        scope: 'identify email',
+        state: fallbackState,
+        prompt: 'consent',
+      },
+    )}`
+    return reply.redirect(consentUrl)
+  }
 
   fastify.get(
     '/authorize',
@@ -78,43 +138,8 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
     (request, reply) => {
       const { code, state, error } = request.query
 
-      // Discord returns error=access_denied when prompt=none but user hasn't authorized yet.
-      // Fall back to the full consent flow.
       if (error) {
-        reply.clearCookie('oauth_state', { path: '/' })
-        const fallbackState = randomBytes(16).toString('hex')
-        reply.setCookie('oauth_state', fallbackState, {
-          httpOnly: true,
-          secure: true,
-          maxAge: 600,
-          path: '/',
-          sameSite: 'lax',
-        })
-        // Un flux `link` en cours survit à ce repli : on reporte la liaison
-        // sur le nouveau `state` (même cookie signé, nouvelle valeur), sinon
-        // le second aller-retour la perdrait silencieusement.
-        const rawLink = request.cookies.oauth_link
-        const decoded = decodeLinkCookie(
-          rawLink ? request.unsignCookie(rawLink) : null,
-        )
-        if (decoded) {
-          reply.setCookie(
-            'oauth_link',
-            encodeLinkCookie(decoded.userId, fallbackState),
-            LINK_COOKIE_OPTS,
-          )
-        }
-        const consentUrl = `https://discord.com/api/oauth2/authorize?${new URLSearchParams(
-          {
-            client_id: config.discordClientId,
-            redirect_uri: config.discordRedirectUri,
-            response_type: 'code',
-            scope: 'identify email',
-            state: fallbackState,
-            prompt: 'consent',
-          },
-        )}`
-        return reply.redirect(consentUrl)
+        return restartWithConsent(request, reply, state)
       }
 
       if (!code || !state) {

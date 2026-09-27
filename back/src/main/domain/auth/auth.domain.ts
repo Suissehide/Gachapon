@@ -216,8 +216,9 @@ export class AuthDomain implements AuthDomainInterface {
 
   /**
    * Un invité clique le lien envoyé à son `pendingEmail`. L'email a pu être
-   * pris entre la demande et le clic : on re-vérifie dans la transaction,
-   * et l'index unique sur `email` tranche une éventuelle course (P2002).
+   * pris entre la demande et le clic : on re-vérifie juste avant l'écriture
+   * (pas de transaction ici), et c'est l'index unique sur `email` qui ferme
+   * la course restante (P2002 → `pendingEmailTaken`).
    */
   async #convertGuest(
     userId: string,

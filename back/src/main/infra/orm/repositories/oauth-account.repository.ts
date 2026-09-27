@@ -1,5 +1,6 @@
 import type { OAuthAccount, OAuthProvider } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
+import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class OAuthAccountRepository {
@@ -23,7 +24,16 @@ export class OAuthAccountRepository {
     provider: OAuthProvider,
     providerAccountId: string,
   ): Promise<OAuthAccount> {
-    return this.#prisma.oAuthAccount.create({
+    return this.createInTx(this.#prisma, userId, provider, providerAccountId)
+  }
+
+  createInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    provider: OAuthProvider,
+    providerAccountId: string,
+  ): Promise<OAuthAccount> {
+    return tx.oAuthAccount.create({
       data: { userId, provider, providerAccountId },
     })
   }

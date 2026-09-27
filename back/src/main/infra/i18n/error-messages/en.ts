@@ -26,7 +26,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'auth.unknownProvider': 'Unknown provider',
   'auth.oauthTokenExchangeFailed': 'OAuth provider token exchange failed',
   'auth.oauthUserinfoFailed': 'OAuth provider userinfo fetch failed',
-  'auth.oauthEmailMissing': 'This account has no email with this provider',
+  'auth.oauthEmailUnverified':
+    'Your Google/Discord account has no verified email. Verify it with them, then try again.',
   'auth.invalidApiKey': 'Invalid API key',
   'auth.accountSuspended': 'Account suspended',
   'auth.noAccessToken': 'No access token',
@@ -47,6 +48,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'profile.cardNotInCollection': 'Card not in your collection',
   'admin.cannotChangeOwnRole': 'Cannot change your own role',
   'admin.cannotSuspendSelf': 'Cannot suspend your own account',
+  'admin.cannotChangeGuestRole':
+    'Cannot change a guest’s role: they must create their account first',
 
   // --- collection / cards ---
   'collection.cardNotFound': 'Card not found',

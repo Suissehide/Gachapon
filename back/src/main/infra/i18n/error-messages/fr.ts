@@ -40,8 +40,8 @@ export const FR_MESSAGES = {
     'Échec de l’échange du jeton auprès du fournisseur OAuth',
   'auth.oauthUserinfoFailed':
     'Échec de récupération du profil auprès du fournisseur OAuth',
-  'auth.oauthEmailMissing':
-    'Ce compte n’a pas d’email associé chez ce fournisseur',
+  'auth.oauthEmailUnverified':
+    'Ton compte Google/Discord n’a pas d’email vérifié. Vérifie-le chez eux puis réessaie.',
   'auth.invalidApiKey': 'Clé API invalide',
   'auth.accountSuspended': 'Compte suspendu',
   'auth.noAccessToken': 'Aucun jeton d’accès',
@@ -63,6 +63,8 @@ export const FR_MESSAGES = {
   'profile.cardNotInCollection': 'Cette carte n’est pas dans ta collection',
   'admin.cannotChangeOwnRole': 'Impossible de modifier son propre rôle',
   'admin.cannotSuspendSelf': 'Impossible de suspendre son propre compte',
+  'admin.cannotChangeGuestRole':
+    'Impossible de changer le rôle d’un invité : il doit d’abord créer son compte',
 
   // --- collection / cartes ---
   'collection.cardNotFound': 'Carte introuvable',

@@ -49,6 +49,14 @@ export class UserRepository implements UserRepositoryInterface {
     return this.#prisma.user.update({ where: { id }, data: input })
   }
 
+  updateInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+    input: UpdateUserInput,
+  ): Promise<UserEntity> {
+    return tx.user.update({ where: { id }, data: input })
+  }
+
   async updateFeaturedCardIds(
     userId: string,
     cardIds: string[],
@@ -135,7 +143,14 @@ export class UserRepository implements UserRepositoryInterface {
    * `classifyEmailOwner` avant d'appeler cette méthode.
    */
   async deleteUnverifiedByEmail(email: string): Promise<void> {
-    await this.#prisma.user.deleteMany({
+    await this.deleteUnverifiedByEmailInTx(this.#prisma, email)
+  }
+
+  async deleteUnverifiedByEmailInTx(
+    tx: PrimaTransactionClient,
+    email: string,
+  ): Promise<void> {
+    await tx.user.deleteMany({
       where: { email, emailVerifiedAt: null, passwordHash: { not: null } },
     })
   }

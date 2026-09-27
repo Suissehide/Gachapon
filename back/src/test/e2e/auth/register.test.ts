@@ -103,12 +103,15 @@ describe('POST /auth/register', () => {
   })
 
   /**
-   * Régression de la revue de la tâche 6 : un compte né par OAuth (ou lié à
-   * un invité via `linkGuest`) a `passwordHash: null` et `emailVerifiedAt:
-   * null` — avant `classifyEmailOwner`, `register()` le traitait comme une
-   * inscription par mot de passe jamais vérifiée et le supprimait via
+   * Régression de la revue de la tâche 6 : un compte né par OAuth a
+   * `passwordHash: null` et `emailVerifiedAt: null` — avant
+   * `classifyEmailOwner`, `register()` le traitait comme une inscription par
+   * mot de passe jamais vérifiée et le supprimait via
    * `deleteUnverifiedByEmail`, laissant n'importe qui effacer un compte
-   * OAuth d'autrui en s'inscrivant avec son email.
+   * OAuth d'autrui en s'inscrivant avec son email. (Un invité rattaché par
+   * `linkGuest`, lui, sort avec `emailVerifiedAt` posé — et parfois un
+   * `passwordHash` hérité d'une demande de conversion email : voir
+   * `guest/upgrade-oauth.test.ts`.)
    */
   it('returns 409 and keeps the account when the email belongs to an OAuth-only account', async () => {
     const email = `oauthonly${suffix}@example.com`
@@ -118,7 +121,7 @@ describe('POST /auth/register', () => {
         email,
         locale: 'EN',
         // passwordHash / emailVerifiedAt restent null : c'est exactement
-        // l'état d'un compte OAuth-only ou d'un invité rattaché.
+        // l'état d'un compte OAuth-only.
       },
     })
 

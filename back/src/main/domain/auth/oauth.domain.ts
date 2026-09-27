@@ -35,6 +35,19 @@ export class OAuthLinkConflictError extends Error {
   }
 }
 
+/**
+ * Connexion/inscription OAuth refusée : le fournisseur ne garantit pas
+ * l'email. L'appelant redirige vers `?oauth_error=email_unverified`.
+ */
+export class OAuthEmailUnverifiedError extends Error {
+  readonly reason = 'email_unverified'
+
+  constructor() {
+    super(errorMessage('auth.oauthEmailUnverified'))
+    this.name = 'OAuthEmailUnverifiedError'
+  }
+}
+
 export class OAuthDomain implements OAuthDomainInterface {
   readonly #config: Config
   readonly #userRepository: UserRepositoryInterface
@@ -143,62 +156,80 @@ export class OAuthDomain implements OAuthDomainInterface {
       if (!user) {
         throw Boom.notFound(errorMessage('user.notFound'))
       }
-      try {
-        await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-          await this.#streakDomain.updateStreak(user.id, tx)
-        })
-      } catch (err) {
-        console.error('[StreakDomain] updateStreak failed:', err)
-      }
+      await this.#touchStreak(user.id)
       const tokens = await this.#authDomain.generateTokenPair(user)
       return { user, tokens, isNew: false, linked: false }
     }
 
-    // Chemin login/register : un compte sans OAuthAccount existant se
-    // rattache par email. Discord peut renvoyer `email: null` (compte sans
-    // adresse confirmée) — sans cette garde, `findByEmail(null)` casserait
-    // le typage et le flux plus loin.
-    if (!userInfo.email) {
-      throw Boom.badRequest(errorMessage('auth.oauthEmailMissing'))
-    }
-
-    let user = await this.#userRepository.findByEmail(userInfo.email)
-    let isNew = false
-
-    if (!user) {
-      const username = await this.#availableUsername(userInfo.username)
-      const tokenMaxStock = await this.#configService.get('tokenMaxStock')
-      // Même raisonnement que `auth.domain.ts#register` : la locale du
-      // callback OAuth (résolue par le hook de tâche 4, ici depuis
-      // l'`Accept-Language` que le navigateur envoie en revenant de
-      // Google/Discord) est le seul signal disponible sur la langue de ce
-      // nouveau compte — second et dernier chemin de création d'utilisateur
-      // dans `src/main` (voir `userRepository.create(` — 2 call sites).
-      user = await this.#userRepository.create({
-        username,
-        email: userInfo.email,
-        tokens: tokenMaxStock,
-        locale: getCurrentLocale(),
-      })
-      isNew = true
-    }
-
-    const resolvedUser = user
-
+    const { user, isNew } = await this.#findOrCreateByVerifiedEmail(userInfo)
     await this.#oauthAccountRepository.create(
-      resolvedUser.id,
+      user.id,
       prismaProvider,
       userInfo.id,
     )
+    await this.#touchStreak(user.id)
+    const tokens = await this.#authDomain.generateTokenPair(user)
+    return { user, tokens, isNew, linked: false }
+  }
+
+  /**
+   * Chemin login/register sans OAuthAccount existant : le compte se
+   * rattache par email, ou naît de cet email. Les deux supposent que le
+   * fournisseur garantit l'adresse : sans ça, n'importe qui pourrait
+   * déclarer chez Discord l'email d'autrui (non vérifié) et prendre son
+   * compte ici. Discord peut aussi renvoyer `email: null`.
+   */
+  async #findOrCreateByVerifiedEmail(
+    userInfo: OAuthUserInfo,
+  ): Promise<{ user: UserEntity; isNew: boolean }> {
+    if (!userInfo.email || !userInfo.emailVerified) {
+      throw new OAuthEmailUnverifiedError()
+    }
+
+    const existing = await this.#userRepository.findByEmail(userInfo.email)
+    if (existing) {
+      if (existing.emailVerifiedAt !== null || existing.passwordHash === null) {
+        return { user: existing, isNew: false }
+      }
+      // Inscription par mot de passe jamais confirmée : le fournisseur vient
+      // de prouver l'adresse, le compte devient vérifié. Le mot de passe, lui,
+      // n'a jamais été prouvé par le propriétaire de l'email (quelqu'un a pu
+      // pré-créer ce compte avec l'adresse d'autrui) : on l'efface plutôt
+      // que de lui ouvrir la porte. « Mot de passe oublié » le recrée.
+      const verified = await this.#userRepository.update(existing.id, {
+        emailVerifiedAt: new Date(),
+        passwordHash: null,
+        emailVerificationToken: null,
+        emailVerificationTokenExpiresAt: null,
+      })
+      return { user: verified, isNew: false }
+    }
+
+    const username = await this.#availableUsername(userInfo.username)
+    const tokenMaxStock = await this.#configService.get('tokenMaxStock')
+    // Même raisonnement que `auth.domain.ts#register` : la locale du
+    // callback OAuth (résolue par le hook de tâche 4, ici depuis
+    // l'`Accept-Language` que le navigateur envoie en revenant de
+    // Google/Discord) est le seul signal disponible sur la langue de ce
+    // nouveau compte — second et dernier chemin de création d'utilisateur
+    // dans `src/main` (voir `userRepository.create(` — 2 call sites).
+    const user = await this.#userRepository.create({
+      username,
+      email: userInfo.email,
+      tokens: tokenMaxStock,
+      locale: getCurrentLocale(),
+    })
+    return { user, isNew: true }
+  }
+
+  async #touchStreak(userId: string): Promise<void> {
     try {
       await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-        await this.#streakDomain.updateStreak(resolvedUser.id, tx)
+        await this.#streakDomain.updateStreak(userId, tx)
       })
     } catch (err) {
       console.error('[StreakDomain] updateStreak failed:', err)
     }
-    const tokens = await this.#authDomain.generateTokenPair(resolvedUser)
-    return { user: resolvedUser, tokens, isNew, linked: false }
   }
 
   /**
@@ -237,14 +268,46 @@ export class OAuthDomain implements OAuthDomainInterface {
     if (status === 'verified' || status === 'pending') {
       throw new OAuthLinkConflictError('account_exists')
     }
-    if (status === 'stale') {
-      await this.#userRepository.deleteUnverifiedByEmail(email)
+    // Une seule transaction : sans elle, un `create` qui échoue (P2002,
+    // liaison concurrente du même compte fournisseur) laissait un USER sans
+    // OAuthAccount. L'index unique (email, et provider+providerAccountId)
+    // ferme la course restante : P2002 → conflit propre, jamais un 500.
+    let user: UserEntity
+    try {
+      user = await this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          if (status === 'stale') {
+            await this.#userRepository.deleteUnverifiedByEmailInTx(tx, email)
+          }
+          // L'email du fournisseur est vérifié : le compte l'est aussi. On
+          // solde au passage une demande de conversion par email restée en
+          // cours (`requestEmailUpgrade` a pu poser `passwordHash` + jeton) —
+          // sinon ce USER, avec mot de passe mais sans `emailVerifiedAt`,
+          // passerait `stale` à l'expiration du jeton et n'importe quel
+          // `POST /auth/register` sur son email pourrait le supprimer.
+          const updated = await this.#userRepository.updateInTx(tx, guest.id, {
+            email,
+            role: 'USER',
+            emailVerifiedAt: new Date(),
+            pendingEmail: null,
+            emailVerificationToken: null,
+            emailVerificationTokenExpiresAt: null,
+          })
+          await this.#oauthAccountRepository.createInTx(
+            tx,
+            updated.id,
+            prismaProvider,
+            info.id,
+          )
+          return updated
+        },
+      )
+    } catch (err) {
+      if ((err as { code?: string }).code === 'P2002') {
+        throw new OAuthLinkConflictError('account_exists')
+      }
+      throw err
     }
-    const user = await this.#userRepository.update(guest.id, {
-      email,
-      role: 'USER',
-    })
-    await this.#oauthAccountRepository.create(user.id, prismaProvider, info.id)
     void this.#activityDomain.record('GUEST_CONVERTED', {
       userId: user.id,
       username: user.username,

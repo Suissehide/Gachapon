@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
-import { createGuest } from '../../helpers/guest'
+import { createGuest, randomTestIpv6 } from '../../helpers/guest'
 
 describe('liaison OAuth d’un invité', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -119,6 +119,127 @@ describe('liaison OAuth d’un invité', () => {
       where: { id: stale.id },
     })
     expect(removed).toBeNull()
+  })
+
+  /**
+   * Revue finale (critique) : la carte /settings laisse les boutons OAuth
+   * visibles pendant « vérifie ta boîte ». `requestEmailUpgrade` a déjà posé
+   * `passwordHash` + jeton ; si `linkGuest` ne soldait pas cet état, le USER
+   * obtenu restait non vérifié, passait `stale` à l'expiration du jeton, et
+   * n'importe quel `POST /auth/register` sur son email pouvait le supprimer.
+   */
+  it('après une demande de conversion email, la liaison OAuth donne un compte vérifié et protégé', async () => {
+    const prisma = app.iocContainer.postgresOrm.prisma
+    const { cookies, body } = await createGuest(app)
+    const email = `upglink${suffix}@test.com`
+    const upgrade = await app.inject({
+      method: 'POST',
+      url: '/auth/guest/upgrade',
+      headers: { cookie: cookies, 'x-forwarded-for': randomTestIpv6() },
+      payload: { email, password: 'Password123!' },
+    })
+    expect(upgrade.statusCode).toBe(202)
+
+    await app.iocContainer.oauthDomain.linkGuest(body.id, 'google', {
+      id: `upglink-${suffix}`,
+      email,
+    })
+    const linked = await prisma.user.findUniqueOrThrow({
+      where: { id: body.id },
+    })
+    expect(linked.role).toBe('USER')
+    expect(linked.emailVerifiedAt).not.toBeNull()
+    expect(linked.pendingEmail).toBeNull()
+    expect(linked.emailVerificationToken).toBeNull()
+
+    // Simule l'expiration d'un jeton éventuellement resté en place (24 h).
+    await prisma.user.updateMany({
+      where: { id: body.id, emailVerificationTokenExpiresAt: { not: null } },
+      data: { emailVerificationTokenExpiresAt: new Date(Date.now() - 1000) },
+    })
+
+    const register = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      headers: { 'x-forwarded-for': randomTestIpv6() },
+      payload: {
+        username: `squat${suffix}`,
+        email,
+        password: 'Password123!',
+      },
+    })
+    expect(register.statusCode).toBe(409)
+    expect(
+      await prisma.user.findUnique({ where: { id: body.id } }),
+    ).not.toBeNull()
+
+    // Le mot de passe choisi à la demande de conversion reste valable.
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password: 'Password123!' },
+    })
+    expect(login.statusCode).toBe(200)
+  })
+
+  /**
+   * Revue finale : `linkGuest` n'était pas transactionnel. Un `create` qui
+   * échoue (P2002, liaison concurrente du même compte fournisseur) laissait
+   * un USER sans OAuthAccount — et remontait un 500.
+   */
+  it('annule tout et répond account_exists si la création de la liaison échoue (P2002)', async () => {
+    const { oauthDomain, oauthAccountRepository, postgresOrm } =
+      app.iocContainer
+    const { body } = await createGuest(app)
+    const spy = jest
+      .spyOn(oauthAccountRepository, 'createInTx')
+      .mockRejectedValueOnce(
+        Object.assign(new Error('Unique constraint failed'), {
+          code: 'P2002',
+        }),
+      )
+    try {
+      await expect(
+        oauthDomain.linkGuest(body.id, 'discord', {
+          id: `race-${suffix}`,
+          email: `race${suffix}@test.com`,
+        }),
+      ).rejects.toMatchObject({
+        name: 'OAuthLinkConflictError',
+        reason: 'account_exists',
+      })
+    } finally {
+      spy.mockRestore()
+    }
+    const guest = await postgresOrm.prisma.user.findUniqueOrThrow({
+      where: { id: body.id },
+    })
+    expect(guest.role).toBe('GUEST')
+    expect(guest.email).toBeNull()
+  })
+
+  it('deux liaisons concurrentes du même compte fournisseur : une seule gagne, l’autre reste GUEST', async () => {
+    const { oauthDomain, postgresOrm } = app.iocContainer
+    const a = await createGuest(app)
+    const b = await createGuest(app)
+    const results = await Promise.allSettled([
+      oauthDomain.linkGuest(a.body.id, 'google', {
+        id: `concurrent-${suffix}`,
+        email: `concA${suffix}@test.com`,
+      }),
+      oauthDomain.linkGuest(b.body.id, 'google', {
+        id: `concurrent-${suffix}`,
+        email: `concB${suffix}@test.com`,
+      }),
+    ])
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1)
+    const rejected = results.find((r) => r.status === 'rejected')
+    expect(rejected?.reason).toMatchObject({ reason: 'account_exists' })
+    const users = await postgresOrm.prisma.user.findMany({
+      where: { id: { in: [a.body.id, b.body.id] } },
+    })
+    expect(users.filter((u) => u.role === 'USER')).toHaveLength(1)
+    expect(users.filter((u) => u.role === 'GUEST' && u.email === null)).toHaveLength(1)
   })
 
   it('GET /auth/oauth/google/authorize?mode=link exige une session invitée', async () => {

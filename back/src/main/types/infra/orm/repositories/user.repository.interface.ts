@@ -46,6 +46,11 @@ export interface UserRepositoryInterface {
   findByUsername(username: string): Promise<UserEntity | null>
   create(input: CreateUserInput): Promise<UserEntity>
   update(id: string, input: UpdateUserInput): Promise<UserEntity>
+  updateInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+    input: UpdateUserInput,
+  ): Promise<UserEntity>
   updateFeaturedCardIds(userId: string, cardIds: string[]): Promise<void>
   delete(id: string): Promise<void>
   findByIdOrThrowInTx(
@@ -78,6 +83,10 @@ export interface UserRepositoryInterface {
   findByEmailVerificationToken(token: string): Promise<UserEntity | null>
   findByPasswordResetToken(token: string): Promise<UserEntity | null>
   deleteUnverifiedByEmail(email: string): Promise<void>
+  deleteUnverifiedByEmailInTx(
+    tx: PrimaTransactionClient,
+    email: string,
+  ): Promise<void>
   /** Supprime les invités inactifs depuis `before` ; renvoie le nombre supprimé. */
   deleteInactiveGuests(before: Date): Promise<number>
   findAllPaginated(
