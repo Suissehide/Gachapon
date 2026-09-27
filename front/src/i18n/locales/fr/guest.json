@@ -24,5 +24,20 @@
       "description": "Défie tes coéquipiers et parie sur leurs tirages une fois ton compte créé."
     }
   },
-  "toastForbidden": "Crée ton compte pour débloquer cette fonction"
+  "toastForbidden": "Crée ton compte pour débloquer cette fonction",
+  "account": {
+    "title": "Compte invité",
+    "description": "Ta progression est liée à ce navigateur. Ajoute un email ou un compte Google/Discord pour la retrouver partout.",
+    "submit": "Sauvegarder ma progression",
+    "checkInbox": "Vérifie ta boîte mail : un lien de confirmation a été envoyé à {{email}}.",
+    "changeOrResend": "Modifier l'adresse ou renvoyer le lien",
+    "conflict": "Ce compte existe déjà. Te connecter dessus abandonnera ta progression invitée.",
+    "loginInstead": "Se connecter à ce compte",
+    "emailUnverified": "Ton compte Google/Discord n'a pas d'email vérifié : vérifie-le chez eux ou utilise un email ici.",
+    "linked": "Compte sauvegardé : ta progression est conservée."
+  },
+  "link": {
+    "google": "Sauvegarder avec Google",
+    "discord": "Sauvegarder avec Discord"
+  }
 }

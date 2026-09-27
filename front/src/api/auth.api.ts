@@ -94,13 +94,17 @@ export const AuthApi = {
       body: JSON.stringify({ token }),
     })
     if (!res.ok) {
-      handleHttpError(
+      // 409 : `auth.pendingEmailTaken`, déjà traduit côté serveur — un
+      // invité tente de vérifier un email pour lequel une inscription
+      // classique est déjà en attente de vérification.
+      await handleHttpErrorFromServer(
         res,
         {
           400: {
             title: i18n.t('auth:apiTitles.invalidLinkTitle'),
             message: i18n.t('auth:apiTitles.invalidLinkMessage'),
           },
+          409: i18n.t('auth:apiTitles.invalidLinkTitle'),
         },
         i18n.t('auth:apiTitles.operations.verifyEmail'),
       )

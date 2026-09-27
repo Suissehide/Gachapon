@@ -3,7 +3,9 @@ import dayjs from 'dayjs'
 import { Check, Copy, Eye, EyeOff, Key, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { z } from 'zod'
 
+import { GuestAccountCard } from '../../components/guest/GuestAccountCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { PageShell } from '../../components/shared/PageShell'
 import { ConfirmPopup } from '../../components/team/ConfirmPopup.tsx'
@@ -15,15 +17,65 @@ import {
   useCreateApiKey,
   useDeleteApiKey,
 } from '../../queries/useProfile'
-import { useAuthStore } from '../../stores/auth.store'
+import { useAuthStore, useIsGuest } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/settings')({
+  validateSearch: z.object({ link_error: z.string().optional() }),
   component: Settings,
 })
 
 function Settings() {
   const { t } = useTranslation(['settings', 'collection'])
   const user = useAuthStore((s) => s.user)
+  const isGuest = useIsGuest()
+  const { link_error } = Route.useSearch()
+
+  return (
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          {
+            label: t('collection:page.breadcrumbProfile'),
+            to: '/profile/$username',
+            params: { username: user?.username ?? '' },
+          },
+          { label: t('settings:breadcrumb') },
+        ]}
+        title={t('settings:title')}
+      />
+
+      {/* Infos compte */}
+      <section className="rounded-xl border border-border bg-card p-6">
+        <h2 className="mb-5 text-sm font-bold uppercase tracking-wide text-text-light">
+          {t('settings:account.heading')}
+        </h2>
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/30 to-secondary/30 text-xl font-black text-primary">
+            {user?.username[0]?.toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-text">{user?.username}</p>
+            {!isGuest && (
+              <p className="text-sm text-text-light">{user?.email}</p>
+            )}
+          </div>
+        </div>
+
+        {isGuest && (
+          <div className="mt-5 border-t border-border pt-5">
+            <GuestAccountCard initialLinkError={link_error} />
+          </div>
+        )}
+      </section>
+
+      {!isGuest && <ApiKeysSection />}
+    </PageShell>
+  )
+}
+
+function ApiKeysSection() {
+  const { t } = useTranslation('settings')
   const { data: apiKeys, isLoading } = useApiKeys()
   const { mutate: createKey, isPending: creating } = useCreateApiKey()
   const { mutate: deleteKey } = useDeleteApiKey()
@@ -61,43 +113,13 @@ function Settings() {
   }
 
   return (
-    <PageShell>
-      <PageHeader
-        breadcrumbs={[
-          { label: 'Gachapon', to: '/play' },
-          {
-            label: t('collection:page.breadcrumbProfile'),
-            to: '/profile/$username',
-            params: { username: user?.username ?? '' },
-          },
-          { label: t('settings:breadcrumb') },
-        ]}
-        title={t('settings:title')}
-      />
-
-      {/* Infos compte */}
-      <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-5 text-sm font-bold uppercase tracking-wide text-text-light">
-          {t('settings:account.heading')}
-        </h2>
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/30 to-secondary/30 text-xl font-black text-primary">
-            {user?.username[0]?.toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-text">{user?.username}</p>
-            <p className="text-sm text-text-light">{user?.email}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* API Keys */}
+    <>
       <section className="rounded-xl border border-border bg-card p-6">
         <h2 className="mb-1 text-sm font-bold uppercase tracking-wide text-text-light">
-          {t('settings:apiKeys.heading')}
+          {t('apiKeys.heading')}
         </h2>
         <p className="mb-5 text-xs text-text-light">
-          {t('settings:apiKeys.description')}
+          {t('apiKeys.description')}
         </p>
 
         {/* Formulaire création */}
@@ -110,7 +132,7 @@ function Settings() {
                 handleCreate()
               }
             }}
-            placeholder={t('settings:apiKeys.namePlaceholder')}
+            placeholder={t('apiKeys.namePlaceholder')}
             maxLength={50}
           />
           <Button
@@ -118,7 +140,7 @@ function Settings() {
             disabled={creating || !newKeyName.trim()}
           >
             <Plus className="h-4 w-4" />
-            {t('settings:apiKeys.create')}
+            {t('apiKeys.create')}
           </Button>
         </div>
 
@@ -126,7 +148,7 @@ function Settings() {
         {createdKey && (
           <div className="mb-5 rounded-lg border border-primary/30 bg-primary/5 p-4">
             <p className="mb-3 text-xs font-semibold text-primary">
-              {t('settings:apiKeys.newKeyWarning')}
+              {t('apiKeys.newKeyWarning')}
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 overflow-hidden text-ellipsis rounded bg-background px-2 py-1.5 font-mono text-xs text-text">
@@ -136,11 +158,7 @@ function Settings() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => setVisible((v) => !v)}
-                title={
-                  visible
-                    ? t('settings:apiKeys.hide')
-                    : t('settings:apiKeys.show')
-                }
+                title={visible ? t('apiKeys.hide') : t('apiKeys.show')}
               >
                 {visible ? (
                   <EyeOff className="h-4 w-4" />
@@ -152,7 +170,7 @@ function Settings() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={handleCopy}
-                title={t('settings:apiKeys.copy')}
+                title={t('apiKeys.copy')}
               >
                 {copied ? (
                   <Check className="h-4 w-4 text-green-500" />
@@ -166,13 +184,9 @@ function Settings() {
 
         {/* Liste des clés */}
         {isLoading ? (
-          <p className="text-xs text-text-light">
-            {t('settings:apiKeys.loading')}
-          </p>
+          <p className="text-xs text-text-light">{t('apiKeys.loading')}</p>
         ) : apiKeys?.length === 0 ? (
-          <p className="text-xs text-text-light">
-            {t('settings:apiKeys.empty')}
-          </p>
+          <p className="text-xs text-text-light">{t('apiKeys.empty')}</p>
         ) : (
           <ul className="space-y-2">
             {apiKeys?.map((k) => (
@@ -186,11 +200,11 @@ function Settings() {
                     {k.name}
                   </p>
                   <p className="text-xs text-text-light">
-                    {t('settings:apiKeys.createdOn', {
+                    {t('apiKeys.createdOn', {
                       date: dayjs(k.createdAt).format('L'),
                     })}
                     {k.lastUsedAt &&
-                      t('settings:apiKeys.usedOn', {
+                      t('apiKeys.usedOn', {
                         date: dayjs(k.lastUsedAt).format('L'),
                       })}
                   </p>
@@ -199,7 +213,7 @@ function Settings() {
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => setDeleteTarget({ id: k.id, name: k.name })}
-                  title={t('settings:apiKeys.delete')}
+                  title={t('apiKeys.delete')}
                   className="text-text-light hover:bg-destructive/10 hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -218,15 +232,15 @@ function Settings() {
           }
         }}
         icon={<Trash2 className="h-4 w-4" />}
-        title={t('settings:apiKeys.deletePopup.title')}
+        title={t('apiKeys.deletePopup.title')}
         description={
           deleteTarget
-            ? t('settings:apiKeys.deletePopup.description', {
+            ? t('apiKeys.deletePopup.description', {
                 name: deleteTarget.name,
               })
             : ''
         }
-        confirmLabel={t('settings:apiKeys.deletePopup.confirm')}
+        confirmLabel={t('apiKeys.deletePopup.confirm')}
         onConfirm={() => {
           if (!deleteTarget) {
             return
@@ -240,6 +254,6 @@ function Settings() {
           })
         }}
       />
-    </PageShell>
+    </>
   )
 }

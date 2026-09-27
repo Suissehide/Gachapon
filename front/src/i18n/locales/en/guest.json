@@ -24,5 +24,20 @@
       "description": "Challenge your teammates and bet on their pulls once your account is created."
     }
   },
-  "toastForbidden": "Create your account to unlock this feature"
+  "toastForbidden": "Create your account to unlock this feature",
+  "account": {
+    "title": "Guest account",
+    "description": "Your progress is tied to this browser. Add an email or a Google/Discord account to find it anywhere.",
+    "submit": "Save my progress",
+    "checkInbox": "Check your inbox: a confirmation link was sent to {{email}}.",
+    "changeOrResend": "Change the address or resend the link",
+    "conflict": "This account already exists. Signing in to it will abandon your guest progress.",
+    "loginInstead": "Sign in to this account",
+    "emailUnverified": "Your Google/Discord account has no verified email: verify it with them or use an email here instead.",
+    "linked": "Account saved: your progress is kept."
+  },
+  "link": {
+    "google": "Save with Google",
+    "discord": "Save with Discord"
+  }
 }
