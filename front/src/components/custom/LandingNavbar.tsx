@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { discordInviteUrl } from '../../constants/config.constant'
-import { usePlayAsGuest } from '../../queries/useGuest.ts'
 import { useAuthStore, useIsGuest } from '../../stores/auth.store'
 import { useAuthDialogStore } from '../../stores/authDialog.store'
 import { AuthDialog } from '../auth/authDialog'
@@ -20,7 +19,7 @@ import {
 } from './MobileMenu.tsx'
 
 export function LandingNavbar() {
-  const { t } = useTranslation(['layout', 'about', 'home', 'guest'])
+  const { t } = useTranslation(['layout', 'about', 'guest'])
 
   const NAV_ITEMS = [
     { to: '/guide' as const, label: t('layout:landingNav.guide') },
@@ -68,7 +67,6 @@ export function LandingNavbar() {
   } = useAuthDialogStore()
 
   const { menuOpen, setMenuOpen, closeMenu } = useMobileMenu()
-  const { play, isPending } = usePlayAsGuest()
 
   const doLogout = () => void logout().then(() => navigate({ to: '/' }))
 
@@ -209,24 +207,16 @@ export function LandingNavbar() {
               <>
                 <Button
                   variant="ghost"
-                  onClick={openLogin}
-                  className="text-sm text-text-light flex"
-                >
-                  {t('home:footer.login')}
-                </Button>
-                <Button
-                  variant="ghost"
                   onClick={openRegister}
                   className="hidden lg:flex text-sm text-text-light"
                 >
                   {t('layout:landingNav.signUpButton')}
                 </Button>
                 <Button
-                  onClick={play}
-                  disabled={isPending}
+                  onClick={openLogin}
                   className="flex rounded-full h-9 text-sm px-4 lg:px-5 shadow-sm shadow-primary/20"
                 >
-                  {t('guest:play')}
+                  {t('layout:landingNav.playButton')}
                 </Button>
               </>
             )}

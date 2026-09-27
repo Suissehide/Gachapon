@@ -3,6 +3,8 @@ import { Dialog } from 'radix-ui'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePlayAsGuest } from '../../queries/useGuest.ts'
+import { useAuthStore } from '../../stores/auth.store.ts'
 import { Button } from '../ui/button.tsx'
 import { LoginForm } from './loginForm.tsx'
 import { RegisterForm } from './registerForm.tsx'
@@ -20,6 +22,8 @@ export function AuthDialog({
 }) {
   const { t } = useTranslation('auth')
   const [tab, setTab] = useState<AuthTab>(defaultTab)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { play, isPending } = usePlayAsGuest()
 
   useEffect(() => {
     if (open) {
@@ -31,7 +35,7 @@ export function AuthDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200">
           {/* Header */}
           <div className="px-8 pt-7 pb-0">
             <Dialog.Close asChild>
@@ -58,6 +62,30 @@ export function AuthDialog({
                 : t('dialog.registerDescription')}
             </Dialog.Description>
 
+            {/* Un invité déjà en session n'a pas à en recréer un. */}
+            {!isAuthenticated && (
+              <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    {t('dialog.guestTitle')}
+                  </p>
+                  <p className="text-xs text-text-light mt-0.5">
+                    {t('dialog.guestDescription')}
+                  </p>
+                </div>
+                <Button
+                  className="shrink-0"
+                  disabled={isPending}
+                  onClick={() => {
+                    onOpenChange(false)
+                    play()
+                  }}
+                >
+                  {t('dialog.playAsGuest')}
+                </Button>
+              </div>
+            )}
+
             {/* Tabs */}
             <div className="flex border-b border-border mt-5">
               {(['login', 'register'] as AuthTab[]).map((tabOption) => (
@@ -65,7 +93,7 @@ export function AuthDialog({
                   key={tabOption}
                   type="button"
                   onClick={() => setTab(tabOption)}
-                  className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${
+                  className={`flex-1 pb-3 text-sm font-semibold cursor-pointer transition-colors relative ${
                     tab === tabOption
                       ? 'text-foreground'
                       : 'text-text-light hover:text-text'
