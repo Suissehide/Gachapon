@@ -21,6 +21,9 @@ import {
 export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
   const { betDomain, duelDomain, storageClient } = fastify.iocContainer
 
+  // Fonctions sociales fermées aux invités (voir role.plugin.ts#forbidGuest).
+  fastify.addHook('preHandler', fastify.forbidGuest)
+
   fastify.get(
     '/teams/:id/wagers',
     {

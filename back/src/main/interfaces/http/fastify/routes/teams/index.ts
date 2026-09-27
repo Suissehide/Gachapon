@@ -46,6 +46,9 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     recruitmentDomain,
   } = fastify.iocContainer
 
+  // Fonctions sociales fermées aux invités (voir role.plugin.ts#forbidGuest).
+  fastify.addHook('preHandler', fastify.forbidGuest)
+
   /**
    * Pousse un `team:perk` par bonus touché, à CHAQUE membre de l'équipe —
    * jamais `broadcast` : un rang de bonus ne regarde que cette équipe.

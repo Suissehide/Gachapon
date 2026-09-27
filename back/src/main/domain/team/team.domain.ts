@@ -233,6 +233,9 @@ export class TeamDomain implements TeamDomainInterface {
       if (!user) {
         throw Boom.notFound(errorMessage('user.notFound'))
       }
+      if (user.role === 'GUEST') {
+        throw Boom.conflict(errorMessage('team.cannotInviteGuest'))
+      }
       const alreadyMember = await this.#memberRepo.findByTeamAndUser(
         teamId,
         user.id,

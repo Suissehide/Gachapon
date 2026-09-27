@@ -8,6 +8,9 @@ import {
 export const apiKeysRouter: FastifyPluginCallbackZod = (fastify) => {
   const { apiKeyRepository } = fastify.iocContainer
 
+  // Fonctions sociales fermées aux invités (voir role.plugin.ts#forbidGuest).
+  fastify.addHook('preHandler', fastify.forbidGuest)
+
   fastify.post(
     '/',
     {

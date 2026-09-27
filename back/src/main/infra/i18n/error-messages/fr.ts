@@ -45,6 +45,8 @@ export const FR_MESSAGES = {
   'auth.noAccessToken': 'Aucun jeton d’accès',
   'auth.notAuthenticated': 'Non authentifié',
   'auth.insufficientPermissions': 'Permissions insuffisantes',
+  'auth.guestForbidden':
+    'Crée ton compte pour débloquer cette fonction, ta progression est conservée',
   'auth.noRefreshToken': 'Aucun jeton de rafraîchissement',
   'auth.oauthMissingCodeOrState': 'Code ou état manquant',
   'auth.oauthInvalidState': 'État OAuth invalide',
@@ -120,6 +122,8 @@ export const FR_MESSAGES = {
   'team.notMember': 'Tu ne fais pas partie de cette équipe',
   'team.full': 'Cette équipe est complète ({{max}} membres)',
   'team.userAlreadyMember': 'Cet utilisateur est déjà membre',
+  'team.cannotInviteGuest':
+    'Ce joueur joue en invité : il doit créer son compte avant de rejoindre une équipe',
   'team.invitationAlreadyPendingForUser':
     'Une invitation est déjà en attente pour cet utilisateur',
   'team.invitationAlreadyPendingForEmail':

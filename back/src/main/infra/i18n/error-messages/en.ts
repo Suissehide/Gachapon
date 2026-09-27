@@ -31,6 +31,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'auth.noAccessToken': 'No access token',
   'auth.notAuthenticated': 'Not authenticated',
   'auth.insufficientPermissions': 'Insufficient permissions',
+  'auth.guestForbidden':
+    'Create your account to unlock this feature, your progress is kept',
   'auth.noRefreshToken': 'No refresh token',
   'auth.oauthMissingCodeOrState': 'Missing code or state',
   'auth.oauthInvalidState': 'Invalid OAuth state',
@@ -101,6 +103,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'team.notMember': 'Not a member of this team',
   'team.full': 'This team is full ({{max}} members)',
   'team.userAlreadyMember': 'User is already a member',
+  'team.cannotInviteGuest':
+    'This player is a guest: they need to create an account before joining a team',
   'team.invitationAlreadyPendingForUser':
     'Invitation already pending for this user',
   'team.invitationAlreadyPendingForEmail':

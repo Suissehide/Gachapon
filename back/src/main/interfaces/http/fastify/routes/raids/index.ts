@@ -11,6 +11,9 @@ export const raidsRouter: FastifyPluginCallbackZod = (fastify) => {
   const { raidDomain, teamProgressionDomain, backgroundTasks } =
     fastify.iocContainer
 
+  // Fonctions sociales fermées aux invités (voir role.plugin.ts#forbidGuest).
+  fastify.addHook('preHandler', fastify.forbidGuest)
+
   fastify.get(
     '/teams/:id/raid',
     {
