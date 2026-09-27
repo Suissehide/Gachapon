@@ -26,6 +26,7 @@ import {
   teamMembersResponseSchema,
   teamPerkSpendBodySchema,
   teamPerksResponseSchema,
+  teamPublicResponseSchema,
   teamRaidHistoryResponseSchema,
   teamRankingQuerySchema,
   teamResponseSchema,
@@ -147,6 +148,22 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     (request) =>
       teamDomain.getTeamDetail(request.params.id, request.user.userID),
+  )
+
+  // Fiche publique, pour le lien du classement : tout joueur connecté y a
+  // droit, là où `/teams/:id` exige d'être membre.
+  fastify.get(
+    '/teams/:id/public',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Get the public view of a team',
+        params: teamIdParamSchema,
+        response: { 200: teamPublicResponseSchema },
+      },
+    },
+    (request) =>
+      teamDomain.getPublicTeam(request.params.id, request.user.userID),
   )
 
   fastify.get(

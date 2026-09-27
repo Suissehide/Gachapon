@@ -60,6 +60,12 @@ export interface IRecruitmentDomain {
     teamId: string,
     userId: string,
   ): Promise<void>
+  /** Le joueur a une candidature en attente, non expirée, pour cette équipe. */
+  hasPendingRequest(
+    teamId: string,
+    userId: string,
+    now?: Date,
+  ): Promise<boolean>
   listDirectory(
     userId: string,
     opts: { cursor?: string; search?: string },

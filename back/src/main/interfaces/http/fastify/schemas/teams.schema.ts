@@ -260,3 +260,23 @@ export const teamRaidHistoryResponseSchema = z.object({
     }),
   ),
 })
+
+/** Fiche publique : agrégats d'équipe seulement, jamais le roster. */
+export const teamPublicResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  motto: z.string().nullable(),
+  hue: z.number().int(),
+  createdAt: z.date(),
+  level: z.number().int(),
+  memberCount: z.number().int(),
+  maxMembers: z.number().int(),
+  activeThisWeek: z.number().int(),
+  rankGlobal: z.number().int().nullable(),
+  raidsWon: z.number().int(),
+  recruiting: z.boolean(),
+  isMember: z.boolean(),
+  hasPendingRequest: z.boolean(),
+})

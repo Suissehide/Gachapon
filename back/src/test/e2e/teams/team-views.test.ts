@@ -722,4 +722,68 @@ describe('Vues de la section Équipe', () => {
       expect(res.statusCode).toBe(403)
     }
   })
+
+  // ── GET /teams/:id/public ──────────────────────────────────────────────
+
+  it('GET /teams/:id/public : un non-membre lit les agrégats, jamais le roster', async () => {
+    const res = await get(`/teams/${mainTeamId}/public`, cookiesJoiner)
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+
+    expect(body.id).toBe(mainTeamId)
+    expect(body.name).toBe(MAIN_TEAM_NAME)
+    expect(body.motto).toBe(MAIN_MOTTO)
+    expect(body.hue).toBe(hueFromName(MAIN_TEAM_NAME))
+    expect(body.level).toBe(MAIN_LEVEL)
+    expect(body.memberCount).toBe(4)
+    expect(body.maxMembers).toBe(maxMembers)
+    expect(body.raidsWon).toBe(2)
+    expect(typeof body.activeThisWeek).toBe('number')
+    expect(typeof body.rankGlobal).toBe('number')
+    expect(body.isMember).toBe(false)
+    expect(body.hasPendingRequest).toBe(false)
+    // Le cœur de la vue : rien de nominatif ni de réservé aux membres.
+    for (const key of ['members', 'ownerId', 'perks', 'perkPoints', 'weekPts', 'xp']) {
+      expect(body[key]).toBeUndefined()
+    }
+  })
+
+  it('GET /teams/:id/public : isMember pour un membre, candidature en attente reflétée', async () => {
+    const mine = (await get(`/teams/${mainTeamId}/public`, cookiesMe)).json()
+    expect(mine.isMember).toBe(true)
+
+    const request = await prisma.joinRequest.create({
+      data: {
+        teamId: mainTeamId,
+        userId: joinerId,
+        expiresAt: new Date(Date.now() + DAY_MS),
+      },
+    })
+    try {
+      const pending = (
+        await get(`/teams/${mainTeamId}/public`, cookiesJoiner)
+      ).json()
+      expect(pending.hasPendingRequest).toBe(true)
+
+      // Périmée mais pas encore balayée : plus « en attente ».
+      await prisma.joinRequest.update({
+        where: { id: request.id },
+        data: { expiresAt: new Date(Date.now() - 1000) },
+      })
+      const expired = (
+        await get(`/teams/${mainTeamId}/public`, cookiesJoiner)
+      ).json()
+      expect(expired.hasPendingRequest).toBe(false)
+    } finally {
+      await prisma.joinRequest.delete({ where: { id: request.id } })
+    }
+  })
+
+  it('GET /teams/:id/public : 404 sur une équipe inconnue', async () => {
+    const res = await get(
+      '/teams/00000000-0000-4000-8000-000000000000/public',
+      cookiesJoiner,
+    )
+    expect(res.statusCode).toBe(404)
+  })
 })

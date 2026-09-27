@@ -19,6 +19,7 @@ import type {
   TeamMemberRole,
   TeamMembersView,
   TeamMemberView,
+  TeamPublicView,
   TeamWithMembers,
 } from '../../types/domain/team/team.types'
 import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
@@ -806,6 +807,52 @@ export class TeamDomain implements TeamDomainInterface {
       rankGlobal,
       raidsWon,
       recruiting: team.recruiting,
+    }
+  }
+
+  /**
+   * La fiche publique, pour qui arrive d'un lien du classement sans être
+   * membre. PAS de `getTeamAsMember` : c'est tout l'objet de la vue. En
+   * échange, rien de nominatif — ni roster, ni bonus, ni points par membre —
+   * seulement ce que l'annuaire de recrutement montre déjà, plus le rang et
+   * les raids gagnés, qui sont des faits d'équipe.
+   */
+  async getPublicTeam(
+    teamId: string,
+    userId: string,
+    now: Date = new Date(),
+  ): Promise<TeamPublicView> {
+    const team = await this.#teamRepo.findById(teamId)
+    if (!team) {
+      throw Boom.notFound(errorMessage('team.notFound'))
+    }
+    const [maxMembers, weekly, rankGlobal, raidsWon, hasPendingRequest] =
+      await Promise.all([
+        this.#maxMembers(),
+        this.#teamProgressionDomain.getWeeklyPoints(teamId, now),
+        this.#leaderboardDomain.getTeamRank(teamId),
+        this.#raidDomain.countRaidsWon(teamId),
+        this.#recruitmentDomain.hasPendingRequest(teamId, userId, now),
+      ])
+    return {
+      id: team.id,
+      name: team.name,
+      slug: team.slug,
+      description: team.description,
+      motto: team.motto,
+      hue: resolveHue(team),
+      createdAt: team.createdAt,
+      level: team.level,
+      memberCount: team.members.length,
+      maxMembers,
+      // Même compte que `_count.weeklies` de l'annuaire : une ligne
+      // hebdomadaire par membre actif.
+      activeThisWeek: weekly.members.length,
+      rankGlobal,
+      raidsWon,
+      recruiting: team.recruiting,
+      isMember: team.members.some((member) => member.userId === userId),
+      hasPendingRequest,
     }
   }
 

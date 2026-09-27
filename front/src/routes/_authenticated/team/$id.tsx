@@ -14,9 +14,12 @@ import { RaidHistoryPanel } from '../../../components/team/RaidHistoryPanel.tsx'
 import { RaidPanel } from '../../../components/team/RaidPanel.tsx'
 import { JoinRequestsPanel } from '../../../components/team/recruitment/JoinRequestsPanel.tsx'
 import { TeamIdentityCard } from '../../../components/team/TeamIdentityCard.tsx'
+import { TeamPublicCard } from '../../../components/team/TeamPublicCard.tsx'
 import { WagersPanel } from '../../../components/team/wagers/WagersPanel.tsx'
 import { Button } from '../../../components/ui/button.tsx'
+import { isApiError } from '../../../libs/httpErrorHandler.ts'
 import {
+  usePublicTeam,
   useTeamDetail,
   useTeamLive,
 } from '../../../queries/useTeamProgression.ts'
@@ -48,7 +51,11 @@ function TeamDetailPageContent() {
   // bonus, classement, points hebdo, raids vaincus) dont le rail a besoin.
   // Deux hooks sur la même clé n'auraient servi qu'à faire diverger les
   // types du même JSON.
-  const { data: team, isLoading, isError } = useTeamDetail(id)
+  const { data: team, isLoading, isError, error } = useTeamDetail(id)
+  // 403 = l'équipe existe mais je n'en suis pas membre (lien du
+  // classement) : on bascule sur la fiche publique plutôt que sur l'erreur.
+  const isOutsider = isApiError(error) && error.status === 403
+  const publicTeam = usePublicTeam(id, isOutsider)
   // Niveau, points de bonus et rangs poussés en direct par le serveur.
   useTeamLive(id)
   const { mutate: leave } = useLeaveTeam()
@@ -79,11 +86,26 @@ function TeamDetailPageContent() {
     [team?.members],
   )
 
-  if (isLoading) {
+  if (isLoading || (isOutsider && publicTeam.isPending)) {
     return (
       <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
+    )
+  }
+
+  if (isOutsider && publicTeam.data) {
+    return (
+      <PageShell>
+        <PageHeader
+          breadcrumbs={[
+            { label: t('page.breadcrumbHome'), to: '/play' },
+            { label: t('page.breadcrumbTeams'), to: '/team' },
+            { label: publicTeam.data.name },
+          ]}
+        />
+        <TeamPublicCard team={publicTeam.data} />
+      </PageShell>
     )
   }
 

@@ -7,6 +7,7 @@ import type {
   TeamListItem,
   TeamMemberRole,
   TeamMembersView,
+  TeamPublicView,
   TeamWithMembers,
 } from './team.types'
 
@@ -81,6 +82,12 @@ export interface TeamDomainInterface {
   listMyTeams(userId: string, now?: Date): Promise<TeamListItem[]>
   /** L'en-tête de la fiche d'équipe. */
   getTeamDetail(teamId: string, userId: string, now?: Date): Promise<TeamDetail>
+  /** La fiche publique : agrégats seulement, lisible par tout joueur connecté. */
+  getPublicTeam(
+    teamId: string,
+    userId: string,
+    now?: Date,
+  ): Promise<TeamPublicView>
   /** La table des membres — MEMBRES uniquement, pas les invités en attente. */
   listMembers(
     teamId: string,

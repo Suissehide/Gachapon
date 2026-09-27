@@ -7,6 +7,7 @@ import { TeamProgressionApi } from '../api/teamProgression.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
 import { wsClient } from '../lib/ws.ts'
+import { isApiError } from '../libs/httpErrorHandler.ts'
 
 const MEMBERS_PAGE_SIZE = 10
 
@@ -20,12 +21,35 @@ export const teamMembersKey = (teamId: string) =>
   ['teams', teamId, 'members'] as const
 export const teamRaidHistoryKey = (teamId: string) =>
   ['teams', teamId, 'raids'] as const
+// Sous `['teams']` : candidater ou annuler (`useRecruitment.ts`) invalide ce
+// préfixe, donc le bouton de la fiche publique suit sans câblage de plus.
+export const publicTeamKey = (teamId: string) =>
+  ['teams', teamId, 'public'] as const
 
 export function useTeamDetail(teamId: string | undefined) {
   return useQuery({
     queryKey: teamDetailKey(teamId ?? ''),
     queryFn: () => TeamProgressionApi.getTeamDetail(teamId as string),
     enabled: Boolean(teamId),
+    // 403 (pas membre) et 404 sont définitifs : les réessayer laissait la
+    // page sur son spinner ~7 s avant d'afficher l'erreur.
+    retry: (failureCount, error) =>
+      !(isApiError(error) && (error.status === 403 || error.status === 404)) &&
+      failureCount < 3,
+  })
+}
+
+/**
+ * La fiche publique, pour un non-membre : ne s'active qu'une fois que la
+ * fiche complète a répondu 403 (voir `routes/_authenticated/team/$id.tsx`).
+ */
+export function usePublicTeam(teamId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: publicTeamKey(teamId ?? ''),
+    queryFn: () => TeamProgressionApi.getPublicTeam(teamId as string),
+    enabled: Boolean(teamId) && enabled,
+    retry: (failureCount, error) =>
+      !(isApiError(error) && error.status === 404) && failureCount < 3,
   })
 }
 

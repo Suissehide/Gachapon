@@ -396,5 +396,14 @@
     "claimHint": "À réclamer dans tes Récompenses.",
     "attackAgain": "Réattaquer ({{count}})",
     "tierRewardTokens": "{{pct}} % · Jetons"
+  },
+  "publicView": {
+    "activeLabel": "ACTIFS / SEMAINE",
+    "membersOnly": "Le raid, les bonus et la liste des membres sont réservés aux membres de l’équipe.",
+    "notRecruiting": "Cette équipe ne recrute pas.",
+    "full": "Équipe complète.",
+    "pending": "Candidature en attente",
+    "apply": "Candidater",
+    "cancel": "Annuler ma candidature"
   }
 }

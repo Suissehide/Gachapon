@@ -396,5 +396,14 @@
     "claimHint": "Claim it from your Rewards.",
     "attackAgain": "Attack again ({{count}})",
     "tierRewardTokens": "{{pct}}% · Tokens"
+  },
+  "publicView": {
+    "activeLabel": "ACTIVE / WEEK",
+    "membersOnly": "The raid, bonuses and member list are for team members only.",
+    "notRecruiting": "This team isn't recruiting.",
+    "full": "This team is full.",
+    "pending": "Application pending",
+    "apply": "Apply",
+    "cancel": "Cancel my application"
   }
 }

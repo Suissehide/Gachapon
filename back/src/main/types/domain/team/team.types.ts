@@ -122,6 +122,34 @@ export type TeamDetail = {
   recruiting: boolean
 }
 
+/**
+ * La fiche PUBLIQUE d'une équipe, lisible par tout joueur connecté (lien
+ * depuis le classement). Rien que des agrégats d'équipe, du même ordre que
+ * l'annuaire de recrutement : le roster (pseudo, rôle, niveau, points,
+ * dégâts de chacun) reste derrière `getTeamAsMember`.
+ */
+export type TeamPublicView = {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  motto: string | null
+  hue: number
+  createdAt: Date
+  level: number
+  memberCount: number
+  maxMembers: number
+  /** Membres ayant marqué au moins un point cette semaine (comme l'annuaire). */
+  activeThisWeek: number
+  rankGlobal: number | null
+  raidsWon: number
+  recruiting: boolean
+  /** Le lecteur en est membre : le front bascule alors sur la fiche complète. */
+  isMember: boolean
+  /** Le lecteur a une candidature EN ATTENTE pour cette équipe. */
+  hasPendingRequest: boolean
+}
+
 /** Libellé du rôle, dans la locale de la requête qui l'a produit (voir `roleLabel`). */
 export type TeamMemberRoleLabel = TeamRoleLabel
 

@@ -149,6 +149,7 @@ export type TeamJoinRequest = {
 export const TEAM_ROUTES = {
   teams: '/teams',
   team: (teamId: string) => `/teams/${teamId}`,
+  publicTeam: (teamId: string) => `/teams/${teamId}/public`,
   invite: (teamId: string) => `/teams/${teamId}/invite`,
   leave: (teamId: string) => `/teams/${teamId}/leave`,
   invitations: (teamId: string) => `/teams/${teamId}/invitations`,

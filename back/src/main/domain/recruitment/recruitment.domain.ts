@@ -380,6 +380,21 @@ export class RecruitmentDomain implements IRecruitmentDomain {
    * note sur `JoinRequestRepository#listDirectory` pour pourquoi ce
    * classement final se fait en mémoire plutôt qu'en SQL.
    */
+  async hasPendingRequest(
+    teamId: string,
+    userId: string,
+    now: Date = new Date(),
+  ): Promise<boolean> {
+    const req = await this.#joinRequestRepo.findByTeamAndUser(teamId, userId)
+    // Même lecture que l'annuaire : une demande périmée mais pas encore
+    // balayée n'est plus « en attente ».
+    return (
+      req !== null &&
+      req.status === 'PENDING' &&
+      !isJoinRequestExpired(req, now)
+    )
+  }
+
   async listDirectory(
     userId: string,
     opts: { cursor?: string; search?: string },

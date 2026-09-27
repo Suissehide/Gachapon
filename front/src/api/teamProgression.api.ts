@@ -71,6 +71,27 @@ export type TeamDetail = {
   recruiting: boolean
 }
 
+// Croisé champ par champ avec `teamPublicResponseSchema` : la fiche lisible
+// par un non-membre. Agrégats seulement — pas de roster, pas de bonus.
+export type TeamPublic = {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  motto: string | null
+  hue: number
+  createdAt: string
+  level: number
+  memberCount: number
+  maxMembers: number
+  activeThisWeek: number
+  rankGlobal: number | null
+  raidsWon: number
+  recruiting: boolean
+  isMember: boolean
+  hasPendingRequest: boolean
+}
+
 // Croisé champ par champ avec l'entrée `members[]` de
 // `teamMembersResponseSchema`.
 export type TeamMemberRow = {
@@ -169,6 +190,20 @@ const RESET_PERK_ERRORS = {
 export const TeamProgressionApi = {
   getTeamDetail: async (teamId: string): Promise<TeamDetail> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.team(teamId)}`)
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        TEAM_ACCESS_ERRORS,
+        i18n.t('team:progressionApi.operations.loadTeam'),
+      )
+    }
+    return res.json()
+  },
+
+  getPublicTeam: async (teamId: string): Promise<TeamPublic> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}${TEAM_ROUTES.publicTeam(teamId)}`,
+    )
     if (!res.ok) {
       handleHttpError(
         res,
