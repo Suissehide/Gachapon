@@ -106,7 +106,11 @@
 }
 @media (min-width: 1024px) {
   :root {
-    --topbar-h: 111px;
+    /* Rangée 1 (60) + rangée 2 (1 de bordure + 56 : le bouton de
+       déconnexion `my-2 h-10` fixe la hauteur des onglets étirés) + bordure
+       basse (1). Mesuré à 118 dans le navigateur ; à 111, le haut de chaque
+       page passait 7 px sous la barre fixe. */
+    --topbar-h: 118px;
   }
 }
 
