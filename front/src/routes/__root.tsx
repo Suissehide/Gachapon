@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 
 import { NotFoundPage } from '../components/custom/NotFoundPage.tsx'
+import { Toaster } from '../components/ui/toaster.tsx'
 import { useAuthStore } from '../stores/auth.store.js'
 
 export const Route = createRootRoute({
@@ -14,5 +15,10 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  return <Outlet />
+  return (
+    <>
+      <Outlet />
+      <Toaster />
+    </>
+  )
 }
