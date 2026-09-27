@@ -17,6 +17,7 @@ import type { ConfigServiceInterface } from '../../types/infra/config/config.ser
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
+import { classifyEmailOwner } from './email-ownership'
 import { generateGuestUsername } from './guest-username'
 
 // 5 tirages à 2 chiffres (6 400 combinaisons × 100), puis 5 à 4 chiffres.
@@ -128,19 +129,20 @@ export class GuestDomain implements GuestDomainInterface {
     // Le normalizerExtension n'abaisse que `email` : `pendingEmail` est
     // normalisé ici, pour que la copie vers `email` au clic reste cohérente.
     const email = input.email.toLowerCase()
-    // Même règle qu'`AuthDomain#register` : un compte vérifié bloque, un
-    // compte non vérifié dont le jeton a expiré est éphémère et cède la
-    // place (sinon une inscription jamais confirmée squatterait l'email à
-    // vie et bloquerait toute conversion future).
+    // Même règle qu'`AuthDomain#register` (`classifyEmailOwner`, partagée) :
+    // un compte possédé (vérifié, ou né par OAuth) bloque, un compte non
+    // vérifié dont le jeton a expiré est éphémère et cède la place (sinon
+    // une inscription jamais confirmée squatterait l'email à vie et
+    // bloquerait toute conversion future).
     const existing = await this.#userRepository.findByEmail(email)
-    if (existing?.emailVerifiedAt) {
+    const emailStatus = classifyEmailOwner(existing)
+    if (emailStatus === 'verified') {
       throw emailTaken(errorMessage('auth.emailAlreadyInUse'))
     }
-    if (existing && !existing.emailVerifiedAt) {
-      const expiresAt = existing.emailVerificationTokenExpiresAt
-      if (expiresAt && expiresAt > new Date()) {
-        throw Boom.conflict(errorMessage('auth.unverifiedAccountPending'))
-      }
+    if (emailStatus === 'pending') {
+      throw Boom.conflict(errorMessage('auth.unverifiedAccountPending'))
+    }
+    if (emailStatus === 'stale') {
       await this.#userRepository.deleteUnverifiedByEmail(email)
     }
     const token = randomUUID()

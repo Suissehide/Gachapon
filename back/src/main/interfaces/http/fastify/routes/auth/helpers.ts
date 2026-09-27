@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { OAuthLinkConflictError } from '../../../../../domain/auth/oauth.domain'
+import { resolveLinkUserId } from '../../../../../domain/auth/oauth-link-cookie'
 import type { TokenPair } from '../../../../../types/domain/auth/auth.types'
 import type {
   OAuthDomainInterface,
@@ -36,21 +37,26 @@ export function sanitizeUser(
 
 /**
  * Fin commune des callbacks Google/Discord : résout le `linkUserId` depuis le
- * cookie SIGNÉ `oauth_link` posé par `/authorize?mode=link`, appelle
- * `handleCallback`, puis redirige vers `/oauth/success` (avec `linked=1` ou
- * `link_error=account_exists` en cas de conflit).
+ * cookie SIGNÉ `oauth_link` posé par `/authorize?mode=link`, en n'acceptant
+ * que si son `state` correspond au `state` de CE callback (voir
+ * `oauth-link-cookie.ts` — un flux de liaison abandonné puis suivi d'une
+ * connexion normale, dans la fenêtre de 10 min du cookie, ne doit jamais
+ * rattacher le compte OAuth de la connexion à l'invité d'origine). Appelle
+ * ensuite `handleCallback`, puis redirige vers `/oauth/success` (avec
+ * `linked=1`, ou `link_error=<reason>` en cas de conflit de liaison).
  */
 export async function completeOAuthCallback(
   oauthDomain: OAuthDomainInterface,
   provider: OAuthProviderName,
   code: string,
+  state: string,
   request: FastifyRequest,
   reply: FastifyReply,
   frontUrl: string,
 ): Promise<FastifyReply> {
   const rawLink = request.cookies.oauth_link
   const unsigned = rawLink ? request.unsignCookie(rawLink) : null
-  const linkUserId = unsigned?.valid ? (unsigned.value ?? undefined) : undefined
+  const linkUserId = resolveLinkUserId(unsigned, state)
   reply.clearCookie('oauth_link', { path: '/' })
   try {
     const { tokens, linked } = await oauthDomain.handleCallback(
@@ -67,7 +73,7 @@ export async function completeOAuthCallback(
     if (err instanceof OAuthLinkConflictError) {
       reply.clearCookie('oauth_state', { path: '/' })
       return reply.redirect(
-        `${frontUrl}/oauth/success?link_error=account_exists`,
+        `${frontUrl}/oauth/success?link_error=${err.reason}`,
       )
     }
     throw err

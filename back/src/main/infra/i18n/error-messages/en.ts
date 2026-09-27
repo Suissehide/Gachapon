@@ -26,6 +26,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'auth.unknownProvider': 'Unknown provider',
   'auth.oauthTokenExchangeFailed': 'OAuth provider token exchange failed',
   'auth.oauthUserinfoFailed': 'OAuth provider userinfo fetch failed',
+  'auth.oauthEmailMissing': 'This account has no email with this provider',
   'auth.invalidApiKey': 'Invalid API key',
   'auth.accountSuspended': 'Account suspended',
   'auth.noAccessToken': 'No access token',

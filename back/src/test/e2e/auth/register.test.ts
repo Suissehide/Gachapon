@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import type { PostgresPrismaClient } from '../../../main/infra/orm/postgres-client'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { randomTestIpv6 } from '../../helpers/guest'
 
 describe('POST /auth/register', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -99,5 +100,47 @@ describe('POST /auth/register', () => {
 
     const user = await prisma.user.findUnique({ where: { email } })
     expect(user?.locale).toBe('EN')
+  })
+
+  /**
+   * Régression de la revue de la tâche 6 : un compte né par OAuth (ou lié à
+   * un invité via `linkGuest`) a `passwordHash: null` et `emailVerifiedAt:
+   * null` — avant `classifyEmailOwner`, `register()` le traitait comme une
+   * inscription par mot de passe jamais vérifiée et le supprimait via
+   * `deleteUnverifiedByEmail`, laissant n'importe qui effacer un compte
+   * OAuth d'autrui en s'inscrivant avec son email.
+   */
+  it('returns 409 and keeps the account when the email belongs to an OAuth-only account', async () => {
+    const email = `oauthonly${suffix}@example.com`
+    const created = await prisma.user.create({
+      data: {
+        username: `oauthonly${suffix}`,
+        email,
+        locale: 'EN',
+        // passwordHash / emailVerifiedAt restent null : c'est exactement
+        // l'état d'un compte OAuth-only ou d'un invité rattaché.
+      },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      // IP dédiée : les 4 tests précédents de ce fichier consomment déjà les
+      // 5 `POST /auth/register` autorisés / 15 min pour l'IP par défaut de
+      // `inject()` (voir `register.router.ts`) — un 6e appel sur la même IP
+      // renverrait 429 avant même d'atteindre la logique testée ici.
+      headers: { 'x-forwarded-for': randomTestIpv6() },
+      payload: {
+        username: `intruder${suffix}`,
+        email,
+        password: 'Password123!',
+      },
+    })
+    expect(res.statusCode).toBe(409)
+
+    const stillThere = await prisma.user.findUnique({
+      where: { id: created.id },
+    })
+    expect(stillThere).not.toBeNull()
   })
 })

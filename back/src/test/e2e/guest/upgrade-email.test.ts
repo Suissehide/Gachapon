@@ -157,6 +157,14 @@ describe('conversion d’un invité par email', () => {
         username: `stale${suffix}`,
         email: staleEmail,
         locale: 'EN',
+        // `passwordHash` posé : c'est ce qui distingue une inscription par
+        // mot de passe jamais confirmée (éphémère, `classifyEmailOwner` la
+        // classe `stale`) d'un compte né par OAuth (`passwordHash === null`,
+        // jamais éphémère même sans `emailVerifiedAt` — revue de la tâche
+        // 6). Aucun vrai chemin de création n'écrit un jeton de vérification
+        // sans poser `passwordHash` en même temps (voir `AuthDomain#register`
+        // / `GuestDomain#requestEmailUpgrade`).
+        passwordHash: 'irrelevant-never-authenticated-with',
         emailVerificationToken: 'expired-token-stale',
         emailVerificationTokenExpiresAt: new Date(Date.now() - 1000),
       },

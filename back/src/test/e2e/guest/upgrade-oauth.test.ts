@@ -46,7 +46,10 @@ describe('liaison OAuth d’un invité', () => {
         id: `d-${suffix}`,
         email: `owned${suffix}@test.com`,
       }),
-    ).rejects.toMatchObject({ name: 'OAuthLinkConflictError' })
+    ).rejects.toMatchObject({
+      name: 'OAuthLinkConflictError',
+      reason: 'account_exists',
+    })
     const guest = await postgresOrm.prisma.user.findUniqueOrThrow({
       where: { id: body.id },
     })
@@ -66,7 +69,30 @@ describe('liaison OAuth d’un invité', () => {
         id: `dup-${suffix}`,
         email: `dup2${suffix}@test.com`,
       }),
-    ).rejects.toMatchObject({ name: 'OAuthLinkConflictError' })
+    ).rejects.toMatchObject({
+      name: 'OAuthLinkConflictError',
+      reason: 'account_exists',
+    })
+  })
+
+  it('refuse (email_unverified) si l’email du fournisseur n’est pas vérifié : l’invité reste GUEST', async () => {
+    const { oauthDomain, postgresOrm } = app.iocContainer
+    const { body } = await createGuest(app)
+    await expect(
+      oauthDomain.linkGuest(body.id, 'discord', {
+        id: `unverified-${suffix}`,
+        email: `unverified${suffix}@test.com`,
+        emailVerified: false,
+      }),
+    ).rejects.toMatchObject({
+      name: 'OAuthLinkConflictError',
+      reason: 'email_unverified',
+    })
+    const guest = await postgresOrm.prisma.user.findUniqueOrThrow({
+      where: { id: body.id },
+    })
+    expect(guest.role).toBe('GUEST')
+    expect(guest.email).toBeNull()
   })
 
   it('rattache l’invité si l’email appartenait à une inscription par mot de passe jamais vérifiée et expirée', async () => {
@@ -110,5 +136,44 @@ describe('liaison OAuth d’un invité', () => {
     })
     expect(ok.statusCode).toBe(302)
     expect(String(ok.headers['set-cookie'])).toContain('oauth_link=')
+  })
+
+  /**
+   * Régression de la revue de la tâche 6 : sans cet effacement explicite, un
+   * cookie `oauth_link` posé par un flux de liaison abandonné restait vivant
+   * jusqu'à ses 10 minutes et pouvait rattacher le compte OAuth d'une
+   * connexion normale ultérieure (même navigateur, même fenêtre) à l'invité
+   * d'origine — voire, sur un poste partagé, à l'invité d'une autre
+   * personne.
+   */
+  it('GET /auth/oauth/google/authorize?mode=login efface un cookie oauth_link orphelin', async () => {
+    const { cookies } = await createGuest(app)
+    const linkRes = await app.inject({
+      method: 'GET',
+      url: '/auth/oauth/google/authorize?mode=link',
+      headers: { cookie: cookies },
+    })
+    const linkSetCookies = Array.isArray(linkRes.headers['set-cookie'])
+      ? linkRes.headers['set-cookie']
+      : [linkRes.headers['set-cookie'] ?? '']
+    const oauthLinkCookie = linkSetCookies.find((c) =>
+      c.startsWith('oauth_link='),
+    )
+    expect(oauthLinkCookie).toBeDefined()
+
+    const loginRes = await app.inject({
+      method: 'GET',
+      url: '/auth/oauth/google/authorize?mode=login',
+      headers: {
+        cookie: `${cookies}; ${(oauthLinkCookie as string).split(';')[0]}`,
+      },
+    })
+    expect(loginRes.statusCode).toBe(302)
+    const loginSetCookies = Array.isArray(loginRes.headers['set-cookie'])
+      ? loginRes.headers['set-cookie']
+      : [loginRes.headers['set-cookie'] ?? '']
+    const cleared = loginSetCookies.find((c) => c.startsWith('oauth_link='))
+    expect(cleared).toBeDefined()
+    expect(cleared).toMatch(/^oauth_link=;/)
   })
 })

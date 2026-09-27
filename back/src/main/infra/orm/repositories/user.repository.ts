@@ -128,9 +128,15 @@ export class UserRepository implements UserRepositoryInterface {
     })
   }
 
+  /**
+   * Défense en profondeur : `passwordHash: { not: null }` protège les
+   * comptes nés par OAuth (jamais de mot de passe, donc jamais
+   * `emailVerifiedAt`) même si un appelant oubliait de vérifier
+   * `classifyEmailOwner` avant d'appeler cette méthode.
+   */
   async deleteUnverifiedByEmail(email: string): Promise<void> {
     await this.#prisma.user.deleteMany({
-      where: { email, emailVerifiedAt: null },
+      where: { email, emailVerifiedAt: null, passwordHash: { not: null } },
     })
   }
 

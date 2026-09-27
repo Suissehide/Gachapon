@@ -40,6 +40,8 @@ export const FR_MESSAGES = {
     'Échec de l’échange du jeton auprès du fournisseur OAuth',
   'auth.oauthUserinfoFailed':
     'Échec de récupération du profil auprès du fournisseur OAuth',
+  'auth.oauthEmailMissing':
+    'Ce compte n’a pas d’email associé chez ce fournisseur',
   'auth.invalidApiKey': 'Clé API invalide',
   'auth.accountSuspended': 'Compte suspendu',
   'auth.noAccessToken': 'Aucun jeton d’accès',

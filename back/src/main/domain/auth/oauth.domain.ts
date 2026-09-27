@@ -20,12 +20,18 @@ import type { StreakDomainInterface } from '../../types/domain/streak/streak.dom
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import { classifyEmailOwner } from './email-ownership'
 
-/** Conflit de liaison : l'appelant redirige vers `?link_error=account_exists`. */
+export type OAuthLinkErrorReason = 'account_exists' | 'email_unverified'
+
+/** Conflit de liaison : l'appelant redirige vers `?link_error=<reason>`. */
 export class OAuthLinkConflictError extends Error {
-  constructor() {
-    super('OAUTH_LINK_CONFLICT')
+  readonly reason: OAuthLinkErrorReason
+
+  constructor(reason: OAuthLinkErrorReason = 'account_exists') {
+    super(`OAUTH_LINK_CONFLICT:${reason}`)
     this.name = 'OAuthLinkConflictError'
+    this.reason = reason
   }
 }
 
@@ -110,7 +116,17 @@ export class OAuthDomain implements OAuthDomainInterface {
         : await this.#fetchDiscordUser(code)
 
     if (linkUserId) {
-      const user = await this.linkGuest(linkUserId, provider, userInfo)
+      // Une adresse absente ou non confirmée côté fournisseur ne doit
+      // jamais atterrir dans `email` : l'invité reste GUEST plutôt que
+      // d'hériter d'une adresse qu'il ne possède pas forcément.
+      if (!userInfo.email || !userInfo.emailVerified) {
+        throw new OAuthLinkConflictError('email_unverified')
+      }
+      const user = await this.linkGuest(linkUserId, provider, {
+        id: userInfo.id,
+        email: userInfo.email,
+        emailVerified: userInfo.emailVerified,
+      })
       const tokens = await this.#authDomain.generateTokenPair(user)
       return { user, tokens, isNew: false, linked: true }
     }
@@ -136,6 +152,14 @@ export class OAuthDomain implements OAuthDomainInterface {
       }
       const tokens = await this.#authDomain.generateTokenPair(user)
       return { user, tokens, isNew: false, linked: false }
+    }
+
+    // Chemin login/register : un compte sans OAuthAccount existant se
+    // rattache par email. Discord peut renvoyer `email: null` (compte sans
+    // adresse confirmée) — sans cette garde, `findByEmail(null)` casserait
+    // le typage et le flux plus loin.
+    if (!userInfo.email) {
+      throw Boom.badRequest(errorMessage('auth.oauthEmailMissing'))
     }
 
     let user = await this.#userRepository.findByEmail(userInfo.email)
@@ -179,22 +203,25 @@ export class OAuthDomain implements OAuthDomainInterface {
 
   /**
    * Rattache un compte OAuth à un invité : plus jamais de fusion ni de
-   * liaison automatique par email (règle du plan). Un email déjà possédé
-   * bloque — sauf s'il s'agit d'une inscription par mot de passe jamais
-   * vérifiée et dont le jeton a expiré (même règle que
-   * `GuestDomain#requestEmailUpgrade` / `AuthDomain#convertGuest`) : cette
-   * ligne est éphémère et cède la place. Un compte créé par OAuth
-   * (`passwordHash === null`) n'a jamais `emailVerifiedAt` ni de jeton — il
-   * doit bloquer quand même, d'où le test explicite sur `passwordHash`.
+   * liaison automatique par email (règle du plan). `classifyEmailOwner`
+   * (partagée avec `register`/`requestEmailUpgrade`/`#convertGuest`) décide
+   * du sort d'un email déjà présent — seule une ligne `stale` (inscription
+   * par mot de passe jamais vérifiée, jeton expiré/absent) cède la place.
+   * `emailVerified` : `undefined` vaut vérifié, pour ne pas casser les
+   * appelants qui construisent `info` à la main (tests, appel direct) sans
+   * connaître ce champ — seul `handleCallback` passe explicitement `false`.
    */
   async linkGuest(
     guestId: string,
     provider: OAuthProviderName,
-    info: { id: string; email: string },
+    info: { id: string; email: string; emailVerified?: boolean },
   ): Promise<UserEntity> {
     const guest = await this.#userRepository.findById(guestId)
     if (!guest || guest.role !== 'GUEST') {
       throw Boom.forbidden(errorMessage('auth.guestOnly'))
+    }
+    if (info.emailVerified === false) {
+      throw new OAuthLinkConflictError('email_unverified')
     }
     const prismaProvider =
       provider === 'google' ? OAuthProvider.GOOGLE : OAuthProvider.DISCORD
@@ -204,19 +231,13 @@ export class OAuthDomain implements OAuthDomainInterface {
       this.#userRepository.findByEmail(email),
     ])
     if (linked) {
-      throw new OAuthLinkConflictError()
+      throw new OAuthLinkConflictError('account_exists')
     }
-    if (owner) {
-      const tokenPending =
-        !!owner.emailVerificationTokenExpiresAt &&
-        owner.emailVerificationTokenExpiresAt > new Date()
-      const blocks =
-        owner.emailVerifiedAt !== null ||
-        owner.passwordHash === null ||
-        tokenPending
-      if (blocks) {
-        throw new OAuthLinkConflictError()
-      }
+    const status = classifyEmailOwner(owner)
+    if (status === 'verified' || status === 'pending') {
+      throw new OAuthLinkConflictError('account_exists')
+    }
+    if (status === 'stale') {
       await this.#userRepository.deleteUnverifiedByEmail(email)
     }
     const user = await this.#userRepository.update(guest.id, {
@@ -259,12 +280,14 @@ export class OAuthDomain implements OAuthDomainInterface {
     }
     const u = (await userRes.json()) as {
       id: string
-      email: string
+      email: string | null
+      verified_email?: boolean
       name: string
     }
     return {
       id: u.id,
-      email: u.email,
+      email: u.email ?? null,
+      emailVerified: u.verified_email === true,
       username: u.name.replace(/\s+/g, '_').toLowerCase(),
     }
   }
@@ -293,10 +316,16 @@ export class OAuthDomain implements OAuthDomainInterface {
     }
     const u = (await userRes.json()) as {
       id: string
-      email: string
+      email: string | null
+      verified?: boolean
       username: string
     }
-    return { id: u.id, email: u.email, username: u.username }
+    return {
+      id: u.id,
+      email: u.email ?? null,
+      emailVerified: u.verified === true,
+      username: u.username,
+    }
   }
 
   async #availableUsername(base: string): Promise<string> {

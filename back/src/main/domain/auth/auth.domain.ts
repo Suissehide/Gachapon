@@ -22,6 +22,7 @@ import type { ConfigServiceInterface } from '../../types/infra/config/config.ser
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
+import { classifyEmailOwner } from './email-ownership'
 import { emailTaken } from './guest.domain'
 
 const SALT_ROUNDS = 12
@@ -68,17 +69,20 @@ export class AuthDomain implements AuthDomainInterface {
   }
 
   async register(input: RegisterInput): Promise<{ email: string }> {
-    // Check for existing verified account
+    // `classifyEmailOwner` : partagée avec `requestEmailUpgrade`,
+    // `#convertGuest` et `OAuthDomain#linkGuest` — un compte né par OAuth
+    // (`passwordHash === null`) compte comme `verified` (possédé) même
+    // sans `emailVerifiedAt` ni jeton, pour ne jamais l'effacer via un
+    // simple `register` sur son email (revue de la tâche 6).
     const existing = await this.#userRepository.findByEmail(input.email)
-    if (existing?.emailVerifiedAt) {
+    const emailStatus = classifyEmailOwner(existing)
+    if (emailStatus === 'verified') {
       throw Boom.conflict(errorMessage('auth.emailAlreadyInUse'))
     }
-    // If unverified account exists with expired token, delete it
-    if (existing && !existing.emailVerifiedAt) {
-      const expiresAt = existing.emailVerificationTokenExpiresAt
-      if (expiresAt && expiresAt > new Date()) {
-        throw Boom.conflict(errorMessage('auth.unverifiedAccountPending'))
-      }
+    if (emailStatus === 'pending') {
+      throw Boom.conflict(errorMessage('auth.unverifiedAccountPending'))
+    }
+    if (emailStatus === 'stale') {
       await this.#userRepository.deleteUnverifiedByEmail(input.email)
     }
 
@@ -228,19 +232,20 @@ export class AuthDomain implements AuthDomainInterface {
       return emailTaken(errorMessage('auth.pendingEmailTaken'))
     }
     // Même règle qu'à la demande (`GuestDomain#requestEmailUpgrade`) et
-    // qu'à `register` : seul un compte VÉRIFIÉ, ou une inscription non
-    // vérifiée dont le jeton n'a pas expiré, bloque la conversion. Une
-    // inscription non vérifiée et expirée est éphémère : on la supprime et
-    // on continue, sinon elle squatterait l'email pour toujours.
+    // qu'à `register` (`classifyEmailOwner`, partagée) : seul un compte
+    // possédé (`verified` : vérifié, ou né par OAuth), ou une inscription
+    // non vérifiée dont le jeton n'a pas expiré (`pending`), bloque la
+    // conversion. Une ligne `stale` est éphémère : on la supprime et on
+    // continue, sinon elle squatterait l'email pour toujours.
     const existing = await this.#userRepository.findByEmail(pendingEmail)
-    if (existing?.emailVerifiedAt) {
+    const emailStatus = classifyEmailOwner(existing)
+    if (emailStatus === 'verified') {
       throw await taken()
     }
-    if (existing && !existing.emailVerifiedAt) {
-      const expiresAt = existing.emailVerificationTokenExpiresAt
-      if (expiresAt && expiresAt > new Date()) {
-        throw Boom.conflict(errorMessage('auth.unverifiedAccountPending'))
-      }
+    if (emailStatus === 'pending') {
+      throw Boom.conflict(errorMessage('auth.unverifiedAccountPending'))
+    }
+    if (emailStatus === 'stale') {
       await this.#userRepository.deleteUnverifiedByEmail(pendingEmail)
     }
     try {

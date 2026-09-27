@@ -2,12 +2,25 @@ import { randomBytes } from 'node:crypto'
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import {
+  decodeLinkCookie,
+  encodeLinkCookie,
+} from '../../../../../../domain/auth/oauth-link-cookie'
 import { errorMessage } from '../../../../../../infra/i18n/error-messages'
 import {
   discordOAuthCallbackQuerySchema,
   oauthAuthorizeQuerySchema,
 } from '../../../schemas/auth.schemas'
 import { completeOAuthCallback } from '../helpers'
+
+const LINK_COOKIE_OPTS = {
+  httpOnly: true,
+  secure: true,
+  signed: true,
+  maxAge: 600,
+  path: '/',
+  sameSite: 'lax' as const,
+}
 
 export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
   const { oauthDomain, config } = fastify.iocContainer
@@ -30,20 +43,26 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
         sameSite: 'lax',
       })
       if (request.query.mode === 'link') {
-        // Lie la popup OAuth à l'invité connecté. Cookie SIGNÉ : un tiers ne
-        // peut pas y écrire l'id d'un autre invité.
+        // Lie la popup OAuth à l'invité connecté. Cookie SIGNÉ, et lié au
+        // `state` de CE round-trip (voir `oauth-link-cookie.ts`) : sans ce
+        // lien, un flux abandonné puis une connexion normale ultérieure
+        // (même fenêtre de 10 min, même navigateur) rattacherait le compte
+        // OAuth de la connexion à l'invité au lieu de simplement le
+        // connecter.
         await fastify.verifySessionCookie(request)
         if (request.user.role !== 'GUEST') {
           throw Boom.forbidden(errorMessage('auth.guestOnly'))
         }
-        reply.setCookie('oauth_link', request.user.userID, {
-          httpOnly: true,
-          secure: true,
-          signed: true,
-          maxAge: 600,
-          path: '/',
-          sameSite: 'lax',
-        })
+        reply.setCookie(
+          'oauth_link',
+          encodeLinkCookie(request.user.userID, state),
+          LINK_COOKIE_OPTS,
+        )
+      } else {
+        // Un cookie de liaison orphelin (flux `link` abandonné dans les 10
+        // dernières minutes) ne doit jamais survivre à une connexion ou
+        // inscription normale lancée dans la même fenêtre de navigateur.
+        reply.clearCookie('oauth_link', { path: '/' })
       }
       return reply.redirect(
         oauthDomain.getAuthorizationUrl('discord', state, request.query.mode),
@@ -71,6 +90,20 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
           path: '/',
           sameSite: 'lax',
         })
+        // Un flux `link` en cours survit à ce repli : on reporte la liaison
+        // sur le nouveau `state` (même cookie signé, nouvelle valeur), sinon
+        // le second aller-retour la perdrait silencieusement.
+        const rawLink = request.cookies.oauth_link
+        const decoded = decodeLinkCookie(
+          rawLink ? request.unsignCookie(rawLink) : null,
+        )
+        if (decoded) {
+          reply.setCookie(
+            'oauth_link',
+            encodeLinkCookie(decoded.userId, fallbackState),
+            LINK_COOKIE_OPTS,
+          )
+        }
         const consentUrl = `https://discord.com/api/oauth2/authorize?${new URLSearchParams(
           {
             client_id: config.discordClientId,
@@ -97,6 +130,7 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
         oauthDomain,
         'discord',
         code,
+        state,
         request,
         reply,
         config.frontUrl,
