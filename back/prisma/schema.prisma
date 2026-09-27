@@ -10,6 +10,9 @@ generator client {
 enum GlobalRole {
   USER
   SUPER_ADMIN
+  /// Compte sans email créé par « Jouer » : tout le solo, rien de social.
+  /// Converti en USER par vérification d'email ou liaison OAuth.
+  GUEST
 }
 
 enum Locale {
@@ -143,6 +146,8 @@ enum EquipmentSet {
 
 enum ActivityEventType {
   USER_SIGNUP
+  GUEST_SIGNUP
+  GUEST_CONVERTED
   PULL_EPIC
   PULL_LEGENDARY
   SHOP_PURCHASE
@@ -181,7 +186,10 @@ enum BetSide {
 model User {
   id                              String     @id @default(uuid())
   username                        String     @unique
-  email                           String     @unique
+  email                           String?    @unique
+  /// Email demandé par un invité qui se convertit, en attente de vérification.
+  /// Pas unique : l'unicité se vérifie contre `email` au clic sur le lien.
+  pendingEmail                    String?
   passwordHash                    String?
   avatar                          String?
   banner                          String?
@@ -246,6 +254,8 @@ model User {
   betsReceived        Bet[]              @relation("BetTarget")
   betEntries          BetEntry[]
   weeklies            TeamMemberWeekly[]
+
+  @@index([role, lastLoginAt])
 }
 
 /// Une équipe de combat par mode de jeu. `key` vaut 'campaign', 'raid' ou

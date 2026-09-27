@@ -355,7 +355,10 @@ export class TeamDomain implements TeamDomainInterface {
       const user = await this.#userRepo.findById(userId)
       // Comparaison en minuscules par prudence : `normalizerExtension` abaisse
       // déjà les e-mails à l'écriture, mais la garde ne doit pas en dépendre.
-      if (user?.email.toLowerCase() !== invitation.invitedEmail.toLowerCase()) {
+      if (
+        !user?.email ||
+        user.email.toLowerCase() !== invitation.invitedEmail.toLowerCase()
+      ) {
         throw Boom.forbidden(errorMessage('team.invitationForAnotherUser'))
       }
       return

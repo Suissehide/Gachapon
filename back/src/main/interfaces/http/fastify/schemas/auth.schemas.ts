@@ -20,7 +20,8 @@ export const loginBodySchema = z.object({
 export const userResponseSchema = z.object({
   id: z.string(),
   username: z.string(),
-  email: z.string(),
+  email: z.string().nullable(),
+  pendingEmail: z.string().nullable(),
   role: z.string(),
   tokens: z.number(),
   dust: z.number(),

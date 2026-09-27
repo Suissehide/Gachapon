@@ -29,7 +29,7 @@ export type AdminUsersWhereInput = {
 export type UserExportRow = {
   id: string
   username: string
-  email: string
+  email: string | null
   role: string
   suspended: boolean
   level: number

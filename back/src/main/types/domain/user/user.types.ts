@@ -1,4 +1,4 @@
-import type { User } from '../../../../generated/client'
+import type { GlobalRole, User } from '../../../../generated/client'
 import type { Locale } from '../../../infra/i18n/locale'
 
 export type UserEntity = User
@@ -16,9 +16,11 @@ export type UserEntity = User
  */
 export type CreateUserInput = {
   username: string
-  email: string
+  /** `null` pour un invité (`role: 'GUEST'`), obligatoire sinon. */
+  email: string | null
   passwordHash?: string
   tokens?: number
+  role?: GlobalRole
   locale: Locale
 }
 
@@ -37,6 +39,8 @@ export type UpdateUserInput = Partial<
     | 'streakDays'
     | 'lastLoginAt'
     | 'role'
+    | 'email'
+    | 'pendingEmail'
     | 'emailVerifiedAt'
     | 'emailVerificationToken'
     | 'emailVerificationTokenExpiresAt'

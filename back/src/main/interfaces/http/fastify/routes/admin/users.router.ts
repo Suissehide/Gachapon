@@ -95,7 +95,7 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
         users.map((u) => [
           u.id,
           u.username,
-          u.email,
+          u.email ?? '',
           u.role,
           u.suspended ? 'suspendu' : 'actif',
           u.level,

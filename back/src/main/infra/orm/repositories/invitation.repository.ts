@@ -29,13 +29,16 @@ export class InvitationRepository implements IInvitationRepository {
 
   findPendingForUser(
     userId: string,
-    email: string,
+    email: string | null,
   ): Promise<InvitationWithDetails[]> {
     return this.#prisma.invitation.findMany({
       where: {
         status: 'PENDING',
         expiresAt: { gt: new Date() },
-        OR: [{ invitedUserId: userId }, { invitedEmail: email }],
+        OR: [
+          { invitedUserId: userId },
+          ...(email ? [{ invitedEmail: email }] : []),
+        ],
       },
       include: {
         team: { select: { id: true, name: true, slug: true, avatar: true } },

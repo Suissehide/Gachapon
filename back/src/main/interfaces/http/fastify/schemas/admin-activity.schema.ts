@@ -2,6 +2,8 @@ import { z } from 'zod/v4'
 
 export const ACTIVITY_EVENT_TYPES = [
   'USER_SIGNUP',
+  'GUEST_SIGNUP',
+  'GUEST_CONVERTED',
   'PULL_EPIC',
   'PULL_LEGENDARY',
   'SHOP_PURCHASE',

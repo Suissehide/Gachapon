@@ -10,7 +10,7 @@ export interface IInvitationRepository {
   findByTokenWithDetails(token: string): Promise<InvitationWithDetails | null>
   findPendingForUser(
     userId: string,
-    email: string,
+    email: string | null,
   ): Promise<InvitationWithDetails[]>
   findPendingByTeamAndUser(
     teamId: string,
