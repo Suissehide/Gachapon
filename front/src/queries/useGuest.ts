@@ -34,7 +34,13 @@ export function usePlayAsGuest() {
           message: t('limit.message'),
           severity: TOAST_SEVERITY.INFO,
         })
+        return
       }
+      toast({
+        title: t('errors.createTitle'),
+        message: err.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 
