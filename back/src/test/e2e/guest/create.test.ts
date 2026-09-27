@@ -59,6 +59,52 @@ describe('POST /auth/guest', () => {
     expect(again.statusCode).toBe(409)
   })
 
+  /**
+   * Revue finale : une signature JWT valide ne prouve pas que la session
+   * sert encore (invité purgé, refresh révoqué). Sans vérifier l'utilisateur,
+   * « Jouer » recevait 409, le front croyait à une session, `fetchMe`
+   * échouait et renvoyait à l'accueil.
+   */
+  it('crée un invité si les cookies désignent un utilisateur supprimé', async () => {
+    const { cookies, body } = await createGuest(app)
+    await app.iocContainer.postgresOrm.prisma.user.delete({
+      where: { id: body.id },
+    })
+    const again = await app.inject({
+      method: 'POST',
+      url: '/auth/guest',
+      headers: { cookie: cookies, 'x-forwarded-for': randomTestIpv6() },
+    })
+    expect(again.statusCode).toBe(201)
+    expect(again.json().id).not.toBe(body.id)
+  })
+
+  it('crée un invité si seul un refresh révoqué subsiste', async () => {
+    const { res } = await createGuest(app)
+    const setCookie = res.headers['set-cookie']
+    const refresh = (Array.isArray(setCookie) ? setCookie : [setCookie ?? ''])
+      .map((c) => c.split(';')[0])
+      .find((c) => c.startsWith('refresh_token=')) as string
+    const stillValid = await app.inject({
+      method: 'POST',
+      url: '/auth/guest',
+      headers: { cookie: refresh, 'x-forwarded-for': randomTestIpv6() },
+    })
+    // Refresh encore valide : session utilisable → 409.
+    expect(stillValid.statusCode).toBe(409)
+    const token = refresh.slice('refresh_token='.length)
+    const { sub } = app.iocContainer.jwtService.verifyRefresh<{ sub: string }>(
+      token,
+    )
+    await app.iocContainer.refreshTokenRepository.revoke(sub, token)
+    const again = await app.inject({
+      method: 'POST',
+      url: '/auth/guest',
+      headers: { cookie: refresh, 'x-forwarded-for': randomTestIpv6() },
+    })
+    expect(again.statusCode).toBe(201)
+  })
+
   it('enregistre une activité GUEST_SIGNUP', async () => {
     const { body } = await createGuest(app)
     // record() est en fire-and-forget : on laisse la promesse se résoudre.
