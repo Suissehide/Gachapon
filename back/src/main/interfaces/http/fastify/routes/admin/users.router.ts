@@ -242,6 +242,11 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound(errorMessage('user.notFound'))
       }
+      // Un invité n'a ni email ni mot de passe : le passer USER/SUPER_ADMIN
+      // contournerait la conversion (et la purge des invités inactifs).
+      if (user.role === 'GUEST') {
+        throw Boom.conflict(errorMessage('admin.cannotChangeGuestRole'))
+      }
       return userRepository.updateRole(request.params.id, request.body.role)
     },
   )
