@@ -120,6 +120,7 @@ export const CONFIG_KEYS = [
   'team.maxMembers',
   'team.recruitDays',
   'teamRaid.historyLimit',
+  'guest.purgeAfterDays',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

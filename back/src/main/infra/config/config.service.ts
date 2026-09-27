@@ -301,6 +301,10 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'team.maxMembers': 35,
   'team.recruitDays': 1,
   'teamRaid.historyLimit': 6,
+  // Un invité n'a ni email ni mot de passe : passé la durée de son refresh
+  // token (30 j), il ne peut plus jamais rouvrir son compte. La purge ne
+  // supprime donc que des comptes déjà inaccessibles.
+  'guest.purgeAfterDays': 30,
 }
 
 export class ConfigService implements ConfigServiceInterface {

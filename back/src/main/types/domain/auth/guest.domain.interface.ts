@@ -14,4 +14,5 @@ export interface GuestDomainInterface {
     userId: string,
     input: { email: string; password: string },
   ): Promise<{ pendingEmail: string }>
+  purgeInactiveGuests(): Promise<number>
 }

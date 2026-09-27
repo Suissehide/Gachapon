@@ -18,6 +18,7 @@ import type { IMailService } from '../../types/infra/mail/mail.service.interface
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
 import { classifyEmailOwner } from './email-ownership'
+import { guestPurgeCutoff } from './guest-rules'
 import { generateGuestUsername } from './guest-username'
 
 // 5 tirages à 2 chiffres (6 400 combinaisons × 100), puis 5 à 4 chiffres.
@@ -156,5 +157,12 @@ export class GuestDomain implements GuestDomainInterface {
     })
     await this.#mailService.sendVerificationEmail(email, token, user.locale)
     return { pendingEmail: email }
+  }
+
+  async purgeInactiveGuests(): Promise<number> {
+    const days = await this.#configService.get('guest.purgeAfterDays')
+    return this.#userRepository.deleteInactiveGuests(
+      guestPurgeCutoff(new Date(), days),
+    )
   }
 }

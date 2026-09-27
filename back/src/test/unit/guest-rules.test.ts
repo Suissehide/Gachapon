@@ -1,6 +1,9 @@
 import { describe, expect, it } from '@jest/globals'
 
-import { rateLimitKeyForIp } from '../../main/domain/auth/guest-rules'
+import {
+  guestPurgeCutoff,
+  rateLimitKeyForIp,
+} from '../../main/domain/auth/guest-rules'
 
 describe('rateLimitKeyForIp', () => {
   it('garde une IPv4 telle quelle', () => {
@@ -25,5 +28,13 @@ describe('rateLimitKeyForIp', () => {
 
   it('normalise la casse et ignore l’identifiant de zone', () => {
     expect(rateLimitKeyForIp('2001:DB8:1:2::1%eth0')).toBe('2001:db8:1:2::/64')
+  })
+})
+
+describe('guestPurgeCutoff', () => {
+  it('recule de N jours pleins', () => {
+    expect(
+      guestPurgeCutoff(new Date('2026-09-26T12:00:00Z'), 30).toISOString(),
+    ).toBe('2026-08-27T12:00:00.000Z')
   })
 })

@@ -1,5 +1,12 @@
 import { isIPv4 } from 'node:net'
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** Date avant laquelle un invité sans activité est purgé. */
+export function guestPurgeCutoff(now: Date, days: number): Date {
+  return new Date(now.getTime() - days * DAY_MS)
+}
+
 /**
  * Clé du rate limit de création d'invité. Un FAI attribue couramment un /64
  * entier à un seul foyer : compter par adresse IPv6 laisserait tourner des

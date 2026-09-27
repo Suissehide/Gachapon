@@ -140,6 +140,25 @@ export class UserRepository implements UserRepositoryInterface {
     })
   }
 
+  async deleteInactiveGuests(before: Date): Promise<number> {
+    const { count } = await this.#prisma.user.deleteMany({
+      where: {
+        role: 'GUEST',
+        OR: [
+          { lastLoginAt: { lt: before } },
+          { lastLoginAt: null, createdAt: { lt: before } },
+        ],
+        // Relations SANS cascade vers User : une seule ligne retenue ferait
+        // échouer tout le deleteMany. Un invité n'en a normalement aucune.
+        ownedTeams: { none: {} },
+        sentInvitations: { none: {} },
+        receivedInvitations: { none: {} },
+        joinRequestsDecided: { none: {} },
+      },
+    })
+    return count
+  }
+
   #buildAdminWhere(params: AdminUsersWhereInput) {
     const where: Record<string, unknown> = {}
     if (params.search) {

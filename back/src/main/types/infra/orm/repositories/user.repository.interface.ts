@@ -78,6 +78,8 @@ export interface UserRepositoryInterface {
   findByEmailVerificationToken(token: string): Promise<UserEntity | null>
   findByPasswordResetToken(token: string): Promise<UserEntity | null>
   deleteUnverifiedByEmail(email: string): Promise<void>
+  /** Supprime les invités inactifs depuis `before` ; renvoie le nombre supprimé. */
+  deleteInactiveGuests(before: Date): Promise<number>
   findAllPaginated(
     params: AdminUsersWhereInput & { page: number; limit: number },
   ): Promise<{
