@@ -46,6 +46,11 @@ export interface UserRepositoryInterface {
   findByUsername(username: string): Promise<UserEntity | null>
   create(input: CreateUserInput): Promise<UserEntity>
   update(id: string, input: UpdateUserInput): Promise<UserEntity>
+  /**
+   * Update conditionnel : ne s'applique que si le compte est encore GUEST.
+   * `null` si un appel concurrent l'a déjà converti.
+   */
+  updateIfGuest(id: string, input: UpdateUserInput): Promise<UserEntity | null>
   updateInTx(
     tx: PrimaTransactionClient,
     id: string,

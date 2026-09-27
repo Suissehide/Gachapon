@@ -95,6 +95,49 @@ describe('conversion d’un invité par email', () => {
     expect(res.json().code).toBe('EMAIL_TAKEN')
   })
 
+  /**
+   * Revue navigateur : `verify-email.tsx` appelle la vérification dans un
+   * effet de montage (double montage en StrictMode, double clic ou double
+   * ouverture du lien en prod). Le 2e appel retrouvait l'invité lui-même
+   * propriétaire de l'email et répondait 409 « pris par un autre compte »,
+   * alors que la conversion avait réussi.
+   */
+  it('deux vérifications simultanées du même lien : aucune 409, une seule conversion', async () => {
+    const { cookies, body } = await createGuest(app)
+    const email = `twice${suffix}@test.com`
+    expect((await upgrade(cookies, email)).statusCode).toBe(202)
+    const { emailVerificationToken } = await prisma().user.findUniqueOrThrow({
+      where: { id: body.id },
+    })
+    const verify = () =>
+      app.inject({
+        method: 'POST',
+        url: '/auth/verify-email',
+        payload: { token: emailVerificationToken },
+      })
+    const results = await Promise.all([verify(), verify()])
+    const codes = results.map((r) => r.statusCode).sort()
+    expect(codes).not.toContain(409)
+    expect(codes[0]).toBe(200)
+    for (const code of codes) {
+      expect([200, 400]).toContain(code)
+    }
+
+    const done = await prisma().user.findUniqueOrThrow({
+      where: { id: body.id },
+    })
+    expect(done.role).toBe('USER')
+    expect(done.email).toBe(email)
+    expect(done.emailVerifiedAt).not.toBeNull()
+
+    // `record()` est en fire-and-forget.
+    await new Promise((r) => setTimeout(r, 200))
+    const events = await prisma().activityEvent.count({
+      where: { userId: body.id, type: 'GUEST_CONVERTED' },
+    })
+    expect(events).toBe(1)
+  })
+
   it('409 au clic si l’email a été pris entre-temps, et efface pendingEmail', async () => {
     const { cookies, body } = await createGuest(app)
     const email = `race${suffix}@test.com`

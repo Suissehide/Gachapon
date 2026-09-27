@@ -57,6 +57,17 @@ export class UserRepository implements UserRepositoryInterface {
     return tx.user.update({ where: { id }, data: input })
   }
 
+  async updateIfGuest(
+    id: string,
+    input: UpdateUserInput,
+  ): Promise<UserEntity | null> {
+    const { count } = await this.#prisma.user.updateMany({
+      where: { id, role: 'GUEST' },
+      data: input,
+    })
+    return count === 0 ? null : this.findById(id)
+  }
+
   async updateFeaturedCardIds(
     userId: string,
     cardIds: string[],

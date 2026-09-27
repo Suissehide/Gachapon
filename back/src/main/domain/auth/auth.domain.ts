@@ -219,6 +219,12 @@ export class AuthDomain implements AuthDomainInterface {
    * pris entre la demande et le clic : on re-vérifie juste avant l'écriture
    * (pas de transaction ici), et c'est l'index unique sur `email` qui ferme
    * la course restante (P2002 → `pendingEmailTaken`).
+   *
+   * Idempotent : le lien peut être validé deux fois en parallèle (double
+   * montage StrictMode, double clic). Un appel qui trouve l'invité LUI-MÊME
+   * propriétaire de l'email, ou dont l'update conditionnel (`role: GUEST`)
+   * ne touche plus rien, renvoie le compte déjà converti — sans 409 ni
+   * seconde activité GUEST_CONVERTED.
    */
   async #convertGuest(
     userId: string,
@@ -239,6 +245,9 @@ export class AuthDomain implements AuthDomainInterface {
     // conversion. Une ligne `stale` est éphémère : on la supprime et on
     // continue, sinon elle squatterait l'email pour toujours.
     const existing = await this.#userRepository.findByEmail(pendingEmail)
+    if (existing?.id === userId) {
+      return existing
+    }
     const emailStatus = classifyEmailOwner(existing)
     if (emailStatus === 'verified') {
       throw await taken()
@@ -250,7 +259,7 @@ export class AuthDomain implements AuthDomainInterface {
       await this.#userRepository.deleteUnverifiedByEmail(pendingEmail)
     }
     try {
-      const converted = await this.#userRepository.update(userId, {
+      const converted = await this.#userRepository.updateIfGuest(userId, {
         email: pendingEmail,
         pendingEmail: null,
         role: 'USER',
@@ -258,6 +267,9 @@ export class AuthDomain implements AuthDomainInterface {
         emailVerificationToken: null,
         emailVerificationTokenExpiresAt: null,
       })
+      if (!converted) {
+        return this.#alreadyConverted(userId, pendingEmail)
+      }
       void this.#activityDomain.record('GUEST_CONVERTED', {
         userId,
         username: converted.username,
@@ -266,10 +278,28 @@ export class AuthDomain implements AuthDomainInterface {
       return converted
     } catch (err) {
       if ((err as { code?: string }).code === 'P2002') {
+        // La contrainte a pu sauter sur notre propre conversion concurrente :
+        // dans ce cas le compte est déjà USER avec cet email, rien à refuser.
+        const current = await this.#userRepository.findById(userId)
+        if (current?.role !== 'GUEST' && current?.email === pendingEmail) {
+          return current
+        }
         throw await taken()
       }
       throw err
     }
+  }
+
+  /** L'appel concurrent a gagné : on rend le compte converti tel quel. */
+  async #alreadyConverted(
+    userId: string,
+    pendingEmail: string,
+  ): Promise<UserEntity> {
+    const current = await this.#userRepository.findById(userId)
+    if (current && current.role !== 'GUEST' && current.email === pendingEmail) {
+      return current
+    }
+    throw Boom.badRequest(errorMessage('auth.invalidOrExpiredToken'))
   }
 
   async resendVerification(email: string): Promise<void> {
