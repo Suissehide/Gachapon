@@ -1,7 +1,7 @@
-import { useNavigate } from '@tanstack/react-router'
 import { Lock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { useGuestSaveDialogStore } from '../../stores/guestSaveDialog.store.ts'
 import { Button } from '../ui/button.tsx'
 import {
   Card,
@@ -15,7 +15,7 @@ type Feature = 'teams' | 'raid' | 'wagers'
 
 export function GuestLockedPanel({ feature }: { feature: Feature }) {
   const { t } = useTranslation('guest')
-  const navigate = useNavigate()
+  const openSaveDialog = useGuestSaveDialogStore((s) => s.setOpen)
   return (
     <Card className="mx-auto max-w-lg text-center">
       <CardHeader>
@@ -24,9 +24,7 @@ export function GuestLockedPanel({ feature }: { feature: Feature }) {
         <CardDescription>{t(`locked.${feature}.description`)}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button onClick={() => void navigate({ to: '/settings' })}>
-          {t('locked.cta')}
-        </Button>
+        <Button onClick={() => openSaveDialog(true)}>{t('locked.cta')}</Button>
       </CardContent>
     </Card>
   )

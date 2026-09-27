@@ -22,14 +22,20 @@ function isLinkIssue(value: string | undefined): value is LinkIssue {
 }
 
 /**
- * Carte de conversion affichée dans `/settings` pour un compte invité :
- * email + mot de passe, ou liaison Google/Discord, pour sauvegarder la
- * progression au-delà du navigateur courant.
+ * Formulaire de conversion d'un compte invité : email + mot de passe, ou
+ * liaison Google/Discord, pour sauvegarder la progression au-delà du
+ * navigateur courant. Affiché dans `/settings` et dans `GuestSaveDialog`
+ * (`hideHeader` : la popup porte déjà son titre).
  */
 export function GuestAccountCard({
   initialLinkError,
+  hideHeader = false,
+  onLoginInstead,
 }: {
   initialLinkError?: string
+  hideHeader?: boolean
+  /** Appelé avant d'ouvrir la connexion (la popup invité se ferme d'abord). */
+  onLoginInstead?: () => void
 }) {
   const { t } = useTranslation(['guest', 'auth'])
   const { toast } = useToast()
@@ -94,15 +100,24 @@ export function GuestAccountCard({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <p className="font-semibold text-text">{t('account.title')}</p>
-        <p className="text-sm text-text-light">{t('account.description')}</p>
-      </div>
+      {!hideHeader && (
+        <div>
+          <p className="font-semibold text-text">{t('account.title')}</p>
+          <p className="text-sm text-text-light">{t('account.description')}</p>
+        </div>
+      )}
 
       {linkIssue === 'account_exists' && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
           <p className="mb-2 text-text">{t('account.conflict')}</p>
-          <Button size="sm" variant="outline" onClick={openLogin}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              onLoginInstead?.()
+              openLogin()
+            }}
+          >
             {t('account.loginInstead')}
           </Button>
         </div>

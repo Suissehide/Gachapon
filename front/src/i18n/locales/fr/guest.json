@@ -42,8 +42,8 @@
     "discord": "Sauvegarder avec Discord"
   },
   "banner": {
-    "message": "Tu joues en invité : ta progression est liée à ce navigateur. Sauvegarde-la.",
-    "cta": "Sauvegarder",
+    "message": "Tu joues en invité : ta progression est liée à ce navigateur. Sauvegarde-la en te connectant.",
+    "cta": "Se connecter",
     "dismiss": "Masquer pendant 7 jours"
   },
   "warnings": {
@@ -51,5 +51,16 @@
     "logoutTitle": "Quitter ta partie invitée ?",
     "logoutDescription": "Sans email ni compte lié, ta progression sera perdue définitivement. Sauvegarde-la d'abord depuis les paramètres.",
     "logoutConfirm": "Me déconnecter quand même"
+  },
+  "saveDialog": {
+    "title": "Sauvegarde ta progression",
+    "description": "Choisis ton pseudo, puis relie ton compte à un email ou à Google/Discord pour retrouver ta partie sur n'importe quel appareil.",
+    "close": "Fermer",
+    "usernameLabel": "Pseudo",
+    "usernameSave": "Enregistrer",
+    "usernameHint": "C'est le nom affiché au classement. Tu pourras le changer plus tard.",
+    "usernameInvalid": "3 à 30 caractères : lettres, chiffres et _ uniquement.",
+    "usernameSaved": "Pseudo enregistré",
+    "usernameErrorTitle": "Impossible de changer le pseudo"
   }
 }

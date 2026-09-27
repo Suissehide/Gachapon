@@ -42,8 +42,8 @@
     "discord": "Save with Discord"
   },
   "banner": {
-    "message": "You're playing as a guest: your progress is tied to this browser. Save it.",
-    "cta": "Save",
+    "message": "You're playing as a guest: your progress is tied to this browser. Save it by signing in.",
+    "cta": "Sign in",
     "dismiss": "Hide for 7 days"
   },
   "warnings": {
@@ -51,5 +51,16 @@
     "logoutTitle": "Leave your guest game?",
     "logoutDescription": "Without an email or linked account, your progress will be lost for good. Save it first from the settings.",
     "logoutConfirm": "Sign out anyway"
+  },
+  "saveDialog": {
+    "title": "Save your progress",
+    "description": "Pick your username, then link your account to an email or to Google/Discord to get your game back on any device.",
+    "close": "Close",
+    "usernameLabel": "Username",
+    "usernameSave": "Save",
+    "usernameHint": "This is the name shown on the leaderboard. You can change it later.",
+    "usernameInvalid": "3 to 30 characters: letters, numbers and _ only.",
+    "usernameSaved": "Username saved",
+    "usernameErrorTitle": "Could not change the username"
   }
 }

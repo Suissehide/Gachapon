@@ -1,10 +1,10 @@
-import { useNavigate } from '@tanstack/react-router'
 import { X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { create } from 'zustand'
 
 import { useIsGuest } from '../../stores/auth.store.ts'
+import { useGuestSaveDialogStore } from '../../stores/guestSaveDialog.store.ts'
 import { Button } from '../ui/button.tsx'
 
 const DISMISS_KEY = 'gachapon_guest_banner_dismissed_until'
@@ -35,7 +35,7 @@ export const useGuestNudgeStore = create<{
 
 export function GuestSaveBanner() {
   const { t } = useTranslation('guest')
-  const navigate = useNavigate()
+  const openSaveDialog = useGuestSaveDialogStore((s) => s.setOpen)
   const isGuest = useIsGuest()
   const nudged = useGuestNudgeStore((s) => s.nudged)
   const [dismissedUntil, setDismissedUntil] = useState(readDismissedUntil)
@@ -56,21 +56,19 @@ export function GuestSaveBanner() {
   }
 
   return (
-    <div className="px-4 pt-4">
-      <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-sm">
-        <p className="flex-1 text-text">{t('banner.message')}</p>
-        <Button size="sm" onClick={() => void navigate({ to: '/settings' })}>
-          {t('banner.cta')}
-        </Button>
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={dismiss}
-          aria-label={t('banner.dismiss')}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="flex items-center gap-3 border-b border-primary/30 bg-primary/5 px-4 py-2 text-sm">
+      <p className="flex-1 text-text">{t('banner.message')}</p>
+      <Button size="sm" onClick={() => openSaveDialog(true)}>
+        {t('banner.cta')}
+      </Button>
+      <Button
+        size="icon-sm"
+        variant="ghost"
+        onClick={dismiss}
+        aria-label={t('banner.dismiss')}
+      >
+        <X className="h-4 w-4" />
+      </Button>
     </div>
   )
 }
