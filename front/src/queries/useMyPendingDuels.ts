@@ -5,7 +5,7 @@ import { WagersApi } from '../api/wagers.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
 import { wsClient } from '../lib/ws.ts'
-import { useAuthStore } from '../stores/auth.store.ts'
+import { useAuthStore, useIsGuest } from '../stores/auth.store.ts'
 import { wagersKey } from './useWagers.ts'
 
 export const myDuelsKey = ['me', 'duels'] as const
@@ -21,12 +21,13 @@ export const duelHandsKey = (teamId: string, duelId: string) =>
  */
 export function useMyPendingDuels() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isGuest = useIsGuest()
   const queryClient = useQueryClient()
 
   const query = useQuery({
     queryKey: myDuelsKey,
     queryFn: () => WagersApi.getMyPendingDuels(),
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !isGuest,
     staleTime: 60_000,
   })
 

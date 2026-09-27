@@ -8,5 +8,21 @@
   "errors": {
     "createTitle": "Could not start the game",
     "upgradeTitle": "Could not save your progress"
-  }
+  },
+  "locked": {
+    "cta": "Create your account, your progress is kept",
+    "teams": {
+      "title": "Teams need an account",
+      "description": "Join a team for the weekly raid, duels and bets between teammates."
+    },
+    "raid": {
+      "title": "The raid needs an account",
+      "description": "The raid is played as a team: create your account to join one."
+    },
+    "wagers": {
+      "title": "Duels and bets need an account",
+      "description": "Challenge your teammates and bet on their pulls once your account is created."
+    }
+  },
+  "toastForbidden": "Create your account to unlock this feature"
 }

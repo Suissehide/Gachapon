@@ -14,7 +14,7 @@ import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
 import { wsClient } from '../lib/ws.ts'
-import { useAuthStore } from '../stores/auth.store.ts'
+import { useAuthStore, useIsGuest } from '../stores/auth.store.ts'
 import { useMyTeams } from './useTeams.ts'
 
 /**
@@ -65,12 +65,14 @@ export type TeamJoinRequestWithTeam = TeamJoinRequest & {
 // page) est donc la seule forme qui empêche un consommateur de se tromper —
 // même schéma que `useAdminActivity`.
 export const useTeamDirectory = (search: string) => {
+  const isGuest = useIsGuest()
   const query = useInfiniteQuery({
     queryKey: ['recruitment', 'directory', search],
     queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
       RecruitmentApi.getDirectory({ cursor: pageParam, search }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: !isGuest,
   })
 
   useDataFetching({
@@ -84,10 +86,12 @@ export const useTeamDirectory = (search: string) => {
 
 export const useMyJoinRequests = () => {
   useRecruitmentLiveInvalidation()
+  const isGuest = useIsGuest()
 
   const query = useQuery({
     queryKey: ['recruitment', 'mine'],
     queryFn: () => RecruitmentApi.getMine(),
+    enabled: !isGuest,
   })
 
   useDataFetching({
@@ -232,6 +236,7 @@ export const useDeclineJoinRequest = () => {
  */
 export const useMyTeamsJoinRequests = () => {
   useRecruitmentLiveInvalidation()
+  const isGuest = useIsGuest()
 
   const { data: teamsData, isPending: isTeamsPending } = useMyTeams()
 
@@ -243,6 +248,7 @@ export const useMyTeamsJoinRequests = () => {
     queries: officerTeams.map((team) => ({
       queryKey: ['recruitment', 'team', team.id],
       queryFn: () => RecruitmentApi.getForTeam(team.id),
+      enabled: !isGuest,
     })),
   })
 

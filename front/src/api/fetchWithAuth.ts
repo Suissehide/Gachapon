@@ -1,4 +1,6 @@
-import { withAcceptLanguage } from '../i18n/index.ts'
+import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
+import i18n, { withAcceptLanguage } from '../i18n/index.ts'
+import { useToastStore } from '../store/useToastStore.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { AuthApi } from './auth.api.ts'
 
@@ -63,6 +65,20 @@ export const fetchWithAuth = async (
       return response
     }
     response = await makeRequest()
+  }
+
+  if (response.status === 403) {
+    const body = await response
+      .clone()
+      .json()
+      .catch(() => null)
+    if ((body as { code?: string } | null)?.code === 'GUEST_FORBIDDEN') {
+      useToastStore.getState().addToast({
+        title: i18n.t('guest:toastForbidden'),
+        message: (body as { message?: string }).message ?? '',
+        severity: TOAST_SEVERITY.INFO,
+      })
+    }
   }
 
   return response

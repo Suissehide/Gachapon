@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { TeamMember } from '../../../api/teams.api.ts'
+import { GuestLockedPanel } from '../../../components/guest/GuestLockedPanel.tsx'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { ConfirmPopup } from '../../../components/team/ConfirmPopup.tsx'
@@ -20,13 +21,24 @@ import {
   useTeamLive,
 } from '../../../queries/useTeamProgression.ts'
 import { useLeaveTeam } from '../../../queries/useTeams.ts'
-import { useAuthStore } from '../../../stores/auth.store.ts'
+import { useAuthStore, useIsGuest } from '../../../stores/auth.store.ts'
 
 export const Route = createFileRoute('/_authenticated/team/$id')({
   component: TeamDetailPage,
 })
 
 function TeamDetailPage() {
+  const isGuest = useIsGuest()
+  return isGuest ? (
+    <PageShell>
+      <GuestLockedPanel feature="teams" />
+    </PageShell>
+  ) : (
+    <TeamDetailPageContent />
+  )
+}
+
+function TeamDetailPageContent() {
   const { t } = useTranslation('team')
   const { id } = Route.useParams()
   const navigate = useNavigate()

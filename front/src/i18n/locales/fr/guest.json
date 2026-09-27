@@ -8,5 +8,21 @@
   "errors": {
     "createTitle": "Impossible de lancer la partie",
     "upgradeTitle": "Impossible de sauvegarder ta progression"
-  }
+  },
+  "locked": {
+    "cta": "Crée ton compte, ta progression est conservée",
+    "teams": {
+      "title": "Les équipes demandent un compte",
+      "description": "Rejoins une équipe pour le raid hebdomadaire, les duels et les paris entre coéquipiers."
+    },
+    "raid": {
+      "title": "Le raid demande un compte",
+      "description": "Le raid se joue en équipe : crée ton compte pour en rejoindre une."
+    },
+    "wagers": {
+      "title": "Les duels et paris demandent un compte",
+      "description": "Défie tes coéquipiers et parie sur leurs tirages une fois ton compte créé."
+    }
+  },
+  "toastForbidden": "Crée ton compte pour débloquer cette fonction"
 }

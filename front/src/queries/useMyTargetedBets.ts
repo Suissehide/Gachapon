@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 
 import { WagersApi } from '../api/wagers.api.ts'
 import { wsClient } from '../lib/ws.ts'
-import { useAuthStore } from '../stores/auth.store.ts'
+import { useAuthStore, useIsGuest } from '../stores/auth.store.ts'
 
 export const myBetsKey = ['me', 'bets'] as const
 
@@ -16,12 +16,13 @@ export const myBetsKey = ['me', 'bets'] as const
  */
 export function useMyTargetedBets() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isGuest = useIsGuest()
   const queryClient = useQueryClient()
 
   const query = useQuery({
     queryKey: myBetsKey,
     queryFn: () => WagersApi.getMyTargetedBets(),
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !isGuest,
     staleTime: 60_000,
   })
 

@@ -1,5 +1,13 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ArrowRight, Coins, LogOut, Sparkles, Ticket, Zap } from 'lucide-react'
+import {
+  ArrowRight,
+  Coins,
+  Lock,
+  LogOut,
+  Sparkles,
+  Ticket,
+  Zap,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -8,7 +16,7 @@ import { formatNumber } from '../../libs/utils.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useTokenBalance } from '../../queries/useGacha.ts'
 import type { AuthUser } from '../../stores/auth.store'
-import { useAuthStore } from '../../stores/auth.store'
+import { useAuthStore, useIsGuest } from '../../stores/auth.store'
 import { NotificationDot } from '../notifications/NotificationDot.tsx'
 import { NotificationsBadge } from '../notifications/NotificationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
@@ -36,10 +44,12 @@ export function Navbar() {
     { to: '/skills', label: t('layout:admin.nav.skills') },
   ] as const
 
+  const isGuest = useIsGuest()
+
   const navItemsAfterProfile = [
     { to: '/shop', label: t('layout:admin.nav.shop') },
     { to: '/leaderboard', label: t('layout:appNav.leaderboard') },
-    { to: '/team', label: t('home:community.teams.title') },
+    { to: '/team', label: t('home:community.teams.title'), locked: isGuest },
   ] as const
 
   const navItems = [...navItemsBeforeProfile, ...navItemsAfterProfile]
@@ -141,7 +151,12 @@ export function Navbar() {
               ))}
               {navItemsAfterProfile.map((item) => (
                 <Link key={item.label} to={item.to} className={tabClass}>
-                  {item.label}
+                  <span className="inline-flex items-center gap-1.5">
+                    {item.label}
+                    {'locked' in item && item.locked && (
+                      <Lock className="h-3 w-3 text-text-light" />
+                    )}
+                  </span>
                   <span
                     aria-hidden
                     className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
@@ -195,6 +210,7 @@ export function Navbar() {
             badgeCount={
               item.to === '/skills' ? (user?.skillPoints ?? 0) : undefined
             }
+            locked={'locked' in item && item.locked}
           />
         ))}
 

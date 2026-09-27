@@ -5,7 +5,7 @@ import { TeamsApi } from '../api/teams.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
-import { useAuthStore } from '../stores/auth.store.ts'
+import { useAuthStore, useIsGuest } from '../stores/auth.store.ts'
 
 export type {
   Invitation,
@@ -17,9 +17,11 @@ export type {
 } from '../api/teams.api.ts'
 
 export const useMyTeams = () => {
+  const isGuest = useIsGuest()
   const query = useQuery({
     queryKey: ['teams'],
     queryFn: () => TeamsApi.getMyTeams(),
+    enabled: !isGuest,
   })
 
   useDataFetching({
@@ -277,10 +279,11 @@ export const useInvitation = (token: string | undefined) => {
 }
 
 export const useMyInvitations = (enabled = true) => {
+  const isGuest = useIsGuest()
   const query = useQuery({
     queryKey: ['invitations', 'me'],
     queryFn: () => TeamsApi.getMyInvitations(),
-    enabled,
+    enabled: enabled && !isGuest,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   })

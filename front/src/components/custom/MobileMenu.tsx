@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { Lock } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -120,6 +121,7 @@ export function MobileNavLink({
   open,
   onClick,
   badgeCount,
+  locked,
 }: {
   to: string
   label: string
@@ -127,6 +129,7 @@ export function MobileNavLink({
   open: boolean
   onClick: () => void
   badgeCount?: number
+  locked?: boolean
 }) {
   return (
     <Link
@@ -141,8 +144,9 @@ export function MobileNavLink({
       <span
         className={`w-4 h-4 rounded-full shrink-0 bg-linear-to-br ${dotGradients[index % 3]}`}
       />
-      <span className="relative text-3xl font-semibold uppercase tracking-wide">
+      <span className="relative flex items-center gap-2 text-3xl font-semibold uppercase tracking-wide">
         {label}
+        {locked && <Lock className="h-3 w-3 text-text-light" />}
         {badgeCount ? (
           <NotificationDot count={badgeCount} className="-right-5 -top-2" />
         ) : null}

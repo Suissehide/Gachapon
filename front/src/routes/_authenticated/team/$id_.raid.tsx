@@ -29,6 +29,7 @@ import {
   RewardTile,
 } from '../../../components/battle/resultKit.tsx'
 import { TeamDock } from '../../../components/battle/TeamDock.tsx'
+import { GuestLockedPanel } from '../../../components/guest/GuestLockedPanel.tsx'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../../components/team/TeamEditorPopup.tsx'
@@ -46,6 +47,7 @@ import { formatNumber } from '../../../libs/utils.ts'
 import { useCombatTeam } from '../../../queries/useCombatTeam.ts'
 import { useRaid, useRaidAttack } from '../../../queries/useRaid.ts'
 import { useTeam } from '../../../queries/useTeams.ts'
+import { useIsGuest } from '../../../stores/auth.store.ts'
 
 export const Route = createFileRoute('/_authenticated/team/$id_/raid')({
   component: RaidAttackPage,
@@ -112,6 +114,17 @@ function RaidGate({
 }
 
 function RaidAttackPage() {
+  const isGuest = useIsGuest()
+  return isGuest ? (
+    <PageShell>
+      <GuestLockedPanel feature="raid" />
+    </PageShell>
+  ) : (
+    <RaidAttackPageContent />
+  )
+}
+
+function RaidAttackPageContent() {
   const { t } = useTranslation('team')
   const { id } = Route.useParams()
   const navigate = useNavigate()

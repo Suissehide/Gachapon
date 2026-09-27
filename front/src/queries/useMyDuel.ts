@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { TeamsApi } from '../api/teams.api.ts'
 import type { DuelView } from '../api/wagers.api.ts'
 import { TEAM_SLOTS } from '../constants/teams.constant.ts'
-import { useAuthStore } from '../stores/auth.store.ts'
+import { useAuthStore, useIsGuest } from '../stores/auth.store.ts'
 import { useWagers, useWagersLive } from './useWagers.ts'
 
 /**
@@ -22,6 +22,7 @@ import { useWagers, useWagersLive } from './useWagers.ts'
  */
 export function useMyDuel() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isGuest = useIsGuest()
   // Même clé que `useMyTeams` : la liste est partagée avec la page Équipes
   // plutôt que refetchée. `useDataFetching` n'est volontairement pas branché
   // ici — ce hook vit sur des pages dont le duel n'est pas le sujet, il ne
@@ -29,7 +30,7 @@ export function useMyDuel() {
   const { data: teams } = useQuery({
     queryKey: ['teams'],
     queryFn: () => TeamsApi.getMyTeams(),
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !isGuest,
     staleTime: 60_000,
   })
 

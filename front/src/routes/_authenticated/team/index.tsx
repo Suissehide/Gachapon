@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Compass, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { GuestLockedPanel } from '../../../components/guest/GuestLockedPanel.tsx'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { CreateTeamPopup } from '../../../components/team/CreateTeamPopup.tsx'
@@ -12,12 +13,24 @@ import { EmptyState } from '../../../components/ui/emptyState.tsx'
 import { PopupTrigger } from '../../../components/ui/popup.tsx'
 import { TEAM_SLOTS } from '../../../constants/teams.constant.ts'
 import { useMyTeams } from '../../../queries/useTeams.ts'
+import { useIsGuest } from '../../../stores/auth.store.ts'
 
 export const Route = createFileRoute('/_authenticated/team/')({
   component: TeamsPage,
 })
 
 function TeamsPage() {
+  const isGuest = useIsGuest()
+  return isGuest ? (
+    <PageShell>
+      <GuestLockedPanel feature="teams" />
+    </PageShell>
+  ) : (
+    <TeamsPageContent />
+  )
+}
+
+function TeamsPageContent() {
   const { t } = useTranslation('team')
   const { data, isLoading } = useMyTeams()
 
