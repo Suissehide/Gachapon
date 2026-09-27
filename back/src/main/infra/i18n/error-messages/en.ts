@@ -34,6 +34,9 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'auth.noRefreshToken': 'No refresh token',
   'auth.oauthMissingCodeOrState': 'Missing code or state',
   'auth.oauthInvalidState': 'Invalid OAuth state',
+  'auth.alreadyAuthenticated': 'You are already signed in',
+  'auth.guestUsernameUnavailable':
+    'Could not generate a username, try again in a moment',
 
   // --- profile / admin users ---
   'profile.cardNotInCollection': 'Card not in your collection',

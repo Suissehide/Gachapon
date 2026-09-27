@@ -28,6 +28,7 @@ import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.rep
 import type { WsManager } from '../../interfaces/ws/ws-manager'
 import type { IActivityDomain } from '../domain/activity/activity.domain.interface'
 import type { AuthDomainInterface } from '../domain/auth/auth.domain.interface'
+import type { GuestDomainInterface } from '../domain/auth/guest.domain.interface'
 import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface'
 import type { ICollectionDomain } from '../domain/collection/collection.domain.interface'
 import type { IDailyShopDomain } from '../domain/daily-shop/daily-shop.domain.interface'
@@ -97,6 +98,7 @@ export interface IocContainer {
   readonly userDomain: UserDomainInterface
   readonly authDomain: AuthDomainInterface
   readonly oauthDomain: OAuthDomainInterface
+  readonly guestDomain: GuestDomainInterface
   readonly refreshTokenRepository: RefreshTokenRepository
   readonly oauthAccountRepository: OAuthAccountRepository
   readonly apiKeyRepository: ApiKeyRepository

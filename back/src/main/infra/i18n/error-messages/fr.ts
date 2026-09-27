@@ -48,6 +48,9 @@ export const FR_MESSAGES = {
   'auth.noRefreshToken': 'Aucun jeton de rafraîchissement',
   'auth.oauthMissingCodeOrState': 'Code ou état manquant',
   'auth.oauthInvalidState': 'État OAuth invalide',
+  'auth.alreadyAuthenticated': 'Tu es déjà connecté',
+  'auth.guestUsernameUnavailable':
+    'Impossible de générer un pseudo, réessaie dans un instant',
 
   // --- profile / admin users ---
   'profile.cardNotInCollection': 'Cette carte n’est pas dans ta collection',

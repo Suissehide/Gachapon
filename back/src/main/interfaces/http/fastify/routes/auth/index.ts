@@ -1,6 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 
 import { forgotPasswordRouter } from './forgot-password.router'
+import { guestRouter } from './guest.router'
 import { loginRouter } from './login.router'
 import { logoutRouter } from './logout.router'
 import { meRouter } from './me.router'
@@ -14,6 +15,7 @@ import { verifyEmailRouter } from './verify-email.router'
 export const authRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(registerRouter, { prefix: '/register' })
   await fastify.register(loginRouter, { prefix: '/login' })
+  await fastify.register(guestRouter, { prefix: '/guest' })
   await fastify.register(logoutRouter, { prefix: '/logout' })
   await fastify.register(refreshRouter, { prefix: '/refresh' })
   await fastify.register(meRouter, { prefix: '/me' })

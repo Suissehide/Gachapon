@@ -5,6 +5,7 @@ import type { Resolver } from 'awilix/lib/resolvers'
 import { AchievementsDomain } from '../../../domain/achievements/achievements.domain'
 import { ActivityDomain } from '../../../domain/activity/activity.domain'
 import { AuthDomain } from '../../../domain/auth/auth.domain'
+import { GuestDomain } from '../../../domain/auth/guest.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
 import { CampaignDomain } from '../../../domain/campaign/campaign.domain'
 import { CardAscensionTx } from '../../../domain/card-ascension/card-ascension.tx'
@@ -123,6 +124,7 @@ class AwilixIocContainer {
     this.#reg('mailService', asClass(MailService).singleton())
     this.#reg('authDomain', asClass(AuthDomain).singleton())
     this.#reg('oauthDomain', asClass(OAuthDomain).singleton())
+    this.#reg('guestDomain', asClass(GuestDomain).singleton())
     this.#reg('cardRepository', asClass(CardRepository).singleton())
     this.#reg('userCardRepository', asClass(UserCardRepository).singleton())
     this.#reg('gachaPullRepository', asClass(GachaPullRepository).singleton())
