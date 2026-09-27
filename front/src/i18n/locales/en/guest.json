@@ -39,5 +39,16 @@
   "link": {
     "google": "Save with Google",
     "discord": "Save with Discord"
+  },
+  "banner": {
+    "message": "You're playing as a guest: your progress is tied to this browser. Save it.",
+    "cta": "Save",
+    "dismiss": "Hide for 7 days"
+  },
+  "warnings": {
+    "login": "You're playing as a guest: signing in to another account will abandon your current progress.",
+    "logoutTitle": "Leave your guest game?",
+    "logoutDescription": "Without an email or linked account, your progress will be lost for good. Save it first from the settings.",
+    "logoutConfirm": "Sign out anyway"
   }
 }

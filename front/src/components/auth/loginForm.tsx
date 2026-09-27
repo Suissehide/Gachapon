@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { EmailNotVerifiedError } from '../../api/auth.api.ts'
 import { useAppForm } from '../../hooks/formConfig.tsx'
 import { useLogin } from '../../queries/useAuth.ts'
-import { useAuthStore } from '../../stores/auth.store.ts'
+import { useAuthStore, useIsGuest } from '../../stores/auth.store.ts'
 import { Button } from '../ui/button.tsx'
 import { OAuthButtons, OAuthDivider } from './oauthSection.tsx'
 
@@ -15,10 +15,11 @@ export function LoginForm({
   onSuccess: () => void
   onClose?: () => void
 }) {
-  const { t } = useTranslation('auth')
+  const { t } = useTranslation(['auth', 'guest'])
   const navigate = useNavigate()
   const { loginMutation, isPending, error } = useLogin()
   const fetchMe = useAuthStore((state) => state.fetchMe)
+  const isGuest = useIsGuest()
 
   const form = useAppForm({
     defaultValues: { email: '', password: '' },
@@ -56,6 +57,12 @@ export function LoginForm({
       }}
       className="flex flex-col gap-3"
     >
+      {isGuest && (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-text">
+          {t('guest:warnings.login')}
+        </p>
+      )}
+
       <form.AppField name="email">
         {(field) => (
           <field.Input type="email" label={t('loginForm.emailLabel')} />

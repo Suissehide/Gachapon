@@ -5,12 +5,14 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Crown,
   Gem,
+  Ghost,
   Gift,
   ShieldBan,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
   TrendingUp,
+  UserCheck,
   UserPlus,
 } from 'lucide-react'
 import type { ReactElement, ReactNode } from 'react'
@@ -59,6 +61,30 @@ const EVENT_META: Record<
       <Trans
         t={t}
         i18nKey="activityFeed.events.USER_SIGNUP"
+        values={{ name: e.user?.username ?? t('activityFeed.fallbackPlayer') }}
+        components={{ username: usernameComponent(e.user?.username) }}
+      />
+    ),
+  },
+  GUEST_SIGNUP: {
+    icon: Ghost,
+    tone: 'text-text-light',
+    render: (e, t) => (
+      <Trans
+        t={t}
+        i18nKey="activityFeed.events.GUEST_SIGNUP"
+        values={{ name: e.user?.username ?? t('activityFeed.fallbackPlayer') }}
+        components={{ username: usernameComponent(e.user?.username) }}
+      />
+    ),
+  },
+  GUEST_CONVERTED: {
+    icon: UserCheck,
+    tone: 'text-success',
+    render: (e, t) => (
+      <Trans
+        t={t}
+        i18nKey="activityFeed.events.GUEST_CONVERTED"
         values={{ name: e.user?.username ?? t('activityFeed.fallbackPlayer') }}
         components={{ username: usernameComponent(e.user?.username) }}
       />

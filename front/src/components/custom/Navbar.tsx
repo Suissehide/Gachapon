@@ -21,6 +21,7 @@ import { NotificationDot } from '../notifications/NotificationDot.tsx'
 import { NotificationsBadge } from '../notifications/NotificationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
 import { LocaleSwitcher } from '../shared/LocaleSwitcher.tsx'
+import { ConfirmPopup } from '../team/ConfirmPopup.tsx'
 import { Button } from '../ui/button.tsx'
 import {
   CapsuleIcon,
@@ -33,7 +34,7 @@ const tabClass =
   'relative whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span:last-child]:bg-linear-to-r [&.active>span:last-child]:from-primary [&.active>span:last-child]:to-secondary'
 
 export function Navbar() {
-  const { t } = useTranslation(['layout', 'combat', 'home'])
+  const { t } = useTranslation(['layout', 'combat', 'home', 'guest'])
 
   const navItemsBeforeProfile = [
     { to: '/play', label: t('layout:appNav.play') },
@@ -58,10 +59,21 @@ export function Navbar() {
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
   const { menuOpen, setMenuOpen, closeMenu } = useMobileMenu()
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false)
 
-  const handleLogout = async () => {
+  const doLogout = async () => {
     await logout()
     await navigate({ to: '/' })
+  }
+
+  // Un invité qui se déconnecte perd sa progression pour de bon (pas d'email
+  // ni de compte lié) : on demande confirmation au lieu de déconnecter direct.
+  const handleLogout = () => {
+    if (isGuest) {
+      setConfirmLogoutOpen(true)
+      return
+    }
+    void doLogout()
   }
 
   return (
@@ -179,7 +191,7 @@ export function Navbar() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => void handleLogout()}
+                    onClick={handleLogout}
                     aria-label={t('layout:appNav.logoutAriaLabel')}
                     title={t('layout:appNav.logoutAriaLabel')}
                     className="my-2 h-10 w-10 rounded-[11px] text-text-light/40 hover:bg-text/[0.06] hover:text-destructive"
@@ -240,7 +252,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               onClick={() => {
-                void handleLogout()
+                handleLogout()
                 closeMenu()
               }}
               title={t('layout:appNav.logoutAriaLabel')}
@@ -251,6 +263,15 @@ export function Navbar() {
           </div>
         )}
       </MobileMenuShell>
+
+      <ConfirmPopup
+        open={confirmLogoutOpen}
+        onOpenChange={setConfirmLogoutOpen}
+        title={t('guest:warnings.logoutTitle')}
+        description={t('guest:warnings.logoutDescription')}
+        confirmLabel={t('guest:warnings.logoutConfirm')}
+        onConfirm={() => void doLogout()}
+      />
     </>
   )
 }

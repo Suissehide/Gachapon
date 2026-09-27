@@ -16,7 +16,8 @@ export const ROLE_OPTIONS = toSelectOptions(ROLE)
 export type AdminUser = {
   id: string
   username: string
-  email: string
+  // Nullable : un invité (rôle GUEST) n'a pas encore d'email vérifié.
+  email: string | null
   role: string
   tokens: number
   dust: number

@@ -39,5 +39,16 @@
   "link": {
     "google": "Sauvegarder avec Google",
     "discord": "Sauvegarder avec Discord"
+  },
+  "banner": {
+    "message": "Tu joues en invité : ta progression est liée à ce navigateur. Sauvegarde-la.",
+    "cta": "Sauvegarder",
+    "dismiss": "Masquer pendant 7 jours"
+  },
+  "warnings": {
+    "login": "Tu joues en invité : te connecter à un autre compte abandonnera ta progression actuelle.",
+    "logoutTitle": "Quitter ta partie invitée ?",
+    "logoutDescription": "Sans email ni compte lié, ta progression sera perdue définitivement. Sauvegarde-la d'abord depuis les paramètres.",
+    "logoutConfirm": "Me déconnecter quand même"
   }
 }

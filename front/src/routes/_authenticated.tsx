@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
 import { AchievementUnlockToast } from '../components/achievements/AchievementUnlockToast.tsx'
 import { Navbar } from '../components/custom/Navbar.tsx'
+import { GuestSaveBanner } from '../components/guest/GuestSaveBanner.tsx'
 import { LevelUpOverlay } from '../components/level/LevelUpOverlay.tsx'
 import { RewardRevealOverlay } from '../components/rewards/RewardRevealOverlay.tsx'
 import { useAuthStore } from '../stores/auth.store.js'
@@ -20,6 +21,7 @@ function AuthenticatedLayout() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <main className="pt-[var(--topbar-h)]">
+        <GuestSaveBanner />
         <Outlet />
       </main>
       <LevelUpOverlay />

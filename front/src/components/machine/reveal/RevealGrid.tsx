@@ -13,6 +13,7 @@ import cardBackImg from '../../../assets/data/card-back/star.png'
 import type { CardRarity } from '../../../constants/card.constant'
 import i18n from '../../../i18n/index.ts'
 import type { PullBatchEntry } from '../../../queries/useGacha'
+import { useGuestNudgeStore } from '../../guest/GuestSaveBanner.tsx'
 import { CardDisplay } from '../../shared/tcg-card/CardDisplay'
 import { getRarityTone } from '../../shared/tcg-card/config'
 import { Button } from '../../ui/button'
@@ -177,6 +178,10 @@ export function RevealGrid({
       // achievements (fires even on the "Tout révéler" cascade, which passes
       // suppressEffect to skip only the fullscreen flash).
       onCardRevealed?.(idx)
+      if (results[idx].card.rarity === 'LEGENDARY') {
+        // Moment fort côté invité : une occasion de plus de proposer la sauvegarde.
+        useGuestNudgeStore.getState().nudge()
+      }
       if (suppressEffect) {
         return
       }

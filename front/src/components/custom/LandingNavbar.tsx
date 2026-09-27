@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next'
 
 import { discordInviteUrl } from '../../constants/config.constant'
 import { usePlayAsGuest } from '../../queries/useGuest.ts'
-import { useAuthStore } from '../../stores/auth.store'
+import { useAuthStore, useIsGuest } from '../../stores/auth.store'
 import { useAuthDialogStore } from '../../stores/authDialog.store'
 import { AuthDialog } from '../auth/authDialog'
 import { LocaleSwitcher } from '../shared/LocaleSwitcher.tsx'
+import { ConfirmPopup } from '../team/ConfirmPopup.tsx'
 import { Button } from '../ui/button'
 import {
   CapsuleIcon,
@@ -53,8 +54,10 @@ export function LandingNavbar() {
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const logout = useAuthStore((s) => s.logout)
+  const isGuest = useIsGuest()
   const navigate = useNavigate()
   const [ressourcesOpen, setRessourcesOpen] = useState(false)
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const {
     open: dialogOpen,
@@ -66,6 +69,18 @@ export function LandingNavbar() {
 
   const { menuOpen, setMenuOpen, closeMenu } = useMobileMenu()
   const { play, isPending } = usePlayAsGuest()
+
+  const doLogout = () => void logout().then(() => navigate({ to: '/' }))
+
+  // Un invité qui se déconnecte perd sa progression pour de bon (pas d'email
+  // ni de compte lié) : on demande confirmation au lieu de déconnecter direct.
+  const handleLogout = () => {
+    if (isGuest) {
+      setConfirmLogoutOpen(true)
+      return
+    }
+    doLogout()
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -182,9 +197,7 @@ export function LandingNavbar() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() =>
-                      void logout().then(() => navigate({ to: '/' }))
-                    }
+                    onClick={handleLogout}
                     title={t('layout:landingNav.logoutAriaLabel')}
                     className="text-text-light hover:text-destructive hover:bg-destructive/10"
                   >
@@ -301,7 +314,7 @@ export function LandingNavbar() {
             <Button
               variant="ghost"
               onClick={() => {
-                void logout().then(() => navigate({ to: '/' }))
+                handleLogout()
                 closeMenu()
               }}
               title={t('layout:landingNav.logoutAriaLabel')}
@@ -317,6 +330,15 @@ export function LandingNavbar() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         defaultTab={defaultTab}
+      />
+
+      <ConfirmPopup
+        open={confirmLogoutOpen}
+        onOpenChange={setConfirmLogoutOpen}
+        title={t('guest:warnings.logoutTitle')}
+        description={t('guest:warnings.logoutDescription')}
+        confirmLabel={t('guest:warnings.logoutConfirm')}
+        onConfirm={doLogout}
       />
     </>
   )

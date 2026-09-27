@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import DiscordIcon from '../../assets/icons/discord.svg?react'
 import GoogleIcon from '../../assets/icons/google.svg?react'
 import { apiUrl } from '../../constants/config.constant.ts'
-import { useAuthStore } from '../../stores/auth.store'
+import { useAuthStore, useIsGuest } from '../../stores/auth.store'
 import { useAuthDialogStore } from '../../stores/authDialog.store'
 import { Button } from '../ui/button.tsx'
 
@@ -35,6 +35,7 @@ export function OAuthButtons({
   const navigate = useNavigate()
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const setDialogOpen = useAuthDialogStore((s) => s.setOpen)
+  const isGuest = useIsGuest()
 
   const handleLinkError = (reason?: string) => {
     onLinked?.(
@@ -99,6 +100,11 @@ export function OAuthButtons({
 
   return (
     <div className="flex flex-col gap-2.5">
+      {action === 'login' && isGuest && (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-text">
+          {t('guest:warnings.login')}
+        </p>
+      )}
       <Button
         type="button"
         variant="ghost"

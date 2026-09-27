@@ -237,6 +237,7 @@
       "grantButton": "Grant",
       "revokeAdmin": "Revoke admin",
       "promoteAdmin": "Promote to admin",
+      "roleDisabledForGuest": "A guest must save their account first",
       "reactivate": "Reactivate",
       "suspend": "Suspend",
       "collectionLink": "Collection →"
@@ -576,6 +577,8 @@
     "unknownCount": "?",
     "events": {
       "USER_SIGNUP": "<username>{{name}}</username> signed up",
+      "GUEST_SIGNUP": "<username>{{name}}</username> started a guest game",
+      "GUEST_CONVERTED": "<username>{{name}}</username> saved their guest account",
       "PULL_LEGENDARY": "<username>{{name}}</username> pulled {{cardName}}",
       "PULL_EPIC": "<username>{{name}}</username> pulled {{cardName}}",
       "SHOP_PURCHASE": "<username>{{name}}</username> made a shop purchase",

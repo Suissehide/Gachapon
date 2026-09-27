@@ -69,6 +69,8 @@ function buildColumns(t: TFunction<'admin'>): ColumnDef<AdminUser>[] {
       accessorKey: 'email',
       header: t('users.columns.email'),
       meta: { grow: true },
+      // Nullable pour un invité (rôle GUEST) : pas encore d'email vérifié.
+      cell: ({ row }) => row.original.email ?? '—',
     },
     {
       accessorKey: 'role',
@@ -488,6 +490,12 @@ function AdminUserDetail({
           variant="ghost"
           className="flex-1 border border-border"
           onClick={onUpdateRole}
+          disabled={selected.role === 'GUEST'}
+          title={
+            selected.role === 'GUEST'
+              ? t('users.detail.roleDisabledForGuest')
+              : undefined
+          }
         >
           {selected.role === 'SUPER_ADMIN'
             ? t('users.detail.revokeAdmin')
