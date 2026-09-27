@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import Boom from '@hapi/boom'
 
 import { errorMessage } from '../../infra/i18n/error-messages'
@@ -13,12 +14,23 @@ import type {
 } from '../../types/domain/auth/guest.domain.interface'
 import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
 import { generateGuestUsername } from './guest-username'
 
 // 5 tirages à 2 chiffres (6 400 combinaisons × 100), puis 5 à 4 chiffres.
 const USERNAME_ATTEMPTS: (2 | 4)[] = [2, 2, 2, 2, 2, 4, 4, 4, 4, 4]
+
+const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000
+const COOLDOWN_MS = 2 * 60 * 1000
+
+/** 409 avec `code: 'EMAIL_TAKEN'` : le front propose alors de se connecter. */
+export const emailTaken = (message: string) => {
+  const err = Boom.conflict(message)
+  Object.assign(err.output.payload, { code: 'EMAIL_TAKEN' })
+  return err
+}
 
 export class GuestDomain implements GuestDomainInterface {
   readonly #userRepository: UserRepositoryInterface
@@ -27,6 +39,7 @@ export class GuestDomain implements GuestDomainInterface {
   readonly #activityDomain: IActivityDomain
   readonly #streakDomain: StreakDomainInterface
   readonly #postgresOrm: PostgresOrm
+  readonly #mailService: IMailService
 
   constructor({
     userRepository,
@@ -35,6 +48,7 @@ export class GuestDomain implements GuestDomainInterface {
     activityDomain,
     streakDomain,
     postgresOrm,
+    mailService,
   }: IocContainer) {
     this.#userRepository = userRepository
     this.#authDomain = authDomain
@@ -42,6 +56,7 @@ export class GuestDomain implements GuestDomainInterface {
     this.#activityDomain = activityDomain
     this.#streakDomain = streakDomain
     this.#postgresOrm = postgresOrm
+    this.#mailService = mailService
   }
 
   async createGuest(): Promise<GuestSession> {
@@ -87,5 +102,45 @@ export class GuestDomain implements GuestDomainInterface {
       }
     }
     throw Boom.serverUnavailable(errorMessage('auth.guestUsernameUnavailable'))
+  }
+
+  async requestEmailUpgrade(
+    userId: string,
+    input: { email: string; password: string },
+  ): Promise<{ pendingEmail: string }> {
+    const user = await this.#userRepository.findById(userId)
+    if (!user || user.role !== 'GUEST') {
+      throw Boom.forbidden(errorMessage('auth.guestOnly'))
+    }
+    // Même délai que resendVerification : le jeton courant a été émis à
+    // (expiration - TTL).
+    if (user.emailVerificationTokenExpiresAt) {
+      const issuedAt =
+        user.emailVerificationTokenExpiresAt.getTime() -
+        VERIFICATION_TOKEN_TTL_MS
+      const elapsed = Date.now() - issuedAt
+      if (elapsed < COOLDOWN_MS) {
+        throw Boom.tooManyRequests(errorMessage('auth.resendCooldown'), {
+          retryAfterSeconds: Math.ceil((COOLDOWN_MS - elapsed) / 1000),
+        })
+      }
+    }
+    // Le normalizerExtension n'abaisse que `email` : `pendingEmail` est
+    // normalisé ici, pour que la copie vers `email` au clic reste cohérente.
+    const email = input.email.toLowerCase()
+    if (await this.#userRepository.findByEmail(email)) {
+      throw emailTaken(errorMessage('auth.emailAlreadyInUse'))
+    }
+    const token = randomUUID()
+    await this.#userRepository.update(user.id, {
+      pendingEmail: email,
+      passwordHash: await this.#authDomain.hashPassword(input.password),
+      emailVerificationToken: token,
+      emailVerificationTokenExpiresAt: new Date(
+        Date.now() + VERIFICATION_TOKEN_TTL_MS,
+      ),
+    })
+    await this.#mailService.sendVerificationEmail(email, token, user.locale)
+    return { pendingEmail: email }
   }
 }

@@ -22,6 +22,7 @@ import type { ConfigServiceInterface } from '../../types/infra/config/config.ser
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
+import { emailTaken } from './guest.domain'
 
 const SALT_ROUNDS = 12
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000 // 24h
@@ -184,11 +185,14 @@ export class AuthDomain implements AuthDomainInterface {
       throw Boom.badRequest(errorMessage('auth.invalidOrExpiredToken'))
     }
 
-    const verified = await this.#userRepository.update(user.id, {
-      emailVerifiedAt: new Date(),
-      emailVerificationToken: null,
-      emailVerificationTokenExpiresAt: null,
-    })
+    const verified =
+      user.role === 'GUEST' && user.pendingEmail
+        ? await this.#convertGuest(user.id, user.pendingEmail)
+        : await this.#userRepository.update(user.id, {
+            emailVerifiedAt: new Date(),
+            emailVerificationToken: null,
+            emailVerificationTokenExpiresAt: null,
+          })
 
     let unlockedAchievements: UnlockedAchievement[] = []
     try {
@@ -204,6 +208,49 @@ export class AuthDomain implements AuthDomainInterface {
 
     const tokens = await this.generateTokenPair(verified)
     return { user: verified, tokens, unlockedAchievements }
+  }
+
+  /**
+   * Un invité clique le lien envoyé à son `pendingEmail`. L'email a pu être
+   * pris entre la demande et le clic : on re-vérifie dans la transaction,
+   * et l'index unique sur `email` tranche une éventuelle course (P2002).
+   */
+  async #convertGuest(
+    userId: string,
+    pendingEmail: string,
+  ): Promise<UserEntity> {
+    const taken = async () => {
+      await this.#userRepository.update(userId, {
+        pendingEmail: null,
+        emailVerificationToken: null,
+        emailVerificationTokenExpiresAt: null,
+      })
+      return emailTaken(errorMessage('auth.pendingEmailTaken'))
+    }
+    if (await this.#userRepository.findByEmail(pendingEmail)) {
+      throw await taken()
+    }
+    try {
+      const converted = await this.#userRepository.update(userId, {
+        email: pendingEmail,
+        pendingEmail: null,
+        role: 'USER',
+        emailVerifiedAt: new Date(),
+        emailVerificationToken: null,
+        emailVerificationTokenExpiresAt: null,
+      })
+      void this.#activityDomain.record('GUEST_CONVERTED', {
+        userId,
+        username: converted.username,
+        payload: { method: 'EMAIL' },
+      })
+      return converted
+    } catch (err) {
+      if ((err as { code?: string }).code === 'P2002') {
+        throw await taken()
+      }
+      throw err
+    }
   }
 
   async resendVerification(email: string): Promise<void> {

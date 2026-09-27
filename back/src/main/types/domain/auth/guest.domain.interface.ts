@@ -10,4 +10,8 @@ export type GuestSession = {
 
 export interface GuestDomainInterface {
   createGuest(): Promise<GuestSession>
+  requestEmailUpgrade(
+    userId: string,
+    input: { email: string; password: string },
+  ): Promise<{ pendingEmail: string }>
 }

@@ -64,6 +64,15 @@ export const forgotPasswordBodySchema = z.object({ email: z.email() })
 
 export const resendVerificationBodySchema = z.object({ email: z.email() })
 
+export const guestUpgradeBodySchema = z.object({
+  email: z.email(),
+  password: z.string().min(8).max(100),
+})
+
+export const guestUpgradeResponseSchema = z.object({
+  pendingEmail: z.string(),
+})
+
 export const resetPasswordBodySchema = z.object({
   token: z.string().uuid(),
   newPassword: z.string().min(8).max(100),

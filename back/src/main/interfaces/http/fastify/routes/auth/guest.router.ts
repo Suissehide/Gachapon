@@ -4,7 +4,11 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { rateLimitKeyForIp } from '../../../../../domain/auth/guest-rules'
 import { errorMessage } from '../../../../../infra/i18n/error-messages'
-import { userResponseSchema } from '../../schemas/auth.schemas'
+import {
+  guestUpgradeBodySchema,
+  guestUpgradeResponseSchema,
+  userResponseSchema,
+} from '../../schemas/auth.schemas'
 import { sanitizeUser, setTokenCookies } from './helpers'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -64,6 +68,26 @@ export const guestRouter: FastifyPluginCallbackZod = (fastify) => {
         pendingRewardsCount,
         unlockedAchievements,
       })
+    },
+  )
+
+  fastify.post(
+    '/upgrade',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      config: { rateLimit: { max: 5, timeWindow: 15 * 60 * 1000 } },
+      schema: {
+        summary: 'Ask to turn the guest account into a full account',
+        body: guestUpgradeBodySchema,
+        response: { 202: guestUpgradeResponseSchema },
+      },
+    },
+    async (request, reply) => {
+      const result = await guestDomain.requestEmailUpgrade(
+        request.user.userID,
+        request.body,
+      )
+      return reply.status(202).send(result)
     },
   )
 }

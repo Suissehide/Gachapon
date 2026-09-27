@@ -53,6 +53,9 @@ export const FR_MESSAGES = {
   'auth.alreadyAuthenticated': 'Tu es déjà connecté',
   'auth.guestUsernameUnavailable':
     'Impossible de générer un pseudo, réessaie dans un instant',
+  'auth.guestOnly': 'Réservé aux comptes invités',
+  'auth.pendingEmailTaken':
+    'Cet email a été utilisé entre-temps par un autre compte',
 
   // --- profile / admin users ---
   'profile.cardNotInCollection': 'Cette carte n’est pas dans ta collection',

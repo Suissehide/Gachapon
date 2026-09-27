@@ -39,6 +39,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'auth.alreadyAuthenticated': 'You are already signed in',
   'auth.guestUsernameUnavailable':
     'Could not generate a username, try again in a moment',
+  'auth.guestOnly': 'Guest accounts only',
+  'auth.pendingEmailTaken': 'This email has since been used by another account',
 
   // --- profile / admin users ---
   'profile.cardNotInCollection': 'Card not in your collection',
