@@ -18,6 +18,7 @@ import {
 import { buildTowerFloors } from '../content/tower.definitions'
 import { QUEST_DEFINITIONS } from '../quests/quest-definitions'
 import { TOWER_ELEMENTS } from '../tower/tower-slots'
+import { RETIRED_ENGLISH_NAMES } from './retired-english-names'
 
 /**
  * Sélectionne l'unique ligne dont `nameFr` correspond, pour les quatre
@@ -191,9 +192,10 @@ export class ContentTranslationsBootstrap {
    *
    * Deux conditions, toutes les deux nécessaires :
    *  1. `current` est une valeur que ce backfill a le droit de toucher —
-   *     vide, ou identique au français (la signature de la recopie faite par
-   *     la migration). Toute autre valeur est une traduction saisie à la
-   *     main : on ne la touche jamais, quelle que soit la cible.
+   *     vide, identique au français (la signature de la recopie faite par
+   *     la migration), ou une ancienne traduction du code
+   *     (`RETIRED_ENGLISH_NAMES`). Toute autre valeur est une traduction
+   *     saisie à la main : on ne la touche jamais, quelle que soit la cible.
    *  2. `target` diffère réellement de `current` — sinon écrire ne changerait
    *     rien et ne ferait que gonfler le compteur (le cas des traductions
    *     légitimement identiques FR/EN, voir le commentaire de classe).
@@ -207,7 +209,7 @@ export class ContentTranslationsBootstrap {
     const current = args.current ?? ''
     const currentFr = args.currentFr ?? ''
     const isMigrationArtifact = current === '' || current === currentFr
-    if (!isMigrationArtifact) {
+    if (!isMigrationArtifact && !RETIRED_ENGLISH_NAMES.has(current)) {
       return false
     }
     if (current === args.target) {

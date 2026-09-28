@@ -43,10 +43,10 @@ export const RAID_BOSS_NAME: Record<TowerElement, string> = {
   EARTH: 'Gorm, le Roc',
 }
 
-/** Traduction anglaise de `RAID_BOSS_NAME`. Prénoms conservés, épithètes traduites. */
+/** Traduction anglaise de `RAID_BOSS_NAME`. Prénoms conservés sans accents français, épithètes traduites. */
 export const RAID_BOSS_NAME_EN: Record<TowerElement, string> = {
   FIRE: 'Ignis, the Blaze',
-  WATER: 'Nérée, the Tide',
+  WATER: 'Nereus, the Tide',
   NATURE: 'Sylva, the Bramble',
   EARTH: 'Gorm, the Rock',
 }

@@ -93,7 +93,7 @@ export const CARDS = [
   {
     id: 'HUM-006',
     nameFr: "Léna l'Archère",
-    nameEn: 'Léna the Archer',
+    nameEn: 'Lena the Archer',
     rarity: 'COMMON',
     dropWeight: 85,
     baseHp: 82,
@@ -328,7 +328,7 @@ export const CARDS = [
   {
     id: 'HUM-024',
     nameFr: 'Mélisande',
-    nameEn: 'Mélisande',
+    nameEn: 'Melisande',
     rarity: 'UNCOMMON',
     dropWeight: 38,
     baseHp: 135,
@@ -380,7 +380,7 @@ export const CARDS = [
   {
     id: 'HUM-028',
     nameFr: 'Séléné au Fouet',
-    nameEn: 'Séléné of the Whip',
+    nameEn: 'Selene of the Whip',
     rarity: 'UNCOMMON',
     dropWeight: 38,
     baseHp: 119,
@@ -394,7 +394,7 @@ export const CARDS = [
   {
     id: 'HUM-029',
     nameFr: 'Capitaine Hélène',
-    nameEn: 'Captain Hélène',
+    nameEn: 'Captain Helene',
     rarity: 'RARE',
     dropWeight: 16,
     baseHp: 249,
@@ -420,7 +420,7 @@ export const CARDS = [
   {
     id: 'HUM-031',
     nameFr: 'Séraphine la Magicienne',
-    nameEn: 'Séraphine the Sorceress',
+    nameEn: 'Seraphine the Sorceress',
     rarity: 'RARE',
     dropWeight: 16,
     baseHp: 159,

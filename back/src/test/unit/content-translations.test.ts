@@ -8,6 +8,7 @@ import {
 } from '../../main/domain/content/campaign.definitions'
 import { CARDS, HUMAN_CARD_SET } from '../../main/domain/content/cards.definitions'
 import { ENEMY_FAMILIES } from '../../main/domain/content/enemies.definitions'
+import { IMPORTED_CARD_NAMES } from '../../main/domain/content/imported-cards.definitions'
 import {
   SET_LABEL_EN,
   SET_LABEL_FR,
@@ -26,6 +27,7 @@ import { SKILL_BRANCH_TEXT, SKILL_NODE_TEXT } from '../../main/domain/content/sk
 import { buildTowerFloors } from '../../main/domain/content/tower.definitions'
 import { TOWER_ELEMENTS } from '../../main/domain/tower/tower-slots'
 import { QUEST_DEFINITIONS } from '../../main/domain/quests/quest-definitions'
+import { RETIRED_ENGLISH_NAMES } from '../../main/domain/i18n/retired-english-names'
 
 /**
  * Garde-fou de traduction — task 8 du lot i18n.
@@ -62,7 +64,6 @@ const CARDS_LEGITIMATE_IDENTICAL = new Set([
   'HUM-021', // Aymeric — prénom nu
   'HUM-022', // Eleonore — prénom nu
   'HUM-023', // Foulques — prénom nu
-  'HUM-024', // Mélisande — prénom nu
   'HUM-025', // Perceval — prénom nu
   'HUM-032', // Josselin — prénom nu
   'HUM-033', // Oriane — prénom nu
@@ -398,5 +399,47 @@ describe('traductions du contenu — passifs', () => {
         expect(fr).not.toBe(en)
       }
     }
+  })
+})
+
+// -----------------------------------------------------------------------
+// Noms propres — l'anglais ne porte aucun accent français (2026-09-28).
+// Seule exception : les circonflexes des orcs et des nains, lus comme de la
+// fantasy à la Tolkien (Khazad-dûm), pas comme du français.
+// -----------------------------------------------------------------------
+const FANTASY_CIRCUMFLEX = new Set([
+  'ORC-001', // Grôm the Brute
+  'ORC-023', // Ghazûl the Butcher
+  'ORC-025', // Dûrz the Shaman
+  'NAI-031', // King Khazadûm
+])
+
+const FRENCH_DIACRITIC = /[À-ÖØ-öø-ÿŒœ]/
+
+describe('traductions du contenu — accents dans l’anglais', () => {
+  const englishNames: [string, string][] = [
+    ...CARDS.map((c): [string, string] => [c.id, c.nameEn]),
+    ...Object.entries(IMPORTED_CARD_NAMES).map(([id, c]): [string, string] => [
+      id,
+      c.nameEn,
+    ]),
+    ...TOWER_ELEMENTS.map((e): [string, string] => [
+      `raid:${e}`,
+      RAID_BOSS_NAME_EN[e],
+    ]),
+  ]
+
+  it('ne laisse aucun accent français dans un nom anglais', () => {
+    const accented = englishNames.filter(
+      ([id, name]) => FRENCH_DIACRITIC.test(name) && !FANTASY_CIRCUMFLEX.has(id),
+    )
+    expect(accented).toEqual([])
+  })
+
+  it('ne réutilise aucune traduction retirée', () => {
+    const revived = englishNames.filter(([, name]) =>
+      RETIRED_ENGLISH_NAMES.has(name),
+    )
+    expect(revived).toEqual([])
   })
 })

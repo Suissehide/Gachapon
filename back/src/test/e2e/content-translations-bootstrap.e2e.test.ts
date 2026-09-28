@@ -174,6 +174,18 @@ describe('backfill des traductions au démarrage', () => {
       expect(card.name).toBe(handWritten)
     })
 
+    it('réécrit une ancienne traduction du code, bien qu’elle diffère du français', async () => {
+      const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
+      // Valeur livrée avant le 2026-09-28, dans RETIRED_ENGLISH_NAMES.
+      const { def, id } = await createLikeSeed('HUM-006', 'Léna the Archer')
+
+      await contentTranslationsBootstrap.bootstrap()
+
+      const raw = await postgresOrm.prisma.card.findUniqueOrThrow({ where: { id } })
+      expect(raw.nameEn).toBe(def.nameEn)
+      expect(raw.nameEn).toBe('Lena the Archer')
+    })
+
     it('est idempotent : un second appel sans mutation ne réécrit rien', async () => {
       const { contentTranslationsBootstrap } = app.iocContainer
       // Les trois cartes ci-dessus sont déjà dans leur état cible (ou
