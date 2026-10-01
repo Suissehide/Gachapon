@@ -35,7 +35,7 @@ const GROUP_OPTIONS = [
   { value: 'set' as const, label: i18n.t('collection:filters.group.set') },
 ]
 
-const ELEMENT_OPTIONS = [
+export const ELEMENT_OPTIONS = [
   { value: 'all', label: i18n.t('collection:filters.allMasculine') },
   ...ELEMENT_ORDER.map((el) => ({
     value: el,
@@ -71,7 +71,7 @@ const OWNERSHIP_OPTIONS = [
 // qualifient une RARETÉ, donc accord au féminin — `common:rarity.*`
 // (« Commune », « Peu commune »), comme la constante partagée corrigée en
 // tâche 6, et non `common:cardRarity.*` (masculin) qu'elle lisait avant.
-const RARITY_OPTIONS = [
+export const RARITY_OPTIONS = [
   { value: 'all', label: i18n.t('collection:filters.allFeminine') },
   ...RARITY_ORDER.map((r) => ({
     value: r,

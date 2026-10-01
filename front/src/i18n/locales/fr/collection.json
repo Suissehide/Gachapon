@@ -120,7 +120,10 @@
     "swap": "Échanger",
     "swapTitle": "Échanger l'équipement",
     "swapSubtitle": "Les pièces de cette carte passent sur celle que tu choisis, et inversement.",
-    "swapCancel": "Annuler"
+    "swapCancel": "Annuler",
+    "swapSearchLabel": "Nom",
+    "swapSearchPlaceholder": "Rechercher une carte…",
+    "swapEmpty": "Aucune carte ne correspond aux filtres."
   },
   "slotPopup": {
     "subtitle": "Équipe, améliore ou détruis les objets de ce slot.",

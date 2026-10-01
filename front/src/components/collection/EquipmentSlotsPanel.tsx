@@ -38,8 +38,8 @@ import {
   type StuffStatKey,
   statColorVar,
 } from '../../utils/cardStats.ts'
-import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../ui/button.tsx'
+import { Input, Select } from '../ui/input.tsx'
 import {
   Popup,
   PopupBody,
@@ -48,6 +48,14 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../ui/popup.tsx'
+import { CollectionCard } from './CollectionCard.tsx'
+import {
+  ELEMENT_OPTIONS,
+  type ElementFilter,
+  FilterField,
+  RARITY_OPTIONS,
+  type RarityFilter,
+} from './CollectionFilters.tsx'
 import { EquipmentSlotPopup } from './EquipmentSlotPopup.tsx'
 
 const SLOT_ORDER: EquipmentSlot[] = [
@@ -476,8 +484,18 @@ function SwapEquipmentPopup({
   userCardId: string
   onClose: () => void
 }) {
-  const { t } = useTranslation(['collection', 'equipment'])
-  const cards = useCardsByPower().filter((uc) => uc.id !== userCardId)
+  const { t } = useTranslation('collection')
+  const [search, setSearch] = useState('')
+  const [rarity, setRarity] = useState<RarityFilter>('all')
+  const [element, setElement] = useState<ElementFilter>('all')
+  const query = search.trim().toLowerCase()
+  const cards = useCardsByPower().filter(
+    (uc) =>
+      uc.id !== userCardId &&
+      (rarity === 'all' || uc.card.rarity === rarity) &&
+      (element === 'all' || uc.card.element === element) &&
+      uc.card.name.toLowerCase().includes(query),
+  )
   const swap = useSwapEquipment()
   return (
     <Popup open onOpenChange={(v) => !v && onClose()}>
@@ -490,37 +508,71 @@ function SwapEquipmentPopup({
             {t('collection:slotsPanel.swapTitle')}
           </PopupTitle>
         </PopupHeader>
-        <PopupBody>
-          <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
+        <PopupBody className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+            <FilterField
+              id="swap-search"
+              label={t('collection:slotsPanel.swapSearchLabel')}
+            >
+              <Input
+                id="swap-search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('collection:slotsPanel.swapSearchPlaceholder')}
+              />
+            </FilterField>
+            <FilterField
+              id="swap-rarity"
+              label={t('collection:filters.labels.rarity')}
+            >
+              <Select
+                id="swap-rarity"
+                options={RARITY_OPTIONS}
+                value={rarity}
+                onValueChange={(v) => setRarity(v as RarityFilter)}
+                clearable={false}
+              />
+            </FilterField>
+            <FilterField
+              id="swap-element"
+              label={t('collection:filters.labels.element')}
+            >
+              <Select
+                id="swap-element"
+                options={ELEMENT_OPTIONS}
+                value={element}
+                onValueChange={(v) => setElement(v as ElementFilter)}
+                clearable={false}
+              />
+            </FilterField>
+          </div>
+          {cards.length === 0 && (
+            <p className="py-8 text-center text-sm text-text-light">
+              {t('collection:slotsPanel.swapEmpty')}
+            </p>
+          )}
+          <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto p-2 sm:grid-cols-3 lg:grid-cols-4">
             {cards.map((uc) => (
-              <button
+              <CollectionCard
                 key={uc.id}
-                type="button"
-                disabled={swap.isPending}
-                onClick={() =>
+                card={uc.card}
+                variant={uc.variant}
+                // Pas de pastille ×N : les doublons n'ont pas de sens pour un échange.
+                quantity={1}
+                isOwned
+                userCardId={uc.id}
+                level={uc.level}
+                palier={uc.palier}
+                onClick={() => {
+                  if (swap.isPending) {
+                    return
+                  }
                   swap.mutate(
                     { fromUserCardId: userCardId, toUserCardId: uc.id },
                     { onSuccess: onClose },
                   )
-                }
-                className="rounded-lg border border-border p-2 transition-colors hover:border-primary hover:bg-primary/5"
-              >
-                <CardDisplay
-                  rarity={uc.card.rarity}
-                  name={uc.card.name}
-                  setName={uc.card.set.name}
-                  imageUrl={uc.card.imageUrl}
-                  variant={uc.variant}
-                  isOwned
-                  compact
-                />
-                <p className="mt-1 text-center text-[10px] text-text-light">
-                  {t('equipment:picker.cardLine', {
-                    level: uc.level,
-                    palier: uc.palier,
-                  })}
-                </p>
-              </button>
+                }}
+              />
             ))}
           </div>
         </PopupBody>

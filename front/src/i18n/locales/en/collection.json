@@ -120,7 +120,10 @@
     "swap": "Swap",
     "swapTitle": "Swap equipment",
     "swapSubtitle": "This card's pieces move to the card you pick, and vice versa.",
-    "swapCancel": "Cancel"
+    "swapCancel": "Cancel",
+    "swapSearchLabel": "Name",
+    "swapSearchPlaceholder": "Search a card…",
+    "swapEmpty": "No card matches the filters."
   },
   "slotPopup": {
     "subtitle": "Equip, upgrade or destroy the items for this slot.",
