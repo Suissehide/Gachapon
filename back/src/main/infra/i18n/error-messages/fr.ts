@@ -220,6 +220,7 @@ export const FR_MESSAGES = {
   'equipment.userEquipmentNotFound': 'Équipement du joueur introuvable',
   'equipment.catalogNotSeeded': 'Aucun catalogue d’équipement seedé',
   'equipment.notFound': 'Équipement introuvable',
+  'equipment.swapSameCard': 'Choisis une autre carte pour l’échange',
   'equipment.alreadyMaxLevel': 'Équipement déjà au niveau maximum',
   'equipment.cannotSalvageEquipped': 'Impossible de détruire un objet équipé',
   'skills.noPointsAvailable': 'Aucun point de compétence disponible',

@@ -309,4 +309,61 @@ describe('Equipment routes', () => {
     expect(res.statusCode).toBe(200)
     expect(res.json()).toEqual({ unequipped: false })
   })
+
+  // État hérité des tests précédents : l'armure est sur userCardId, l'arme A
+  // libre. On pose l'arme A sur une seconde carte puis on échange.
+  it('POST /equipment/swap — exchanges all equipment between two cards', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const card = await postgresOrm.prisma.card.findFirst({
+      where: { nameFr: `EquipCard${suffix}` },
+    })
+    const uc2 = await postgresOrm.prisma.userCard.create({
+      data: { userId, cardId: card!.id, variant: 'HOLOGRAPHIC', quantity: 1, level: 1, palier: 1 },
+    })
+    await app.inject({
+      method: 'POST',
+      url: `/equipment/${weaponInstanceA}/equip`,
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { targetUserCardId: uc2.id },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/equipment/swap',
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { fromUserCardId: userCardId, toUserCardId: uc2.id },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ swapped: 2 })
+
+    const list = await app.inject({ method: 'GET', url: '/equipment', headers: { cookie: cookies } })
+    const items = list.json().items as Array<{ id: string; equippedOnId: string | null }>
+    expect(items.find((i) => i.id === armorInstance)?.equippedOnId).toBe(uc2.id)
+    expect(items.find((i) => i.id === weaponInstanceA)?.equippedOnId).toBe(userCardId)
+    expect(items.find((i) => i.id === weaponInstanceB)?.equippedOnId).toBeNull()
+  })
+
+  it('POST /equipment/swap — refuses the same card twice', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/equipment/swap',
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { fromUserCardId: userCardId, toUserCardId: userCardId },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it("POST /equipment/swap — refuses another user's card", async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const otherUc = await postgresOrm.prisma.userCard.findFirst({
+      where: { user: { username: `equip-other2${suffix}` } },
+    })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/equipment/swap',
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { fromUserCardId: userCardId, toUserCardId: otherUc!.id },
+    })
+    expect(res.statusCode).toBe(404)
+  })
 })

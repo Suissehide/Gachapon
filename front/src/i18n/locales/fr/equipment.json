@@ -6,7 +6,8 @@
       "equip": "Erreur lors de l'équipement",
       "unequip": "Erreur lors du déséquipement",
       "upgrade": "Erreur lors de l'amélioration",
-      "destroy": "Erreur lors de la destruction"
+      "destroy": "Erreur lors de la destruction",
+      "swap": "Erreur lors de l'échange d'équipement"
     }
   },
   "toasts": {

@@ -43,12 +43,12 @@ import { useStoredState } from '../../hooks/useStoredState.ts'
 import i18n, { currentLocale } from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { formatNumber } from '../../libs/utils.ts'
-import { useUserCollection } from '../../queries/useCollection.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import {
+  useCardsByPower,
   useEquipItem,
   useEquipmentList,
   useEquipmentSets,
@@ -57,11 +57,7 @@ import {
   useUpgradeItem,
 } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import {
-  aggregateEquipmentBonuses,
-  cardPower,
-  formatBonusKey,
-} from '../../utils/cardStats.ts'
+import { formatBonusKey } from '../../utils/cardStats.ts'
 
 // Options de rareté — mêmes libellés et mêmes pastilles que la page
 // Collection, dont on réutilise RARITY_LABEL_FR et RARITY_COLOR_VAR plutôt
@@ -229,10 +225,8 @@ function useFrozenOrder(
 function EquipmentPage() {
   const { t } = useTranslation(['equipment', 'common'])
   const locale = currentLocale()
-  const user = useAuthStore((s) => s.user)
   const equipment = useEquipmentList()
   const equipmentSets = useEquipmentSets()
-  const collection = useUserCollection(user?.id)
   const equipItem = useEquipItem()
   const unequipItem = useUnequipItem()
   const salvageItems = useSalvageItems()
@@ -356,30 +350,7 @@ function EquipmentPage() {
 
   const handleUnequip = (id: string) => unequipItem.mutate(id)
 
-  // Cartes de la fenêtre « Équiper sur… », les plus puissantes en tête :
-  // c'est presque toujours l'une d'elles qu'on stuffe, et l'ordre par défaut
-  // de la collection obligeait à la chercher. Même calcul de puissance que la
-  // page Collection — équipement déjà porté compris.
-  const pickerCards = useMemo(() => {
-    const cards = collection.data?.cards ?? []
-    // Puissance calculée une fois par carte, pas à chaque comparaison :
-    // l'agrégation parcourt tout l'inventaire d'équipement.
-    const power = new Map(
-      cards.map((uc) => [
-        uc.id,
-        cardPower(
-          uc.card,
-          uc.level,
-          uc.variant,
-          uc.palier,
-          aggregateEquipmentBonuses(items, uc.id, economy.equip.levelScale),
-        ),
-      ]),
-    )
-    return [...cards].sort(
-      (a, b) => (power.get(b.id) ?? 0) - (power.get(a.id) ?? 0),
-    )
-  }, [collection.data?.cards, items, economy.equip.levelScale])
+  const pickerCards = useCardsByPower()
 
   return (
     <PageShell>

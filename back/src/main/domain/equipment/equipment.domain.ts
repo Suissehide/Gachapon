@@ -375,6 +375,48 @@ export class EquipmentDomain {
     )
   }
 
+  /**
+   * Échange tout l'équipement de deux cartes : les pièces de A passent sur B
+   * et inversement. Une carte vide côté cible revient à un simple transfert.
+   * Les deux cartes portent au plus une pièce par slot, donc l'échange en
+   * conserve l'unicité sans autre vérification.
+   */
+  swapCards(
+    userId: string,
+    userCardIdA: string,
+    userCardIdB: string,
+  ): Promise<{ swapped: number }> {
+    if (userCardIdA === userCardIdB) {
+      throw Boom.badRequest(errorMessage('equipment.swapSameCard'))
+    }
+    return retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const owned = await tx.userCard.count({
+            where: { userId, id: { in: [userCardIdA, userCardIdB] } },
+          })
+          if (owned !== 2) {
+            throw Boom.notFound(errorMessage('collection.userCardNotFound'))
+          }
+          const onA = await tx.userEquipment.findMany({
+            where: { userId, equippedOnId: userCardIdA },
+            select: { id: true },
+          })
+          const moved = await tx.userEquipment.updateMany({
+            where: { userId, equippedOnId: userCardIdB },
+            data: { equippedOnId: userCardIdA },
+          })
+          await tx.userEquipment.updateMany({
+            where: { id: { in: onA.map((ue) => ue.id) } },
+            data: { equippedOnId: userCardIdB },
+          })
+          return { swapped: onA.length + moved.count }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
+    )
+  }
+
   async #getSubstatRanges(): Promise<SubstatRanges> {
     const c = await this.#configService.getMany(...SUBSTAT_RANGE_CONFIG_KEYS)
     return substatRangesFromConfig(c)

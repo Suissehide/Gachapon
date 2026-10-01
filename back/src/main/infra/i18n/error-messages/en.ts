@@ -191,6 +191,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'equipment.userEquipmentNotFound': 'UserEquipment not found',
   'equipment.catalogNotSeeded': 'No equipment catalog seeded',
   'equipment.notFound': 'Equipment not found',
+  'equipment.swapSameCard': 'Pick a different card to swap with',
   'equipment.alreadyMaxLevel': 'Equipment already at max level',
   'equipment.cannotSalvageEquipped': 'Cannot salvage an equipped item',
   'skills.noPointsAvailable': 'No skill points available',

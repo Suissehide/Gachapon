@@ -6,6 +6,7 @@ import {
   Layers,
   Link,
   Plus,
+  Repeat,
   Shield,
   Sword,
 } from 'lucide-react'
@@ -23,9 +24,11 @@ import { cn, formatNumber } from '../../libs/utils.ts'
 import {
   useActiveSetsForCard,
   useCardEquipmentContribution,
+  useCardsByPower,
   useEquipmentList,
   useEquipmentSets,
   useSetColorByKey,
+  useSwapEquipment,
 } from '../../queries/useEquipment.ts'
 import {
   type ActiveSetSummary,
@@ -35,7 +38,16 @@ import {
   type StuffStatKey,
   statColorVar,
 } from '../../utils/cardStats.ts'
+import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../ui/button.tsx'
+import {
+  Popup,
+  PopupBody,
+  PopupContent,
+  PopupFooter,
+  PopupHeader,
+  PopupTitle,
+} from '../ui/popup.tsx'
 import { EquipmentSlotPopup } from './EquipmentSlotPopup.tsx'
 
 const SLOT_ORDER: EquipmentSlot[] = [
@@ -298,6 +310,7 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
   const sets = useEquipmentSets()
   const contribution = useCardEquipmentContribution(userCardId)
   const [pickerSlot, setPickerSlot] = useState<EquipmentSlot | null>(null)
+  const [swapOpen, setSwapOpen] = useState(false)
 
   // Couleur d'un set = couleur de la stat qu'il buffe (règle du handoff),
   // dérivée de `GET /equipment/sets` — même source que les en-têtes de set de
@@ -322,10 +335,19 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
 
   return (
     <div className="mt-5">
-      <div className="mb-3 flex items-baseline justify-between gap-2">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[rgba(27,23,38,0.45)]">
           {t('collection:slotsPanel.title')}
         </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto h-6 px-2 font-mono text-[11px] uppercase tracking-[0.08em]"
+          onClick={() => setSwapOpen(true)}
+        >
+          <Repeat className="h-3.5 w-3.5" />
+          {t('collection:slotsPanel.swap')}
+        </Button>
         <p className="font-mono text-[11px] tabular-nums tracking-[0.08em] text-[rgba(27,23,38,0.38)]">
           <Trans
             t={t}
@@ -431,6 +453,83 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
           onClose={() => setPickerSlot(null)}
         />
       )}
+
+      {swapOpen && (
+        <SwapEquipmentPopup
+          userCardId={userCardId}
+          onClose={() => setSwapOpen(false)}
+        />
+      )}
     </div>
+  )
+}
+
+/**
+ * Choix de la carte avec laquelle échanger tout l'équipement — mêmes
+ * vignettes et même ordre (puissance décroissante) que « Équiper sur… » de
+ * la page Équipement.
+ */
+function SwapEquipmentPopup({
+  userCardId,
+  onClose,
+}: {
+  userCardId: string
+  onClose: () => void
+}) {
+  const { t } = useTranslation(['collection', 'equipment'])
+  const cards = useCardsByPower().filter((uc) => uc.id !== userCardId)
+  const swap = useSwapEquipment()
+  return (
+    <Popup open onOpenChange={(v) => !v && onClose()}>
+      <PopupContent size="xl">
+        <PopupHeader>
+          <PopupTitle
+            icon={<Repeat className="h-4 w-4" />}
+            subtitle={t('collection:slotsPanel.swapSubtitle')}
+          >
+            {t('collection:slotsPanel.swapTitle')}
+          </PopupTitle>
+        </PopupHeader>
+        <PopupBody>
+          <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
+            {cards.map((uc) => (
+              <button
+                key={uc.id}
+                type="button"
+                disabled={swap.isPending}
+                onClick={() =>
+                  swap.mutate(
+                    { fromUserCardId: userCardId, toUserCardId: uc.id },
+                    { onSuccess: onClose },
+                  )
+                }
+                className="rounded-lg border border-border p-2 transition-colors hover:border-primary hover:bg-primary/5"
+              >
+                <CardDisplay
+                  rarity={uc.card.rarity}
+                  name={uc.card.name}
+                  setName={uc.card.set.name}
+                  imageUrl={uc.card.imageUrl}
+                  variant={uc.variant}
+                  isOwned
+                  compact
+                />
+                <p className="mt-1 text-center text-[10px] text-text-light">
+                  {t('equipment:picker.cardLine', {
+                    level: uc.level,
+                    palier: uc.palier,
+                  })}
+                </p>
+              </button>
+            ))}
+          </div>
+        </PopupBody>
+        <PopupFooter>
+          <Button variant="outline" onClick={onClose}>
+            {t('collection:slotsPanel.swapCancel')}
+          </Button>
+        </PopupFooter>
+      </PopupContent>
+    </Popup>
   )
 }

@@ -8,6 +8,8 @@ import {
   equipmentSalvageBodySchema,
   equipmentSalvageResponseSchema,
   equipmentSetsResponseSchema,
+  equipmentSwapBodySchema,
+  equipmentSwapResponseSchema,
   equipmentUnequipResponseSchema,
   equipmentUpgradeResponseSchema,
 } from '../../schemas/equipment.schema'
@@ -72,6 +74,24 @@ export const equipmentRouter: FastifyPluginCallbackZod = (fastify) => {
       equipmentDomain.unequip(
         request.user.userID,
         request.params.userEquipmentId,
+      ),
+  )
+
+  fastify.post(
+    '/equipment/swap',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Swap all equipment between two cards',
+        body: equipmentSwapBodySchema,
+        response: { 200: equipmentSwapResponseSchema },
+      },
+    },
+    (request) =>
+      equipmentDomain.swapCards(
+        request.user.userID,
+        request.body.fromUserCardId,
+        request.body.toUserCardId,
       ),
   )
 

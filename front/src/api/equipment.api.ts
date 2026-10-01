@@ -167,6 +167,21 @@ export const EquipmentApi = {
     return res.json()
   },
 
+  swap: async (
+    fromUserCardId: string,
+    toUserCardId: string,
+  ): Promise<{ swapped: number }> => {
+    const res = await fetchWithAuth(`${apiUrl}/equipment/swap`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fromUserCardId, toUserCardId }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, i18n.t('equipment:apiTitles.operations.swap'))
+    }
+    return res.json()
+  },
+
   upgrade: async (
     userEquipmentId: string,
   ): Promise<{

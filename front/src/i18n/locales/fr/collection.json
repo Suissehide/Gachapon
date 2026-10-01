@@ -116,7 +116,11 @@
     "equippedCount_other": "<equipped>{{count}}</equipped> / {{total}} équipés",
     "setPieces": "{{filled}} / {{pieces}} pièces",
     "slotTitle": "{{name}} — {{rarity}} · set {{set}} · Nv. {{level}}",
-    "itemLevel": "NV."
+    "itemLevel": "NV.",
+    "swap": "Échanger",
+    "swapTitle": "Échanger l'équipement",
+    "swapSubtitle": "Les pièces de cette carte passent sur celle que tu choisis, et inversement.",
+    "swapCancel": "Annuler"
   },
   "slotPopup": {
     "subtitle": "Équipe, améliore ou détruis les objets de ce slot.",

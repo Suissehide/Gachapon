@@ -110,3 +110,12 @@ export const equipmentSetsResponseSchema = z.object({
     }),
   ),
 })
+
+export const equipmentSwapBodySchema = z.object({
+  fromUserCardId: z.string().uuid(),
+  toUserCardId: z.string().uuid(),
+})
+
+export const equipmentSwapResponseSchema = z.object({
+  swapped: z.number().int(),
+})

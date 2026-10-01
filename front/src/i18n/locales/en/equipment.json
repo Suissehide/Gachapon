@@ -6,7 +6,8 @@
       "equip": "Error equipping",
       "unequip": "Error unequipping",
       "upgrade": "Error upgrading",
-      "destroy": "Error destroying"
+      "destroy": "Error destroying",
+      "swap": "Error while swapping equipment"
     }
   },
   "toasts": {

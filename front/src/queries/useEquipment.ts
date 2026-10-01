@@ -10,6 +10,7 @@ import {
   type ActiveSetSummary,
   activeSetsForCard,
   aggregateEquipmentBonuses,
+  cardPower,
   cardStuffStats,
   computeCardSetBonuses,
   emptyStuffStatBonuses,
@@ -19,6 +20,7 @@ import {
   withCardSetBonuses,
 } from '../utils/cardStats'
 import { invalidateBattleCache } from './useCampaign.ts'
+import { useUserCollection } from './useCollection.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
 const EQUIPMENT_KEY = ['equipment']
@@ -232,6 +234,59 @@ export function useUnequipItem() {
       // ET l'agrégat (['combat','teams']) que le hub des tours consommera.
       qc.invalidateQueries({ queryKey: ['combat'] })
       // Equipped stats changed → drop the cached battle replay cache.
+      invalidateBattleCache(qc)
+    },
+  })
+}
+
+/**
+ * Cartes du joueur, les plus puissantes en tête : c'est presque toujours
+ * l'une d'elles qu'on stuffe. Même calcul de puissance que la page
+ * Collection — équipement déjà porté compris. Sert aux fenêtres
+ * « Équiper sur… » et « Échanger l'équipement avec… ».
+ */
+export function useCardsByPower() {
+  const user = useAuthStore((s) => s.user)
+  const collection = useUserCollection(user?.id)
+  const { data } = useEquipmentList()
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  return useMemo(() => {
+    const cards = collection.data?.cards ?? []
+    const items = data?.items ?? []
+    // Puissance calculée une fois par carte, pas à chaque comparaison :
+    // l'agrégation parcourt tout l'inventaire d'équipement.
+    const power = new Map(
+      cards.map((uc) => [
+        uc.id,
+        cardPower(
+          uc.card,
+          uc.level,
+          uc.variant,
+          uc.palier,
+          aggregateEquipmentBonuses(items, uc.id, economy.equip.levelScale),
+        ),
+      ]),
+    )
+    return [...cards].sort(
+      (a, b) => (power.get(b.id) ?? 0) - (power.get(a.id) ?? 0),
+    )
+  }, [collection.data?.cards, data, economy.equip.levelScale])
+}
+
+export function useSwapEquipment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      fromUserCardId,
+      toUserCardId,
+    }: {
+      fromUserCardId: string
+      toUserCardId: string
+    }) => EquipmentApi.swap(fromUserCardId, toUserCardId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
+      qc.invalidateQueries({ queryKey: ['collection'] })
+      qc.invalidateQueries({ queryKey: ['combat'] })
       invalidateBattleCache(qc)
     },
   })

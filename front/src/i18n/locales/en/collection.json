@@ -116,7 +116,11 @@
     "equippedCount_other": "<equipped>{{count}}</equipped> / {{total}} equipped",
     "setPieces": "{{filled}} / {{pieces}} pieces",
     "slotTitle": "{{name}} — {{rarity}} · set {{set}} · Lvl. {{level}}",
-    "itemLevel": "LVL."
+    "itemLevel": "LVL.",
+    "swap": "Swap",
+    "swapTitle": "Swap equipment",
+    "swapSubtitle": "This card's pieces move to the card you pick, and vice versa.",
+    "swapCancel": "Cancel"
   },
   "slotPopup": {
     "subtitle": "Equip, upgrade or destroy the items for this slot.",
