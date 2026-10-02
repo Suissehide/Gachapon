@@ -24,8 +24,11 @@ import {
 } from './MobileMenu.tsx'
 import { NavGroup, type NavGroupDef, type NavItem } from './NavGroup.tsx'
 
+// `flex items-center` : un <button> (trigger de dropdown) centre son contenu
+// différemment d'un <a> en flux bloc normal côté Chrome — sans ça, les
+// onglets simples et les groupes déroulants ne partagent pas la même ligne de base.
 const tabClass =
-  'relative cursor-pointer whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span:last-child]:bg-linear-to-r [&.active>span:last-child]:from-primary [&.active>span:last-child]:to-secondary'
+  'relative flex cursor-pointer items-center whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span:last-child]:bg-linear-to-r [&.active>span:last-child]:from-primary [&.active>span:last-child]:to-secondary'
 
 export function Navbar() {
   const { t } = useTranslation(['layout', 'combat', 'home', 'guest'])
@@ -193,7 +196,9 @@ export function Navbar() {
           <div className="flex items-stretch justify-between border-t border-text/[0.07] px-[26px]">
             <nav className="flex items-stretch gap-[2px]">
               <Link to={playItem.to} className={tabClass}>
-                <span className="relative">{playItem.label}</span>
+                <span className="relative inline-flex items-center gap-1.5">
+                  {playItem.label}
+                </span>
                 <span
                   aria-hidden
                   className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
