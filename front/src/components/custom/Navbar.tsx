@@ -49,7 +49,7 @@ export function Navbar() {
       id: 'collection',
       label: t('layout:appNav.groups.collection'),
       items: [
-        { to: '/collection', label: t('layout:appNav.collection') },
+        { to: '/collection', label: t('layout:appNav.cards') },
         { to: '/equipment', label: t('layout:appNav.equipment') },
         {
           to: '/skills',
