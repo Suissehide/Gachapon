@@ -49,6 +49,7 @@ export const useDeliverOrder = () => {
       qc.invalidateQueries({ queryKey: ORDERS_QUERY_KEY })
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       void useAuthStore.getState().fetchMe()
       toast({
         title: i18n.t('orders:toasts.deliveredTitle'),
