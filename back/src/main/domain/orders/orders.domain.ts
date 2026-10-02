@@ -20,6 +20,11 @@ import type {
   PostgresORMInterface,
   PrimaTransactionClient,
 } from '../../types/infra/orm/client'
+import {
+  calculateTokens,
+  effectiveRegenInterval,
+  overflowDust,
+} from '../economy/economy.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { RARITY_ORDER } from '../wagers/wager-rules'
 import { generateOrderLines, pickClient } from './order-generation'
@@ -52,10 +57,19 @@ function startOfUtcDay(now: Date): Date {
 export class OrdersDomain implements IOrdersDomain {
   readonly #postgresOrm: PostgresORMInterface
   readonly #configService: ConfigServiceInterface
+  readonly #skillTreeRepository: IocContainer['skillTreeRepository']
+  readonly #teamProgressionDomain: IocContainer['teamProgressionDomain']
 
-  constructor({ postgresOrm, configService }: IocContainer) {
+  constructor({
+    postgresOrm,
+    configService,
+    skillTreeRepository,
+    teamProgressionDomain,
+  }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
+    this.#skillTreeRepository = skillTreeRepository
+    this.#teamProgressionDomain = teamProgressionDomain
   }
 
   async list(userId: string): Promise<OrdersBoard> {
@@ -396,13 +410,41 @@ export class OrdersDomain implements IOrdersDomain {
         data: { quantity: { decrement: amount } },
       })
     }
+    // Régénération matérialisée AVANT le crédit (même calcul que
+    // rewards.claimOne) : sinon calculateTokens plafonnerait plus tard
+    // `stock + regen` à maxStock et avalerait les jetons livrés.
+    const [user, upgrades, cfg, teamEffects] = await Promise.all([
+      tx.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { tokens: true, lastTokenAt: true },
+      }),
+      this.#skillTreeRepository.getEffectsForUser(userId),
+      this.#configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+      this.#teamProgressionDomain.effectsForUser(userId),
+    ])
+    const { tokens, newLastTokenAt, overflow } = calculateTokens(
+      user.lastTokenAt,
+      user.tokens,
+      effectiveRegenInterval({
+        intervalMinutes: cfg.tokenRegenIntervalMinutes,
+        reductionMinutes: upgrades.regenReductionMinutes,
+        lootBonusPct: teamEffects.loot,
+      }),
+      cfg.tokenMaxStock + upgrades.tokenVaultBonus,
+      upgrades.multiTokenChance,
+    )
     await tx.user.update({
       where: { id: userId },
       data: {
-        dust: { increment: order.rewardDust },
+        dust: {
+          increment:
+            order.rewardDust +
+            overflowDust(overflow, upgrades.tokenOverflowDust),
+        },
         dustGenerated: { increment: order.rewardDust },
         gold: { increment: order.rewardGold },
-        tokens: { increment: order.rewardTokens },
+        tokens: tokens + order.rewardTokens,
+        lastTokenAt: newLastTokenAt ?? undefined,
       },
     })
     await tx.customerOrder.update({

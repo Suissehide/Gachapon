@@ -126,6 +126,30 @@ describe('Orders routes', () => {
     expect(new Date(slot0.nextAt).getTime()).toBeGreaterThan(Date.now())
   })
 
+  // Revue finale #1 : la régénération en attente est matérialisée avant le
+  // crédit, sinon le plafond de calculateTokens avale les jetons livrés.
+  it('POST deliver — les jetons livrés s’ajoutent à la réserve régénérée', async () => {
+    const { id, cookie } = await registerUser('ordregen')
+    const uc = await prisma.userCard.create({ data: { userId: id, cardId: rareWater.id, quantity: 2 } })
+    const order = await seedOrder(id, [{ quantity: 1, rarity: 'RARE' }], rareWater.id)
+    await prisma.user.update({
+      where: { id },
+      data: { tokens: 1, lastTokenAt: new Date(Date.now() - 2 * 24 * 3600_000) },
+    })
+    const { tokenMaxStock } = await (app as any).iocContainer.configService.getMany('tokenMaxStock')
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/orders/${order.id}/deliver`,
+      headers: { cookie },
+      payload: { picks: [{ lineIndex: 0, userCardId: uc.id, amount: 1 }] },
+    })
+    expect(res.statusCode).toBe(200)
+    const after = await prisma.user.findUnique({ where: { id } })
+    expect(after.tokens).toBe(tokenMaxStock + 1)
+    expect(Date.now() - after.lastTokenAt.getTime()).toBeLessThan(60_000)
+  })
+
   it('POST deliver — refuse de consommer le dernier exemplaire', async () => {
     const { id, cookie } = await registerUser('ordlast')
     const uc = await prisma.userCard.create({ data: { userId: id, cardId: rareWater.id, quantity: 2 } })
