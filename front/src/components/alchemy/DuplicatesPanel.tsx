@@ -57,8 +57,8 @@ export function DuplicatesPanel({ tier, amounts, picked, onBump }: Props) {
                   aria-disabled={!canAdd}
                   onClick={() => canAdd && onBump(c.userCardId, 1)}
                   className={cn(
-                    'relative block w-full rounded-[10px] text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-[3px] hover:bg-transparent',
-                    !canAdd && 'cursor-default',
+                    'relative block w-full rounded-[10px] text-left transition-[transform,box-shadow] duration-200 hover:bg-transparent',
+                    canAdd ? 'hover:-translate-y-[3px]' : 'cursor-default',
                     mine > 0 &&
                       'shadow-[0_0_0_3px_var(--background),0_0_0_6px_var(--primary),0_16px_30px_-12px_rgba(245,158,11,0.6)]',
                   )}
