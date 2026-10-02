@@ -22,11 +22,11 @@ const RARITY_PRICE_KEYS = {
   LEGENDARY: 'dailyShopPriceLegendary',
 } as const
 
-function todayUTC(): Date {
+// The shop resets every hour: its key is the start of the current UTC hour.
+function currentHourUTC(): Date {
   const now = new Date()
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  )
+  now.setUTCMinutes(0, 0, 0)
+  return now
 }
 
 function formatItem(
@@ -88,7 +88,7 @@ export class DailyShopDomain implements IDailyShopDomain {
   }
 
   async getOrGenerate(userId: string): Promise<DailyShopResult> {
-    const date = todayUTC()
+    const date = currentHourUTC()
     const prisma = this.#postgresOrm.prisma
 
     const [ownedCardIds, existing] = await Promise.all([
@@ -126,8 +126,8 @@ export class DailyShopDomain implements IDailyShopDomain {
       this.#skillTreeRepository.getEffectsForUser(userId),
     ])
 
-    // Slots are calculated from the user's current effects; only applied to today's generation.
-    // Investing in DAILY_SHOP_SLOT after today's shop is generated will not retroactively add a slot until tomorrow.
+    // Slots are calculated from the user's current effects; only applied to this hour's generation.
+    // Investing in DAILY_SHOP_SLOT after the shop is generated adds the slot at the next hourly reset.
     const slots = 4 + (effects.dailyShopSlots ?? 0)
 
     if (activeCards.length < slots) {
@@ -200,7 +200,7 @@ export class DailyShopDomain implements IDailyShopDomain {
   }
 
   async buy(userId: string, itemId: string): Promise<BuyDailyShopItemResult> {
-    const date = todayUTC()
+    const date = currentHourUTC()
     const prisma = this.#postgresOrm.prisma
 
     const item = await prisma.dailyShopItem.findUnique({

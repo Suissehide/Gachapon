@@ -50,10 +50,7 @@ function useCountdown() {
   useEffect(() => {
     const update = () => {
       const now = new Date()
-      const midnight = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
-      )
-      const diff = midnight.getTime() - now.getTime()
+      const diff = 3_600_000 - (now.getTime() % 3_600_000)
       const h = Math.floor(diff / 3_600_000)
       const m = Math.floor((diff % 3_600_000) / 60_000)
       const s = Math.floor((diff % 60_000) / 1000)

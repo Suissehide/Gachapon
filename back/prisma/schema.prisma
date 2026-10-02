@@ -589,7 +589,8 @@ model DailyShop {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date        DateTime @db.Date
+  // Start of the UTC hour the shop was rolled for (resets hourly).
+  date        DateTime
   generatedAt DateTime @default(now())
 
   items DailyShopItem[]

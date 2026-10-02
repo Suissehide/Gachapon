@@ -12,6 +12,8 @@ export const useDailyShop = () => {
   const query = useQuery({
     queryKey: ['daily-shop'],
     queryFn: () => DailyShopApi.get(),
+    // The shop resets at the top of every UTC hour: refetch just after it.
+    refetchInterval: () => 3_600_000 - (Date.now() % 3_600_000) + 1000,
   })
 
   useDataFetching({
