@@ -322,7 +322,12 @@ export class OrdersDomain implements IOrdersDomain {
       }))
     const setIds = lastBySlot.flatMap((o) =>
       o?.status === 'OPEN'
-        ? (o.lines as OrderLine[]).flatMap((l) => (l.setId ? [l.setId] : []))
+        ? [
+            ...(o.lines as OrderLine[]).flatMap((l) =>
+              l.setId ? [l.setId] : [],
+            ),
+            o.clientCard.setId,
+          ]
         : [],
     )
     const sets = await prisma.cardSet.findMany({
@@ -343,6 +348,9 @@ export class OrdersDomain implements IOrdersDomain {
               id: o.clientCard.id,
               name: o.clientCard.name,
               imageUrl: o.clientCard.imageUrl,
+              rarity: o.clientCard.rarity,
+              element: o.clientCard.element,
+              setName: setName.get(o.clientCard.setId) ?? o.clientCard.setId,
             },
             reward: {
               dust: o.rewardDust,

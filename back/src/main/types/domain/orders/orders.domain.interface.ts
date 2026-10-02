@@ -71,7 +71,14 @@ export type OrderLineView = OrderLine & {
 
 export type OrderView = {
   id: string
-  client: { id: string; name: string; imageUrl: string | null }
+  client: {
+    id: string
+    name: string
+    imageUrl: string | null
+    rarity: CardRarity
+    element: CardElement | null
+    setName: string
+  }
   lines: OrderLineView[]
   reward: OrderReward
   suggestedPicks: DeliveryPick[] | null

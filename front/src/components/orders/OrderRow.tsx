@@ -14,6 +14,7 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import { useDismissOrder } from '../../queries/useOrders.ts'
+import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { ConfirmPopup } from '../team/ConfirmPopup.tsx'
 import { Button } from '../ui/button.tsx'
 import { DeliverPopup } from './DeliverPopup.tsx'
@@ -125,18 +126,15 @@ export function OrderRow({
           'border-primary/50 bg-gradient-to-r from-primary/8 via-card to-card shadow-[0_2px_0_rgba(245,158,11,0.08),0_18px_36px_-20px_rgba(245,158,11,0.35)]',
       )}
     >
-      <div className="grid h-[106px] w-[84px] place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-surface-3 to-track shadow-[var(--shadow-portrait-inset)] ring-1 ring-inset ring-border-dark md:h-[140px] md:w-[112px]">
-        {order.client.imageUrl ? (
-          <img
-            src={order.client.imageUrl}
-            alt={order.client.name}
-            className="h-full w-full origin-top scale-[1.35] object-cover object-top"
-          />
-        ) : (
-          <span className="font-display text-[44px] font-extrabold text-text/25">
-            {order.client.name.charAt(0)}
-          </span>
-        )}
+      <div className="w-[84px] shrink-0 md:w-[112px]">
+        <CardDisplay
+          rarity={order.client.rarity}
+          name={order.client.name}
+          setName={order.client.setName}
+          imageUrl={order.client.imageUrl}
+          element={order.client.element}
+          compact
+        />
       </div>
 
       <div className="flex min-w-0 flex-col gap-3.5">
