@@ -1,3 +1,4 @@
+import type { UnlockedAchievement } from './achievements.constant.ts'
 import type { CardElement, CardRarity, CardVariant } from './card.constant.ts'
 
 /** Rareté de départ d'un cran (LEGENDARY exclue). */
@@ -38,6 +39,7 @@ export type TransmuteResult = {
     set: { id: string; name: string }
   }
   isNew: boolean
+  unlockedAchievements: UnlockedAchievement[]
 }
 
 export const ALCHEMY_ROUTES = {

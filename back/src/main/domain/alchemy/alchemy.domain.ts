@@ -186,11 +186,12 @@ export class AlchemyDomain implements IAlchemyDomain {
         async (tx) => {
           await this.#consume(tx, userId, fromRarity, picks, cost)
           const result = await this.#grantResult(tx, userId, toRarity, rates)
-          await this.#achievementsDomain.track(tx, userId, {
-            kind: 'CARD_RECYCLED',
-            amount: cost,
-          })
-          return result
+          const unlockedAchievements = await this.#achievementsDomain.track(
+            tx,
+            userId,
+            { kind: 'CARD_RECYCLED', amount: cost },
+          )
+          return { ...result, unlockedAchievements }
         },
         { isolationLevel: 'Serializable' },
       )
@@ -210,6 +211,7 @@ export class AlchemyDomain implements IAlchemyDomain {
           set: { id: card.set.id, name: card.set.name },
         },
         isNew: resultId.isNew,
+        unlockedAchievements: resultId.unlockedAchievements,
       }
     })
   }

@@ -284,6 +284,36 @@ describe('Alchemy routes', () => {
     expect(uq.progress).toBe(5)
   })
 
+  it('POST /alchemy/transmute — renvoie les succès débloqués (CARDS_RECYCLED)', async () => {
+    const { id, cookie } = await registerUser('alcach')
+    const stack = await giveStack(id, commonA.id, 6) // available = 5
+    const achievement = await prisma.achievement.create({
+      data: {
+        key: `test_alchemy_recycled_${suffix}`,
+        nameFr: 'Test Recycleur',
+        nameEn: 'Test Recycler',
+        descriptionFr: 'Test',
+        descriptionEn: 'Test',
+        criterion: { type: 'CARDS_RECYCLED', threshold: 5 },
+        isActive: true,
+      },
+    })
+
+    try {
+      const res = await transmute(cookie, {
+        fromRarity: 'COMMON',
+        picks: [{ userCardId: stack.id, amount: 5 }],
+      })
+      expect(res.statusCode).toBe(200)
+      expect(Array.isArray(res.json().unlockedAchievements)).toBe(true)
+      expect(res.json().unlockedAchievements.map((a: any) => a.key)).toContain(achievement.key)
+    } finally {
+      await prisma.userAchievement.deleteMany({ where: { achievementId: achievement.id } })
+      await prisma.userAchievementProgress.deleteMany({ where: { achievementId: achievement.id } })
+      await prisma.achievement.delete({ where: { id: achievement.id } })
+    }
+  })
+
   // Review Focus 2 : deux transmutations concurrentes sur une pile de 6
   // doublons (5 disponibles), 5 picks chacune — une seule réussit.
   it('POST /alchemy/transmute — une seule des deux transmutations concurrentes réussit', async () => {

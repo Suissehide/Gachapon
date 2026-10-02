@@ -9,6 +9,8 @@ import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
 import i18n from '../i18n/index.ts'
 import { isApiError } from '../libs/httpErrorHandler.ts'
+import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
+import { useAuthStore } from '../stores/auth.store.ts'
 import { useRewardRevealStore } from '../stores/rewardReveal.store.ts'
 
 export const ALCHEMY_QUERY_KEY = ['alchemy'] as const
@@ -22,6 +24,7 @@ export const useAlchemy = () =>
 export const useTransmute = () => {
   const qc = useQueryClient()
   const reveal = useRewardRevealStore((s) => s.reveal)
+  const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
   const { toast } = useToast()
   return useMutation({
     mutationFn: ({
@@ -40,6 +43,11 @@ export const useTransmute = () => {
         ['achievements'],
       ]) {
         qc.invalidateQueries({ queryKey: key })
+      }
+      if (result.unlockedAchievements?.length) {
+        enqueueAchievementUnlock(result.unlockedAchievements)
+        // The unlocked achievement mints a pending reward — refresh the badge.
+        void useAuthStore.getState().fetchMe()
       }
       reveal([
         {

@@ -3,6 +3,7 @@ import type {
   CardRarity,
   CardVariant,
 } from '../../../../generated/client'
+import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
 
 /** Rareté de départ d'un cran (LEGENDARY exclue). */
 export type AlchemyFromRarity = Exclude<CardRarity, 'LEGENDARY'>
@@ -42,6 +43,7 @@ export type TransmuteResult = {
     set: { id: string; name: string }
   }
   isNew: boolean
+  unlockedAchievements: UnlockedAchievement[]
 }
 
 export interface IAlchemyDomain {
