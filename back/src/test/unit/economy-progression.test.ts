@@ -1,4 +1,9 @@
 import {
+  ALCHEMY_COST_KEYS,
+  ALCHEMY_FROM_RARITIES,
+  nextRarity,
+} from '../../main/domain/alchemy/alchemy-rules'
+import {
   CHAPTER_COUNT,
   STAGES_PER_CHAPTER,
   bossLoot,
@@ -36,6 +41,7 @@ const POOL = [
 const TOTAL_CARDS = POOL.reduce((s, p) => s + p.cards, 0)
 const LEGENDARY_CARDS = POOL[4].cards
 const TOTAL_WEIGHT = POOL.reduce((s, p) => s + p.cards * p.weight, 0)
+type Rarity = (typeof POOL)[number]['rarity']
 const pRarity = (p: (typeof POOL)[number]) => (p.cards * p.weight) / TOTAL_WEIGHT
 
 // ── Constantes économie (sources réelles) ─────────────────────────────────────
@@ -92,9 +98,24 @@ type Snapshot = {
   stage: number
   level: number
   legendaries: number
+  epicDistinct: number
+  /** Sorties d'alchimie cumulées, par rareté produite. */
+  alchemyOut: Record<Rarity, number>
 }
 
-function simulate(days: number): Snapshot[] {
+const distinctOf = (cards: number, draws: number) => cards * (1 - (1 - 1 / cards) ** draws)
+
+/**
+ * `withAlchemy` — HYPOTHÈSE BORNE HAUTE : le joueur transmute TOUS ses
+ * doublons de COMMON à EPIC, dès qu'il en a assez, en cascade dans la
+ * journée. Il n'en recycle donc aucun : sa poussière de recyclage ne vient
+ * plus que des doublons de LEGENDARY (le reliquat de stock attend la
+ * prochaine transmutation, il n'est pas recyclé). C'est la direction qui
+ * accélère le plus les légendaires tirées, et elle ralentit au passage les
+ * achats au Marché : les deux effets se compensent en partie.
+ * `false` (défaut) garde la trajectoire de référence à l'identique.
+ */
+function simulate(days: number, { withAlchemy = false } = {}): Snapshot[] {
   const out: Snapshot[] = []
   let gold = 0
   let dust = 0
@@ -103,6 +124,10 @@ function simulate(days: number): Snapshot[] {
   let teamLevel = 1 // niveau moyen des 4 cartes de l'équipe
   let totalPulls = 0
   let boughtLegendaries = 0
+  // Alchimie : cartes reçues par transmutation, doublons déjà comptés, stock en attente
+  const alchemyIn = Object.fromEntries(POOL.map((p) => [p.rarity, 0])) as Record<Rarity, number>
+  const prevDupes = { ...alchemyIn }
+  const stock = { ...alchemyIn }
 
   for (let day = 1; day <= days; day++) {
     const mature = day >= SKILL_MATURITY_DAY
@@ -169,7 +194,25 @@ function simulate(days: number): Snapshot[] {
       }, 0) / TOTAL_CARDS,
     )
     const dustPerPull = POOL.reduce((s, p) => s + pRarity(p) * p.dust, 0)
-    dust += pullsToday * dustPerPull * completion + QUEST_DUST_PER_DAY
+    if (withAlchemy) {
+      // Du cran le plus bas au plus haut : une sortie du jour peut déjà
+      // nourrir le cran suivant (cascade).
+      for (const rarity of ALCHEMY_FROM_RARITIES) {
+        // biome-ignore lint/style/noNonNullAssertion: POOL couvre toutes les raretés
+        const p = POOL.find((x) => x.rarity === rarity)!
+        const draws = totalPulls * pRarity(p) + alchemyIn[rarity]
+        const dupes = draws - distinctOf(p.cards, draws)
+        stock[rarity] += dupes - prevDupes[rarity]
+        prevDupes[rarity] = dupes
+        const n = Math.floor(stock[rarity] / DEFAULTS[ALCHEMY_COST_KEYS[rarity]])
+        stock[rarity] -= n * DEFAULTS[ALCHEMY_COST_KEYS[rarity]]
+        // biome-ignore lint/style/noNonNullAssertion: aucun cran depuis LEGENDARY
+        alchemyIn[nextRarity(rarity)!] += n
+      }
+      dust += QUEST_DUST_PER_DAY
+    } else {
+      dust += pullsToday * dustPerPull * completion + QUEST_DUST_PER_DAY
+    }
 
     // Boutique quotidienne : acheter les LEGENDARY manquantes en priorité
     // Pity : une LEGENDARY forcée tous les pityThreshold tirages
@@ -179,8 +222,14 @@ function simulate(days: number): Snapshot[] {
     // directions opposées, acceptable dans la bande [J75, J95].
     const legendaryDraws =
       totalPulls * pRarity(POOL[4]) +
-      Math.floor(totalPulls / DEFAULTS.pityThreshold)
+      Math.floor(totalPulls / DEFAULTS.pityThreshold) +
+      alchemyIn.LEGENDARY
     const pulledLegendaries = LEGENDARY_CARDS * (1 - (1 - 1 / LEGENDARY_CARDS) ** legendaryDraws)
+    if (withAlchemy) {
+      const legendaryDupes = legendaryDraws - pulledLegendaries
+      dust += (legendaryDupes - prevDupes.LEGENDARY) * DEFAULTS.dustLegendary
+      prevDupes.LEGENDARY = legendaryDupes
+    }
     const gifted = GIFTED_LEGENDARY_DAYS.filter((d) => d <= day).length
     if (
       pulledLegendaries + boughtLegendaries + gifted < LEGENDARY_CARDS &&
@@ -200,6 +249,8 @@ function simulate(days: number): Snapshot[] {
       stage: stageCleared,
       level: calculateLevel(xp, XP_BASE, XP_SLOPE, DEFAULTS['xp.levelCap']),
       legendaries: Math.floor(pulledLegendaries) + boughtLegendaries + gifted,
+      epicDistinct: distinctOf(POOL[3].cards, totalPulls * pRarity(POOL[3]) + alchemyIn.EPIC),
+      alchemyOut: { ...alchemyIn },
     })
   }
   return out
@@ -280,6 +331,36 @@ describe('economy-progression — partie complète en ~3 mois', () => {
   //
   // Ce fichier reste le garde-fou de l'ÉCONOMIE (or, jetons, poussière,
   // légendaires), où ces deux angles morts ne portent pas à conséquence.
+
+  it('avec l’alchimie : 17 LEGENDARY atteints entre J75 et J95', () => {
+    const alch = simulate(90, { withAlchemy: true })
+    const doneDay = alch.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
+    if (doneDay == null) {
+      const ext = simulate(120, { withAlchemy: true })
+      const extDay = ext.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
+      expect(extDay).toBeDefined()
+      expect(extDay).toBeLessThanOrEqual(95)
+    } else {
+      expect(doneDay).toBeGreaterThanOrEqual(75)
+    }
+  })
+
+  it('avec l’alchimie : log de la trajectoire', () => {
+    const alch = simulate(120, { withAlchemy: true })
+    const done = (t: Snapshot[]) => t.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
+    console.info(`17 LEG : J${done(simulate(120))} sans alchimie, J${done(alch)} avec`)
+    for (const d of [10, 30, 60, 90]) {
+      const s = alch[d - 1]
+      const out = Object.entries(s.alchemyOut)
+        .filter(([r]) => r !== 'COMMON')
+        .map(([r, n]) => `${r} ${n}`)
+        .join(', ')
+      console.info(
+        `J${s.day} (alchimie): ${s.legendaries} LEG, ${s.epicDistinct.toFixed(1)} EPIC distinctes, sorties cumulées ${out}`,
+      )
+    }
+    expect(alch).toHaveLength(120)
+  })
 
   it('le boost épique du seed est bien ×2 / 800 / 10 tirages', () => {
     const boost = SHOP_ITEMS.find((i) => i.nameFr === 'Boost Épique')
