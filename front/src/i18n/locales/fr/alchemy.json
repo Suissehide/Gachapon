@@ -17,7 +17,9 @@
     "available": "{{count}} en double",
     "empty": "Pas assez de doublons de cette rareté.",
     "lastCopyNote": "Tu gardes toujours un exemplaire de chaque carte.",
-    "transmute": "Transmuter"
+    "transmute": "Transmuter",
+    "remove": "Retirer un exemplaire de {{name}}",
+    "add": "Ajouter un exemplaire de {{name}}"
   },
   "toasts": {
     "errorTitle": "Alchimie"

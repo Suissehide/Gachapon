@@ -17,7 +17,9 @@
     "available": "{{count}} spare",
     "empty": "Not enough duplicates of this rarity.",
     "lastCopyNote": "You always keep one copy of each card.",
-    "transmute": "Transmute"
+    "transmute": "Transmute",
+    "remove": "Remove one copy of {{name}}",
+    "add": "Add one copy of {{name}}"
   },
   "toasts": {
     "errorTitle": "Alchemy"

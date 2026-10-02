@@ -95,6 +95,7 @@ export function Cauldron({ tier }: Props) {
                 variant="secondary"
                 size="icon-sm"
                 disabled={mine === 0}
+                aria-label={t('alchemy:cauldron.remove', { name: c.name })}
                 onClick={() => bump(c.userCardId, -1)}
               >
                 <Minus className="h-4 w-4" />
@@ -107,6 +108,7 @@ export function Cauldron({ tier }: Props) {
                 variant="secondary"
                 size="icon-sm"
                 disabled={!canAdd}
+                aria-label={t('alchemy:cauldron.add', { name: c.name })}
                 onClick={() => bump(c.userCardId, 1)}
               >
                 <Plus className="h-4 w-4" />
