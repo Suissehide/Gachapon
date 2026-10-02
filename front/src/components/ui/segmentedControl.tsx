@@ -65,7 +65,9 @@ export function SegmentedControl<T extends string>({
               isActive
                 ? 'bg-primary/10 border-primary/25 text-text'
                 : 'text-text-light hover:bg-background/50 hover:text-text',
+              // L'option active reste lisible même désactivée : c'est la sélection.
               option.disabled &&
+                !isActive &&
                 'cursor-not-allowed opacity-40 hover:bg-transparent hover:text-text-light',
             )}
             style={
