@@ -260,6 +260,22 @@ export const FR_MESSAGES = {
   // PATCH admin sans aucun champ renseigné (`admin-raid.schema.ts`).
   'raid.adminPatchNothingToUpdate': 'Rien à modifier',
 
+  // --- orders ---
+  'orders.notFound': 'Commande introuvable',
+  'orders.alreadyClosed': "Cette commande n'est plus ouverte",
+  'orders.dailyCapReached':
+    "Le comptoir a reçu {{cap}} livraisons aujourd'hui — reviens demain",
+  'orders.unknownCard': 'Carte introuvable dans ta collection',
+  'orders.badLine': "La ligne {{line}} n'existe pas dans cette commande",
+  'orders.variantNotAllowed':
+    'Seules les cartes normales peuvent être livrées (pas les brillantes ni les holographiques)',
+  'orders.cardDoesNotMatch':
+    'Cette carte ne correspond pas aux critères de la ligne {{line}}',
+  'orders.wouldLeaveZeroCopies':
+    "Impossible de livrer {{amount}} exemplaires — il t'en resterait 0 (tu en as {{quantity}})",
+  'orders.lineNotCovered':
+    'La ligne {{line}} demande {{expected}} cartes, la sélection en contient {{got}}',
+
   // --- wagers (paris et duels) ---
   'wagers.stakeMustBeInteger':
     'La mise doit être un nombre entier de poussière',

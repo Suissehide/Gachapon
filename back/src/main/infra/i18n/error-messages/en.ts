@@ -226,6 +226,21 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'raid.formerMemberFallback': 'Former member',
   'raid.adminPatchNothingToUpdate': 'Nothing to update',
 
+  // --- orders ---
+  'orders.notFound': 'Order not found',
+  'orders.alreadyClosed': 'This order is no longer open',
+  'orders.dailyCapReached':
+    'The counter took {{cap}} deliveries today — come back tomorrow',
+  'orders.unknownCard': 'Card not found in your collection',
+  'orders.badLine': 'Line {{line}} does not exist in this order',
+  'orders.variantNotAllowed':
+    'Only normal cards can be delivered (no brilliant or holographic ones)',
+  'orders.cardDoesNotMatch': 'This card does not match line {{line}}',
+  'orders.wouldLeaveZeroCopies':
+    'Cannot deliver {{amount}} copies — you would have 0 left (you have {{quantity}})',
+  'orders.lineNotCovered':
+    'Line {{line}} needs {{expected}} cards, the selection has {{got}}',
+
   // --- wagers (bets and duels) ---
   'wagers.stakeMustBeInteger': 'The stake must be a whole number of dust',
   'wagers.stakeBelowMin': 'The minimum stake is {{min}} dust',
