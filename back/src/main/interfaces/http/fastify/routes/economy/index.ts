@@ -123,6 +123,12 @@ const economyConfigResponseSchema = z.object({
       forge: perkConfigSchema,
     }),
   }),
+  orders: z.object({
+    slots: z.number(),
+    cooldownMinutes: z.number(),
+    dailyCap: z.number(),
+    freeDismissPerDay: z.number(),
+  }),
 })
 
 export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -197,6 +203,10 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'teamPerk.forge.perRank',
         'teamPerk.forge.unlockLevel',
         'teamPerk.forge.maxRank',
+        'orders.slots',
+        'orders.cooldownMinutes',
+        'orders.dailyCap',
+        'orders.freeDismissPerDay',
         ...SUBSTAT_RANGE_CONFIG_KEYS,
       )
       return {
@@ -303,6 +313,12 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
               maxRank: c['teamPerk.forge.maxRank'],
             },
           },
+        },
+        orders: {
+          slots: c['orders.slots'],
+          cooldownMinutes: c['orders.cooldownMinutes'],
+          dailyCap: c['orders.dailyCap'],
+          freeDismissPerDay: c['orders.freeDismissPerDay'],
         },
       }
     },
