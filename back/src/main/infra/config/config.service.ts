@@ -171,7 +171,10 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // GlobalConfig (clé = 'raid.xxx'), ou élargir ces deux listes blanches.
   'raid.attacksPerDay': 2,
   'raid.timeoutTurns': 10,
-  'raid.baseHpPerMember': 162000,
+  // Baissé de 30 % le 2026-10-02 (162000 avant) : le boss tombait trop
+  // rarement. La carte épique du palier 100 % ne vient plus qu'aux niveaux
+  // difficiles (RAID_EPIC_CARD_MIN_LEVEL, raid.definitions.ts).
+  'raid.baseHpPerMember': 113400,
   // Effectif MINIMUM facturé dans les PV du boss, même pour une équipe plus
   // petite : sans lui, monter une équipe à un joueur donnait un boss à sa
   // taille et les quatre paliers toutes les semaines.
@@ -179,8 +182,9 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // Points de pourcentage de PV ajoutés PAR NIVEAU, composés. Le niveau monte
   // d'un cran par victoire et redescend d'un cran par semaine sans victoire :
   // le système s'arrête tout seul là où l'équipe ne suit plus, d'où l'absence
-  // de plafond. À 10, une équipe assidue plafonne vers le niveau 2 (niveau 6
-  // avec le bonus d'équipe `raid` au rang 2).
+  // de plafond. À 10 et 162000 PV par membre, une équipe assidue plafonnait
+  // vers le niveau 2 (niveau 6 avec le bonus d'équipe `raid` au rang 2) ; à
+  // 113400, il faut ~4 crans de plus pour retrouver les mêmes PV (1,1^4 ≈ 1,46).
   'raid.levelHpBonusPct': 10,
   // Bonus de lot par niveau, en POINTS DE POURCENTAGE de la base de chaque
   // palier. DOIT rester strictement sous `raid.levelHpBonusPct` : au-dessus,
@@ -211,8 +215,9 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // `raid` est le seul dont l'effet mord sur des PV de boss calibrés à la main,
   // et il plafonne plus bas que les trois autres (voir sa ligne).
   // Diviseur des degats de raid. Cale sur l'echelle REELLE du jeu, pas sur les
-  // chiffres de la maquette : raid.baseHpPerMember vaut 162000 PAR MEMBRE, donc
-  // la part d'un membre sur sa semaine represente 162000 degats. A 300, cela fait
+  // chiffres de la maquette : raid.baseHpPerMember valait 162000 PAR MEMBRE, donc
+  // la part d'un membre sur sa semaine representait 162000 degats (113400 depuis
+  // le 2026-10-02 : les points de raid d'une equipe qui tue le boss baissent d'autant). A 300, cela fait
   // 540 points, soit ~1060 avec les tirages et les duels — l'ordre de grandeur de
   // la maquette (1180 pour le meilleur contributeur). A 2, un membre marquait
   // 81000 points et l'equipe touchait le niveau 50 en moins de deux semaines.

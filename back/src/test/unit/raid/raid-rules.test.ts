@@ -1,7 +1,10 @@
 import { describe, expect, it } from '@jest/globals'
 
 import type { LogEntry } from '../../../main/domain/combat/battle-simulator.domain'
-import { RAID_TIERS } from '../../../main/domain/content/raid.definitions'
+import {
+  RAID_EPIC_CARD_MIN_LEVEL,
+  RAID_TIERS,
+} from '../../../main/domain/content/raid.definitions'
 import { DEFAULTS } from '../../../main/infra/config/config.service'
 import {
   attacksRemaining,
@@ -12,6 +15,7 @@ import {
   raidElementForWeek,
   raidMaxHp,
   raidPct,
+  raidTierCardRarityAtLevel,
   raidTierRewardAtLevel,
   raidWeekEndsAt,
   raidWeekIndex,
@@ -296,4 +300,24 @@ describe('raid-rules — invariant : la récompense par point de dégât décro�
       }
     },
   )
+})
+
+describe('raid-rules — carte du palier 100 %', () => {
+  it(`pas d'épique sous le niveau ${RAID_EPIC_CARD_MIN_LEVEL}`, () => {
+    expect(raidTierCardRarityAtLevel(100, 0, null)).toBeNull()
+    expect(
+      raidTierCardRarityAtLevel(100, RAID_EPIC_CARD_MIN_LEVEL - 1, null),
+    ).toBeNull()
+  })
+
+  it(`épique à partir du niveau ${RAID_EPIC_CARD_MIN_LEVEL}, palier 100 % seulement`, () => {
+    expect(raidTierCardRarityAtLevel(100, RAID_EPIC_CARD_MIN_LEVEL, null)).toBe(
+      'EPIC',
+    )
+    expect(raidTierCardRarityAtLevel(75, RAID_EPIC_CARD_MIN_LEVEL, null)).toBeNull()
+  })
+
+  it('le lot de base ne donne plus de carte', () => {
+    expect(RAID_TIERS.every((t) => t.cardRarity === null)).toBe(true)
+  })
 })

@@ -7,7 +7,10 @@ import {
   raidTierLabelEn,
   raidTierLabelFr,
 } from '../../../domain/content/raid.definitions'
-import { raidTierRewardAtLevel } from '../../../domain/raid/raid-rules'
+import {
+  raidTierCardRarityAtLevel,
+  raidTierRewardAtLevel,
+} from '../../../domain/raid/raid-rules'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { LocalizedRaidBoss } from '../../../types/infra/orm/localized'
 import type {
@@ -89,7 +92,11 @@ export class RaidRepository implements IRaidRepository {
         data: {
           ...amounts,
           xp: tier.reward.xp,
-          cardRarity: tier.reward.cardRarity,
+          cardRarity: raidTierCardRarityAtLevel(
+            tier.pct,
+            level,
+            tier.reward.cardRarity,
+          ),
           labelFr: `${raidTierLabelFr(tier.pct)} (niv. ${level})`,
           labelEn: `${raidTierLabelEn(tier.pct)} (level ${level})`,
         },

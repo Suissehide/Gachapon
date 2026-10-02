@@ -1,4 +1,6 @@
+import type { CardRarity } from '../../../generated/client'
 import type { LogEntry } from '../combat/battle-simulator.domain'
+import { RAID_EPIC_CARD_MIN_LEVEL } from '../content/raid.definitions'
 import { mondayOfUtcWeek } from '../quests/quest-matching'
 import type { TowerElement } from '../tower/tower-slots'
 
@@ -136,6 +138,19 @@ export function raidTierRewardAtLevel(
     gold: Math.round(base.gold * mult),
     dust: Math.round(base.dust * mult),
   }
+}
+
+/**
+ * Carte du palier à un niveau donné : le palier 100 % donne une épique à
+ * partir de `RAID_EPIC_CARD_MIN_LEVEL`, sinon la carte de la ligne de base
+ * (aucune par défaut, réglable depuis /admin/raid).
+ */
+export function raidTierCardRarityAtLevel(
+  pct: number,
+  level: number,
+  baseRarity: CardRarity | null,
+): CardRarity | null {
+  return pct === 100 && level >= RAID_EPIC_CARD_MIN_LEVEL ? 'EPIC' : baseRarity
 }
 
 /**

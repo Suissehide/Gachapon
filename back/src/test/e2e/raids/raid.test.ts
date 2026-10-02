@@ -211,7 +211,7 @@ describe('routes de raid', () => {
     expect(body.killedAt).toBeNull()
     expect(body.tiers.map((t: any) => t.pct)).toEqual([25, 50, 75, 100])
     expect(body.tiers.every((t: any) => t.reached === false)).toBe(true)
-    expect(body.tiers[3].reward.cardRarity).toBe('EPIC')
+    expect(body.tiers[3].reward.cardRarity).toBeNull()
     expect(body.me).toEqual({
       attacksPerDay: 2,
       attacksRemainingToday: 2,

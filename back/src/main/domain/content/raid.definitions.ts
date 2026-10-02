@@ -80,9 +80,16 @@ export const RAID_TIERS = [
     gold: 1000,
     dust: 300,
     xp: 0,
-    cardRarity: 'EPIC' as const,
+    cardRarity: null,
   },
 ] as const
+
+/**
+ * Niveau de raid à partir duquel le palier 100 % donne aussi une carte
+ * épique. Le niveau 0 ne la donne plus depuis le 2026-10-02 : elle récompense
+ * un boss difficile, pas la première victoire (voir `raidTierCardRarityAtLevel`).
+ */
+export const RAID_EPIC_CARD_MIN_LEVEL = 3
 
 /**
  * Libellé de la récompense d'un palier de raid — le gabarit, jamais
