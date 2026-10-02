@@ -129,6 +129,12 @@ const economyConfigResponseSchema = z.object({
     dailyCap: z.number(),
     freeDismissPerDay: z.number(),
   }),
+  alchemy: z.object({
+    costCommon: z.number(),
+    costUncommon: z.number(),
+    costRare: z.number(),
+    costEpic: z.number(),
+  }),
 })
 
 export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -207,6 +213,10 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'orders.cooldownMinutes',
         'orders.dailyCap',
         'orders.freeDismissPerDay',
+        'alchemy.costCommon',
+        'alchemy.costUncommon',
+        'alchemy.costRare',
+        'alchemy.costEpic',
         ...SUBSTAT_RANGE_CONFIG_KEYS,
       )
       return {
@@ -319,6 +329,12 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           cooldownMinutes: c['orders.cooldownMinutes'],
           dailyCap: c['orders.dailyCap'],
           freeDismissPerDay: c['orders.freeDismissPerDay'],
+        },
+        alchemy: {
+          costCommon: c['alchemy.costCommon'],
+          costUncommon: c['alchemy.costUncommon'],
+          costRare: c['alchemy.costRare'],
+          costEpic: c['alchemy.costEpic'],
         },
       }
     },

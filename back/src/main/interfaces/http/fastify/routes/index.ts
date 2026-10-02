@@ -2,6 +2,7 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 
 import { achievementsRouter } from './achievements'
 import { adminRouter } from './admin'
+import { alchemyRouter } from './alchemy'
 import { apiKeysRouter } from './api-keys'
 import { authRouter } from './auth'
 import { campaignRouter } from './campaign'
@@ -128,6 +129,7 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(shopRouter)
   await fastify.register(dailyShopRouter)
   await fastify.register(ordersRouter)
+  await fastify.register(alchemyRouter)
   await fastify.register(economyRouter)
   await fastify.register(equipmentRouter)
   await fastify.register(skillsRouter)
