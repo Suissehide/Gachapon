@@ -180,4 +180,14 @@
   --currency-gold-ink: #854d0e;
   --currency-token: #ea580c;
   --currency-token-ink: #9a3412;
+
+  /* Pastilles de notification de la topbar (point de nav, pilule de
+     sous-menu, compteur ancré cloche/cadeau) — handoff
+     `design_handoff_topbar_notifications`. Rouge = à traiter (commande
+     livrable, notification non lue), ambre = gain/à utiliser (cadeau,
+     points de compétence non dépensés). `--badge-gain` réutilise
+     --warning plutôt qu'un hex propre : même teinte ambrée que le reste
+     de l'app. */
+  --badge-alert: #e11d48;
+  --badge-gain: var(--warning);
 }

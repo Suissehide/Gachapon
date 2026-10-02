@@ -25,7 +25,7 @@ import {
 import { NavGroup, type NavGroupDef, type NavItem } from './NavGroup.tsx'
 
 const tabClass =
-  'relative whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span:last-child]:bg-linear-to-r [&.active>span:last-child]:from-primary [&.active>span:last-child]:to-secondary'
+  'relative cursor-pointer whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span:last-child]:bg-linear-to-r [&.active>span:last-child]:from-primary [&.active>span:last-child]:to-secondary'
 
 export function Navbar() {
   const { t } = useTranslation(['layout', 'combat', 'home', 'guest'])
@@ -55,6 +55,7 @@ export function Navbar() {
           to: '/skills',
           label: t('layout:admin.nav.skills'),
           badge: user?.skillPoints ?? 0,
+          badgeTone: 'gain',
         },
       ],
     },
@@ -75,6 +76,7 @@ export function Navbar() {
           to: '/orders',
           label: t('layout:appNav.orders'),
           badge: deliverableOrders,
+          badgeTone: 'alert',
         },
       ],
     },
@@ -155,7 +157,7 @@ export function Navbar() {
               }
               aria-expanded={menuOpen}
               aria-controls="mobile-menu"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
+              className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-muted"
               onClick={() => setMenuOpen((o) => !o)}
             >
               <CapsuleIcon open={menuOpen} />
@@ -253,6 +255,7 @@ export function Navbar() {
               open={menuOpen}
               onClick={closeMenu}
               badgeCount={entry.item.badge}
+              badgeTone={entry.item.badgeTone}
               locked={entry.item.locked}
             />
           ),

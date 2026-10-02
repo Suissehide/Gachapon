@@ -83,6 +83,9 @@
   --color-warning: var(--warning);
   --color-info: var(--info);
 
+  --color-badge-alert: var(--badge-alert);
+  --color-badge-gain: var(--badge-gain);
+
   --color-rarity-common: var(--rarity-common);
   --color-rarity-uncommon: var(--rarity-uncommon);
   --color-rarity-rare: var(--rarity-rare);

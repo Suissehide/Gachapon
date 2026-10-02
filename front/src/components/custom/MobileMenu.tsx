@@ -2,8 +2,10 @@ import { Link } from '@tanstack/react-router'
 import { Lock } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { NotificationDot } from '../notifications/NotificationDot.tsx'
+import { NotificationBadge } from '../notifications/NotificationBadge.tsx'
+import type { BadgeTone } from './NavGroup.tsx'
 
 /** Délai d'entrée échelonné d'une ligne du menu (80 ms, puis +45 ms par ligne). */
 const staggerDelay = (index: number) => `${80 + index * 45}ms`
@@ -121,6 +123,7 @@ export function MobileNavLink({
   open,
   onClick,
   badgeCount,
+  badgeTone,
   locked,
 }: {
   to: string
@@ -129,28 +132,35 @@ export function MobileNavLink({
   open: boolean
   onClick: () => void
   badgeCount?: number
+  badgeTone?: BadgeTone
   locked?: boolean
 }) {
+  const { t } = useTranslation('notifications')
   return (
     <Link
       to={to as never}
       onClick={onClick}
-      className={`flex items-center gap-4 px-2 py-3 rounded-xl text-text-light hover:text-text
+      className={`flex items-center justify-between gap-4 px-2 py-3 rounded-xl text-text-light hover:text-text
         transition-[opacity,transform] duration-300 ease-spring-pop
         [&.active]:text-primary [&.active]:font-semibold
         ${open ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}
       style={{ transitionDelay: staggerDelay(index) }}
     >
-      <span
-        className={`w-4 h-4 rounded-full shrink-0 bg-linear-to-br ${dotGradients[index % 3]}`}
-      />
-      <span className="relative flex items-center gap-2 text-3xl font-semibold uppercase tracking-wide">
-        {label}
-        {locked && <Lock className="h-3 w-3 text-text-light" />}
-        {badgeCount ? (
-          <NotificationDot count={badgeCount} className="-right-5 -top-2" />
-        ) : null}
+      <span className="flex items-center gap-4">
+        <span
+          className={`w-4 h-4 rounded-full shrink-0 bg-linear-to-br ${dotGradients[index % 3]}`}
+        />
+        <span className="flex items-center gap-2 text-3xl font-semibold uppercase tracking-wide">
+          {label}
+          {locked && <Lock className="h-3 w-3 text-text-light" />}
+        </span>
       </span>
+      <NotificationBadge
+        shape="pill"
+        tone={badgeTone ?? 'alert'}
+        count={badgeCount ?? 0}
+        ariaLabel={t('pendingAriaLabel', { count: badgeCount ?? 0 })}
+      />
     </Link>
   )
 }

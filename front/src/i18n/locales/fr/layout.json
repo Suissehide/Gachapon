@@ -80,6 +80,7 @@
       "commerce": "Commerce",
       "social": "Social"
     },
+    "groupBadgeAriaLabel": "{{section}}, nouveautés",
     "nextInSuffix": " · prochain dans {{timer}}"
   },
   "localeSwitcher": {

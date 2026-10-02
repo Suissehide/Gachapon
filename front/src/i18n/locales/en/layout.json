@@ -80,6 +80,7 @@
       "commerce": "Trade",
       "social": "Social"
     },
+    "groupBadgeAriaLabel": "{{section}}, new",
     "nextInSuffix": " · next in {{timer}}"
   },
   "localeSwitcher": {

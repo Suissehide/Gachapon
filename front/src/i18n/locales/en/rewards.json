@@ -18,6 +18,7 @@
   },
   "claim": "Claim",
   "title": "Rewards",
+  "giftAriaLabelCount": "Gifts, {{count}} to claim",
   "claimAll": "Claim all",
   "empty": "No reward pending",
   "apiTitles": {

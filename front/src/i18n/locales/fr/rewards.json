@@ -18,6 +18,7 @@
   },
   "claim": "Réclamer",
   "title": "Récompenses",
+  "giftAriaLabelCount": "Cadeaux, {{count}} à récupérer",
   "claimAll": "Tout réclamer",
   "empty": "Aucune récompense en attente",
   "apiTitles": {

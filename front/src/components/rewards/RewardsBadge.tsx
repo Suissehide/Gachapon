@@ -2,7 +2,7 @@ import { Gift } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { NotificationDot } from '../notifications/NotificationDot.tsx'
+import { NotificationBadge } from '../notifications/NotificationBadge.tsx'
 import { Button } from '../ui/button.tsx'
 import { RewardsPopup } from './RewardsPopup.tsx'
 
@@ -33,13 +33,21 @@ export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label={t('rewards:title')}
+        aria-label={
+          pendingRewardsCount > 0
+            ? t('rewards:giftAriaLabelCount', { count: pendingRewardsCount })
+            : t('rewards:title')
+        }
         className="h-10 w-10 rounded-[11px] text-text-light/60 hover:bg-text/[0.06] hover:text-text"
       >
         <Gift className="h-5 w-5" />
       </Button>
 
-      <NotificationDot count={pendingRewardsCount} />
+      <NotificationBadge
+        shape="anchored"
+        tone="gain"
+        count={pendingRewardsCount}
+      />
 
       {isOpen && <RewardsPopup onClose={() => setIsOpen(false)} />}
     </div>

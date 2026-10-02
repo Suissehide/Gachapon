@@ -1,5 +1,6 @@
 {
   "bellAriaLabel": "Notifications",
+  "bellAriaLabelCount": "Notifications, {{count}} unread",
   "panelTitle": "Notifications",
   "empty": "No notifications",
   "pendingAriaLabel": "{{count}} pending",

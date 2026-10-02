@@ -1,13 +1,18 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronDown, Lock } from 'lucide-react'
 import { DropdownMenu } from 'radix-ui'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../libs/utils.ts'
-import { NotificationDot } from '../notifications/NotificationDot.tsx'
+import { NotificationBadge } from '../notifications/NotificationBadge.tsx'
 import {
   DropdownMenuCustomContent,
   DropdownMenuCustomItem,
 } from '../ui/dropdownMenu.tsx'
+
+/** Sens d'un compteur : `alert` (rouge, à traiter) ou `gain` (ambre, à
+    récupérer/dépenser) — voir `NotificationBadge`. */
+export type BadgeTone = 'alert' | 'gain'
 
 export type NavItem = {
   to:
@@ -23,6 +28,8 @@ export type NavItem = {
     | '/leaderboard'
   label: string
   badge?: number
+  /** Défaut `alert` si `badge` est posé sans préciser de teinte. */
+  badgeTone?: BadgeTone
   locked?: boolean
 }
 
@@ -32,6 +39,21 @@ export type NavGroupDef = { id: string; label: string; items: NavItem[] }
 export const isUnder = (pathname: string, to: string) =>
   pathname === to || pathname.startsWith(`${to}/`)
 
+/** Point de nav du groupe : rouge si un item `alert` a un compteur > 0,
+    sinon ambre si un item `gain` en a un, sinon aucun point. */
+function groupTone(items: NavItem[]): BadgeTone | null {
+  const hasAlert = items.some(
+    (item) => (item.badgeTone ?? 'alert') === 'alert' && (item.badge ?? 0) > 0,
+  )
+  if (hasAlert) {
+    return 'alert'
+  }
+  const hasGain = items.some(
+    (item) => item.badgeTone === 'gain' && (item.badge ?? 0) > 0,
+  )
+  return hasGain ? 'gain' : null
+}
+
 /** Onglet déroulant de la barre desktop : même allure que les onglets-liens. */
 export function NavGroup({
   group,
@@ -40,19 +62,28 @@ export function NavGroup({
   group: NavGroupDef
   tabClass: string
 }) {
+  const { t } = useTranslation(['layout', 'notifications'])
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const active = group.items.some((item) => isUnder(pathname, item.to))
-  const badge = group.items.reduce((sum, item) => sum + (item.badge ?? 0), 0)
+  const tone = groupTone(group.items)
 
   return (
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger
         className={cn(tabClass, 'group outline-none', active && 'active')}
+        aria-label={
+          tone
+            ? t('layout:appNav.groupBadgeAriaLabel', { section: group.label })
+            : undefined
+        }
       >
-        <span className="relative inline-flex items-center gap-1">
+        <span className="relative inline-flex items-center gap-1.5">
           {group.label}
-          <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-          <NotificationDot count={badge} className="-right-4 -top-2" />
+          {tone && <NotificationBadge shape="dot" tone={tone} />}
+          <ChevronDown
+            aria-hidden
+            className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180"
+          />
         </span>
         <span
           aria-hidden
@@ -65,16 +96,20 @@ export function NavGroup({
           <DropdownMenuCustomItem key={item.to} asChild>
             <Link
               to={item.to}
-              className="gap-2 px-3 py-2 text-sm font-semibold text-text-light [&.active]:bg-primary/15 [&.active]:text-primary-dark"
+              className="justify-between gap-2 px-3 py-2 text-sm font-semibold text-text-light [&.active]:bg-primary/15 [&.active]:text-primary-dark"
             >
-              <span className="relative inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1.5">
                 {item.label}
                 {item.locked && <Lock className="h-3 w-3 text-text-light" />}
-                <NotificationDot
-                  count={item.badge ?? 0}
-                  className="-right-5 -top-2"
-                />
               </span>
+              <NotificationBadge
+                shape="pill"
+                tone={item.badgeTone ?? 'alert'}
+                count={item.badge ?? 0}
+                ariaLabel={t('notifications:pendingAriaLabel', {
+                  count: item.badge ?? 0,
+                })}
+              />
             </Link>
           </DropdownMenuCustomItem>
         ))}

@@ -48,7 +48,7 @@ import {
 import { useAuthStore } from '../../stores/auth.store.ts'
 import { SettledDuelResultPopup } from '../team/DuelResultPopup.tsx'
 import { Button } from '../ui/button.tsx'
-import { NotificationDot } from './NotificationDot.tsx'
+import { NotificationBadge } from './NotificationBadge.tsx'
 import { Nom, NotificationItem, RespondButtons } from './NotificationItem.tsx'
 
 /** « Tu bats captain 12 – 8 », du point de vue du lecteur. */
@@ -284,13 +284,15 @@ export function NotificationsBadge() {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label={t('bellAriaLabel')}
+        aria-label={
+          count > 0 ? t('bellAriaLabelCount', { count }) : t('bellAriaLabel')
+        }
         className="h-10 w-10 rounded-[11px] text-text-light/60 hover:bg-text/[0.06] hover:text-text"
       >
         <Bell className="h-5 w-5" />
       </Button>
 
-      <NotificationDot count={count} />
+      <NotificationBadge shape="anchored" tone="alert" count={count} />
 
       {isOpen && (
         <div className="absolute right-0 top-10 z-50 min-w-80 overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-lg:fixed max-lg:inset-x-3 max-lg:top-[116px] max-lg:min-w-0">
