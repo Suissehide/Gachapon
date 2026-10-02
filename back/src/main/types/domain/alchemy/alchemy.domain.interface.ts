@@ -16,6 +16,9 @@ export type AlchemyStack = {
   imageUrl: string | null
   rarity: CardRarity
   element: CardElement | null
+  level: number
+  /** Nom localisé du set (client Prisma étendu). */
+  setName: string
   available: number
 }
 

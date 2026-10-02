@@ -63,7 +63,7 @@ export class AlchemyDomain implements IAlchemyDomain {
       this.#configService.getMany(...Object.values(ALCHEMY_COST_KEYS)),
       prisma.userCard.findMany({
         where: { userId, variant: 'NORMAL', quantity: { gt: 1 } },
-        include: { card: true },
+        include: { card: { include: { set: true } } },
       }),
       this.#duelDomain.listEngagedCardKeysInTx(prisma, userId),
     ])
@@ -76,6 +76,8 @@ export class AlchemyDomain implements IAlchemyDomain {
         imageUrl: u.card.imageUrl,
         rarity: u.card.rarity,
         element: u.card.element,
+        level: u.level,
+        setName: u.card.set.name,
         available: u.quantity - 1,
       }))
     return {
