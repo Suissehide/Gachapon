@@ -21,6 +21,11 @@ function AlchemyPage() {
   const tiers = data?.tiers ?? []
   const defaultTier =
     tiers.find((tier) => tier.maxTransmutations > 0) ?? tiers[0]
+  // Cran figé dès la première réponse : sinon, épuiser le cran choisi par
+  // défaut ferait sauter la sélection vers un autre au refetch suivant.
+  if (selected === null && defaultTier) {
+    setSelected(defaultTier.fromRarity)
+  }
   const activeFromRarity = selected ?? defaultTier?.fromRarity
   const activeTier =
     tiers.find((tier) => tier.fromRarity === activeFromRarity) ?? defaultTier
