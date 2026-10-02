@@ -94,11 +94,11 @@ export interface SetDefinitionView {
 }
 
 const RARITY_MULT_KEY = {
-  COMMON: 'card.rarityMultCommon',
-  UNCOMMON: 'card.rarityMultUncommon',
-  RARE: 'card.rarityMultRare',
-  EPIC: 'card.rarityMultEpic',
-  LEGENDARY: 'card.rarityMultLegendary',
+  COMMON: 'equip.rarityMultCommon',
+  UNCOMMON: 'equip.rarityMultUncommon',
+  RARE: 'equip.rarityMultRare',
+  EPIC: 'equip.rarityMultEpic',
+  LEGENDARY: 'equip.rarityMultLegendary',
 } as const
 
 export interface EquipmentInstanceView {
@@ -227,11 +227,11 @@ export class EquipmentDomain {
       this.#configService.getMany(
         'equip.goldCostBase',
         'equip.goldCostExp',
-        'card.rarityMultCommon',
-        'card.rarityMultUncommon',
-        'card.rarityMultRare',
-        'card.rarityMultEpic',
-        'card.rarityMultLegendary',
+        'equip.rarityMultCommon',
+        'equip.rarityMultUncommon',
+        'equip.rarityMultRare',
+        'equip.rarityMultEpic',
+        'equip.rarityMultLegendary',
       ),
       this.#upgradeDiscountPct(userId),
     ])
@@ -478,11 +478,11 @@ export class EquipmentDomain {
       this.#configService.getMany(
         'equip.goldCostBase',
         'equip.goldCostExp',
-        'card.rarityMultCommon',
-        'card.rarityMultUncommon',
-        'card.rarityMultRare',
-        'card.rarityMultEpic',
-        'card.rarityMultLegendary',
+        'equip.rarityMultCommon',
+        'equip.rarityMultUncommon',
+        'equip.rarityMultRare',
+        'equip.rarityMultEpic',
+        'equip.rarityMultLegendary',
         ...SUBSTAT_RANGE_CONFIG_KEYS,
       ),
       this.#upgradeDiscountPct(userId),

@@ -88,6 +88,18 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'shop.energyDailyCap': 3,
   'equip.goldCostBase': 25,
   'equip.goldCostExp': 1.35,
+  // Multiplicateurs de rareté PROPRES à l'équipement — ne pas réutiliser
+  // card.rarityMult* : deb470f0 (2026-09) les a baissés pour COMMON/
+  // UNCOMMON/RARE (1.0/1.3/1.7 → 0.25/0.4/0.7) afin de rendre le level-up de
+  // CARTE moins cher, ce qui a divisé par 2-4 le coût d'amélioration de
+  // l'équipement en même temps — effet de bord non voulu. Valeurs
+  // d'origine, pré-deb470f0 (Epic/Legendary inchangées, déjà égales aux
+  // valeurs carte actuelles).
+  'equip.rarityMultCommon': 1.0,
+  'equip.rarityMultUncommon': 1.3,
+  'equip.rarityMultRare': 1.7,
+  'equip.rarityMultEpic': 2.3,
+  'equip.rarityMultLegendary': 3.0,
   'equip.salvageGoldCommon': 10,
   'equip.salvageGoldUncommon': 30,
   'equip.salvageGoldRare': 80,
