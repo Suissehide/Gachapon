@@ -32,7 +32,15 @@ export function Cauldron({ tier }: Props) {
     ),
   )
 
-  const picked = Object.values(amounts).reduce((s, n) => s + n, 0)
+  // Seules les piles encore candidates comptent : une carte sortie du cran
+  // (duel, plus de doublon) ne doit ni gonfler le total ni partir au serveur.
+  const picks: AlchemyPick[] = tier.candidates
+    .map((c) => ({
+      userCardId: c.userCardId,
+      amount: amounts[c.userCardId] ?? 0,
+    }))
+    .filter((p) => p.amount > 0)
+  const picked = picks.reduce((s, p) => s + p.amount, 0)
 
   const bump = (userCardId: string, delta: number) =>
     setAmounts((prev) => ({
@@ -40,12 +48,7 @@ export function Cauldron({ tier }: Props) {
       [userCardId]: Math.max(0, (prev[userCardId] ?? 0) + delta),
     }))
 
-  const submit = () => {
-    const picks: AlchemyPick[] = Object.entries(amounts)
-      .filter(([, amount]) => amount > 0)
-      .map(([userCardId, amount]) => ({ userCardId, amount }))
-    transmute.mutate({ fromRarity: tier.fromRarity, picks })
-  }
+  const submit = () => transmute.mutate({ fromRarity: tier.fromRarity, picks })
 
   if (tier.candidates.length === 0) {
     return (

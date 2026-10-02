@@ -56,13 +56,11 @@ function AlchemyPage() {
 
           <Cauldron
             tier={activeTier}
-            // Change de cran → reset. Après une transmutation réussie sur le
-            // même cran, le serveur renvoie de nouvelles suggestions (les
-            // quantités ont bougé) : il faut aussi remonter dans ce cas,
-            // sinon `amounts` garde des quantités qui dépassent le nouveau
-            // disponible.
-            key={`${activeTier.fromRarity}:${(activeTier.suggestedPicks ?? [])
-              .map((p) => `${p.userCardId}:${p.amount}`)
+            // Change de cran ou de stock (transmutation réussie, carte sortie
+            // des candidats) → reset : `amounts` ne doit jamais garder des
+            // quantités qui dépassent le nouveau disponible.
+            key={`${activeTier.fromRarity}:${activeTier.candidates
+              .map((c) => `${c.userCardId}:${c.available}`)
               .join(',')}`}
           />
         </>
