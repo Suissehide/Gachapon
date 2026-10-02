@@ -27,7 +27,7 @@
     "eyebrow": "Les variantes",
     "titleLine1": "Même carte,",
     "titleHighlight": "trois finitions.",
-    "description": "À partir de rare, une carte peut sortir en holographique ou en brillante au lieu de standard. Les doublons ne sont pas perdus : ils se transforment en poussière, qui achète les cartes qui te manquent dans la boutique du jour.",
+    "description": "À partir de rare, une carte peut sortir en holographique ou en brillante au lieu de standard. Les doublons ne sont pas perdus : ils se transforment en poussière, qui achète les cartes qui te manquent dans la vitrine.",
     "variants": {
       "standard": {
         "name": "Standard",
@@ -78,7 +78,7 @@
     "dust": {
       "before": "Les doublons se transforment en",
       "dustTerm": "poussière",
-      "middle": ", que tu dépenses dans la boutique du jour pour acheter des cartes précises, ou dans ton arbre de compétences. Un compteur de",
+      "middle": ", que tu dépenses dans la vitrine pour acheter des cartes précises, ou dans ton arbre de compétences. Un compteur de",
       "pityTerm": "pitié",
       "after": "fait que la malchance a une fin : si tu enchaînes trop de tirages sans carte rare, la suivante est garantie."
     },

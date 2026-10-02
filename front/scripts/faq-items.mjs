@@ -55,8 +55,8 @@ export const FAQ_ITEMS = [
       en: 'What do I do with duplicates?',
     },
     a: {
-      fr: "Les doublons sont automatiquement convertibles en poussière, une ressource secondaire qui permet d'acheter des cartes ciblées dans la boutique quotidienne, d'investir dans l'arbre de compétences ou de débloquer certaines variantes. Aucune carte n'est jamais perdue.",
-      en: 'Duplicates can be turned into dust, a secondary resource you spend to buy specific cards in the daily shop, invest in the skill tree, or unlock certain variants. No card is ever lost.',
+      fr: "Les doublons sont automatiquement convertibles en poussière, une ressource secondaire qui permet d'acheter des cartes ciblées dans la vitrine, d'investir dans l'arbre de compétences ou de débloquer certaines variantes. Aucune carte n'est jamais perdue.",
+      en: 'Duplicates can be turned into dust, a secondary resource you spend to buy specific cards in the showcase, invest in the skill tree, or unlock certain variants. No card is ever lost.',
     },
   },
   {

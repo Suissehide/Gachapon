@@ -46,7 +46,7 @@
         },
         "i2": {
           "title": "Poussière",
-          "text": "Vient du recyclage des doublons, des quêtes, de la chaîne de connexion et des paliers de niveau. Sert à la boutique du jour, aux vœux, aux packs d'énergie, aux boosts, à monter tes cartes et à réinitialiser l'arbre de compétences."
+          "text": "Vient du recyclage des doublons, des quêtes, de la chaîne de connexion et des paliers de niveau. Sert à la vitrine, aux vœux, aux packs d'énergie, aux boosts, à monter tes cartes et à réinitialiser l'arbre de compétences."
         },
         "i3": {
           "title": "Or",
@@ -111,19 +111,19 @@
         "i2": "Tu peux aussi <strong>recycler</strong> un doublon en poussière depuis la collection. Le montant dépend de la rareté.",
         "i3": "<strong>Tout recycler</strong> convertit d'un coup tes exemplaires en trop, jusqu'à la rareté que tu choisis (variante normale uniquement)."
       },
-      "uses": "La poussière sert à la <strong>boutique du jour</strong>, aux <strong>vœux</strong>, à <strong>monter tes cartes</strong>, aux packs d'énergie et aux boosts, et à <strong>réinitialiser</strong> l'arbre de compétences.",
+      "uses": "La poussière sert à la <strong>vitrine</strong>, aux <strong>vœux</strong>, à <strong>monter tes cartes</strong>, aux packs d'énergie et aux boosts, et à <strong>réinitialiser</strong> l'arbre de compétences.",
       "tip": "Garde des doublons des cartes que tu fais combattre : sans eux, pas d'ascension. La compétence Recyclage augmente la poussière reçue."
     },
     "boutique": {
       "intro": "La <strong>boutique</strong> te laisse viser des cartes précises au lieu de tout laisser au hasard, et vend des ressources.",
       "cards": {
         "i1": {
-          "title": "Boutique du jour",
-          "text": "Une sélection de cartes renouvelée chaque jour à minuit (UTC), à acheter en poussière, prix selon la rareté. Des compétences ajoutent des emplacements, baissent les prix et relèvent les raretés proposées."
+          "title": "Vitrine",
+          "text": "Une sélection de cartes renouvelée toutes les heures, à l'heure pile, à acheter en poussière, prix selon la rareté. Des compétences ajoutent des emplacements, baissent les prix et relèvent les raretés proposées."
         },
         "i2": {
           "title": "Vœu",
-          "text": "Mets de côté les cartes que tu veux et achète-les en poussière quand tu veux, sans délai. C'est le plein tarif : plus cher qu'en boutique du jour, sans remise, et toujours en variante normale. Tu as <strong>2 emplacements</strong> au départ, jusqu'à 5 avec la compétence Collectionneur."
+          "text": "Mets de côté les cartes que tu veux et achète-les en poussière quand tu veux, sans délai. C'est le plein tarif : plus cher qu'en vitrine, sans remise, et toujours en variante normale. Tu as <strong>2 emplacements</strong> au départ, jusqu'à 5 avec la compétence Collectionneur."
         },
         "i3": {
           "title": "Packs & boosts",
@@ -153,7 +153,7 @@
         },
         "i3": {
           "title": "Collection",
-          "text": "La poussière et la boutique : recyclage, remises, coût en poussière des niveaux de carte, prix en or, raretés et emplacements de la boutique du jour, emplacements de vœu."
+          "text": "La poussière et la boutique : recyclage, remises, coût en poussière des niveaux de carte, prix en or, raretés et emplacements de la vitrine, emplacements de vœu."
         },
         "i4": {
           "title": "Combat",

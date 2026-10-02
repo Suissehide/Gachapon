@@ -106,8 +106,8 @@ export const SEO_ROUTES = [
               en: 'Quests, achievements, a login streak, and rewards to claim',
             },
             {
-              fr: 'Boutique du jour et Vœu pour cibler les cartes qui te manquent',
-              en: "Daily shop and Wish to target the cards you're missing",
+              fr: 'Vitrine et Vœu pour cibler les cartes qui te manquent',
+              en: "Showcase and Wish to target the cards you're missing",
             },
             {
               fr: 'Classements collectionneurs, équipes et combats',

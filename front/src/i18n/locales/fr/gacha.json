@@ -98,11 +98,11 @@
       },
       "duplicates": {
         "title": "Doublons & poussière",
-        "text": "Un doublon est automatiquement converti en <dust>poussière</dust>. Cette monnaie sert à la boutique du jour, au Vœu et à l'amélioration de tes cartes : aucun tirage n'est jamais perdu."
+        "text": "Un doublon est automatiquement converti en <dust>poussière</dust>. Cette monnaie sert à la vitrine, au Vœu et à l'amélioration de tes cartes : aucun tirage n'est jamais perdu."
       },
       "shop": {
         "title": "Boutique",
-        "text": "Dépense ta <dust>poussière</dust> dans la boutique du jour pour cibler des cartes précises, ou garde en Vœu les cartes de tes rêves pour les acheter directement. La boutique propose aussi des packs de <token>jetons</token> et des recharges d'<energy>énergie</energy>."
+        "text": "Dépense ta <dust>poussière</dust> dans la vitrine pour cibler des cartes précises, ou garde en Vœu les cartes de tes rêves pour les acheter directement. La boutique propose aussi des packs de <token>jetons</token> et des recharges d'<energy>énergie</energy>."
       },
       "campaign": {
         "title": "Équipe & campagne",

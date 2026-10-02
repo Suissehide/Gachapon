@@ -46,7 +46,7 @@
         },
         "i2": {
           "title": "Dust",
-          "text": "Comes from recycling duplicates, quests, the login streak and level milestones. Spent in the daily shop, on wishes, energy packs and boosts, on levelling your cards, and on resetting the skill tree."
+          "text": "Comes from recycling duplicates, quests, the login streak and level milestones. Spent in the showcase, on wishes, energy packs and boosts, on levelling your cards, and on resetting the skill tree."
         },
         "i3": {
           "title": "Gold",
@@ -111,19 +111,19 @@
         "i2": "You can also <strong>recycle</strong> a duplicate into dust from the collection. The amount depends on rarity.",
         "i3": "<strong>Recycle everything</strong> converts all your spare copies at once, up to the rarity you pick (normal variant only)."
       },
-      "uses": "Dust is spent in the <strong>daily shop</strong>, on <strong>wishes</strong>, on <strong>levelling your cards</strong>, on energy packs and boosts, and on <strong>resetting</strong> the skill tree.",
+      "uses": "Dust is spent in the <strong>showcase</strong>, on <strong>wishes</strong>, on <strong>levelling your cards</strong>, on energy packs and boosts, and on <strong>resetting</strong> the skill tree.",
       "tip": "Keep duplicates of the cards you fight with: without them, no ascension. The Recycling skill increases the dust you get."
     },
     "boutique": {
       "intro": "The <strong>shop</strong> lets you target specific cards instead of leaving everything to chance, and sells resources.",
       "cards": {
         "i1": {
-          "title": "Daily shop",
-          "text": "A selection of cards that renews every day at midnight (UTC), bought with dust, priced by rarity. Skills add slots, lower prices and raise the rarities on offer."
+          "title": "Showcase",
+          "text": "A selection of cards that renews every hour, on the hour, bought with dust, priced by rarity. Skills add slots, lower prices and raise the rarities on offer."
         },
         "i2": {
           "title": "Wishes",
-          "text": "Set aside the cards you want and buy them with dust whenever you like, with no wait. It's full price: more expensive than the daily shop, no discounts, and always the normal variant. You start with <strong>2 slots</strong>, up to 5 with the Collector skill."
+          "text": "Set aside the cards you want and buy them with dust whenever you like, with no wait. It's full price: more expensive than the showcase, no discounts, and always the normal variant. You start with <strong>2 slots</strong>, up to 5 with the Collector skill."
         },
         "i3": {
           "title": "Packs & boosts",
@@ -153,7 +153,7 @@
         },
         "i3": {
           "title": "Collection",
-          "text": "Dust and the shop: recycling, discounts, the dust cost of card levels, gold prices, daily shop rarities and slots, wish slots."
+          "text": "Dust and the shop: recycling, discounts, the dust cost of card levels, gold prices, showcase rarities and slots, wish slots."
         },
         "i4": {
           "title": "Combat",
