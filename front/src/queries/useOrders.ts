@@ -10,14 +10,17 @@ import { useAuthStore } from '../stores/auth.store.ts'
 
 export const ORDERS_QUERY_KEY = ['orders'] as const
 
-export const useOrders = (enabled = true) =>
+/** `poll` : réservé à la page du comptoir. Ailleurs (pastille du menu), pas
+ *  d'intervalle et un staleTime long — chaque GET ouvre une transaction. */
+export const useOrders = ({ enabled = true, poll = false } = {}) =>
   useQuery({
     queryKey: ORDERS_QUERY_KEY,
     queryFn: () => OrdersApi.board(),
     enabled,
     // Un client peut arriver pendant que la page est ouverte : on revérifie
     // chaque minute plutôt que de calculer le prochain nextAt.
-    refetchInterval: 60_000,
+    refetchInterval: poll ? 60_000 : false,
+    staleTime: poll ? 0 : 5 * 60_000,
   })
 
 function useOrderErrorToast() {

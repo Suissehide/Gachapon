@@ -12,7 +12,7 @@ export const Route = createFileRoute('/_authenticated/orders')({
 
 function OrdersPage() {
   const { t } = useTranslation('orders')
-  const { data } = useOrders()
+  const { data } = useOrders({ poll: true })
 
   return (
     <PageShell>
