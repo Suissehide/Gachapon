@@ -56,7 +56,10 @@ export const useDeliverOrder = () => {
       void useAuthStore.getState().fetchMe()
       toast({
         title: i18n.t('orders:toasts.deliveredTitle'),
-        message: i18n.t('orders:toasts.deliveredMessage', reward),
+        message: i18n.t('orders:toasts.deliveredMessage', {
+          ...reward,
+          count: reward.tokens,
+        }),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },

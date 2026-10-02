@@ -47,7 +47,9 @@
   },
   "toasts": {
     "deliveredTitle": "Order delivered",
-    "deliveredMessage": "+{{dust}} dust · +{{gold}} gold · +{{tokens}} tokens",
+    "deliveredMessage_zero": "+{{dust}} dust · +{{gold}} gold",
+    "deliveredMessage_one": "+{{dust}} dust · +{{gold}} gold · +1 token",
+    "deliveredMessage_other": "+{{dust}} dust · +{{gold}} gold · +{{count}} tokens",
     "errorTitle": "Order"
   },
   "apiTitles": {

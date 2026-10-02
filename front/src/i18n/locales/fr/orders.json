@@ -47,7 +47,9 @@
   },
   "toasts": {
     "deliveredTitle": "Commande livrée",
-    "deliveredMessage": "+{{dust}} poussière · +{{gold}} or · +{{tokens}} jetons",
+    "deliveredMessage_zero": "+{{dust}} poussière · +{{gold}} or",
+    "deliveredMessage_one": "+{{dust}} poussière · +{{gold}} or · +1 jeton",
+    "deliveredMessage_other": "+{{dust}} poussière · +{{gold}} or · +{{count}} jetons",
     "errorTitle": "Commande"
   },
   "apiTitles": {
