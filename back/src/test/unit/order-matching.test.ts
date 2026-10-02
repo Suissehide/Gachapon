@@ -122,6 +122,29 @@ describe('validateDelivery', () => {
       validateDelivery(lines, [{ lineIndex: 0, userCardId: 'a', amount: 3 }], mapOf(uc('a', 5))),
     ).toThrow()
   })
+
+  it('refuse les montants non-positifs et non-entiers', () => {
+    const mapWith2Cards = mapOf(uc('a', 10), uc('b', 10))
+    // Montant zéro
+    expect(() =>
+      validateDelivery(lines, [{ lineIndex: 0, userCardId: 'a', amount: 0 }], mapWith2Cards),
+    ).toThrow()
+    // Montant négatif (une carte négative + une autre surcompensatrice = total correct par ligne)
+    expect(() =>
+      validateDelivery(
+        lines,
+        [
+          { lineIndex: 0, userCardId: 'a', amount: -1 },
+          { lineIndex: 0, userCardId: 'b', amount: 3 },
+        ],
+        mapWith2Cards,
+      ),
+    ).toThrow()
+    // Montant décimal
+    expect(() =>
+      validateDelivery(lines, [{ lineIndex: 0, userCardId: 'a', amount: 1.5 }], mapWith2Cards),
+    ).toThrow()
+  })
 })
 
 describe('suggestPicks', () => {

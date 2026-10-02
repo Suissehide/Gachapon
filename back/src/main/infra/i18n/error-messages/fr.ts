@@ -269,6 +269,7 @@ export const FR_MESSAGES = {
   'orders.badLine': "La ligne {{line}} n'existe pas dans cette commande",
   'orders.variantNotAllowed':
     'Seules les cartes normales peuvent être livrées (pas les brillantes ni les holographiques)',
+  'orders.invalidAmount': 'La quantité livrée doit être un entier positif',
   'orders.cardDoesNotMatch':
     'Cette carte ne correspond pas aux critères de la ligne {{line}}',
   'orders.wouldLeaveZeroCopies':

@@ -23,6 +23,39 @@ export function cardMatchesLine(card: MatchableCard, line: OrderLine): boolean {
 }
 
 /**
+ * Valide un pick et retourne la carte avec la ligne correspondante.
+ * Lève un Boom.badRequest si le pick est invalide.
+ */
+function validatePickAndGetCard(
+  pick: DeliveryPick,
+  lines: OrderLine[],
+  userCards: Map<string, MatchableUserCard>,
+): { line: OrderLine; userCard: MatchableUserCard } {
+  if (!Number.isInteger(pick.amount) || pick.amount <= 0) {
+    throw Boom.badRequest(errorMessage('orders.invalidAmount'))
+  }
+  const line = lines[pick.lineIndex]
+  if (!line) {
+    throw Boom.badRequest(
+      errorMessage('orders.badLine', { line: pick.lineIndex + 1 }),
+    )
+  }
+  const userCard = userCards.get(pick.userCardId)
+  if (!userCard) {
+    throw Boom.badRequest(errorMessage('orders.unknownCard'))
+  }
+  if (userCard.variant !== 'NORMAL') {
+    throw Boom.badRequest(errorMessage('orders.variantNotAllowed'))
+  }
+  if (!cardMatchesLine(userCard.card, line)) {
+    throw Boom.badRequest(
+      errorMessage('orders.cardDoesNotMatch', { line: pick.lineIndex + 1 }),
+    )
+  }
+  return { line, userCard }
+}
+
+/**
  * Lève un Boom.badRequest si la sélection ne couvre pas EXACTEMENT chaque
  * ligne, ou si elle consomme le dernier exemplaire d'une carte. Le total par
  * carte est sommé sur TOUTES les lignes : une même carte peut servir deux
@@ -37,24 +70,7 @@ export function validateDelivery(
   const perCard = new Map<string, number>()
 
   for (const pick of picks) {
-    const line = lines[pick.lineIndex]
-    if (!line) {
-      throw Boom.badRequest(
-        errorMessage('orders.badLine', { line: pick.lineIndex + 1 }),
-      )
-    }
-    const userCard = userCards.get(pick.userCardId)
-    if (!userCard) {
-      throw Boom.badRequest(errorMessage('orders.unknownCard'))
-    }
-    if (userCard.variant !== 'NORMAL') {
-      throw Boom.badRequest(errorMessage('orders.variantNotAllowed'))
-    }
-    if (!cardMatchesLine(userCard.card, line)) {
-      throw Boom.badRequest(
-        errorMessage('orders.cardDoesNotMatch', { line: pick.lineIndex + 1 }),
-      )
-    }
+    const { userCard } = validatePickAndGetCard(pick, lines, userCards)
     perLine[pick.lineIndex] = (perLine[pick.lineIndex] ?? 0) + pick.amount
     perCard.set(userCard.id, (perCard.get(userCard.id) ?? 0) + pick.amount)
   }

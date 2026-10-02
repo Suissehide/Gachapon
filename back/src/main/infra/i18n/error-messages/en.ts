@@ -235,6 +235,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'orders.badLine': 'Line {{line}} does not exist in this order',
   'orders.variantNotAllowed':
     'Only normal cards can be delivered (no brilliant or holographic ones)',
+  'orders.invalidAmount': 'Delivered amount must be a positive integer',
   'orders.cardDoesNotMatch': 'This card does not match line {{line}}',
   'orders.wouldLeaveZeroCopies':
     'Cannot deliver {{amount}} copies — you would have 0 left (you have {{quantity}})',
