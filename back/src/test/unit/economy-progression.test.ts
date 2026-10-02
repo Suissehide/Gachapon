@@ -106,16 +106,23 @@ type Snapshot = {
 const distinctOf = (cards: number, draws: number) => cards * (1 - (1 - 1 / cards) ** draws)
 
 /**
- * `withAlchemy` — HYPOTHÈSE BORNE HAUTE : le joueur transmute TOUS ses
+ * `alchemy` :
+ * - `'none'` (défaut) garde la trajectoire de référence à l'identique ;
+ * - `'all'` — HYPOTHÈSE BORNE HAUTE : le joueur transmute TOUS ses
  * doublons de COMMON à EPIC, dès qu'il en a assez, en cascade dans la
  * journée. Il n'en recycle donc aucun : sa poussière de recyclage ne vient
  * plus que des doublons de LEGENDARY (le reliquat de stock attend la
  * prochaine transmutation, il n'est pas recyclé). C'est la direction qui
  * accélère le plus les légendaires tirées, et elle ralentit au passage les
- * achats au Marché : les deux effets se compensent en partie.
- * `false` (défaut) garde la trajectoire de référence à l'identique.
+ * achats au Marché : les deux effets se compensent en partie ;
+ * - `'highOnly'` — stratégie mixte : les doublons COMMON / UNCOMMON sont
+ *   recyclés (Δdoublons × poussière de la rareté), seuls les doublons RARE /
+ *   EPIC partent en transmutation (R→É, É→L). Garde la poussière du Marché.
  */
-function simulate(days: number, { withAlchemy = false } = {}): Snapshot[] {
+type AlchemyStrategy = 'none' | 'all' | 'highOnly'
+const HIGH_TIERS: readonly Rarity[] = ['RARE', 'EPIC']
+
+function simulate(days: number, { alchemy = 'none' as AlchemyStrategy } = {}): Snapshot[] {
   const out: Snapshot[] = []
   let gold = 0
   let dust = 0
@@ -194,7 +201,7 @@ function simulate(days: number, { withAlchemy = false } = {}): Snapshot[] {
       }, 0) / TOTAL_CARDS,
     )
     const dustPerPull = POOL.reduce((s, p) => s + pRarity(p) * p.dust, 0)
-    if (withAlchemy) {
+    if (alchemy !== 'none') {
       // Du cran le plus bas au plus haut : une sortie du jour peut déjà
       // nourrir le cran suivant (cascade).
       for (const rarity of ALCHEMY_FROM_RARITIES) {
@@ -202,8 +209,13 @@ function simulate(days: number, { withAlchemy = false } = {}): Snapshot[] {
         const p = POOL.find((x) => x.rarity === rarity)!
         const draws = totalPulls * pRarity(p) + alchemyIn[rarity]
         const dupes = draws - distinctOf(p.cards, draws)
-        stock[rarity] += dupes - prevDupes[rarity]
+        const newDupes = dupes - prevDupes[rarity]
         prevDupes[rarity] = dupes
+        if (alchemy === 'highOnly' && !HIGH_TIERS.includes(rarity)) {
+          dust += newDupes * p.dust
+          continue
+        }
+        stock[rarity] += newDupes
         const n = Math.floor(stock[rarity] / DEFAULTS[ALCHEMY_COST_KEYS[rarity]])
         stock[rarity] -= n * DEFAULTS[ALCHEMY_COST_KEYS[rarity]]
         // biome-ignore lint/style/noNonNullAssertion: aucun cran depuis LEGENDARY
@@ -225,7 +237,7 @@ function simulate(days: number, { withAlchemy = false } = {}): Snapshot[] {
       Math.floor(totalPulls / DEFAULTS.pityThreshold) +
       alchemyIn.LEGENDARY
     const pulledLegendaries = LEGENDARY_CARDS * (1 - (1 - 1 / LEGENDARY_CARDS) ** legendaryDraws)
-    if (withAlchemy) {
+    if (alchemy !== 'none') {
       const legendaryDupes = legendaryDraws - pulledLegendaries
       dust += (legendaryDupes - prevDupes.LEGENDARY) * DEFAULTS.dustLegendary
       prevDupes.LEGENDARY = legendaryDupes
@@ -332,34 +344,39 @@ describe('economy-progression — partie complète en ~3 mois', () => {
   // Ce fichier reste le garde-fou de l'ÉCONOMIE (or, jetons, poussière,
   // légendaires), où ces deux angles morts ne portent pas à conséquence.
 
-  it('avec l’alchimie : 17 LEGENDARY atteints entre J75 et J95', () => {
-    const alch = simulate(90, { withAlchemy: true })
-    const doneDay = alch.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
-    if (doneDay == null) {
-      const ext = simulate(120, { withAlchemy: true })
-      const extDay = ext.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
-      expect(extDay).toBeDefined()
-      expect(extDay).toBeLessThanOrEqual(95)
-    } else {
-      expect(doneDay).toBeGreaterThanOrEqual(75)
-    }
-  })
+  for (const alchemy of ['all', 'highOnly'] as const) {
+    it(`avec l’alchimie (${alchemy}) : 17 LEGENDARY atteints entre J75 et J95`, () => {
+      const alch = simulate(90, { alchemy })
+      const doneDay = alch.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
+      if (doneDay == null) {
+        const ext = simulate(120, { alchemy })
+        const extDay = ext.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
+        expect(extDay).toBeDefined()
+        expect(extDay).toBeLessThanOrEqual(95)
+      } else {
+        expect(doneDay).toBeGreaterThanOrEqual(75)
+      }
+    })
+  }
 
   it('avec l’alchimie : log de la trajectoire', () => {
-    const alch = simulate(120, { withAlchemy: true })
     const done = (t: Snapshot[]) => t.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
-    console.info(`17 LEG : J${done(simulate(120))} sans alchimie, J${done(alch)} avec`)
-    for (const d of [10, 30, 60, 90]) {
-      const s = alch[d - 1]
-      const out = Object.entries(s.alchemyOut)
-        .filter(([r]) => r !== 'COMMON')
-        .map(([r, n]) => `${r} ${n}`)
-        .join(', ')
-      console.info(
-        `J${s.day} (alchimie): ${s.legendaries} LEG, ${s.epicDistinct.toFixed(1)} EPIC distinctes, sorties cumulées ${out}`,
-      )
+    console.info(`17 LEG : J${done(simulate(120))} sans alchimie`)
+    for (const alchemy of ['all', 'highOnly'] as const) {
+      const alch = simulate(120, { alchemy })
+      console.info(`17 LEG : J${done(alch)} avec alchimie (${alchemy})`)
+      for (const d of [10, 30, 60, 90]) {
+        const s = alch[d - 1]
+        const out = Object.entries(s.alchemyOut)
+          .filter(([r]) => r !== 'COMMON')
+          .map(([r, n]) => `${r} ${n}`)
+          .join(', ')
+        console.info(
+          `J${s.day} (${alchemy}): ${s.legendaries} LEG, ${s.epicDistinct.toFixed(1)} EPIC distinctes, sorties cumulées ${out}`,
+        )
+      }
     }
-    expect(alch).toHaveLength(120)
+    expect(simulate(120, { alchemy: 'highOnly' })).toHaveLength(120)
   })
 
   it('le boost épique du seed est bien ×2 / 800 / 10 tirages', () => {
