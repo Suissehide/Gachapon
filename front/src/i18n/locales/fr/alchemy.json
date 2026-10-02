@@ -5,7 +5,7 @@
     "subtitle": "Transforme tes doublons en une carte de la rareté au-dessus."
   },
   "tier": {
-    "label": "{{from}} → {{to}}",
+    "label": "{{from}} → {{to}} · {{count}}",
     "recipe": "{{cost}} doublons",
     "possible_zero": "Aucune transmutation possible",
     "possible_one": "1 transmutation possible",

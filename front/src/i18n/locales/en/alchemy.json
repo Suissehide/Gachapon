@@ -5,7 +5,7 @@
     "subtitle": "Turn your duplicates into a card of the next rarity."
   },
   "tier": {
-    "label": "{{from}} → {{to}}",
+    "label": "{{from}} → {{to}} · {{count}}",
     "recipe": "{{cost}} duplicates",
     "possible_zero": "No transmutation possible",
     "possible_one": "1 transmutation possible",

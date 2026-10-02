@@ -18,6 +18,8 @@ export interface SegmentedControlOption<T extends string> {
    * d'une seule teinte plutôt que d'exiger cinq variantes par rareté.
    */
   color?: string
+  /** Option visible mais non sélectionnable (grisée, ignorée au clic). */
+  disabled?: boolean
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -54,6 +56,8 @@ export function SegmentedControl<T extends string>({
           <button
             key={option.value}
             type="button"
+            disabled={option.disabled}
+            aria-disabled={option.disabled}
             onClick={() => onChange(option.value)}
             className={cn(
               'cursor-pointer flex items-center justify-center gap-1.5 h-8 rounded-lg px-3 py-2 text-xs font-semibold border border-transparent transition-all duration-150',
@@ -61,6 +65,8 @@ export function SegmentedControl<T extends string>({
               isActive
                 ? 'bg-primary/10 border-primary/25 text-text'
                 : 'text-text-light hover:bg-background/50 hover:text-text',
+              option.disabled &&
+                'cursor-not-allowed opacity-40 hover:bg-transparent hover:text-text-light',
             )}
             style={
               tint === undefined

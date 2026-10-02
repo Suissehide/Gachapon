@@ -41,7 +41,9 @@ function AlchemyPage() {
               label: t('alchemy:tier.label', {
                 from: t(`common:rarity.${tier.fromRarity.toLowerCase()}`),
                 to: t(`common:rarity.${tier.toRarity.toLowerCase()}`),
+                count: tier.maxTransmutations,
               }),
+              disabled: tier.maxTransmutations === 0,
             }))}
             value={activeTier.fromRarity}
             onChange={setSelected}
