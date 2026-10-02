@@ -121,6 +121,18 @@ export const CONFIG_KEYS = [
   'team.recruitDays',
   'teamRaid.historyLimit',
   'guest.purgeAfterDays',
+  'orders.slots',
+  'orders.feasibleSlots',
+  'orders.cooldownMinutes',
+  'orders.dailyCap',
+  'orders.freeDismissPerDay',
+  'orders.dustMult',
+  'orders.goldMult',
+  'orders.tokensCommon',
+  'orders.tokensUncommon',
+  'orders.tokensRare',
+  'orders.tokensEpic',
+  'orders.tokensLegendary',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

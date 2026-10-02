@@ -119,6 +119,12 @@ enum QuestPeriod {
   WEEKLY
 }
 
+enum OrderStatus {
+  OPEN
+  DELIVERED
+  DISMISSED
+}
+
 enum EquipmentSlot {
   WEAPON
   ARMOR
@@ -254,6 +260,7 @@ model User {
   betsReceived        Bet[]              @relation("BetTarget")
   betEntries          BetEntry[]
   weeklies            TeamMemberWeekly[]
+  customerOrders      CustomerOrder[]
 
   @@index([role, lastLoginAt])
 }
@@ -478,6 +485,7 @@ model Card {
   dailyShopItems DailyShopItem[]
   wishedBy       UserWishlistCard[]
   duelTransfers  DuelTransfer[]  @relation("DuelTransferCard")
+  customerOrders CustomerOrder[]
 }
 
 model UserCard {
@@ -1087,4 +1095,30 @@ model BetEntry {
   @@unique([betId, userId])
   @@index([betId])
   @@index([userId])
+}
+
+/// Commande de client (comptoir). L'état d'un emplacement se déduit de sa
+/// dernière commande : OPEN = affichée ; close = la suivante arrive à
+/// closedAt + orders.cooldownMinutes (immédiatement après un congé gratuit).
+/// Récompenses figées à la génération : la config peut bouger sans changer
+/// une commande déjà visible.
+model CustomerOrder {
+  id           String      @id @default(uuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot         Int
+  clientCardId String
+  clientCard   Card        @relation(fields: [clientCardId], references: [id], onDelete: Cascade)
+  /// OrderLine[] — cf. types/domain/orders/orders.domain.interface.ts
+  lines        Json
+  rewardDust   Int
+  rewardGold   Int
+  rewardTokens Int
+  status       OrderStatus @default(OPEN)
+  freeDismiss  Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  closedAt     DateTime?
+
+  @@index([userId, slot, createdAt])
+  @@index([userId, closedAt])
 }

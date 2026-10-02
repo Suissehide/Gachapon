@@ -310,6 +310,23 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // token (30 j), il ne peut plus jamais rouvrir son compte. La purge ne
   // supprime donc que des comptes déjà inaccessibles.
   'guest.purgeAfterDays': 30,
+  // Commandes de clients (spec 2026-10-02). Revenu borné par slots × délai ×
+  // plafond : ~8-12 jetons/jour pour un joueur assidu. Les invariants
+  // « jetons < cartes » et « poussière > conversion max » sont gardés par
+  // order-rewards.test.ts — baisser dustMult sous le multiplicateur de
+  // Recyclage max le fera échouer.
+  'orders.slots': 3,
+  'orders.feasibleSlots': 2,
+  'orders.cooldownMinutes': 180,
+  'orders.dailyCap': 8,
+  'orders.freeDismissPerDay': 1,
+  'orders.dustMult': 1.5,
+  'orders.goldMult': 4,
+  'orders.tokensCommon': 1,
+  'orders.tokensUncommon': 1,
+  'orders.tokensRare': 2,
+  'orders.tokensEpic': 3,
+  'orders.tokensLegendary': 4,
 }
 
 export class ConfigService implements ConfigServiceInterface {
