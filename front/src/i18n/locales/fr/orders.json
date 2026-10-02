@@ -11,6 +11,11 @@
     "lookingFor": "cherche…",
     "line": "{{quantity}} × {{rarity}}",
     "reward": "Récompense",
+    "rewardDust": "poussière",
+    "rewardGold_one": "pièce d'or",
+    "rewardGold_other": "pièces d'or",
+    "rewardTokens_one": "jeton",
+    "rewardTokens_other": "jetons",
     "deliver": "Livrer",
     "dismiss": "Congédier",
     "hintNoDeliveries": "Plus de livraisons aujourd'hui",
@@ -45,9 +50,9 @@
   },
   "toasts": {
     "deliveredTitle": "Commande livrée",
-    "deliveredMessage_zero": "+{{dust}} poussière · +{{gold}} or",
-    "deliveredMessage_one": "+{{dust}} poussière · +{{gold}} or · +1 jeton",
-    "deliveredMessage_other": "+{{dust}} poussière · +{{gold}} or · +{{count}} jetons",
+    "deliveredMessage_zero": "+{{dust}} poussière · +{{gold}} pièces d'or",
+    "deliveredMessage_one": "+{{dust}} poussière · +{{gold}} pièces d'or · +1 jeton",
+    "deliveredMessage_other": "+{{dust}} poussière · +{{gold}} pièces d'or · +{{count}} jetons",
     "errorTitle": "Commande"
   },
   "apiTitles": {

@@ -185,24 +185,20 @@ export function OrderRow({
           <Reward
             icon={<Sparkles className="h-5 w-5" />}
             value={dust}
-            unit={t('common:currency.dust.singular')}
+            unit={t('orders:card.rewardDust')}
             currency="dust"
           />
           <Reward
             icon={<Coins className="h-5 w-5" />}
             value={gold}
-            unit={t('common:currency.gold.singular')}
+            unit={t('orders:card.rewardGold', { count: gold })}
             currency="gold"
           />
           {tokens > 0 && (
             <Reward
               icon={<Ticket className="h-5 w-5" />}
               value={tokens}
-              unit={t(
-                tokens > 1
-                  ? 'common:currency.tokens.plural'
-                  : 'common:currency.tokens.singular',
-              )}
+              unit={t('orders:card.rewardTokens', { count: tokens })}
               currency="tokens"
             />
           )}
@@ -276,8 +272,7 @@ function Reward({
         color.ink,
       )}
     >
-      <span className={color.icon}>{icon}</span>
-      {value}
+      <span className={color.icon}>{icon}</span>+{value}
       <small className="text-sm font-medium text-text-light">{unit}</small>
     </span>
   )

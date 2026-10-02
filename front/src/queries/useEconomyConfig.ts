@@ -80,7 +80,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     },
   },
   // Repli aligné sur `DEFAULTS` (back/infra/config/config.service.ts).
-  orders: { slots: 3, cooldownMinutes: 180, dailyCap: 8, freeDismissPerDay: 1 },
+  orders: { slots: 3, cooldownMinutes: 240, dailyCap: 4, freeDismissPerDay: 1 },
   equip: {
     goldCostBase: 25,
     goldCostExp: 1.35,
