@@ -91,6 +91,17 @@
   --color-rarity-rare: var(--rarity-rare);
   --color-rarity-epic: var(--rarity-epic);
   --color-rarity-legendary: var(--rarity-legendary);
+  /* Teintes claire/sombre — dégradé du dos de carte mystère (alchimie). */
+  --color-rarity-common-light: var(--rarity-common-light);
+  --color-rarity-common-dark: var(--rarity-common-dark);
+  --color-rarity-uncommon-light: var(--rarity-uncommon-light);
+  --color-rarity-uncommon-dark: var(--rarity-uncommon-dark);
+  --color-rarity-rare-light: var(--rarity-rare-light);
+  --color-rarity-rare-dark: var(--rarity-rare-dark);
+  --color-rarity-epic-light: var(--rarity-epic-light);
+  --color-rarity-epic-dark: var(--rarity-epic-dark);
+  --color-rarity-legendary-light: var(--rarity-legendary-light);
+  --color-rarity-legendary-dark: var(--rarity-legendary-dark);
 
   --color-amber-soft: var(--amber-soft);
   --color-track: var(--track);

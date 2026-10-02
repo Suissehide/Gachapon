@@ -4,7 +4,8 @@ import { cn } from '../../libs/utils.ts'
 
 export interface SegmentedControlOption<T extends string> {
   value: T
-  label: string
+  /** Texte ou contenu riche (pastille, compteur…) ; le bouton porte `aria-pressed`. */
+  label: ReactNode
   icon?: ReactNode
   /**
    * Couleur CSS propre à cette option — typiquement un `var(--rarity-*)`.
@@ -31,6 +32,11 @@ interface SegmentedControlProps<T extends string> {
   /** Laisse les options passer sur plusieurs lignes si la largeur manque */
   wrap?: boolean
   className?: string
+  /**
+   * Classes ajoutées à chaque option (gabarit plus grand, état actif via
+   * `aria-pressed:` / `group-aria-pressed:` sur un contenu riche).
+   */
+  optionClassName?: string
 }
 
 export function SegmentedControl<T extends string>({
@@ -40,6 +46,7 @@ export function SegmentedControl<T extends string>({
   stretch = false,
   wrap = false,
   className,
+  optionClassName,
 }: SegmentedControlProps<T>) {
   return (
     <div
@@ -58,6 +65,7 @@ export function SegmentedControl<T extends string>({
             type="button"
             disabled={option.disabled}
             aria-disabled={option.disabled}
+            aria-pressed={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
               'cursor-pointer flex items-center justify-center gap-1.5 h-8 rounded-lg px-3 py-2 text-xs font-semibold border border-transparent transition-all duration-150',
@@ -69,6 +77,7 @@ export function SegmentedControl<T extends string>({
               option.disabled &&
                 !isActive &&
                 'cursor-not-allowed opacity-40 hover:bg-transparent hover:text-text-light',
+              optionClassName,
             )}
             style={
               tint === undefined

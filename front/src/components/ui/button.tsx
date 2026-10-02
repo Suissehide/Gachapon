@@ -41,6 +41,11 @@ const buttonVariants = cva(
         // grisé qui rayonne encore ment sur sa disponibilité.
         amber:
           'bg-primary text-primary-foreground font-bold shadow-[0_8px_20px_-6px_rgba(245,158,11,0.6)] hover:-translate-y-0.5 hover:shadow-[0_12px_26px_-6px_rgba(245,158,11,0.7)] disabled:shadow-none disabled:hover:translate-y-0',
+        // Action secondaire ambrée claire — « Auto-sélectionner » du handoff
+        // alchimie (`.btn-auto`) : fond ambre pâle, liseré ambre, encre
+        // ambrée foncée (lisible, contrairement à --primary sur ce fond).
+        amberSoft:
+          'border border-primary/30 bg-primary/10 font-bold text-primary-darker hover:bg-primary/20',
         // Pilule mono discrète — `.dz-locked` / `.dz-mini` du handoff duels
         // (docs/design_handoff_duels/equipe-duels.css). Sert aux actions
         // secondaires d'un panneau (« ANNULER ») et, via `buttonVariants`,

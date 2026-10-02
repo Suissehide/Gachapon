@@ -12,7 +12,18 @@ export type AlchemyStack = {
   imageUrl: string | null
   rarity: CardRarity
   element: CardElement | null
+  level: number
+  setName: string
   available: number
+}
+
+// Littéraux complets : Tailwind ne voit pas les classes construites.
+export const ALCHEMY_RARITY_BG: Record<CardRarity, string> = {
+  COMMON: 'bg-rarity-common',
+  UNCOMMON: 'bg-rarity-uncommon',
+  RARE: 'bg-rarity-rare',
+  EPIC: 'bg-rarity-epic',
+  LEGENDARY: 'bg-rarity-legendary',
 }
 
 export type AlchemyPick = { userCardId: string; amount: number }

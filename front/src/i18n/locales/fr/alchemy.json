@@ -5,21 +5,33 @@
     "subtitle": "Transforme tes doublons en une carte de la rareté au-dessus."
   },
   "tier": {
-    "label": "{{from}} → {{to}} · {{count}}",
-    "recipe": "{{cost}} doublons",
     "possible_zero": "Aucune transmutation possible",
     "possible_one": "1 transmutation possible",
     "possible_other": "{{count}} transmutations possibles"
   },
+  "duplicates": {
+    "title": "Tes doublons",
+    "count_one": "1 doublon",
+    "count_other": "{{count}} doublons",
+    "spare": "{{count}} en double",
+    "emptyTitle": "Aucun doublon de rareté {{rarity}}",
+    "emptyHint": "Tes cartes en plusieurs exemplaires apparaîtront ici.",
+    "remove": "Retirer un exemplaire de {{name}}",
+    "add": "Ajouter un exemplaire de {{name}}"
+  },
   "cauldron": {
     "title": "Chaudron",
     "progress": "{{picked}} / {{cost}}",
-    "available": "{{count}} en double",
-    "empty": "Pas assez de doublons de cette rareté.",
+    "missing_one": "Il t'en manque {{count}}",
+    "missing_other": "Il t'en manque {{count}}",
+    "removeSlot": "Retirer {{name}} du chaudron",
+    "yields": "Donne",
+    "resultTitle": "1 {{rarity}}",
+    "resultSubtitle": "Carte aléatoire",
+    "auto": "Auto-sélectionner",
+    "clear": "Vider",
     "lastCopyNote": "Tu gardes toujours un exemplaire de chaque carte.",
-    "transmute": "Transmuter",
-    "remove": "Retirer un exemplaire de {{name}}",
-    "add": "Ajouter un exemplaire de {{name}}"
+    "transmute": "Transmuter"
   },
   "toasts": {
     "errorTitle": "Alchimie"

@@ -5,21 +5,33 @@
     "subtitle": "Turn your duplicates into a card of the next rarity."
   },
   "tier": {
-    "label": "{{from}} → {{to}} · {{count}}",
-    "recipe": "{{cost}} duplicates",
     "possible_zero": "No transmutation possible",
     "possible_one": "1 transmutation possible",
     "possible_other": "{{count}} transmutations possible"
   },
+  "duplicates": {
+    "title": "Your duplicates",
+    "count_one": "1 duplicate",
+    "count_other": "{{count}} duplicates",
+    "spare": "{{count}} spare",
+    "emptyTitle": "No {{rarity}} duplicates",
+    "emptyHint": "Cards you own more than once will show up here.",
+    "remove": "Remove one copy of {{name}}",
+    "add": "Add one copy of {{name}}"
+  },
   "cauldron": {
     "title": "Cauldron",
     "progress": "{{picked}} / {{cost}}",
-    "available": "{{count}} spare",
-    "empty": "Not enough duplicates of this rarity.",
+    "missing_one": "{{count}} more needed",
+    "missing_other": "{{count}} more needed",
+    "removeSlot": "Remove {{name}} from the cauldron",
+    "yields": "Yields",
+    "resultTitle": "1 {{rarity}}",
+    "resultSubtitle": "Random card",
+    "auto": "Auto-select",
+    "clear": "Clear",
     "lastCopyNote": "You always keep one copy of each card.",
-    "transmute": "Transmute",
-    "remove": "Remove one copy of {{name}}",
-    "add": "Add one copy of {{name}}"
+    "transmute": "Transmute"
   },
   "toasts": {
     "errorTitle": "Alchemy"
