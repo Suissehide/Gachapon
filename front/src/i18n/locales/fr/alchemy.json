@@ -1,0 +1,29 @@
+{
+  "page": {
+    "eyebrow": "Laboratoire",
+    "title": "Alchimie",
+    "subtitle": "Transforme tes doublons en une carte de la rareté au-dessus."
+  },
+  "tier": {
+    "label": "{{from}} → {{to}}",
+    "recipe": "{{cost}} doublons",
+    "possible_zero": "Aucune transmutation possible",
+    "possible_one": "1 transmutation possible",
+    "possible_other": "{{count}} transmutations possibles"
+  },
+  "cauldron": {
+    "title": "Chaudron",
+    "progress": "{{picked}} / {{cost}}",
+    "available": "{{count}} en double",
+    "empty": "Pas assez de doublons de cette rareté.",
+    "lastCopyNote": "Tu gardes toujours un exemplaire de chaque carte.",
+    "transmute": "Transmuter"
+  },
+  "toasts": {
+    "errorTitle": "Alchimie"
+  },
+  "apiTitles": {
+    "load": "Chargement de l'alchimie",
+    "transmute": "Transmutation"
+  }
+}

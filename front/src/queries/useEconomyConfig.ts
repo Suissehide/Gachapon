@@ -116,6 +116,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
       lifestealPct: { min: 1, max: 4 },
     },
   },
+  alchemy: { costCommon: 5, costUncommon: 6, costRare: 8, costEpic: 6 },
 }
 
 export function useEconomyConfig() {

@@ -331,6 +331,7 @@ const NAMESPACES = [
   'machine',
   'settings',
   'orders',
+  'alchemy',
 ]
 // keySeparator ('.') et nsSeparator (':') : src/i18n/index.ts ne les
 // surcharge pas dans son `interpolation`/`init`, donc ce sont les valeurs

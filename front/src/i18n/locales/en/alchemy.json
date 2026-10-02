@@ -1,0 +1,29 @@
+{
+  "page": {
+    "eyebrow": "Laboratory",
+    "title": "Alchemy",
+    "subtitle": "Turn your duplicates into a card of the next rarity."
+  },
+  "tier": {
+    "label": "{{from}} → {{to}}",
+    "recipe": "{{cost}} duplicates",
+    "possible_zero": "No transmutation possible",
+    "possible_one": "1 transmutation possible",
+    "possible_other": "{{count}} transmutations possible"
+  },
+  "cauldron": {
+    "title": "Cauldron",
+    "progress": "{{picked}} / {{cost}}",
+    "available": "{{count}} spare",
+    "empty": "Not enough duplicates of this rarity.",
+    "lastCopyNote": "You always keep one copy of each card.",
+    "transmute": "Transmute"
+  },
+  "toasts": {
+    "errorTitle": "Alchemy"
+  },
+  "apiTitles": {
+    "load": "Loading alchemy",
+    "transmute": "Transmutation"
+  }
+}

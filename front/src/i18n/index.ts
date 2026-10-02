@@ -4,6 +4,7 @@ import { initReactI18next } from 'react-i18next'
 import aboutEn from './locales/en/about.json'
 import achievementsEn from './locales/en/achievements.json'
 import adminEn from './locales/en/admin.json'
+import alchemyEn from './locales/en/alchemy.json'
 import authEn from './locales/en/auth.json'
 import changelogEn from './locales/en/changelog.json'
 import collectionEn from './locales/en/collection.json'
@@ -38,6 +39,7 @@ import wishlistEn from './locales/en/wishlist.json'
 import aboutFr from './locales/fr/about.json'
 import achievementsFr from './locales/fr/achievements.json'
 import adminFr from './locales/fr/admin.json'
+import alchemyFr from './locales/fr/alchemy.json'
 import authFr from './locales/fr/auth.json'
 import changelogFr from './locales/fr/changelog.json'
 import collectionFr from './locales/fr/collection.json'
@@ -379,6 +381,7 @@ void i18next.use(initReactI18next).init({
       machine: machineFr,
       settings: settingsFr,
       orders: ordersFr,
+      alchemy: alchemyFr,
     },
     en: {
       about: aboutEn,
@@ -415,6 +418,7 @@ void i18next.use(initReactI18next).init({
       machine: machineEn,
       settings: settingsEn,
       orders: ordersEn,
+      alchemy: alchemyEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -454,6 +458,7 @@ void i18next.use(initReactI18next).init({
     'machine',
     'settings',
     'orders',
+    'alchemy',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les

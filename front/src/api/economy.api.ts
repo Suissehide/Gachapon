@@ -129,6 +129,12 @@ export interface EconomyConfig {
     salvageGold: Record<CardRarityKey, number>
     substatRanges: Record<SubstatRangeKey, { min: number; max: number }>
   }
+  alchemy: {
+    costCommon: number
+    costUncommon: number
+    costRare: number
+    costEpic: number
+  }
 }
 
 export async function getEconomyConfig(): Promise<EconomyConfig> {
