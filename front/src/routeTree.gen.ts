@@ -37,6 +37,7 @@ import { Route as AuthenticatedEquipmentRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCombatRouteImport } from './routes/_authenticated/combat'
 import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated/collection'
 import { Route as AuthenticatedCampaignRouteImport } from './routes/_authenticated/campaign'
+import { Route as AuthenticatedAlchemyRouteImport } from './routes/_authenticated/alchemy'
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
 import { Route as AdminAdminRouteImport } from './routes/_admin/admin'
 import { Route as AuthenticatedTeamIndexRouteImport } from './routes/_authenticated/team/index'
@@ -200,6 +201,11 @@ const AuthenticatedCampaignRoute = AuthenticatedCampaignRouteImport.update({
   path: '/campaign',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAlchemyRoute = AuthenticatedAlchemyRouteImport.update({
+  id: '/alchemy',
+  path: '/alchemy',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAchievementsRoute =
   AuthenticatedAchievementsRouteImport.update({
     id: '/achievements',
@@ -336,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/achievements': typeof AuthenticatedAchievementsRoute
+  '/alchemy': typeof AuthenticatedAlchemyRoute
   '/campaign': typeof AuthenticatedCampaignRoute
   '/collection': typeof AuthenticatedCollectionRoute
   '/combat': typeof AuthenticatedCombatRoute
@@ -386,6 +393,7 @@ export interface FileRoutesByTo {
   '/stats': typeof StatsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/achievements': typeof AuthenticatedAchievementsRoute
+  '/alchemy': typeof AuthenticatedAlchemyRoute
   '/campaign': typeof AuthenticatedCampaignRoute
   '/collection': typeof AuthenticatedCollectionRoute
   '/combat': typeof AuthenticatedCombatRoute
@@ -440,6 +448,7 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
+  '/_authenticated/alchemy': typeof AuthenticatedAlchemyRoute
   '/_authenticated/campaign': typeof AuthenticatedCampaignRoute
   '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/combat': typeof AuthenticatedCombatRoute
@@ -493,6 +502,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/admin'
     | '/achievements'
+    | '/alchemy'
     | '/campaign'
     | '/collection'
     | '/combat'
@@ -543,6 +553,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/verify-email'
     | '/achievements'
+    | '/alchemy'
     | '/campaign'
     | '/collection'
     | '/combat'
@@ -596,6 +607,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/_admin/admin'
     | '/_authenticated/achievements'
+    | '/_authenticated/alchemy'
     | '/_authenticated/campaign'
     | '/_authenticated/collection'
     | '/_authenticated/combat'
@@ -850,6 +862,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCampaignRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/alchemy': {
+      id: '/_authenticated/alchemy'
+      path: '/alchemy'
+      fullPath: '/alchemy'
+      preLoaderRoute: typeof AuthenticatedAlchemyRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/achievements': {
       id: '/_authenticated/achievements'
       path: '/achievements'
@@ -1064,6 +1083,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
+  AuthenticatedAlchemyRoute: typeof AuthenticatedAlchemyRoute
   AuthenticatedCampaignRoute: typeof AuthenticatedCampaignRoute
   AuthenticatedCollectionRoute: typeof AuthenticatedCollectionRoute
   AuthenticatedCombatRoute: typeof AuthenticatedCombatRoute
@@ -1087,6 +1107,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAchievementsRoute: AuthenticatedAchievementsRoute,
+  AuthenticatedAlchemyRoute: AuthenticatedAlchemyRoute,
   AuthenticatedCampaignRoute: AuthenticatedCampaignRoute,
   AuthenticatedCollectionRoute: AuthenticatedCollectionRoute,
   AuthenticatedCombatRoute: AuthenticatedCombatRoute,

@@ -20,6 +20,7 @@ export type NavItem = {
     | '/collection'
     | '/equipment'
     | '/skills'
+    | '/alchemy'
     | '/campaign'
     | '/tower'
     | '/shop'

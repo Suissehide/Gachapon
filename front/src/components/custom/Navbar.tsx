@@ -60,6 +60,7 @@ export function Navbar() {
           badge: user?.skillPoints ?? 0,
           badgeTone: 'gain',
         },
+        { to: '/alchemy', label: t('layout:appNav.alchemy') },
       ],
     },
     {

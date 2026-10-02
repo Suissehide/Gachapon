@@ -63,6 +63,7 @@
     "collection": "Collection",
     "cards": "Cards",
     "equipment": "Equipment",
+    "alchemy": "Alchemy",
     "tower": "Tower",
     "leaderboard": "Leaderboard",
     "openMenuAriaLabel": "Open menu",
