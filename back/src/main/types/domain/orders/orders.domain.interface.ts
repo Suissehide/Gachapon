@@ -18,7 +18,9 @@ export type OrderReward = { dust: number; gold: number; tokens: number }
 export type OrderRewardConfig = {
   dustByRarity: Record<CardRarity, number>
   tokensByRarity: Record<CardRarity, number>
+  dustBase: number
   dustMult: number
+  goldBase: number
   goldMult: number
 }
 

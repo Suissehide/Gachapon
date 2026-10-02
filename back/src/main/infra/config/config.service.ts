@@ -310,18 +310,23 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // token (30 j), il ne peut plus jamais rouvrir son compte. La purge ne
   // supprime donc que des comptes déjà inaccessibles.
   'guest.purgeAfterDays': 30,
-  // Commandes de clients (spec 2026-10-02). Revenu borné par slots × délai ×
-  // plafond : ~8-12 jetons/jour pour un joueur assidu. Les invariants
+  // Commandes de clients (spec 2026-10-02, recalibrée). Revenu borné par
+  // slots × délai × plafond (4 livraisons/jour) : ≈ 5 000 or/jour, ≈ 350
+  // poussière/jour nets du recyclage et ~4-6 jetons/jour, soit ≈ 25 % d'une
+  // journée de farm de combat en fin de jeu. Base fixe par commande (or,
+  // poussière) + V × multiplicateur. Les invariants
   // « jetons < cartes » et « poussière > conversion max » sont gardés par
   // order-rewards.test.ts — baisser dustMult sous le multiplicateur de
   // Recyclage max le fera échouer.
   'orders.slots': 3,
   'orders.feasibleSlots': 2,
-  'orders.cooldownMinutes': 180,
-  'orders.dailyCap': 8,
+  'orders.cooldownMinutes': 240,
+  'orders.dailyCap': 4,
   'orders.freeDismissPerDay': 1,
+  'orders.dustBase': 20,
   'orders.dustMult': 1.5,
-  'orders.goldMult': 4,
+  'orders.goldBase': 800,
+  'orders.goldMult': 3,
   'orders.tokensCommon': 1,
   'orders.tokensUncommon': 1,
   'orders.tokensRare': 2,

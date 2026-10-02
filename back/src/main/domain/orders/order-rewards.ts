@@ -13,7 +13,9 @@ export const REWARD_CONFIG_KEYS = [
   'dustRare',
   'dustEpic',
   'dustLegendary',
+  'orders.dustBase',
   'orders.dustMult',
+  'orders.goldBase',
   'orders.goldMult',
   'orders.tokensCommon',
   'orders.tokensUncommon',
@@ -42,7 +44,9 @@ export function rewardConfigFrom(
       EPIC: c['orders.tokensEpic'],
       LEGENDARY: c['orders.tokensLegendary'],
     },
+    dustBase: c['orders.dustBase'],
     dustMult: c['orders.dustMult'],
+    goldBase: c['orders.goldBase'],
     goldMult: c['orders.goldMult'],
   }
 }
@@ -50,6 +54,8 @@ export function rewardConfigFrom(
 /**
  * V = valeur poussière des cartes demandées, SANS le multiplicateur de
  * compétence : deux joueurs voient la même récompense pour la même commande.
+ * Or et poussière = base fixe + V × multiplicateur : la base rend les petites
+ * commandes communes dignes d'être livrées.
  * Jetons plafonnés à nbCartes − 1 : une commande ne rend jamais autant de
  * tirages qu'elle consomme de cartes (un tirage ≈ une carte).
  */
@@ -70,8 +76,8 @@ export function computeOrderReward(
     'COMMON',
   )
   return {
-    dust: Math.round(v * cfg.dustMult),
-    gold: Math.round(v * cfg.goldMult),
+    dust: Math.round(cfg.dustBase + v * cfg.dustMult),
+    gold: Math.round(cfg.goldBase + v * cfg.goldMult),
     tokens: Math.max(0, Math.min(cfg.tokensByRarity[maxRarity], cards - 1)),
   }
 }

@@ -36,7 +36,7 @@ describe('Orders routes', () => {
   async function seedOrder(userId: string, lines: unknown, clientCardId: string, slot = 0) {
     await prisma.customerOrder.deleteMany({ where: { userId } })
     return prisma.customerOrder.create({
-      data: { userId, slot, clientCardId, lines, rewardDust: 240, rewardGold: 640, rewardTokens: 1 },
+      data: { userId, slot, clientCardId, lines, rewardDust: 260, rewardGold: 1280, rewardTokens: 1 },
     })
   }
 
@@ -67,7 +67,7 @@ describe('Orders routes', () => {
     expect(first.statusCode).toBe(200)
     const body = first.json()
     expect(body.slots).toHaveLength(3)
-    expect(body.deliveriesLeft).toBe(8)
+    expect(body.deliveriesLeft).toBe(4)
     expect(body.freeDismissAvailable).toBe(true)
     const ids = body.slots.map((s: any) => s.order?.id)
     expect(ids.every(Boolean)).toBe(true)
@@ -104,11 +104,11 @@ describe('Orders routes', () => {
       payload: { picks: view.suggestedPicks },
     })
     expect(res.statusCode).toBe(200)
-    expect(res.json().reward).toEqual({ dust: 240, gold: 640, tokens: 1 })
+    expect(res.json().reward).toEqual({ dust: 260, gold: 1280, tokens: 1 })
 
     const after = await prisma.user.findUnique({ where: { id } })
-    expect(after.dust - before.dust).toBe(240)
-    expect(after.gold - before.gold).toBe(640)
+    expect(after.dust - before.dust).toBe(260)
+    expect(after.gold - before.gold).toBe(1280)
     expect(after.tokens - before.tokens).toBe(1)
     expect((await prisma.userCard.findUnique({ where: { id: uc.id } })).quantity).toBe(1)
 
@@ -209,7 +209,7 @@ describe('Orders routes', () => {
     const uc = await prisma.userCard.create({ data: { userId: id, cardId: rareWater.id, quantity: 5 } })
     const order = await seedOrder(id, [{ quantity: 1, rarity: 'RARE' }], rareWater.id)
     await prisma.customerOrder.createMany({
-      data: Array.from({ length: 8 }, () => ({
+      data: Array.from({ length: 4 }, () => ({
         userId: id, slot: 2, clientCardId: rareWater.id, lines: [], rewardDust: 0, rewardGold: 0, rewardTokens: 0,
         status: 'DELIVERED', closedAt: new Date(),
       })),
@@ -285,6 +285,6 @@ describe('Orders routes', () => {
 
   it('GET /economy/config — expose les réglages du comptoir', async () => {
     const res = await app.inject({ method: 'GET', url: '/economy/config' })
-    expect(res.json().orders).toEqual({ slots: 3, cooldownMinutes: 180, dailyCap: 8, freeDismissPerDay: 1 })
+    expect(res.json().orders).toEqual({ slots: 3, cooldownMinutes: 240, dailyCap: 4, freeDismissPerDay: 1 })
   })
 })

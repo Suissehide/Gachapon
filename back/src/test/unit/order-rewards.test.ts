@@ -32,10 +32,10 @@ describe('barème des commandes', () => {
   it('calcule les exemples de la spec', () => {
     expect(
       computeOrderReward([{ quantity: 2, rarity: 'RARE', element: 'WATER' }], cfg),
-    ).toEqual({ dust: 240, gold: 640, tokens: 1 })
+    ).toEqual({ dust: 260, gold: 1280, tokens: 1 })
     expect(
       computeOrderReward([{ quantity: 3, rarity: 'COMMON', element: 'FIRE' }], cfg),
-    ).toEqual({ dust: 45, gold: 120, tokens: 1 })
+    ).toEqual({ dust: 65, gold: 890, tokens: 1 })
     expect(computeOrderReward([{ quantity: 1, rarity: 'EPIC' }], cfg).tokens).toBe(0)
   })
 
