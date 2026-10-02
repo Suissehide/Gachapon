@@ -67,9 +67,9 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'card.goldCostExp': 1.6,
   'card.dustCostBase': 0.5,
   'card.dustCostExp': 1.4,
-  'card.rarityMultCommon': 1.0,
-  'card.rarityMultUncommon': 1.3,
-  'card.rarityMultRare': 1.7,
+  'card.rarityMultCommon': 0.25,
+  'card.rarityMultUncommon': 0.4,
+  'card.rarityMultRare': 0.7,
   'card.rarityMultEpic': 2.3,
   'card.rarityMultLegendary': 3.0,
   // Prix d'un vœu = prix de la boutique du jour pour la rareté × ce facteur.

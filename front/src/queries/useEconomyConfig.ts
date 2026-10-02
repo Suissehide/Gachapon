@@ -35,9 +35,9 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     dustCostBase: 0.5,
     dustCostExp: 1.4,
     rarityMult: {
-      COMMON: 1.0,
-      UNCOMMON: 1.3,
-      RARE: 1.7,
+      COMMON: 0.25,
+      UNCOMMON: 0.4,
+      RARE: 0.7,
       EPIC: 2.3,
       LEGENDARY: 3.0,
     },

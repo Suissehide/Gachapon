@@ -1,9 +1,9 @@
 import type { CardRarity } from '../../types/domain/gacha/gacha.types'
 
 export const RARITY_MULT: Record<CardRarity, number> = {
-  COMMON: 1.0,
-  UNCOMMON: 1.3,
-  RARE: 1.7,
+  COMMON: 0.25,
+  UNCOMMON: 0.4,
+  RARE: 0.7,
   EPIC: 2.3,
   LEGENDARY: 3.0,
 }

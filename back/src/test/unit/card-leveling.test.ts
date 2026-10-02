@@ -34,10 +34,10 @@ describe('card-leveling pure domain', () => {
 
   describe('goldCostNextLevel', () => {
     it('uses formula 5 × n^1.6 × multRareté', () => {
-      // n=1, COMMON: round(5 × 1 × 1.0) = 5
-      expect(goldCostNextLevel(1, 'COMMON')).toBe(5)
-      // n=1, RARE: round(5 × 1 × 1.7) = round(8.5) = 9
-      expect(goldCostNextLevel(1, 'RARE')).toBe(9)
+      // n=1, COMMON: round(5 × 1 × 0.25) = round(1.25) = 1
+      expect(goldCostNextLevel(1, 'COMMON')).toBe(1)
+      // n=1, RARE: round(5 × 1 × 0.7) = round(3.5) = 4
+      expect(goldCostNextLevel(1, 'RARE')).toBe(4)
       // n=10, LEGENDARY: round(5 × 10^1.6 × 3.0) = round(5 × 39.81 × 3.0) ≈ 597
       // 10^1.6 = 39.8107…
       expect(goldCostNextLevel(10, 'LEGENDARY')).toBe(
@@ -61,14 +61,14 @@ describe('card-leveling pure domain', () => {
       expect(l).toBeGreaterThan(e)
     })
     it('accepts custom base/exp params', () => {
-      expect(goldCostNextLevel(10, 'COMMON', 10, 2)).toBe(1000)
+      expect(goldCostNextLevel(10, 'COMMON', 10, 2)).toBe(250)
     })
   })
 
   describe('dustCostNextLevel', () => {
     it('uses formula 0.5 × n^1.4 × multRareté (nouvelle économie)', () => {
-      // n=1, COMMON: round(0.5 × 1 × 1.0) = 1 (Math.round(0.5) → 1)
-      expect(dustCostNextLevel(1, 'COMMON')).toBe(1)
+      // n=1, COMMON: round(0.5 × 1 × 0.25) = round(0.125) = 0
+      expect(dustCostNextLevel(1, 'COMMON')).toBe(0)
       // n=10, LEGENDARY: round(0.5 × 10^1.4 × 3.0)
       expect(dustCostNextLevel(10, 'LEGENDARY')).toBe(
         Math.round(0.5 * Math.pow(10, 1.4) * 3.0),
@@ -76,7 +76,7 @@ describe('card-leveling pure domain', () => {
     })
     it('accepts custom base/exp params', () => {
       expect(dustCostNextLevel(10, 'COMMON', 8, 1.4)).toBe(
-        Math.round(8 * Math.pow(10, 1.4)),
+        Math.round(8 * Math.pow(10, 1.4) * 0.25),
       )
     })
   })
