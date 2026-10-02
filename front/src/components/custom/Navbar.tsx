@@ -15,6 +15,7 @@ import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useTokenBalance } from '../../queries/useGacha.ts'
+import { useOrders } from '../../queries/useOrders.ts'
 import type { AuthUser } from '../../stores/auth.store'
 import { useAuthStore, useIsGuest } from '../../stores/auth.store'
 import { NotificationDot } from '../notifications/NotificationDot.tsx'
@@ -39,6 +40,7 @@ export function Navbar() {
   const navItemsBeforeProfile = [
     { to: '/play', label: t('layout:appNav.play') },
     { to: '/collection', label: t('layout:appNav.collection') },
+    { to: '/orders', label: t('layout:appNav.orders') },
     { to: '/equipment', label: t('layout:appNav.equipment') },
     { to: '/campaign', label: t('combat:teamLabel.campaign') },
     { to: '/tower', label: t('layout:appNav.tower') },
@@ -56,6 +58,14 @@ export function Navbar() {
   const navItems = [...navItemsBeforeProfile, ...navItemsAfterProfile]
 
   const user = useAuthStore((s) => s.user)
+  const { data: orders } = useOrders(Boolean(user))
+  // Le cap journalier ne se voit pas dans `deliverable` (le serveur l'ignore
+  // volontairement) : la pastille doit donc le recroiser elle-même, sinon
+  // elle reste allumée une fois le quota du jour atteint.
+  const deliverableOrders =
+    orders && orders.deliveriesLeft > 0
+      ? orders.slots.filter((s) => s.order?.deliverable).length
+      : 0
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
   const { menuOpen, setMenuOpen, closeMenu } = useMobileMenu()
@@ -154,6 +164,12 @@ export function Navbar() {
                         className="-right-5 -top-2"
                       />
                     )}
+                    {item.to === '/orders' && (
+                      <NotificationDot
+                        count={deliverableOrders}
+                        className="-right-5 -top-2"
+                      />
+                    )}
                   </span>
                   <span
                     aria-hidden
@@ -220,7 +236,11 @@ export function Navbar() {
             open={menuOpen}
             onClick={closeMenu}
             badgeCount={
-              item.to === '/skills' ? (user?.skillPoints ?? 0) : undefined
+              item.to === '/skills'
+                ? (user?.skillPoints ?? 0)
+                : item.to === '/orders'
+                  ? deliverableOrders
+                  : undefined
             }
             locked={'locked' in item && item.locked}
           />

@@ -31,6 +31,7 @@ import { Route as AuthenticatedShopRouteImport } from './routes/_authenticated/s
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedQuestsRouteImport } from './routes/_authenticated/quests'
 import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/play'
+import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedEquipmentRouteImport } from './routes/_authenticated/equipment'
 import { Route as AuthenticatedCombatRouteImport } from './routes/_authenticated/combat'
@@ -166,6 +167,11 @@ const AuthenticatedQuestsRoute = AuthenticatedQuestsRouteImport.update({
 const AuthenticatedPlayRoute = AuthenticatedPlayRouteImport.update({
   id: '/play',
   path: '/play',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedLeaderboardRoute =
@@ -335,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/combat': typeof AuthenticatedCombatRoute
   '/equipment': typeof AuthenticatedEquipmentRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/orders': typeof AuthenticatedOrdersRoute
   '/play': typeof AuthenticatedPlayRoute
   '/quests': typeof AuthenticatedQuestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/combat': typeof AuthenticatedCombatRoute
   '/equipment': typeof AuthenticatedEquipmentRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/orders': typeof AuthenticatedOrdersRoute
   '/play': typeof AuthenticatedPlayRoute
   '/quests': typeof AuthenticatedQuestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/_authenticated/combat': typeof AuthenticatedCombatRoute
   '/_authenticated/equipment': typeof AuthenticatedEquipmentRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/play': typeof AuthenticatedPlayRoute
   '/_authenticated/quests': typeof AuthenticatedQuestsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/combat'
     | '/equipment'
     | '/leaderboard'
+    | '/orders'
     | '/play'
     | '/quests'
     | '/settings'
@@ -538,6 +548,7 @@ export interface FileRouteTypes {
     | '/combat'
     | '/equipment'
     | '/leaderboard'
+    | '/orders'
     | '/play'
     | '/quests'
     | '/settings'
@@ -590,6 +601,7 @@ export interface FileRouteTypes {
     | '/_authenticated/combat'
     | '/_authenticated/equipment'
     | '/_authenticated/leaderboard'
+    | '/_authenticated/orders'
     | '/_authenticated/play'
     | '/_authenticated/quests'
     | '/_authenticated/settings'
@@ -794,6 +806,13 @@ declare module '@tanstack/react-router' {
       path: '/play'
       fullPath: '/play'
       preLoaderRoute: typeof AuthenticatedPlayRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/orders': {
+      id: '/_authenticated/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/leaderboard': {
@@ -1050,6 +1069,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCombatRoute: typeof AuthenticatedCombatRoute
   AuthenticatedEquipmentRoute: typeof AuthenticatedEquipmentRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
+  AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedPlayRoute: typeof AuthenticatedPlayRoute
   AuthenticatedQuestsRoute: typeof AuthenticatedQuestsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -1072,6 +1092,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCombatRoute: AuthenticatedCombatRoute,
   AuthenticatedEquipmentRoute: AuthenticatedEquipmentRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
+  AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedPlayRoute: AuthenticatedPlayRoute,
   AuthenticatedQuestsRoute: AuthenticatedQuestsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
