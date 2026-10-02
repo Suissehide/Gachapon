@@ -4,6 +4,7 @@ import type { Resolver } from 'awilix/lib/resolvers'
 
 import { AchievementsDomain } from '../../../domain/achievements/achievements.domain'
 import { ActivityDomain } from '../../../domain/activity/activity.domain'
+import { AlchemyDomain } from '../../../domain/alchemy/alchemy.domain'
 import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { GuestDomain } from '../../../domain/auth/guest.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
@@ -206,6 +207,7 @@ class AwilixIocContainer {
     this.#reg('shopDomain', asClass(ShopDomain).singleton())
     this.#reg('dailyShopDomain', asClass(DailyShopDomain).singleton())
     this.#reg('ordersDomain', asClass(OrdersDomain).singleton())
+    this.#reg('alchemyDomain', asClass(AlchemyDomain).singleton())
     this.#reg('skillTreeDomain', asClass(SkillTreeDomain).singleton())
     this.#reg('skillInvestDomain', asClass(SkillInvestDomain).singleton())
     this.#reg(

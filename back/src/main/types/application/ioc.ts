@@ -27,6 +27,7 @@ import type { UserCardRepository } from '../../infra/orm/repositories/user-card.
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
 import type { WsManager } from '../../interfaces/ws/ws-manager'
 import type { IActivityDomain } from '../domain/activity/activity.domain.interface'
+import type { IAlchemyDomain } from '../domain/alchemy/alchemy.domain.interface'
 import type { AuthDomainInterface } from '../domain/auth/auth.domain.interface'
 import type { GuestDomainInterface } from '../domain/auth/guest.domain.interface'
 import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface'
@@ -155,6 +156,7 @@ export interface IocContainer {
   readonly shopDomain: IShopDomain
   readonly dailyShopDomain: IDailyShopDomain
   readonly ordersDomain: IOrdersDomain
+  readonly alchemyDomain: IAlchemyDomain
   readonly skillTreeDomain: ISkillTreeDomain
   readonly skillInvestDomain: ISkillInvestDomain
   readonly skillInvestBatchDomain: ISkillInvestBatchDomain
