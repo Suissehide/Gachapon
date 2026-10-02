@@ -270,17 +270,6 @@ function LandingPage() {
               >
                 {t('guest:play')}
               </Button>
-              <p className="text-xs text-text-light">
-                {t('guest:playHint')}{' '}
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={openRegister}
-                  className="h-auto p-0 text-xs"
-                >
-                  {t('footer.createAccount')}
-                </Button>
-              </p>
             </div>
           </div>
 
