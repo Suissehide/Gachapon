@@ -6,6 +6,7 @@ import type {
   PoolCard,
   Rng,
 } from '../../types/domain/orders/orders.domain.interface'
+import { weightedPick } from '../shared/weighted-pick'
 import { RARITY_ORDER } from '../wagers/wager-rules'
 import { cardMatchesLine } from './order-matching'
 
@@ -36,22 +37,6 @@ const sameCriteria = (
   a: Omit<OrderLine, 'quantity'>,
   b: Omit<OrderLine, 'quantity'>,
 ) => a.rarity === b.rarity && a.element === b.element && a.setId === b.setId
-
-function weightedPick<T extends { dropWeight: number }>(
-  cards: T[],
-  rng: Rng,
-): T {
-  const total = cards.reduce((s, c) => s + c.dropWeight, 0)
-  let roll = rng() * total
-  for (const c of cards) {
-    roll -= c.dropWeight
-    if (roll <= 0) {
-      return c
-    }
-  }
-  // biome-ignore lint/style/noNonNullAssertion: appelé avec un pool non vide
-  return cards[cards.length - 1]!
-}
 
 /** Commande livrable avec les doublons fournis ; [] s'il n'y en a aucun. */
 function feasibleLines(duplicates: DuplicateStack[], rng: Rng): OrderLine[] {

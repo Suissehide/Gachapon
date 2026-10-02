@@ -161,7 +161,7 @@ export function pickWeightedRandomWithLuck(
   return last.card
 }
 
-type VariantRates = {
+export type VariantRates = {
   brilliantRateRare: number
   brilliantRateEpic: number
   brilliantRateLegendary: number

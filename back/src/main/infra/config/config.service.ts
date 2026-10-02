@@ -344,6 +344,15 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'orders.tokensRare': 2,
   'orders.tokensEpic': 3,
   'orders.tokensLegendary': 4,
+  // Alchimie (spec 2026-10-03) : X doublons → 1 carte de la rareté au-dessus.
+  // Invariants gardés par alchemy-rules.test.ts : X × recyclage(r) >
+  // recyclage(r+1) (pas de boucle de poussière) et X × prix Marché(r) > prix
+  // Marché(r+1) (pas de raccourci d'achat) — c'est ce qui a fixé PC→R et É→L
+  // à 6. Baisser une recette ou un prix du Marché fera échouer ce test.
+  'alchemy.costCommon': 5,
+  'alchemy.costUncommon': 6,
+  'alchemy.costRare': 8,
+  'alchemy.costEpic': 6,
 }
 
 export class ConfigService implements ConfigServiceInterface {

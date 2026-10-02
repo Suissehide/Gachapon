@@ -140,6 +140,10 @@ export const CONFIG_KEYS = [
   'orders.tokensRare',
   'orders.tokensEpic',
   'orders.tokensLegendary',
+  'alchemy.costCommon',
+  'alchemy.costUncommon',
+  'alchemy.costRare',
+  'alchemy.costEpic',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]
