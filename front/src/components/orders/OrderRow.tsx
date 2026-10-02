@@ -13,7 +13,7 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
-import { useDeliverOrder, useDismissOrder } from '../../queries/useOrders.ts'
+import { useDismissOrder } from '../../queries/useOrders.ts'
 import { ConfirmPopup } from '../team/ConfirmPopup.tsx'
 import { Button } from '../ui/button.tsx'
 import { DeliverPopup } from './DeliverPopup.tsx'
@@ -26,6 +26,13 @@ const RARITY_DOT: Record<CardRarity, string> = {
   EPIC: 'bg-rarity-epic',
   LEGENDARY: 'bg-rarity-legendary',
 }
+
+// Couleurs de monnaie = celles des pastilles de la navbar (Wallet/TokensPill).
+const CURRENCY_COLOR = {
+  dust: { icon: 'text-currency-dust', ink: 'text-currency-dust-ink' },
+  gold: { icon: 'text-currency-gold', ink: 'text-currency-gold-ink' },
+  tokens: { icon: 'text-currency-token', ink: 'text-currency-token-ink' },
+} as const satisfies Record<string, { icon: string; ink: string }>
 
 /** « 3 h », « 45 min », « 2 h 15 min » — arrondi à la minute supérieure. */
 export function formatWait(t: TFunction, minutes: number) {
@@ -56,43 +63,35 @@ const owned = (line: OrderLineView) =>
     line.quantity,
   )
 
-/** Pourquoi Livrer est grisé : quota, demande(s) incomplète(s), ou cartes
- *  partagées entre demandes que le choix automatique n'a pas su répartir. */
+/** Pourquoi Livrer est grisé : quota, ou une demande n'a aucun doublon
+ *  compatible. Dès que chaque ligne a au moins un candidat, le bouton ouvre
+ *  la popup de sélection — plus besoin d'indice, l'utilisateur choisit. */
 function blockedHint(t: TFunction, order: OrderView, deliveriesLeft: number) {
   if (deliveriesLeft === 0) {
     return t('orders:card.hintNoDeliveries')
   }
   const missing = order.lines.filter((l) => owned(l) < l.quantity)
   const [first] = missing
+  // Invariant de l'appelant (canDeliver faux ici) : au moins une ligne sans
+  // candidat ⇒ owned() = 0 < quantity ⇒ missing non vide.
   if (missing.length === 1 && first) {
     return t('orders:card.hintMissing', {
       count: first.quantity - owned(first),
       label: lineLabel(t, first),
     })
   }
-  if (missing.length > 1) {
-    return t('orders:card.hintMissingMany', {
-      count: missing.reduce((s, l) => s + l.quantity - owned(l), 0),
-    })
-  }
-  // Lignes complètes une à une, mais une même carte peut nourrir plusieurs
-  // lignes : compter chaque doublon une seule fois borne le vrai manque.
-  const pool = new Map(
-    order.lines.flatMap((l) =>
-      l.candidates.map((c) => [c.userCardId, c.available] as const),
-    ),
-  )
-  const short =
-    order.lines.reduce((s, l) => s + l.quantity, 0) -
-    [...pool.values()].reduce((s, n) => s + n, 0)
-  if (short > 0) {
-    return t('orders:card.hintMissingMany', { count: short })
-  }
-  return t('orders:card.hintChoose')
+  return t('orders:card.hintMissingMany', {
+    count: missing.reduce((s, l) => s + l.quantity - owned(l), 0),
+  })
 }
 
 export const isReady = (order: OrderView, deliveriesLeft: number) =>
   order.deliverable && deliveriesLeft > 0
+
+/** Livrer ouvre la popup de sélection dès qu'une affectation est possible,
+ *  même si le glouton serveur n'a pas trouvé de répartition complète. */
+const canDeliver = (order: OrderView, deliveriesLeft: number) =>
+  deliveriesLeft > 0 && order.lines.every((l) => l.candidates.length > 0)
 
 type Props = {
   order: OrderView
@@ -106,17 +105,15 @@ export function OrderRow({
   freeDismissAvailable,
 }: Props) {
   const { t } = useTranslation(['orders', 'common'])
-  const deliver = useDeliverOrder()
   const dismiss = useDismissOrder()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
-  const [pickOpen, setPickOpen] = useState(false)
+  const [deliverOpen, setDeliverOpen] = useState(false)
   const [dismissOpen, setDismissOpen] = useState(false)
 
   const ready = isReady(order, deliveriesLeft)
-  const canPick =
-    deliveriesLeft > 0 && order.lines.every((l) => l.candidates.length > 0)
+  const able = canDeliver(order, deliveriesLeft)
 
-  const hint = ready ? null : blockedHint(t, order, deliveriesLeft)
+  const hint = able ? null : blockedHint(t, order, deliveriesLeft)
 
   const { dust, gold, tokens } = order.reward
 
@@ -128,12 +125,12 @@ export function OrderRow({
           'border-primary/50 bg-gradient-to-r from-primary/8 via-card to-card shadow-[0_2px_0_rgba(245,158,11,0.08),0_18px_36px_-20px_rgba(245,158,11,0.35)]',
       )}
     >
-      <div className="grid h-[106px] w-[84px] place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-surface-3 to-track md:h-[140px] md:w-[112px]">
+      <div className="grid h-[106px] w-[84px] place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-surface-3 to-track shadow-[var(--shadow-portrait-inset)] ring-1 ring-inset ring-border-dark md:h-[140px] md:w-[112px]">
         {order.client.imageUrl ? (
           <img
             src={order.client.imageUrl}
             alt={order.client.name}
-            className="h-full w-full object-cover"
+            className="h-full w-full origin-top scale-[1.35] object-cover object-top"
           />
         ) : (
           <span className="font-display text-[44px] font-extrabold text-text/25">
@@ -191,11 +188,13 @@ export function OrderRow({
             icon={<Sparkles className="h-5 w-5" />}
             value={dust}
             unit={t('common:currency.dust.singular')}
+            currency="dust"
           />
           <Reward
             icon={<Coins className="h-5 w-5" />}
             value={gold}
             unit={t('common:currency.gold.singular')}
+            currency="gold"
           />
           {tokens > 0 && (
             <Reward
@@ -206,6 +205,7 @@ export function OrderRow({
                   ? 'common:currency.tokens.plural'
                   : 'common:currency.tokens.singular',
               )}
+              currency="tokens"
             />
           )}
         </div>
@@ -215,11 +215,8 @@ export function OrderRow({
         <Button
           variant="amber"
           className="h-[52px] rounded-[14px] text-[17px]"
-          disabled={!ready || !order.suggestedPicks || deliver.isPending}
-          onClick={() =>
-            order.suggestedPicks &&
-            deliver.mutate({ orderId: order.id, picks: order.suggestedPicks })
-          }
+          disabled={!able}
+          onClick={() => setDeliverOpen(true)}
         >
           {t('orders:card.deliver')}
         </Button>
@@ -227,15 +224,6 @@ export function OrderRow({
           <p className="text-center text-[13px] leading-snug text-danger-ink">
             {hint}
           </p>
-        )}
-        {canPick && (
-          <Button
-            variant="link"
-            className="h-auto p-0 text-primary-darker"
-            onClick={() => setPickOpen(true)}
-          >
-            {t('orders:card.chooseCards')}
-          </Button>
         )}
         <Button
           variant="ghost"
@@ -247,13 +235,11 @@ export function OrderRow({
         </Button>
       </div>
 
-      {pickOpen && (
-        <DeliverPopup
-          order={order}
-          open={pickOpen}
-          onOpenChange={setPickOpen}
-        />
-      )}
+      <DeliverPopup
+        order={order}
+        open={deliverOpen}
+        onOpenChange={setDeliverOpen}
+      />
       <ConfirmPopup
         open={dismissOpen}
         onOpenChange={setDismissOpen}
@@ -277,14 +263,22 @@ function Reward({
   icon,
   value,
   unit,
+  currency,
 }: {
   icon: ReactNode
   value: number
   unit: string
+  currency: keyof typeof CURRENCY_COLOR
 }) {
+  const color = CURRENCY_COLOR[currency]
   return (
-    <span className="flex items-center gap-1.5 text-[17px] font-bold text-text">
-      <span className="text-primary-dark">{icon}</span>
+    <span
+      className={cn(
+        'flex items-center gap-1.5 text-[17px] font-bold',
+        color.ink,
+      )}
+    >
+      <span className={color.icon}>{icon}</span>
       {value}
       <small className="text-sm font-medium text-text-light">{unit}</small>
     </span>

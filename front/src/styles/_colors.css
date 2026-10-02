@@ -164,4 +164,20 @@
 
   --shadow-card:
     0 2px 0 rgba(27, 23, 38, 0.04), 0 12px 30px -12px rgba(27, 23, 38, 0.08);
+
+  /* Ombre intérieure du portrait client (commandes) — finition « Arcade
+     clair » : léger creux pour distinguer le cadre de l'illustration, sans
+     assombrir l'image elle-même. */
+  --shadow-portrait-inset: inset 0 1px 4px rgba(27, 23, 38, 0.18);
+
+  /* Couleurs de monnaie des pastilles navbar (`Wallet`/`TokensPill` dans
+     `custom/Navbar.tsx`) — reprises ici pour que les récompenses des
+     commandes utilisent la même teinte par monnaie sans hex en dur dans le
+     composant. `-ink` = texte sur fond clair, l'autre = icône/accent. */
+  --currency-dust: #0284c7;
+  --currency-dust-ink: #075985;
+  --currency-gold: #ca8a04;
+  --currency-gold-ink: #854d0e;
+  --currency-token: #ea580c;
+  --currency-token-ink: #9a3412;
 }

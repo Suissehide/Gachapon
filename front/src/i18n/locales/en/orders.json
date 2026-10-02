@@ -12,13 +12,11 @@
     "line": "{{quantity}} × {{rarity}}",
     "reward": "Reward",
     "deliver": "Deliver",
-    "chooseCards": "Choose the cards",
     "dismiss": "Dismiss",
     "hintNoDeliveries": "No deliveries left today",
     "hintMissing": "You're missing {{count}} {{label}}",
     "hintMissingMany_one": "You're missing {{count}} card",
-    "hintMissingMany_other": "You're missing {{count}} cards",
-    "hintChoose": "Your duplicates fit several requests: choose the cards to split them up"
+    "hintMissingMany_other": "You're missing {{count}} cards"
   },
   "empty": {
     "nextClient": "Next customer in <b>{{time}}</b>",

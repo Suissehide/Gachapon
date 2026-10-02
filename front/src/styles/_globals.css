@@ -66,6 +66,12 @@
   --color-amber-deep: var(--amber-deep);
 
   --color-dust: var(--dust);
+  --color-currency-dust: var(--currency-dust);
+  --color-currency-dust-ink: var(--currency-dust-ink);
+  --color-currency-gold: var(--currency-gold);
+  --color-currency-gold-ink: var(--currency-gold-ink);
+  --color-currency-token: var(--currency-token);
+  --color-currency-token-ink: var(--currency-token-ink);
   --color-wager-bet: var(--wager-bet);
   --color-wager-bet-ink: var(--wager-bet-ink);
   --color-wager-bet-soft: var(--wager-bet-soft);

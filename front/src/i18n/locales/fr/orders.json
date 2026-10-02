@@ -12,13 +12,11 @@
     "line": "{{quantity}} × {{rarity}}",
     "reward": "Récompense",
     "deliver": "Livrer",
-    "chooseCards": "Choisir les cartes",
     "dismiss": "Congédier",
     "hintNoDeliveries": "Plus de livraisons aujourd'hui",
     "hintMissing": "Il te manque {{count}} {{label}}",
     "hintMissingMany_one": "Il te manque {{count}} carte",
-    "hintMissingMany_other": "Il te manque {{count}} cartes",
-    "hintChoose": "Tes doublons servent à plusieurs demandes : choisis les cartes pour les répartir"
+    "hintMissingMany_other": "Il te manque {{count}} cartes"
   },
   "empty": {
     "nextClient": "Prochain client dans <b>{{time}}</b>",
