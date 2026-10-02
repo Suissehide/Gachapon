@@ -20,6 +20,7 @@ import { EquipmentDomain } from '../../../domain/equipment/equipment.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { ContentTranslationsBootstrap } from '../../../domain/i18n/content-translations.bootstrap'
 import { LeaderboardDomain } from '../../../domain/leaderboard/leaderboard.domain'
+import { OrdersDomain } from '../../../domain/orders/orders.domain'
 import { ProfileDomain } from '../../../domain/profile/profile.domain'
 import { QuestsDomain } from '../../../domain/quests/quests.domain'
 import { RaidDomain } from '../../../domain/raid/raid.domain'
@@ -204,6 +205,7 @@ class AwilixIocContainer {
     this.#reg('profileDomain', asClass(ProfileDomain).singleton())
     this.#reg('shopDomain', asClass(ShopDomain).singleton())
     this.#reg('dailyShopDomain', asClass(DailyShopDomain).singleton())
+    this.#reg('ordersDomain', asClass(OrdersDomain).singleton())
     this.#reg('skillTreeDomain', asClass(SkillTreeDomain).singleton())
     this.#reg('skillInvestDomain', asClass(SkillInvestDomain).singleton())
     this.#reg(

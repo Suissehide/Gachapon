@@ -34,6 +34,7 @@ import type { ICollectionDomain } from '../domain/collection/collection.domain.i
 import type { IDailyShopDomain } from '../domain/daily-shop/daily-shop.domain.interface'
 import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interface'
 import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domain.interface'
+import type { IOrdersDomain } from '../domain/orders/orders.domain.interface'
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
 import type { IRecruitmentDomain } from '../domain/recruitment/recruitment.domain.interface'
@@ -153,6 +154,7 @@ export interface IocContainer {
   readonly profileDomain: ProfileDomainInterface
   readonly shopDomain: IShopDomain
   readonly dailyShopDomain: IDailyShopDomain
+  readonly ordersDomain: IOrdersDomain
   readonly skillTreeDomain: ISkillTreeDomain
   readonly skillInvestDomain: ISkillInvestDomain
   readonly skillInvestBatchDomain: ISkillInvestBatchDomain
