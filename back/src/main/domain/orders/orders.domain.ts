@@ -15,6 +15,7 @@ import type {
   OrdersBoard,
   PoolCard,
 } from '../../types/domain/orders/orders.domain.interface'
+import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type {
   PostgresORMInterface,
@@ -59,17 +60,20 @@ export class OrdersDomain implements IOrdersDomain {
   readonly #configService: ConfigServiceInterface
   readonly #skillTreeRepository: IocContainer['skillTreeRepository']
   readonly #teamProgressionDomain: IocContainer['teamProgressionDomain']
+  readonly #duelDomain: IDuelDomain
 
   constructor({
     postgresOrm,
     configService,
     skillTreeRepository,
     teamProgressionDomain,
-  }: IocContainer) {
+    duelDomain,
+  }: Omit<IocContainer, 'duelDomain'> & { duelDomain: IDuelDomain }) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#skillTreeRepository = skillTreeRepository
     this.#teamProgressionDomain = teamProgressionDomain
+    this.#duelDomain = duelDomain
   }
 
   async list(userId: string): Promise<OrdersBoard> {
@@ -221,8 +225,16 @@ export class OrdersDomain implements IOrdersDomain {
     if (pool.length === 0) {
       return
     }
+    // Une carte engagée dans un duel actif n'est jamais livrable : elle ne
+    // sert donc pas de graine à une commande « faisable ».
+    const engaged = await this.#duelDomain.listEngagedCardKeysInTx(tx, userId)
     const duplicates: DuplicateStack[] = owned
-      .filter((u) => u.variant === 'NORMAL' && u.quantity > 1)
+      .filter(
+        (u) =>
+          u.variant === 'NORMAL' &&
+          u.quantity > 1 &&
+          !engaged.has(`${u.cardId}:${u.variant}`),
+      )
       .map((u) => ({
         userCardId: u.id,
         cardId: u.cardId,
@@ -259,43 +271,48 @@ export class OrdersDomain implements IOrdersDomain {
     cooldownMs: number,
   ): Promise<OrdersBoard> {
     const prisma = this.#postgresOrm.prisma
-    const [delivered, freeUsed, owned, lastBySlot] = await Promise.all([
-      prisma.customerOrder.count({
-        where: { userId, status: 'DELIVERED', closedAt: { gte: dayStart } },
-      }),
-      prisma.customerOrder.count({
-        where: {
-          userId,
-          status: 'DISMISSED',
-          freeDismiss: true,
-          closedAt: { gte: dayStart },
-        },
-      }),
-      prisma.userCard.findMany({
-        where: { userId, variant: 'NORMAL', quantity: { gt: 1 } },
-        include: { card: true },
-      }),
-      Promise.all(
-        Array.from({ length: cfg['orders.slots'] }, (_, slot) =>
-          prisma.customerOrder.findFirst({
-            where: { userId, slot },
-            orderBy: { createdAt: 'desc' },
-            include: { clientCard: true },
-          }),
+    const [delivered, freeUsed, owned, lastBySlot, engaged] = await Promise.all(
+      [
+        prisma.customerOrder.count({
+          where: { userId, status: 'DELIVERED', closedAt: { gte: dayStart } },
+        }),
+        prisma.customerOrder.count({
+          where: {
+            userId,
+            status: 'DISMISSED',
+            freeDismiss: true,
+            closedAt: { gte: dayStart },
+          },
+        }),
+        prisma.userCard.findMany({
+          where: { userId, variant: 'NORMAL', quantity: { gt: 1 } },
+          include: { card: true },
+        }),
+        Promise.all(
+          Array.from({ length: cfg['orders.slots'] }, (_, slot) =>
+            prisma.customerOrder.findFirst({
+              where: { userId, slot },
+              orderBy: { createdAt: 'desc' },
+              include: { clientCard: true },
+            }),
+          ),
         ),
-      ),
-    ])
+        this.#duelDomain.listEngagedCardKeysInTx(prisma, userId),
+      ],
+    )
     const deliveriesLeft = Math.max(0, cfg['orders.dailyCap'] - delivered)
-    const stacks = owned.map((u) => ({
-      userCardId: u.id,
-      cardId: u.cardId,
-      available: u.quantity - 1,
-      rarity: u.card.rarity,
-      element: u.card.element,
-      setId: u.card.setId,
-      name: u.card.name,
-      imageUrl: u.card.imageUrl,
-    }))
+    const stacks = owned
+      .filter((u) => !engaged.has(`${u.cardId}:${u.variant}`))
+      .map((u) => ({
+        userCardId: u.id,
+        cardId: u.cardId,
+        available: u.quantity - 1,
+        rarity: u.card.rarity,
+        element: u.card.element,
+        setId: u.card.setId,
+        name: u.card.name,
+        imageUrl: u.card.imageUrl,
+      }))
     const setIds = lastBySlot.flatMap((o) =>
       o?.status === 'OPEN'
         ? (o.lines as OrderLine[]).flatMap((l) => (l.setId ? [l.setId] : []))
@@ -468,6 +485,7 @@ export class OrdersDomain implements IOrdersDomain {
             where: { userId, id: { in: picks.map((p) => p.userCardId) } },
             select: {
               id: true,
+              cardId: true,
               quantity: true,
               variant: true,
               card: { select: { rarity: true, element: true, setId: true } },
@@ -478,6 +496,13 @@ export class OrdersDomain implements IOrdersDomain {
             picks,
             new Map(userCards.map((u) => [u.id, u as MatchableUserCard])),
           )
+          const engaged = await this.#duelDomain.listEngagedCardKeysInTx(
+            tx,
+            userId,
+          )
+          if (userCards.some((u) => engaged.has(`${u.cardId}:${u.variant}`))) {
+            throw Boom.conflict(errorMessage('wagers.cardEngagedInActiveDuel'))
+          }
           await this.#applyDelivery(tx, userId, order, picks)
           return {
             reward: {

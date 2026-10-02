@@ -8,8 +8,9 @@ describe('Orders routes', () => {
   let prisma: any
   const suffix = Date.now()
 
-  // Le fichier enregistre plus de 5 comptes (quota de /auth/register) : une
-  // IP distincte par appel évite de se faire bloquer par son propre test.
+  // Le fichier enregistre et connecte plus de comptes que les quotas de
+  // /auth/register et /auth/login : une IP distincte par appel évite de se
+  // faire bloquer par son propre test.
   async function registerUser(name: string) {
     const email = `${name}${suffix}@test.com`
     await app.inject({
@@ -22,6 +23,7 @@ describe('Orders routes', () => {
     const login = await app.inject({
       method: 'POST',
       url: '/auth/login',
+      headers: { 'x-forwarded-for': randomTestIpv6() },
       payload: { email, password: 'Password123!' },
     })
     return { id: user.id as string, cookie: login.headers['set-cookie'] as string }
@@ -148,6 +150,43 @@ describe('Orders routes', () => {
     const after = await prisma.user.findUnique({ where: { id } })
     expect(after.tokens).toBe(tokenMaxStock + 1)
     expect(Date.now() - after.lastTokenAt.getTime()).toBeLessThan(60_000)
+  })
+
+  // Revue finale #2 : une carte comptée dans un duel actif est verrouillée,
+  // comme pour le recyclage et l'ascension.
+  it('POST deliver — refuse une carte engagée dans un duel actif, absente des candidats', async () => {
+    const { id, cookie } = await registerUser('ordduel')
+    const rival = await registerUser('ordrival')
+    const uc = await prisma.userCard.create({ data: { userId: id, cardId: rareWater.id, quantity: 3 } })
+    const order = await seedOrder(id, [{ quantity: 1, rarity: 'RARE' }], rareWater.id)
+    const team = await prisma.team.create({
+      data: { name: `OrdDuel${suffix}`, slug: `ord-duel-${suffix}`, ownerId: id },
+    })
+    await prisma.duel.create({
+      data: {
+        teamId: team.id,
+        challengerId: id,
+        opponentId: rival.id,
+        status: 'ACTIVE',
+        pullCount: 2,
+        acceptedAt: new Date(Date.now() - 3600_000),
+        deadlineAt: new Date(Date.now() + 3600_000),
+      },
+    })
+    await prisma.gachaPull.create({ data: { userId: id, cardId: rareWater.id } })
+
+    const view = (await getBoard(cookie)).json().slots[0].order
+    expect(view.lines[0].candidates).toEqual([])
+    expect(view.deliverable).toBe(false)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/orders/${order.id}/deliver`,
+      headers: { cookie },
+      payload: { picks: [{ lineIndex: 0, userCardId: uc.id, amount: 1 }] },
+    })
+    expect(res.statusCode).toBe(409)
+    expect((await prisma.userCard.findUnique({ where: { id: uc.id } })).quantity).toBe(3)
   })
 
   it('POST deliver — refuse de consommer le dernier exemplaire', async () => {
