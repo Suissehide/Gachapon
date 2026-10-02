@@ -54,6 +54,11 @@
   --success: #16a34a;
   --warning: #d97706;
   --info: #0ea5e9;
+  /* Encres de statut pour TEXTE sur fond teinté (compteur `possédés/requis`
+     et indice rouge des commandes, handoff `design_handoff_commandes`) :
+     --success et --destructive n'y tiennent pas 4,5:1 en 13 px. */
+  --success-ink: #15803d;
+  --danger-ink: #be123c;
 
   /* Promus depuis l'ancien scope .arcade-theme */
   --surface-2: #fafaf7;

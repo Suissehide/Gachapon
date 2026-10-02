@@ -72,6 +72,8 @@
   --color-wager-bet-border: var(--wager-bet-border);
   --color-wager-window-to: var(--wager-window-to);
   --color-success: var(--success);
+  --color-success-ink: var(--success-ink);
+  --color-danger-ink: var(--danger-ink);
   --color-warning: var(--warning);
   --color-info: var(--info);
 

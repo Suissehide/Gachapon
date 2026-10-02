@@ -112,6 +112,12 @@ export interface EconomyConfig {
       forge: TeamPerkConfig
     }
   }
+  orders: {
+    slots: number
+    cooldownMinutes: number
+    dailyCap: number
+    freeDismissPerDay: number
+  }
   equip: {
     goldCostBase: number
     goldCostExp: number

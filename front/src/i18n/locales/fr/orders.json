@@ -3,19 +3,38 @@
     "eyebrow": "Comptoir",
     "title": "Commandes",
     "subtitle": "Des clients cherchent des cartes. Livre-leur tes doublons contre de l'or, de la poussière et des jetons.",
-    "deliveriesLeft_one": "{{count}} livraison restante aujourd'hui",
-    "deliveriesLeft_other": "{{count}} livraisons restantes aujourd'hui"
+    "quotaLabel_one": "livraison restante",
+    "quotaLabel_other": "livraisons restantes",
+    "quotaWhen": "aujourd'hui"
   },
   "card": {
-    "clientWants": "{{name}} cherche…",
+    "lookingFor": "cherche…",
     "line": "{{quantity}} × {{rarity}}",
     "reward": "Récompense",
     "deliver": "Livrer",
+    "chooseCards": "Choisir les cartes",
     "dismiss": "Congédier",
-    "dismissFree": "Congédier (gratuit)",
-    "notDeliverable": "Tu n'as pas encore les doublons",
-    "nextClient": "Prochain client dans {{time}}",
-    "closedForToday": "Le comptoir est fermé pour aujourd'hui — reviens demain"
+    "hintNoDeliveries": "Plus de livraisons aujourd'hui",
+    "hintMissing": "Il te manque {{count}} {{label}}",
+    "hintMissingMany_one": "Il te manque {{count}} carte",
+    "hintMissingMany_other": "Il te manque {{count}} cartes",
+    "hintChoose": "Tes doublons servent à plusieurs demandes : choisis les cartes pour les répartir"
+  },
+  "empty": {
+    "nextClient": "Prochain client dans <b>{{time}}</b>",
+    "closedForToday": "Plus de client aujourd'hui — reviens demain",
+    "slot": "Place libre"
+  },
+  "dismiss": {
+    "title": "Congédier {{name}} ?",
+    "free": "C'est ton congé gratuit du jour : un nouveau client prend sa place tout de suite.",
+    "paid": "Tu as déjà utilisé ton congé gratuit du jour : la place restera libre et le prochain client arrivera dans {{time}}.",
+    "confirm": "Congédier"
+  },
+  "duration": {
+    "hours": "{{h}} h",
+    "minutes": "{{m}} min",
+    "hoursMinutes": "{{h}} h {{m}} min"
   },
   "deliver": {
     "title": "Livrer la commande",

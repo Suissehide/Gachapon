@@ -79,6 +79,8 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
       forge: { perRank: 0.5, unlockLevel: 1, maxRank: 10 },
     },
   },
+  // Repli aligné sur `DEFAULTS` (back/infra/config/config.service.ts).
+  orders: { slots: 3, cooldownMinutes: 180, dailyCap: 8, freeDismissPerDay: 1 },
   equip: {
     goldCostBase: 25,
     goldCostExp: 1.35,
