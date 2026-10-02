@@ -327,6 +327,20 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'admin.setNotFound': 'Set not found',
   'admin.questNotFound': 'Quest not found',
 
+  // --- alchemy ---
+  'alchemy.noTierFromLegendary':
+    'No transmutation is possible from a legendary card',
+  'alchemy.invalidAmount': 'Amount must be a positive integer',
+  'alchemy.unknownCard': 'Card not found in your collection',
+  'alchemy.wrongRarity': 'Every card must match the selected tier rarity',
+  'alchemy.variantNotAllowed': 'Only normal cards can be transmuted',
+  'alchemy.wouldLeaveZeroCopies':
+    'Cannot use {{amount}} copies — you would have 0 left (you have {{quantity}})',
+  'alchemy.wrongTotal':
+    'The recipe needs {{expected}} cards, the selection has {{got}}',
+  'alchemy.noTargetCard':
+    'No card is available at the resulting rarity right now',
+
   // --- infra ---
   'httpClient.getFailed': 'Error getting data',
   'httpClient.postFailed': 'Error posting data',

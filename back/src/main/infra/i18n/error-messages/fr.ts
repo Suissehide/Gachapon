@@ -373,6 +373,22 @@ export const FR_MESSAGES = {
   'admin.setNotFound': 'Set introuvable',
   'admin.questNotFound': 'Quête introuvable',
 
+  // --- alchemy ---
+  'alchemy.noTierFromLegendary':
+    'Aucune transmutation possible depuis une carte légendaire',
+  'alchemy.invalidAmount': 'La quantité doit être un entier positif',
+  'alchemy.unknownCard': 'Carte introuvable dans ta collection',
+  'alchemy.wrongRarity':
+    'Toutes les cartes doivent être de la rareté du cran choisi',
+  'alchemy.variantNotAllowed':
+    'Seules les cartes normales peuvent être transmutées',
+  'alchemy.wouldLeaveZeroCopies':
+    "Impossible d'utiliser {{amount}} exemplaires — il t'en resterait 0 (tu en as {{quantity}})",
+  'alchemy.wrongTotal':
+    'La recette demande {{expected}} cartes, la sélection en contient {{got}}',
+  'alchemy.noTargetCard':
+    'Aucune carte disponible à la rareté obtenue pour le moment',
+
   // --- infra ---
   'httpClient.getFailed': 'Erreur lors de la récupération des données',
   'httpClient.postFailed': 'Erreur lors de l’envoi des données',
