@@ -21,6 +21,7 @@ import leaderboardEn from './locales/en/leaderboard.json'
 import levelEn from './locales/en/level.json'
 import machineEn from './locales/en/machine.json'
 import notificationsEn from './locales/en/notifications.json'
+import ordersEn from './locales/en/orders.json'
 import passivesEn from './locales/en/passives.json'
 import profileEn from './locales/en/profile.json'
 import questsEn from './locales/en/quests.json'
@@ -54,6 +55,7 @@ import leaderboardFr from './locales/fr/leaderboard.json'
 import levelFr from './locales/fr/level.json'
 import machineFr from './locales/fr/machine.json'
 import notificationsFr from './locales/fr/notifications.json'
+import ordersFr from './locales/fr/orders.json'
 import passivesFr from './locales/fr/passives.json'
 import profileFr from './locales/fr/profile.json'
 import questsFr from './locales/fr/quests.json'
@@ -376,6 +378,7 @@ void i18next.use(initReactI18next).init({
       level: levelFr,
       machine: machineFr,
       settings: settingsFr,
+      orders: ordersFr,
     },
     en: {
       about: aboutEn,
@@ -411,6 +414,7 @@ void i18next.use(initReactI18next).init({
       level: levelEn,
       machine: machineEn,
       settings: settingsEn,
+      orders: ordersEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -449,6 +453,7 @@ void i18next.use(initReactI18next).init({
     'level',
     'machine',
     'settings',
+    'orders',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les

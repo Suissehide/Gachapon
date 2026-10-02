@@ -1,0 +1,39 @@
+{
+  "page": {
+    "eyebrow": "Comptoir",
+    "title": "Commandes",
+    "subtitle": "Des clients cherchent des cartes. Livre-leur tes doublons contre de l'or, de la poussière et des jetons.",
+    "deliveriesLeft_one": "{{count}} livraison restante aujourd'hui",
+    "deliveriesLeft_other": "{{count}} livraisons restantes aujourd'hui"
+  },
+  "card": {
+    "clientWants": "{{name}} cherche…",
+    "line": "{{quantity}} × {{rarity}}",
+    "reward": "Récompense",
+    "deliver": "Livrer",
+    "dismiss": "Congédier",
+    "dismissFree": "Congédier (gratuit)",
+    "notDeliverable": "Tu n'as pas encore les doublons",
+    "nextClient": "Prochain client dans {{time}}",
+    "closedForToday": "Le comptoir est fermé pour aujourd'hui — reviens demain"
+  },
+  "deliver": {
+    "title": "Livrer la commande",
+    "subtitle": "Seuls tes doublons partent : tu gardes toujours un exemplaire.",
+    "lineProgress": "{{picked}} / {{quantity}}",
+    "available": "{{count}} en double",
+    "noCandidate": "Aucun doublon compatible",
+    "confirm": "Livrer",
+    "cancel": "Annuler"
+  },
+  "toasts": {
+    "deliveredTitle": "Commande livrée",
+    "deliveredMessage": "+{{dust}} poussière · +{{gold}} or · +{{tokens}} jetons",
+    "errorTitle": "Commande"
+  },
+  "apiTitles": {
+    "load": "Chargement des commandes",
+    "deliver": "Livraison",
+    "dismiss": "Congé du client"
+  }
+}

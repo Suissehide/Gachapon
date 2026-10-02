@@ -1,0 +1,39 @@
+{
+  "page": {
+    "eyebrow": "Counter",
+    "title": "Orders",
+    "subtitle": "Customers are looking for cards. Hand them your duplicates for gold, dust and tokens.",
+    "deliveriesLeft_one": "{{count}} delivery left today",
+    "deliveriesLeft_other": "{{count}} deliveries left today"
+  },
+  "card": {
+    "clientWants": "{{name}} is looking for…",
+    "line": "{{quantity}} × {{rarity}}",
+    "reward": "Reward",
+    "deliver": "Deliver",
+    "dismiss": "Dismiss",
+    "dismissFree": "Dismiss (free)",
+    "notDeliverable": "You don't have the duplicates yet",
+    "nextClient": "Next customer in {{time}}",
+    "closedForToday": "The counter is closed for today — come back tomorrow"
+  },
+  "deliver": {
+    "title": "Deliver the order",
+    "subtitle": "Only duplicates go: you always keep one copy.",
+    "lineProgress": "{{picked}} / {{quantity}}",
+    "available": "{{count}} spare",
+    "noCandidate": "No matching duplicate",
+    "confirm": "Deliver",
+    "cancel": "Cancel"
+  },
+  "toasts": {
+    "deliveredTitle": "Order delivered",
+    "deliveredMessage": "+{{dust}} dust · +{{gold}} gold · +{{tokens}} tokens",
+    "errorTitle": "Order"
+  },
+  "apiTitles": {
+    "load": "Loading orders",
+    "deliver": "Delivery",
+    "dismiss": "Dismissing customer"
+  }
+}
