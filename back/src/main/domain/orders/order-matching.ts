@@ -106,7 +106,7 @@ export function validateDelivery(
  */
 export function suggestPicks(
   lines: OrderLine[],
-  stacks: DuplicateStack[],
+  stacks: Omit<DuplicateStack, 'dropWeight'>[],
 ): DeliveryPick[] | null {
   const left = new Map(stacks.map((s) => [s.userCardId, s.available]))
   const order = lines

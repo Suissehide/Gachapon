@@ -208,7 +208,14 @@ export class OrdersDomain implements IOrdersDomain {
           cardId: true,
           quantity: true,
           variant: true,
-          card: { select: { rarity: true, element: true, setId: true } },
+          card: {
+            select: {
+              rarity: true,
+              element: true,
+              setId: true,
+              dropWeight: true,
+            },
+          },
         },
       }),
       tx.card.findMany({

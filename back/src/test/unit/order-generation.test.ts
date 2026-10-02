@@ -35,8 +35,8 @@ const pool: PoolCard[] = (
 )
 
 const dups: DuplicateStack[] = [
-  { userCardId: 'u1', cardId: 'RARE-WATER', rarity: 'RARE', element: 'WATER', setId: 's2', available: 2 },
-  { userCardId: 'u2', cardId: 'COMMON-FIRE', rarity: 'COMMON', element: 'FIRE', setId: 's1', available: 3 },
+  { userCardId: 'u1', cardId: 'RARE-WATER', rarity: 'RARE', element: 'WATER', setId: 's2', available: 2, dropWeight: 16 },
+  { userCardId: 'u2', cardId: 'COMMON-FIRE', rarity: 'COMMON', element: 'FIRE', setId: 's1', available: 3, dropWeight: 85 },
 ]
 
 const SEEDS = Array.from({ length: 300 }, (_, i) => i + 1)
@@ -62,6 +62,22 @@ describe('generateOrderLines', () => {
       const lines = generateOrderLines({ duplicates: dups, pool, maxOwnedRarity: 'RARE', feasible: true, rng: seeded(s) })
       expect(suggestPicks(lines, dups)).not.toBeNull()
     }
+  })
+
+  // Revue finale #3 : la graine d'une commande faisable est pondérée par
+  // dropWeight, comme une commande libre — les communes dominent.
+  it('pondère la rareté d’une commande faisable par dropWeight', () => {
+    const allRarities: DuplicateStack[] = pool
+      .filter((c) => c.element === 'FIRE')
+      .map((c) => ({ ...c, userCardId: `u-${c.id}`, cardId: c.id, available: 3 }))
+    const count: Record<string, number> = {}
+    for (const s of Array.from({ length: 2000 }, (_, i) => i + 1)) {
+      const [first] = generateOrderLines({ duplicates: allRarities, pool, maxOwnedRarity: 'LEGENDARY', feasible: true, rng: seeded(s) })
+      count[first!.rarity] = (count[first!.rarity] ?? 0) + 1
+    }
+    // Uniforme ≈ 20 % chacune ; pondéré 85/38/16/8/2 ≈ 57 % de communes, 1 % de légendaires.
+    expect(count.COMMON! / 2000).toBeGreaterThan(0.45)
+    expect((count.LEGENDARY ?? 0) / 2000).toBeLessThan(0.05)
   })
 
   it('plafonne la rareté d’une commande libre à la rareté max possédée', () => {

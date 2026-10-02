@@ -47,6 +47,7 @@ export type DuplicateStack = MatchableCard & {
   userCardId: string
   cardId: string
   available: number
+  dropWeight: number
 }
 
 export type PoolCard = MatchableCard & { id: string; dropWeight: number }

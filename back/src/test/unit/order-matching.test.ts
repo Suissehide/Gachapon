@@ -35,6 +35,7 @@ const stack = (
   rarity: 'RARE',
   element: 'WATER',
   setId: 's1',
+  dropWeight: 1,
   ...card,
 })
 

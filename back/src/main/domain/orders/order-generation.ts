@@ -37,7 +37,10 @@ const sameCriteria = (
   b: Omit<OrderLine, 'quantity'>,
 ) => a.rarity === b.rarity && a.element === b.element && a.setId === b.setId
 
-function weightedPick(cards: PoolCard[], rng: Rng): PoolCard {
+function weightedPick<T extends { dropWeight: number }>(
+  cards: T[],
+  rng: Rng,
+): T {
   const total = cards.reduce((s, c) => s + c.dropWeight, 0)
   let roll = rng() * total
   for (const c of cards) {
@@ -62,8 +65,8 @@ function feasibleLines(duplicates: DuplicateStack[], rng: Rng): OrderLine[] {
     if (usable.length === 0) {
       break
     }
-    // biome-ignore lint/style/noNonNullAssertion: usable non vide
-    const criteria = lineFromSeed(usable[pickIndex(usable.length, rng)]!, rng)
+    // Graine pondérée par dropWeight, comme une commande libre.
+    const criteria = lineFromSeed(weightedPick(usable, rng), rng)
     if (lines.some((l) => sameCriteria(l, criteria))) {
       break
     }
