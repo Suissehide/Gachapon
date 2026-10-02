@@ -154,8 +154,8 @@ export const SKILL_NODE_TEXT = {
   apexCollection: {
     nameFr: 'Apogée de Collection',
     nameEn: 'Collection Apex',
-    descriptionFr: 'Plus de cartes rares dans ta vitrine',
-    descriptionEn: 'More rare cards in your showcase',
+    descriptionFr: 'Plus de cartes rares au marché',
+    descriptionEn: 'More rare cards in the market',
   },
   collectionneur: {
     nameFr: 'Collectionneur',
@@ -166,8 +166,8 @@ export const SKILL_NODE_TEXT = {
   etalElargi: {
     nameFr: 'Étal élargi',
     nameEn: 'Expanded Stall',
-    descriptionFr: 'Cartes supplémentaires à la vitrine',
-    descriptionEn: 'Extra cards in the showcase',
+    descriptionFr: 'Cartes supplémentaires au marché',
+    descriptionEn: 'Extra cards in the market',
   },
   endurance: {
     nameFr: 'Endurance',

@@ -60,7 +60,7 @@ const FLOOR_SCALE = [2.5, 5.4, 9.5, 13.5, 26.5, 39.5, 45, 51, 59, 67.5] as const
  * `towerFloorLoot` lisait `FLOOR_SCALE` : durcir la tour aurait multiplié or,
  * poussière et XP par quatre au passage. Un rééquilibrage de difficulté n'a
  * pas à déplacer l'économie — celle-ci est réglée ailleurs, et son rythme
- * (packs d'énergie, vitrine, courbe d'XP) ne suppose pas que la tour
+ * (packs d'énergie, marché, courbe d'XP) ne suppose pas que la tour
  * se mette soudain à payer quatre fois plus.
  *
  * Conséquence voulue : la difficulté croît plus vite que le butin, donc

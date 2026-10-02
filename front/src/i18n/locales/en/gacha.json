@@ -98,11 +98,11 @@
       },
       "duplicates": {
         "title": "Duplicates & dust",
-        "text": "A duplicate is automatically turned into <dust>dust</dust>. That currency is spent in the showcase, on wishes and on upgrading your cards: no pull is ever wasted."
+        "text": "A duplicate is automatically turned into <dust>dust</dust>. That currency is spent in the market, on wishes and on upgrading your cards: no pull is ever wasted."
       },
       "shop": {
         "title": "Shop",
-        "text": "Spend your <dust>dust</dust> in the showcase to target specific cards, or keep the cards of your dreams as wishes to buy them outright. The shop also offers <token>token</token> packs and <energy>energy</energy> refills."
+        "text": "Spend your <dust>dust</dust> in the market to target specific cards, or keep the cards of your dreams as wishes to buy them outright. The shop also offers <token>token</token> packs and <energy>energy</energy> refills."
       },
       "campaign": {
         "title": "Team & campaign",

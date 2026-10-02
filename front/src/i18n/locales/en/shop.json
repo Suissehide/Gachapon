@@ -18,7 +18,7 @@
       "loadItems": "Error loading the items",
       "purchase": "Error during the purchase",
       "loadMachines": "Error loading the machines",
-      "loadDailyShop": "Error loading the showcase"
+      "loadDailyShop": "Error loading the market"
     }
   },
   "toasts": {
@@ -38,7 +38,7 @@
   },
   "sections": {
     "wishlistTitle": "Wishes",
-    "dailyShopTitle": "Showcase",
+    "dailyShopTitle": "Market",
     "nextRefreshIn": "New pull in",
     "noCardAvailable": "No card available",
     "noItemAvailable": "No item available yet",

@@ -27,7 +27,7 @@
     "eyebrow": "Variants",
     "titleLine1": "Same card,",
     "titleHighlight": "three finishes.",
-    "description": "From rare upwards, a card can drop holographic or brilliant instead of standard. Duplicates aren't wasted: they turn into dust, which buys the cards you're missing in the showcase.",
+    "description": "From rare upwards, a card can drop holographic or brilliant instead of standard. Duplicates aren't wasted: they turn into dust, which buys the cards you're missing in the market.",
     "variants": {
       "standard": {
         "name": "Standard",
@@ -78,7 +78,7 @@
     "dust": {
       "before": "Duplicates turn into",
       "dustTerm": "dust",
-      "middle": ", which you spend in the showcase on specific cards, or on your skill tree. A",
+      "middle": ", which you spend in the market on specific cards, or on your skill tree. A",
       "pityTerm": "pity",
       "after": "counter makes sure bad luck runs out: go too long without a rare card and the next one is guaranteed."
     },

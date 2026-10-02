@@ -18,7 +18,7 @@
       "loadItems": "Erreur lors de la récupération des articles",
       "purchase": "Erreur lors de l'achat",
       "loadMachines": "Erreur lors de la récupération des machines",
-      "loadDailyShop": "Erreur lors de la récupération de la vitrine"
+      "loadDailyShop": "Erreur lors de la récupération du marché"
     }
   },
   "toasts": {
@@ -38,7 +38,7 @@
   },
   "sections": {
     "wishlistTitle": "Vœux",
-    "dailyShopTitle": "Vitrine",
+    "dailyShopTitle": "Marché",
     "nextRefreshIn": "Nouveau tirage dans",
     "noCardAvailable": "Aucune carte disponible",
     "noItemAvailable": "Aucun article disponible pour l'instant",

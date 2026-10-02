@@ -97,7 +97,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'shop.energyPackMissingCombatPoints':
     'ENERGY_PACK item value has no positive integer combatPoints',
   'dailyShop.notEnoughActiveCards':
-    'Not enough active cards to generate the showcase',
+    'Not enough active cards to generate the market',
   'dailyShop.itemAlreadyPurchased': 'Item already purchased',
   'wishlist.cardNotFoundOrInactive': 'Card not found or set is inactive',
   'wishlist.full': 'Wishlist full ({{slots}} slots)',

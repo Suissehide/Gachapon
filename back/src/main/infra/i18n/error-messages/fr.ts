@@ -116,7 +116,7 @@ export const FR_MESSAGES = {
   'shop.energyPackMissingCombatPoints':
     'La valeur de l’ENERGY_PACK n’a pas d’entier positif de points de combat',
   'dailyShop.notEnoughActiveCards':
-    'Pas assez de cartes actives pour générer la vitrine',
+    'Pas assez de cartes actives pour générer le marché',
   'dailyShop.itemAlreadyPurchased': 'Article déjà acheté',
   'wishlist.cardNotFoundOrInactive': 'Carte introuvable ou set inactif',
   'wishlist.full': 'Wishlist pleine ({{slots}} emplacements)',
