@@ -5,8 +5,8 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { NotificationDot } from '../notifications/NotificationDot.tsx'
 
-// Tailwind JIT: these strings must appear literally in source
-export const itemDelays = ['80ms', '125ms', '170ms', '215ms', '260ms', '305ms']
+/** Délai d'entrée échelonné d'une ligne du menu (80 ms, puis +45 ms par ligne). */
+const staggerDelay = (index: number) => `${80 + index * 45}ms`
 
 export const dotGradients = [
   'from-primary-light to-primary',
@@ -139,7 +139,7 @@ export function MobileNavLink({
         transition-[opacity,transform] duration-300 ease-spring-pop
         [&.active]:text-primary [&.active]:font-semibold
         ${open ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}
-      style={{ transitionDelay: itemDelays[index % itemDelays.length] }}
+      style={{ transitionDelay: staggerDelay(index) }}
     >
       <span
         className={`w-4 h-4 rounded-full shrink-0 bg-linear-to-br ${dotGradients[index % 3]}`}
@@ -152,6 +152,28 @@ export function MobileNavLink({
         ) : null}
       </span>
     </Link>
+  )
+}
+
+/** Titre de section (non repliable) du menu mobile, animé comme les lignes */
+export function MobileNavHeading({
+  label,
+  index,
+  open,
+}: {
+  label: string
+  index: number
+  open: boolean
+}) {
+  return (
+    <span
+      className={`px-2 pt-4 pb-1 font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light/60
+        transition-[opacity,transform] duration-300 ease-spring-pop
+        ${open ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}
+      style={{ transitionDelay: staggerDelay(index) }}
+    >
+      {label}
+    </span>
   )
 }
 
@@ -178,7 +200,7 @@ export function MobileNavAnchor({
       className={`flex items-center gap-4 px-2 py-3 rounded-xl text-text-light hover:text-text
         transition-[opacity,transform] duration-300 ease-spring-pop
         ${open ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}
-      style={{ transitionDelay: itemDelays[index % itemDelays.length] }}
+      style={{ transitionDelay: staggerDelay(index) }}
     >
       <span
         className={`w-4 h-4 rounded-full shrink-0 bg-linear-to-br ${dotGradients[index % 3]}`}

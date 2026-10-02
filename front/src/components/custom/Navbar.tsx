@@ -1,13 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import {
-  ArrowRight,
-  Coins,
-  Lock,
-  LogOut,
-  Sparkles,
-  Ticket,
-  Zap,
-} from 'lucide-react'
+import { ArrowRight, Coins, LogOut, Sparkles, Ticket, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -18,7 +10,6 @@ import { useTokenBalance } from '../../queries/useGacha.ts'
 import { useOrders } from '../../queries/useOrders.ts'
 import type { AuthUser } from '../../stores/auth.store'
 import { useAuthStore, useIsGuest } from '../../stores/auth.store'
-import { NotificationDot } from '../notifications/NotificationDot.tsx'
 import { NotificationsBadge } from '../notifications/NotificationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
 import { LocaleSwitcher } from '../shared/LocaleSwitcher.tsx'
@@ -27,9 +18,11 @@ import { Button } from '../ui/button.tsx'
 import {
   CapsuleIcon,
   MobileMenuShell,
+  MobileNavHeading,
   MobileNavLink,
   useMobileMenu,
 } from './MobileMenu.tsx'
+import { NavGroup, type NavGroupDef, type NavItem } from './NavGroup.tsx'
 
 const tabClass =
   'relative whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span:last-child]:bg-linear-to-r [&.active>span:last-child]:from-primary [&.active>span:last-child]:to-secondary'
@@ -37,26 +30,7 @@ const tabClass =
 export function Navbar() {
   const { t } = useTranslation(['layout', 'combat', 'home', 'guest'])
 
-  const navItemsBeforeProfile = [
-    { to: '/play', label: t('layout:appNav.play') },
-    { to: '/collection', label: t('layout:appNav.collection') },
-    { to: '/orders', label: t('layout:appNav.orders') },
-    { to: '/equipment', label: t('layout:appNav.equipment') },
-    { to: '/campaign', label: t('combat:teamLabel.campaign') },
-    { to: '/tower', label: t('layout:appNav.tower') },
-    { to: '/skills', label: t('layout:admin.nav.skills') },
-  ] as const
-
   const isGuest = useIsGuest()
-
-  const navItemsAfterProfile = [
-    { to: '/shop', label: t('layout:admin.nav.shop') },
-    { to: '/leaderboard', label: t('layout:appNav.leaderboard') },
-    { to: '/team', label: t('home:community.teams.title'), locked: isGuest },
-  ] as const
-
-  const navItems = [...navItemsBeforeProfile, ...navItemsAfterProfile]
-
   const user = useAuthStore((s) => s.user)
   const { data: orders } = useOrders({ enabled: Boolean(user) })
   // Le cap journalier ne se voit pas dans `deliverable` (le serveur l'ignore
@@ -66,6 +40,68 @@ export function Navbar() {
     orders && orders.deliveriesLeft > 0
       ? orders.slots.filter((s) => s.order?.deliverable).length
       : 0
+
+  // Source unique de la navigation : barre desktop (déroulants) et menu
+  // mobile (sections) lisent tous deux ce tableau.
+  const playItem: NavItem = { to: '/play', label: t('layout:appNav.play') }
+  const navGroups: NavGroupDef[] = [
+    {
+      id: 'collection',
+      label: t('layout:appNav.groups.collection'),
+      items: [
+        { to: '/collection', label: t('layout:appNav.collection') },
+        { to: '/equipment', label: t('layout:appNav.equipment') },
+        {
+          to: '/skills',
+          label: t('layout:admin.nav.skills'),
+          badge: user?.skillPoints ?? 0,
+        },
+      ],
+    },
+    {
+      id: 'combat',
+      label: t('layout:appNav.groups.combat'),
+      items: [
+        { to: '/campaign', label: t('combat:teamLabel.campaign') },
+        { to: '/tower', label: t('layout:appNav.tower') },
+      ],
+    },
+    {
+      id: 'commerce',
+      label: t('layout:appNav.groups.commerce'),
+      items: [
+        { to: '/shop', label: t('layout:admin.nav.shop') },
+        {
+          to: '/orders',
+          label: t('layout:appNav.orders'),
+          badge: deliverableOrders,
+        },
+      ],
+    },
+    {
+      id: 'social',
+      label: t('layout:appNav.groups.social'),
+      items: [
+        {
+          to: '/team',
+          label: t('home:community.teams.title'),
+          locked: isGuest,
+        },
+        { to: '/leaderboard', label: t('layout:appNav.leaderboard') },
+      ],
+    },
+  ]
+
+  // Entrées du menu mobile dans l'ordre d'affichage (titres de section
+  // compris), pour un index d'animation continu.
+  const mobileEntries = [
+    { kind: 'link' as const, item: playItem },
+    ...navGroups.flatMap((g) => [
+      { kind: 'heading' as const, id: g.id, label: g.label },
+      ...g.items.map((item) => ({ kind: 'link' as const, item })),
+    ]),
+  ]
+
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
   const { menuOpen, setMenuOpen, closeMenu } = useMobileMenu()
@@ -154,42 +190,15 @@ export function Navbar() {
           {/* Row 2 — navigation tabs + logout */}
           <div className="flex items-stretch justify-between border-t border-text/[0.07] px-[26px]">
             <nav className="flex items-stretch gap-[2px]">
-              {navItemsBeforeProfile.map((item) => (
-                <Link key={item.label} to={item.to} className={tabClass}>
-                  <span className="relative">
-                    {item.label}
-                    {item.to === '/skills' && (
-                      <NotificationDot
-                        count={user?.skillPoints ?? 0}
-                        className="-right-5 -top-2"
-                      />
-                    )}
-                    {item.to === '/orders' && (
-                      <NotificationDot
-                        count={deliverableOrders}
-                        className="-right-5 -top-2"
-                      />
-                    )}
-                  </span>
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
-                  />
-                </Link>
-              ))}
-              {navItemsAfterProfile.map((item) => (
-                <Link key={item.label} to={item.to} className={tabClass}>
-                  <span className="inline-flex items-center gap-1.5">
-                    {item.label}
-                    {'locked' in item && item.locked && (
-                      <Lock className="h-3 w-3 text-text-light" />
-                    )}
-                  </span>
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
-                  />
-                </Link>
+              <Link to={playItem.to} className={tabClass}>
+                <span className="relative">{playItem.label}</span>
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
+                />
+              </Link>
+              {navGroups.map((group) => (
+                <NavGroup key={group.id} group={group} tabClass={tabClass} />
               ))}
             </nav>
             <div className="flex items-center gap-3 self-center">
@@ -227,28 +236,31 @@ export function Navbar() {
         onClose={closeMenu}
         topOffset="var(--topbar-h)"
       >
-        {navItems.map((item, i) => (
-          <MobileNavLink
-            key={item.to}
-            to={item.to}
-            label={item.label}
-            index={i}
-            open={menuOpen}
-            onClick={closeMenu}
-            badgeCount={
-              item.to === '/skills'
-                ? (user?.skillPoints ?? 0)
-                : item.to === '/orders'
-                  ? deliverableOrders
-                  : undefined
-            }
-            locked={'locked' in item && item.locked}
-          />
-        ))}
+        {mobileEntries.map((entry, i) =>
+          entry.kind === 'heading' ? (
+            <MobileNavHeading
+              key={entry.id}
+              label={entry.label}
+              index={i}
+              open={menuOpen}
+            />
+          ) : (
+            <MobileNavLink
+              key={entry.item.to}
+              to={entry.item.to}
+              label={entry.item.label}
+              index={i}
+              open={menuOpen}
+              onClick={closeMenu}
+              badgeCount={entry.item.badge}
+              locked={entry.item.locked}
+            />
+          ),
+        )}
 
         <div
           className={`mt-1 flex items-center justify-between border-t border-border/60 pt-3 transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
-          style={{ transitionDelay: `${navItems.length * 45 + 120}ms` }}
+          style={{ transitionDelay: `${mobileEntries.length * 45 + 120}ms` }}
         >
           <span className="px-2 text-sm font-semibold uppercase tracking-wide text-text-light/60">
             {t('layout:appNav.languageLabel')}
@@ -259,7 +271,7 @@ export function Navbar() {
         {user && (
           <div
             className={`mt-1 flex items-center justify-between border-t border-border/60 pt-1 transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
-            style={{ transitionDelay: `${navItems.length * 45 + 160}ms` }}
+            style={{ transitionDelay: `${mobileEntries.length * 45 + 160}ms` }}
           >
             <Link
               to="/profile/$username"

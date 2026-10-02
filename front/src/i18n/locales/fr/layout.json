@@ -73,6 +73,12 @@
     "goldTitle": "Or — {{amount}}",
     "tokensTitle": "Jetons — {{current}}/{{max}}",
     "energyTitle": "Énergie — {{current}}/{{max}}",
+    "groups": {
+      "collection": "Collection",
+      "combat": "Combat",
+      "commerce": "Commerce",
+      "social": "Social"
+    },
     "nextInSuffix": " · prochain dans {{timer}}"
   },
   "localeSwitcher": {
