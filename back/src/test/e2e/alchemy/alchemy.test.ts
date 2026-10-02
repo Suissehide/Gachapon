@@ -226,6 +226,7 @@ describe('Alchemy routes', () => {
       picks: [{ userCardId: otherStack.id, amount: 5 }],
     })
     expect(foreignCard.statusCode).toBe(400)
+    expect((await prisma.userCard.findUnique({ where: { id: otherStack.id } })).quantity).toBe(6)
 
     const zeroAmount = await transmute(cookie, {
       fromRarity: 'COMMON',
