@@ -46,7 +46,11 @@
     "available": "{{count}} en double",
     "noCandidate": "Aucun doublon compatible",
     "confirm": "Livrer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "add": "Ajouter un exemplaire de {{name}}",
+    "remove": "Retirer un exemplaire de {{name}}",
+    "auto": "Auto-sélectionner",
+    "clear": "Vider"
   },
   "toasts": {
     "deliveredTitle": "Commande livrée",

@@ -3,10 +3,11 @@ import { Clock, Coins, Sparkles, Ticket, UserX } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 
-import type { CardRarity } from '../../constants/card.constant.ts'
-import type {
-  OrderLineView,
-  OrderView,
+import {
+  ORDER_RARITY_DOT,
+  type OrderLineView,
+  type OrderView,
+  orderLineLabel,
 } from '../../constants/orders.constant.ts'
 import { cn } from '../../libs/utils.ts'
 import {
@@ -18,15 +19,6 @@ import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { ConfirmPopup } from '../team/ConfirmPopup.tsx'
 import { Button } from '../ui/button.tsx'
 import { DeliverPopup } from './DeliverPopup.tsx'
-
-// Littéraux complets : Tailwind ne voit pas les classes construites.
-const RARITY_DOT: Record<CardRarity, string> = {
-  COMMON: 'bg-rarity-common',
-  UNCOMMON: 'bg-rarity-uncommon',
-  RARE: 'bg-rarity-rare',
-  EPIC: 'bg-rarity-epic',
-  LEGENDARY: 'bg-rarity-legendary',
-}
 
 // Couleurs de monnaie = celles des pastilles de la navbar (Wallet/TokensPill).
 const CURRENCY_COLOR = {
@@ -49,15 +41,6 @@ export function formatWait(t: TFunction, minutes: number) {
   return t('orders:duration.hoursMinutes', { h, m })
 }
 
-const lineLabel = (t: TFunction, line: OrderLineView) =>
-  [
-    t(`common:rarity.${line.rarity.toLowerCase()}`),
-    line.element && t(`common:elements.${line.element.toLowerCase()}`),
-    line.setName,
-  ]
-    .filter(Boolean)
-    .join(' · ')
-
 const owned = (line: OrderLineView) =>
   Math.min(
     line.candidates.reduce((s, c) => s + c.available, 0),
@@ -78,7 +61,7 @@ function blockedHint(t: TFunction, order: OrderView, deliveriesLeft: number) {
   if (missing.length === 1 && first) {
     return t('orders:card.hintMissing', {
       count: first.quantity - owned(first),
-      label: lineLabel(t, first),
+      label: orderLineLabel(t, first),
     })
   }
   return t('orders:card.hintMissingMany', {
@@ -159,10 +142,10 @@ export function OrderRow({
                 <i
                   className={cn(
                     'h-2.5 w-2.5 shrink-0 rounded-[3px]',
-                    RARITY_DOT[line.rarity],
+                    ORDER_RARITY_DOT[line.rarity],
                   )}
                 />
-                {lineLabel(t, line)}
+                {orderLineLabel(t, line)}
                 <span
                   className={cn(
                     'rounded-[7px] border px-[7px] py-0.5 font-mono text-[13px] font-bold',

@@ -46,7 +46,11 @@
     "available": "{{count}} spare",
     "noCandidate": "No matching duplicate",
     "confirm": "Deliver",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "add": "Add one copy of {{name}}",
+    "remove": "Remove one copy of {{name}}",
+    "auto": "Auto-select",
+    "clear": "Clear"
   },
   "toasts": {
     "deliveredTitle": "Order delivered",
