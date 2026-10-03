@@ -173,7 +173,7 @@ export function Cauldron({
         <Button
           type="button"
           variant="amber"
-          className="h-[54px] w-full flex-none rounded-[14px] text-[17px] text-foreground"
+          className="h-[54px] w-full flex-none rounded-[14px] text-[17px]"
           disabled={!full || pending}
           onClick={onTransmute}
         >

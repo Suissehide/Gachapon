@@ -89,7 +89,7 @@ function AlchemyPage() {
     tiers.find((tier) => tier.fromRarity === activeFromRarity) ?? defaultTier
 
   return (
-    <PageShell width="wide">
+    <PageShell>
       <PageHeader
         eyebrow={t('alchemy:page.eyebrow')}
         title={t('alchemy:page.title')}
@@ -101,7 +101,7 @@ function AlchemyPage() {
           <SegmentedControl
             wrap
             className="w-fit max-w-full gap-1.5 rounded-2xl bg-card/70 p-[5px]"
-            optionClassName="group h-[42px] gap-2 rounded-xl px-3.5 text-[15px] font-bold aria-pressed:border-transparent aria-pressed:bg-card aria-pressed:shadow-[0_1px_0_rgba(27,23,38,0.05),0_6px_16px_-8px_rgba(27,23,38,0.2)]"
+            optionClassName="group h-[42px] gap-1.5 rounded-xl px-3 text-[15px] font-bold aria-pressed:border-transparent aria-pressed:bg-card aria-pressed:shadow-[0_1px_0_rgba(27,23,38,0.05),0_6px_16px_-8px_rgba(27,23,38,0.2)]"
             options={tiers.map((tier) => ({
               value: tier.fromRarity,
               label: (
@@ -186,7 +186,7 @@ function Workbench({
     }))
 
   return (
-    <div className="grid items-start gap-6 min-[960px]:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid items-start gap-6 min-[960px]:grid-cols-[minmax(0,1fr)_340px]">
       <DuplicatesPanel
         tier={tier}
         amounts={amounts}
