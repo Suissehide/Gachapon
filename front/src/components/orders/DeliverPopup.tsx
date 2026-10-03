@@ -1,5 +1,5 @@
 import { PackageCheck, WandSparkles } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -44,8 +44,28 @@ const fromPicks = (picks: DeliveryPick[] | null) =>
 export function DeliverPopup({ order, open, onOpenChange }: Props) {
   const { t } = useTranslation(['orders', 'common'])
   const deliver = useDeliverOrder()
-  const [amounts, setAmounts] = useState<Record<string, number>>(() =>
+  const [rawAmounts, setAmounts] = useState<Record<string, number>>(() =>
     fromPicks(order.suggestedPicks),
+  )
+
+  // La popup reste montée dans la ligne, qui peut changer de commande (tri,
+  // rafraîchissement) : on repart de la suggestion à chaque ouverture.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on ne réinitialise qu'à l'ouverture ou au changement de commande, pas à chaque refetch
+  useEffect(() => {
+    if (open) {
+      setAmounts(fromPicks(order.suggestedPicks))
+    }
+  }, [open, order.id])
+
+  // Ne compte que les cartes encore candidates de leur ligne : une sélection
+  // périmée ne peut ni gonfler un compteur ni partir au serveur.
+  const amounts = Object.fromEntries(
+    Object.entries(rawAmounts).filter(([k]) => {
+      const [lineIndex, userCardId] = k.split(':')
+      return order.lines[Number(lineIndex)]?.candidates.some(
+        (c) => c.userCardId === userCardId,
+      )
+    }),
   )
 
   const usedByCard = (userCardId: string) =>
