@@ -529,8 +529,8 @@ export const CARDS = [
  * Le set qui contient les 38 cartes ci-dessus.
  */
 export const HUMAN_CARD_SET = {
-  nameFr: 'Royaume des Humains',
-  nameEn: 'Kingdom of Humans',
+  nameFr: 'Humains',
+  nameEn: 'Humans',
   descriptionFr:
     'Le set des Humains du Gachapon. 38 combattants à collectionner, de la paysanne au roi.',
   descriptionEn:

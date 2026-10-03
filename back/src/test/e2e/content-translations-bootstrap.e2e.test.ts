@@ -255,7 +255,7 @@ describe('backfill des traductions au démarrage', () => {
   // `nameFr` via `findByNameFr` (couverture unitaire dédiée par ailleurs,
   // voir `content-translations-find-by-name-fr.test.ts`, dont le cas
   // d'ambiguïté). Ce test-ci prouve le chemin d'écriture de bout en bout sur
-  // le contenu réel : `HUMAN_CARD_SET.nameFr` (« Royaume des Humains ») n'est
+  // le contenu réel : `HUMAN_CARD_SET.nameFr` (« Humains ») n'est
   // utilisé par aucun autre fichier e2e (vérifié par recherche), donc pas de
   // risque de collision comme il y en aurait sur ShopItem/SkillBranch (voir
   // le rapport de tâche : `shop.test.ts` crée déjà des ShopItem nommés

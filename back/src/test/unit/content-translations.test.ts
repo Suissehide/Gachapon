@@ -152,7 +152,7 @@ describe('traductions du contenu — cartes', () => {
     expect(copied.map((c) => c.id)).toEqual([])
   })
 
-  it('traduit le set Royaume des Humains', () => {
+  it('traduit le set Humains', () => {
     expectBothLanguages(
       'HUMAN_CARD_SET.name',
       HUMAN_CARD_SET.nameFr,

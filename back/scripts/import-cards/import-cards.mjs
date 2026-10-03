@@ -165,8 +165,8 @@ async function ensureSet(folder) {
   const { sets } = await api('GET', '/admin/sets')
   // Comparaison sur `nameFr`, la colonne, et NON sur `name`, le champ calculé :
   // celui-ci est résolu dans la locale par défaut (EN), si bien que le set
-  // « Royaume des Humains » posé par le seed se présente comme
-  // « Kingdom of Humans » — le comparer au nom français créait un doublon.
+  // « Humains » posé par le seed se présente comme
+  // « Humans » — le comparer au nom français créait un doublon.
   const existing = (sets ?? []).find((s) => s.nameFr === setName)
   if (existing) {
     console.log(`  set « ${setName} » déjà présent (${existing.id})`)
