@@ -71,7 +71,6 @@ export function DuplicatesPanel({ tier, amounts, picked, onBump }: Props) {
                     imageUrl={c.imageUrl}
                     variant="NORMAL"
                     element={c.element}
-                    level={c.level}
                   />
                   {mine > 0 && (
                     <span className="absolute -top-2 -right-2 z-[6] grid h-8 min-w-8 place-items-center rounded-full bg-primary px-[9px] font-display text-[15px] font-extrabold text-foreground shadow-[0_0_0_3px_var(--card),0_6px_14px_-4px_rgba(245,158,11,0.7)]">

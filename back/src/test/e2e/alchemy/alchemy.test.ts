@@ -131,7 +131,7 @@ describe('Alchemy routes', () => {
 
     const common = tiers.find((t: any) => t.fromRarity === 'COMMON')
     expect(common.maxTransmutations).toBe(1)
-    expect(common.candidates[0]).toMatchObject({ level: 1, setName: expect.any(String), available: 7 })
+    expect(common.candidates[0]).toMatchObject({ setName: expect.any(String), available: 7 })
     expect(common.suggestedPicks).not.toBeNull()
     const total = common.suggestedPicks.reduce((s: number, p: any) => s + p.amount, 0)
     expect(total).toBe(5)

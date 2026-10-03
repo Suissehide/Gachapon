@@ -76,7 +76,6 @@ export class AlchemyDomain implements IAlchemyDomain {
         imageUrl: u.card.imageUrl,
         rarity: u.card.rarity,
         element: u.card.element,
-        level: u.level,
         setName: u.card.set.name,
         available: u.quantity - 1,
       }))

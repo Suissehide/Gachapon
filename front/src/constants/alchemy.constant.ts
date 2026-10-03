@@ -12,7 +12,6 @@ export type AlchemyStack = {
   imageUrl: string | null
   rarity: CardRarity
   element: CardElement | null
-  level: number
   setName: string
   available: number
 }
