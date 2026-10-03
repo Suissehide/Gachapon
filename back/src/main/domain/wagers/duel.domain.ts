@@ -815,7 +815,6 @@ export class DuelDomain implements IDuelDomain {
 
     const outcome = await retryOnSerialization<SettleOutcome>(() =>
       this.#postgresOrm.executeWithTransactionClient(
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: verdict + transfert + détachement d'équipement, motif calqué sur tower.domain#fight
         async (tx) => {
           const duel = await tx.duel.findUnique({ where: { id: duelId } })
           if (!duel || duel.status !== 'ACTIVE') {
@@ -869,35 +868,20 @@ export class DuelDomain implements IDuelDomain {
             return null
           }
 
-          let winnerId: string | null = null
-          let loserId: string | null = null
-          let loserPulls: PullWithRarity[] = []
-          if (verdict === 'CHALLENGER') {
-            winnerId = duel.challengerId
-            loserId = duel.opponentId
-            loserPulls = opponentPulls
-          } else if (verdict === 'OPPONENT') {
-            winnerId = duel.opponentId
-            loserId = duel.challengerId
-            loserPulls = challengerPulls
-          }
           // TIE : winnerId reste null, loserPulls reste vide — aucun transfert.
-
-          let transferredCount = 0
-          if (winnerId !== null && loserId !== null) {
-            for (const pull of loserPulls) {
-              const transferred = await this.#transferPull(
-                tx,
-                duel.id,
-                loserId,
-                winnerId,
-                pull,
-              )
-              if (transferred) {
-                transferredCount += 1
-              }
-            }
-          }
+          const { winnerId, loserId, loserPulls } = duelSides(
+            verdict,
+            duel,
+            challengerPulls,
+            opponentPulls,
+          )
+          const transferredCount = await this.#transferLoserPulls(
+            tx,
+            duel.id,
+            loserId,
+            winnerId,
+            loserPulls,
+          )
 
           await tx.duel.update({
             where: { id: duel.id },
@@ -965,6 +949,36 @@ export class DuelDomain implements IDuelDomain {
           ),
       )
     }
+  }
+
+  /**
+   * Transfère, un par un, les tirages du perdant au vainqueur. Rien sur une
+   * égalité. Renvoie le nombre de cartes effectivement transférées.
+   */
+  async #transferLoserPulls(
+    tx: PrimaTransactionClient,
+    duelId: string,
+    loserId: string | null,
+    winnerId: string | null,
+    loserPulls: PullWithRarity[],
+  ): Promise<number> {
+    if (winnerId === null || loserId === null) {
+      return 0
+    }
+    let transferredCount = 0
+    for (const pull of loserPulls) {
+      const transferred = await this.#transferPull(
+        tx,
+        duelId,
+        loserId,
+        winnerId,
+        pull,
+      )
+      if (transferred) {
+        transferredCount += 1
+      }
+    }
+    return transferredCount
   }
 
   /**
@@ -1173,4 +1187,32 @@ export class DuelDomain implements IDuelDomain {
       myRole,
     }
   }
+}
+
+/** Vainqueur, perdant et tirages à transférer selon le verdict. */
+function duelSides(
+  verdict: NonNullable<ReturnType<typeof duelVerdict>>,
+  duel: { challengerId: string; opponentId: string },
+  challengerPulls: PullWithRarity[],
+  opponentPulls: PullWithRarity[],
+): {
+  winnerId: string | null
+  loserId: string | null
+  loserPulls: PullWithRarity[]
+} {
+  if (verdict === 'CHALLENGER') {
+    return {
+      winnerId: duel.challengerId,
+      loserId: duel.opponentId,
+      loserPulls: opponentPulls,
+    }
+  }
+  if (verdict === 'OPPONENT') {
+    return {
+      winnerId: duel.opponentId,
+      loserId: duel.challengerId,
+      loserPulls: challengerPulls,
+    }
+  }
+  return { winnerId: null, loserId: null, loserPulls: [] }
 }

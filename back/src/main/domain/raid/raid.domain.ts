@@ -20,6 +20,7 @@ import type {
 import type { TeamWithMembers } from '../../types/domain/team/team.types'
 import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type {
   IRaidRepository,
   RaidTierWithReward,
@@ -29,7 +30,10 @@ import type { StorageClientInterface } from '../../types/infra/storage/storage-c
 import type { Logger } from '../../types/utils/logger'
 import { unitPower } from '../campaign/campaign-power'
 import { resolveEnemyImageUrl } from '../campaign/enemy-appearance'
-import { simulateBattle } from '../combat/battle-simulator.domain'
+import {
+  type SimulatorUnit,
+  simulateBattle,
+} from '../combat/battle-simulator.domain'
 import type { CombatStatsBaseline } from '../combat/combat-stats.domain'
 import type { CombatTeamTx } from '../combat/combat-team.tx'
 import { RAID_TEAM_KEY } from '../combat/combat-team-keys'
@@ -192,7 +196,6 @@ export class RaidDomain implements IRaidDomain {
 
     const outcome = await retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: motif calqué sur tower.domain#fight
         async (tx): Promise<RaidAttackResult> => {
           const raid = await tx.teamRaid.findUnique({
             where: { id: raidId },
@@ -216,42 +219,20 @@ export class RaidDomain implements IRaidDomain {
             throw Boom.tooManyRequests(errorMessage('raid.noAttacksLeftToday'))
           }
 
-          const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
+          const { userCardIds, teamUnits } = await this.#buildPlayerTeam(
             tx,
             userId,
-            RAID_TEAM_KEY,
+            {
+              defMitigationRef: cfg['combat.defMitigationRef'],
+              baseStats,
+              setDefs,
+            },
           )
-          if (userCardIds.length === 0) {
-            throw Boom.badRequest(errorMessage('combat.noTeamComposed'))
-          }
-          const teamUnits = await buildPlayerSimUnits(tx, {
-            userId,
-            userCardIds,
-            defMitigationRef: cfg['combat.defMitigationRef'],
-            baseStats,
-            setDefs,
-            publicUrl: (key) => this.#storageClient.publicUrl(key),
-          })
-          if (teamUnits.length === 0) {
-            throw Boom.badRequest(errorMessage('combat.cardsNotOwnedByPlayer'))
-          }
 
-          const spec = enemySpecSchema.parse(raid.boss.spec)
-          const [bossUnit] = buildEnemySimUnits([spec], {
+          const bossUnit = this.#buildBossUnit(raid.boss, {
             defMitigationRef: cfg['combat.defMitigationRef'],
             baseStats,
-            resolveImage: (appearance) =>
-              resolveEnemyImageUrl(
-                appearance,
-                (key) => this.#storageClient.publicUrl(key),
-                this.#config.isDevelopment ? 'staging/' : '',
-              ),
           })
-          if (!bossUnit) {
-            throw Boom.badImplementation(errorMessage('raid.invalidBossSpec'))
-          }
-          bossUnit.hp = RAID_BOSS_SIM_HP
-          bossUnit.name = raid.boss.name
 
           const seed = `${userId}:raid:${raid.id}:${now.getTime()}`
           const sim = simulateBattle({
@@ -282,44 +263,12 @@ export class RaidDomain implements IRaidDomain {
             data: { raidId: raid.id, userId, damage, seed, userCardIds },
           })
 
-          const tiers = await tx.raidTier.findMany({
-            where: { level: raid.level },
-            include: { reward: true },
-            orderBy: { pct: 'asc' },
-          })
-          const before = crossedTiers(raid.maxHp - hpBefore, raid.maxHp, tiers)
-          const after = crossedTiers(raid.maxHp - hpAfter, raid.maxHp, tiers)
-          if (after.length > 0) {
-            const participants = await tx.raidAttack.findMany({
-              where: { raidId: raid.id },
-              distinct: ['userId'],
-              select: { userId: true },
-            })
-            // Clé sur le RAID (raid.id), qui est unique par équipe ET par
-            // semaine : les lots de palier se gagnent DANS une équipe, donc un
-            // joueur qui joue le raid de plusieurs équipes les gagne dans
-            // chacune. Le plafond d'équipes par joueur (MAX_TEAMS_PER_USER,
-            // team.domain.ts) borne volontairement ce cumul — c'est lui le
-            // levier, pas la clé. Avec la contrainte unique
-            // [userId, source, sourceId], un palier donné d'un raid donné
-            // n'est jamais versé deux fois, et un joueur arrivé après coup
-            // reçoit d'un coup tous les paliers déjà franchis.
-            await tx.userReward.createMany({
-              data: participants.flatMap((p) =>
-                after.map((t) => ({
-                  userId: p.userId,
-                  rewardId: t.rewardId,
-                  source: 'RAID' as const,
-                  sourceId: `${raid.id}:${t.pct}`,
-                })),
-              ),
-              skipDuplicates: true,
-            })
-          }
-          const beforePcts = new Set(before.map((t) => t.pct))
-          const newTiers = after
-            .filter((t) => !beforePcts.has(t.pct))
-            .map((t) => tierView(t, true))
+          const newTiers = await this.#grantCrossedTiers(
+            tx,
+            raid,
+            hpBefore,
+            hpAfter,
+          )
 
           return {
             log: sim.log,
@@ -359,6 +308,112 @@ export class RaidDomain implements IRaidDomain {
     }
 
     return outcome
+  }
+
+  /**
+   * Équipe de raid du joueur, prête pour la simulation. Refuse une équipe
+   * vide ou dont aucune carte n'appartient au joueur.
+   */
+  async #buildPlayerTeam(
+    tx: PrimaTransactionClient,
+    userId: string,
+    opts: {
+      defMitigationRef: number
+      baseStats: CombatStatsBaseline
+      setDefs: ReturnType<typeof setBonusesFromConfig>
+    },
+  ): Promise<{ userCardIds: string[]; teamUnits: SimulatorUnit[] }> {
+    const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
+      tx,
+      userId,
+      RAID_TEAM_KEY,
+    )
+    if (userCardIds.length === 0) {
+      throw Boom.badRequest(errorMessage('combat.noTeamComposed'))
+    }
+    const teamUnits = await buildPlayerSimUnits(tx, {
+      userId,
+      userCardIds,
+      ...opts,
+      publicUrl: (key) => this.#storageClient.publicUrl(key),
+    })
+    if (teamUnits.length === 0) {
+      throw Boom.badRequest(errorMessage('combat.cardsNotOwnedByPlayer'))
+    }
+    return { userCardIds, teamUnits }
+  }
+
+  /** Le boss du raid en unité de simulation, PV fixés à RAID_BOSS_SIM_HP. */
+  #buildBossUnit(
+    boss: { spec: unknown; name: string },
+    opts: { defMitigationRef: number; baseStats: CombatStatsBaseline },
+  ): SimulatorUnit {
+    const spec = enemySpecSchema.parse(boss.spec)
+    const [bossUnit] = buildEnemySimUnits([spec], {
+      ...opts,
+      resolveImage: (appearance) =>
+        resolveEnemyImageUrl(
+          appearance,
+          (key) => this.#storageClient.publicUrl(key),
+          this.#config.isDevelopment ? 'staging/' : '',
+        ),
+    })
+    if (!bossUnit) {
+      throw Boom.badImplementation(errorMessage('raid.invalidBossSpec'))
+    }
+    bossUnit.hp = RAID_BOSS_SIM_HP
+    bossUnit.name = boss.name
+    return bossUnit
+  }
+
+  /**
+   * Verse aux participants les paliers franchis (idempotent) et renvoie
+   * ceux que ce coup vient de franchir.
+   */
+  async #grantCrossedTiers(
+    tx: PrimaTransactionClient,
+    raid: { id: string; level: number; maxHp: number },
+    hpBefore: number,
+    hpAfter: number,
+  ): Promise<RaidTierView[]> {
+    const tiers = await tx.raidTier.findMany({
+      where: { level: raid.level },
+      include: { reward: true },
+      orderBy: { pct: 'asc' },
+    })
+    const before = crossedTiers(raid.maxHp - hpBefore, raid.maxHp, tiers)
+    const after = crossedTiers(raid.maxHp - hpAfter, raid.maxHp, tiers)
+    if (after.length > 0) {
+      const participants = await tx.raidAttack.findMany({
+        where: { raidId: raid.id },
+        distinct: ['userId'],
+        select: { userId: true },
+      })
+      // Clé sur le RAID (raid.id), qui est unique par équipe ET par
+      // semaine : les lots de palier se gagnent DANS une équipe, donc un
+      // joueur qui joue le raid de plusieurs équipes les gagne dans
+      // chacune. Le plafond d'équipes par joueur (MAX_TEAMS_PER_USER,
+      // team.domain.ts) borne volontairement ce cumul — c'est lui le
+      // levier, pas la clé. Avec la contrainte unique
+      // [userId, source, sourceId], un palier donné d'un raid donné
+      // n'est jamais versé deux fois, et un joueur arrivé après coup
+      // reçoit d'un coup tous les paliers déjà franchis.
+      await tx.userReward.createMany({
+        data: participants.flatMap((p) =>
+          after.map((t) => ({
+            userId: p.userId,
+            rewardId: t.rewardId,
+            source: 'RAID' as const,
+            sourceId: `${raid.id}:${t.pct}`,
+          })),
+        ),
+        skipDuplicates: true,
+      })
+    }
+    const beforePcts = new Set(before.map((t) => t.pct))
+    return after
+      .filter((t) => !beforePcts.has(t.pct))
+      .map((t) => tierView(t, true))
   }
 
   /**

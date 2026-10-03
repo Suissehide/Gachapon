@@ -300,6 +300,173 @@ export function applyCombatBonuses(
   }
 }
 
+type SkillEffects = Awaited<
+  ReturnType<ISkillTreeRepository['getEffectsForUser']>
+>
+type CombatBonusEffects = Parameters<typeof applyCombatBonuses>[1]
+
+interface StagePosition {
+  chapter: number
+  index: number
+}
+
+interface CampaignProgress {
+  highestChapter: number
+  highestIndex: number
+}
+
+interface StageAccess {
+  isAlreadyCleared: boolean
+  isCurrent: boolean
+  isNewChapterFirst: boolean
+}
+
+function isStageCleared(
+  stage: StagePosition,
+  progress: CampaignProgress,
+): boolean {
+  return (
+    stage.chapter < progress.highestChapter ||
+    (stage.chapter === progress.highestChapter &&
+      stage.index <= progress.highestIndex)
+  )
+}
+
+/**
+ * Statut d'un étage pour l'écran de campagne. Doit rester cohérent avec le
+ * déverrouillage de attackStage : le premier étage du chapitre suivant ne
+ * s'ouvre que si le boss du chapitre courant est tombé.
+ */
+function stageStatus(
+  stage: StagePosition,
+  progress: CampaignProgress,
+  previousChapterCleared: boolean,
+): CampaignStageView['status'] {
+  if (stage.chapter < progress.highestChapter) {
+    return 'cleared'
+  }
+  if (stage.chapter === progress.highestChapter + 1) {
+    return stage.index === 1 && previousChapterCleared ? 'current' : 'locked'
+  }
+  if (stage.chapter > progress.highestChapter) {
+    return 'locked'
+  }
+  if (stage.index <= progress.highestIndex) {
+    return 'cleared'
+  }
+  return stage.index === progress.highestIndex + 1 ? 'current' : 'locked'
+}
+
+/** Butin de farm après bonus skill-tree puis bonus d'équipe `xp` (dust exclu). */
+function farmLootWithBonuses(
+  rawFarm: FarmLoot,
+  effects: CombatBonusEffects,
+  teamXpBonusPct: number,
+): FarmLoot {
+  const bonusedFarm = applyCombatBonuses(
+    {
+      gold: rawFarm.gold,
+      xp: rawFarm.xp,
+      equipmentDropChance: rawFarm.equipmentDropChance,
+      cardChance: rawFarm.cardChance,
+    },
+    effects,
+  )
+  return {
+    ...rawFarm,
+    ...bonusedFarm,
+    xp: Math.round(bonusedFarm.xp * (1 + teamXpBonusPct / 100)),
+  }
+}
+
+/**
+ * Butin d'un combat unique : bonus skill-tree sur premier passage et farm
+ * (dust exclu par design). Bonus d'équipe `xp` : multiplicatif, APRÈS le bonus
+ * skill-tree, et seulement sur l'XP — « en campagne » n'inclut ni l'or ni les
+ * chances de drop, contrairement au skill tree.
+ */
+function battleLootWithBonuses(
+  rawLoot: LootTable,
+  effects: CombatBonusEffects,
+  teamXpBonusPct: number,
+): LootTable {
+  const teamXpMult = 1 + teamXpBonusPct / 100
+  return {
+    firstClear: {
+      ...rawLoot.firstClear,
+      gold: Math.round(rawLoot.firstClear.gold * (1 + effects.goldBonus / 100)),
+      xp: Math.round(
+        rawLoot.firstClear.xp * (1 + effects.combatXpBonus / 100) * teamXpMult,
+      ),
+    },
+    farm: farmLootWithBonuses(rawLoot.farm, effects, teamXpBonusPct),
+  }
+}
+
+function raritiesFrom(minRarity: Rarity): Rarity[] {
+  return RARITY_ORDER.slice(RARITY_ORDER.indexOf(minRarity))
+}
+
+const EQUIPMENT_CATALOG_SELECT = {
+  id: true,
+  name: true,
+  rarity: true,
+  dropWeight: true,
+  slot: true,
+  setKey: true,
+  bonuses: true,
+} as const
+
+const CARD_CATALOG_SELECT = {
+  id: true,
+  name: true,
+  rarity: true,
+  dropWeight: true,
+  imageUrl: true,
+  element: true,
+  set: { select: { name: true } },
+} as const
+
+function toEquipmentCatalogEntry(e: {
+  id: string
+  name: string
+  rarity: string
+  dropWeight: number
+  slot: EquipmentSlot
+  setKey: EquipmentSet
+  bonuses: unknown
+}): EquipmentCatalogEntry {
+  return {
+    id: e.id,
+    name: e.name,
+    rarity: e.rarity as Rarity,
+    dropWeight: e.dropWeight,
+    slot: e.slot,
+    setKey: e.setKey,
+    bonuses: (e.bonuses ?? {}) as Record<string, number>,
+  }
+}
+
+function toCardCatalogEntry(c: {
+  id: string
+  name: string
+  rarity: string
+  dropWeight: number
+  imageUrl: string | null
+  element: string | null
+  set: { name: string }
+}): CardCatalogEntry {
+  return {
+    id: c.id,
+    name: c.name,
+    rarity: c.rarity as Rarity,
+    dropWeight: c.dropWeight,
+    imageUrl: c.imageUrl,
+    element: c.element,
+    setName: c.set.name,
+  }
+}
+
 export class CampaignDomain {
   readonly #postgresOrm
   readonly #combatPointsTx
@@ -372,28 +539,7 @@ export class CampaignDomain {
 
     const chapters: CampaignView['chapters'] = []
     for (const [chapter, ss] of byChapter) {
-      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
       const stageViews = ss.map((s): CampaignStageView => {
-        let status: CampaignStageView['status']
-        if (chapter < progress.highestChapter) {
-          status = 'cleared'
-        } else if (chapter === progress.highestChapter + 1) {
-          // Next chapter: only stage 1 unlocks, and only if the previous
-          // chapter's boss was cleared.
-          if (s.index === 1 && previousChapterCleared) {
-            status = 'current'
-          } else {
-            status = 'locked'
-          }
-        } else if (chapter > progress.highestChapter) {
-          status = 'locked'
-        } else if (s.index <= progress.highestIndex) {
-          status = 'cleared'
-        } else if (s.index === progress.highestIndex + 1) {
-          status = 'current'
-        } else {
-          status = 'locked'
-        }
         const enemyTeam = enemyTeamSchema.parse(s.enemyTeam)
         return {
           id: s.id,
@@ -401,7 +547,7 @@ export class CampaignDomain {
           index: s.index,
           label: s.label,
           isBoss: s.isBoss,
-          status,
+          status: stageStatus(s, progress, previousChapterCleared),
           recommendedPower: computeTeamPower(enemyTeam),
           rewardPreview: extractRewardPreview(s.lootTable, teamEffects.xp),
           enemies: enemyTeam.map((e, idx) => ({
@@ -462,7 +608,6 @@ export class CampaignDomain {
       // Bonus de set : une seule reconstruction par combat, jamais par carte.
       const setDefs = setBonusesFromConfig(battleCfg)
       return this.#postgresOrm.executeWithTransactionClient(
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
           const stage = await tx.campaignStage.findUnique({
             where: { id: stageId },
@@ -484,33 +629,7 @@ export class CampaignDomain {
             update: {},
           })
 
-          const isInActiveChapter = stage.chapter === progress.highestChapter
-          const isAlreadyCleared =
-            stage.chapter < progress.highestChapter ||
-            (isInActiveChapter && stage.index <= progress.highestIndex)
-          const isCurrent =
-            isInActiveChapter && stage.index === progress.highestIndex + 1
-          // Cross-chapter unlock requires the previous chapter to be fully
-          // cleared (i.e. highestIndex reached the last stage of that chapter,
-          // which is the boss). Otherwise a player could clear stage 1-1 then
-          // jump straight to 2-1, bypassing the boss gate.
-          let isNewChapterFirst = false
-          if (
-            stage.chapter === progress.highestChapter + 1 &&
-            stage.index === 1
-          ) {
-            const prevChapterMax = await tx.campaignStage.aggregate({
-              where: { chapter: progress.highestChapter },
-              _max: { index: true },
-            })
-            const prevMaxIndex = prevChapterMax._max.index ?? 0
-            if (prevMaxIndex > 0 && progress.highestIndex >= prevMaxIndex) {
-              isNewChapterFirst = true
-            }
-          }
-          if (!isAlreadyCleared && !isCurrent && !isNewChapterFirst) {
-            throw Boom.forbidden(errorMessage('campaign.stageLocked'))
-          }
+          const access = await this.#resolveStageAccess(tx, stage, progress)
 
           const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
             tx,
@@ -554,44 +673,15 @@ export class CampaignDomain {
           let rewards: BattleRewards | null = null
 
           if (won) {
-            const rawLoot = stage.lootTable as unknown as LootTable
-            const isFirstClear = !isAlreadyCleared
-            // Apply skill-tree bonuses to both farm and first-clear loot (dust excluded by design)
-            const bonusedFarm = applyCombatBonuses(
-              {
-                gold: rawLoot.farm.gold,
-                xp: rawLoot.farm.xp,
-                equipmentDropChance: rawLoot.farm.equipmentDropChance,
-                cardChance: rawLoot.farm.cardChance,
-              },
-              effects,
-            )
-            // Bonus d'équipe `xp` : multiplicatif, APRÈS le bonus skill-tree,
-            // et seulement sur l'XP — « en campagne » n'inclut ni l'or ni les
-            // chances de drop, contrairement au skill tree.
-            const teamXpMult = 1 + teamEffects.xp / 100
-            const loot: LootTable = {
-              firstClear: {
-                ...rawLoot.firstClear,
-                gold: Math.round(
-                  rawLoot.firstClear.gold * (1 + effects.goldBonus / 100),
-                ),
-                xp: Math.round(
-                  rawLoot.firstClear.xp *
-                    (1 + effects.combatXpBonus / 100) *
-                    teamXpMult,
-                ),
-              },
-              farm: {
-                ...rawLoot.farm,
-                ...bonusedFarm,
-                xp: Math.round(bonusedFarm.xp * teamXpMult),
-              },
-            }
+            const isFirstClear = !access.isAlreadyCleared
             rewards = await this.#applyRewards(
               tx,
               userId,
-              loot,
+              battleLootWithBonuses(
+                stage.lootTable as unknown as LootTable,
+                effects,
+                teamEffects.xp,
+              ),
               isFirstClear,
               battleCfg['xp.base'],
               battleCfg['xp.slope'],
@@ -602,20 +692,7 @@ export class CampaignDomain {
             )
 
             if (isFirstClear) {
-              if (isNewChapterFirst) {
-                await tx.userCampaignProgress.update({
-                  where: { userId },
-                  data: {
-                    highestChapter: stage.chapter,
-                    highestIndex: stage.index,
-                  },
-                })
-              } else if (isCurrent) {
-                await tx.userCampaignProgress.update({
-                  where: { userId },
-                  data: { highestIndex: stage.index },
-                })
-              }
+              await this.#advanceProgress(tx, userId, stage, access)
             }
 
             const { flawless, understaffed } = deriveClearFlags(
@@ -698,7 +775,6 @@ export class CampaignDomain {
         ],
       )
       return this.#postgresOrm.executeWithTransactionClient(
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
           const stage = await tx.campaignStage.findUnique({
             where: { id: stageId },
@@ -725,224 +801,48 @@ export class CampaignDomain {
           const progress = await tx.userCampaignProgress.findUnique({
             where: { userId },
           })
-          if (!progress) {
+          if (!progress || !isStageCleared(stage, progress)) {
             throw Boom.forbidden(errorMessage('campaign.stageNotClearedYet'))
           }
 
-          const isInActiveChapter = stage.chapter === progress.highestChapter
-          const isAlreadyCleared =
-            stage.chapter < progress.highestChapter ||
-            (isInActiveChapter && stage.index <= progress.highestIndex)
-          if (!isAlreadyCleared) {
-            throw Boom.forbidden(errorMessage('campaign.stageNotClearedYet'))
-          }
-
-          const rawFarm = (stage.lootTable as unknown as LootTable).farm
-          // Apply skill-tree bonuses once; dust is excluded by design
-          const bonusedFarmLoot = applyCombatBonuses(
-            {
-              gold: rawFarm.gold,
-              xp: rawFarm.xp,
-              equipmentDropChance: rawFarm.equipmentDropChance,
-              cardChance: rawFarm.cardChance,
-            },
-            effects,
-          )
           // Même bonus d'équipe `xp`, appliqué après le bonus skill-tree,
-          // que le chemin combat unique (`attackStage`).
-          const loot: FarmLoot = {
-            ...rawFarm,
-            ...bonusedFarmLoot,
-            xp: Math.round(bonusedFarmLoot.xp * (1 + teamEffects.xp / 100)),
-          }
-          let totalGold = 0
-          let totalDust = 0
-          let totalXp = 0
-          const equipmentDrops: EquipmentDropPayload[] = []
-          const cardDrops: CardDropPayload[] = []
-
-          // Catalog snapshots used to pick drops. La campagne ne droppe que
-          // les slots classiques : les slots de tour (AMULET/GLOVES/BOOTS/
-          // BELT) sont l'exclusivité des tours (§5/§6 design spec).
-          const equipmentCatalogRaw = await tx.equipment.findMany({
-            where: { slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] } },
-            select: {
-              id: true,
-              name: true,
-              rarity: true,
-              dropWeight: true,
-              slot: true,
-              setKey: true,
-              bonuses: true,
-            },
-          })
-          const equipmentCatalog: EquipmentCatalogEntry[] =
-            equipmentCatalogRaw.map((e) => ({
-              id: e.id,
-              name: e.name,
-              rarity: e.rarity as Rarity,
-              dropWeight: e.dropWeight,
-              slot: e.slot,
-              setKey: e.setKey,
-              bonuses: (e.bonuses ?? {}) as Record<string, number>,
-            }))
-          const activeCardsRaw = await tx.card.findMany({
-            where: { set: { isActive: true } },
-            select: {
-              id: true,
-              name: true,
-              rarity: true,
-              dropWeight: true,
-              imageUrl: true,
-              element: true,
-              set: { select: { name: true } },
-            },
-          })
-          const activeCards: CardCatalogEntry[] = activeCardsRaw.map((c) => ({
-            id: c.id,
-            name: c.name,
-            rarity: c.rarity as Rarity,
-            dropWeight: c.dropWeight,
-            imageUrl: c.imageUrl,
-            element: c.element,
-            setName: c.set.name,
-          }))
-
-          for (let i = 0; i < runs; i++) {
-            totalGold += loot.gold
-            totalDust += loot.dust
-            totalXp += loot.xp
-
-            const droppedRarity = rollFarmEquipmentDrop(loot, Math.random)
-            if (droppedRarity) {
-              const candidate = pickEquipmentForRarity(
-                equipmentCatalog,
-                droppedRarity,
-                Math.random,
-              )
-              if (candidate) {
-                const ue = await tx.userEquipment.create({
-                  data: {
-                    userId,
-                    equipmentId: candidate.id,
-                    substats: rollInitialSubstats(
-                      INITIAL_SUBSTATS_BY_RARITY[droppedRarity],
-                      substatRanges,
-                      Math.random,
-                    ) as unknown as Prisma.InputJsonValue,
-                  },
-                })
-                equipmentDrops.push({
-                  userEquipmentId: ue.id,
-                  equipmentId: candidate.id,
-                  name: candidate.name,
-                  rarity: droppedRarity,
-                  slot: candidate.slot,
-                  setKey: candidate.setKey,
-                  level: ue.level,
-                  bonuses: candidate.bonuses,
-                  substats: (ue.substats ?? []) as {
-                    key: string
-                    value: number
-                  }[],
-                  baseBoost: ue.baseBoost,
-                })
-                await this.#achievementsDomain.track(tx, userId, {
-                  kind: 'EQUIPMENT_OBTAINED',
-                  equipmentId: candidate.id,
-                  rarity: droppedRarity,
-                })
-              }
-            }
-
-            if (rollFarmCardDrop(loot, Math.random) && activeCards.length > 0) {
-              const picked = this.#pickWeighted(activeCards, Math.random)
-              if (picked) {
-                const { wasDuplicate } = await this.#grantCard(
-                  tx,
-                  userId,
-                  picked.id,
-                )
-                cardDrops.push({
-                  cardId: picked.id,
-                  name: picked.name,
-                  rarity: picked.rarity,
-                  wasDuplicate,
-                  imageUrl: picked.imageUrl
-                    ? this.#storageClient.publicUrl(picked.imageUrl)
-                    : null,
-                  element: picked.element,
-                  setName: picked.setName,
-                })
-              }
-            }
-
-            await this.#achievementsDomain.track(tx, userId, {
-              kind: 'STAGE_CLEARED',
-              source: 'CAMPAIGN',
-              isBoss: stage.isBoss,
-              viaSweep: true,
-              flawless: false,
-              understaffed: false,
-            })
-          }
+          // que le chemin combat unique (`attackStage`). Dust exclu par design.
+          const loot = farmLootWithBonuses(
+            (stage.lootTable as unknown as LootTable).farm,
+            effects,
+            teamEffects.xp,
+          )
+          const { totalGold, totalDust, totalXp, equipmentDrops, cardDrops } =
+            await this.#runSweeps(
+              tx,
+              userId,
+              stage.isBoss,
+              loot,
+              runs,
+              substatRanges,
+            )
 
           // Bump XP and recompute level (parity with applyRewards / gacha).
-          const userBefore = await tx.user.findUnique({
-            where: { id: userId },
-            select: { xp: true, level: true },
-          })
-          const oldLevel = userBefore?.level ?? 1
-          const newXp = (userBefore?.xp ?? 0) + totalXp
-          const newLevel = levelAfterXpGain(
-            oldLevel,
-            newXp,
-            sweepCfg['xp.base'],
-            sweepCfg['xp.slope'],
-            sweepCfg['xp.levelCap'],
-          )
-          const sweepGained = skillPointsGained(oldLevel, newLevel)
-          await tx.user.update({
-            where: { id: userId },
-            data: {
-              gold: { increment: totalGold },
-              dust: { increment: totalDust },
-              dustGenerated: { increment: totalDust },
-              xp: newXp,
-              level: newLevel,
-              ...(sweepGained > 0
-                ? { skillPoints: { increment: sweepGained } }
-                : {}),
+          const { xpBefore, levelBefore } = await this.#creditGainsAndLevel(
+            tx,
+            userId,
+            { gold: totalGold, dust: totalDust, xp: totalXp },
+            {
+              base: sweepCfg['xp.base'],
+              slope: sweepCfg['xp.slope'],
+              levelCap: sweepCfg['xp.levelCap'],
             },
-          })
-          if (newLevel > oldLevel) {
-            await this.#achievementsDomain.track(tx, userId, {
-              kind: 'LEVEL_UP',
-              newLevel,
-            })
-            for (const pack of milestonesCrossed(oldLevel, newLevel)) {
-              const milestoneReward = await tx.reward.create({
-                data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
-              })
-              await this.#userRewardRepository.upsertInTx(tx, {
-                userId,
-                rewardId: milestoneReward.id,
-                source: 'LEVEL_UP',
-                sourceId: `level-${pack.level}`,
-              })
-            }
-            if (sweepCfg['levelup.refillEnergy'] === 1) {
-              await this.#combatPointsTx.refillToMaxInTx(tx, userId, effects)
-            }
-          }
+            sweepCfg['levelup.refillEnergy'],
+            effects,
+          )
 
           return {
             runs,
             totalGold,
             totalDust,
             totalXp,
-            xpBefore: userBefore?.xp ?? 0,
-            levelBefore: oldLevel,
+            xpBefore,
+            levelBefore,
             equipmentDrops,
             cardDrops,
           }
@@ -957,7 +857,67 @@ export class CampaignDomain {
     return substatRangesFromConfig(c)
   }
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
+  /** Rejoue `runs` fois le butin de farm d'un étage déjà franchi. */
+  async #runSweeps(
+    tx: PrimaTransactionClient,
+    userId: string,
+    isBoss: boolean,
+    loot: FarmLoot,
+    runs: number,
+    substatRanges: SubstatRanges,
+  ): Promise<{
+    totalGold: number
+    totalDust: number
+    totalXp: number
+    equipmentDrops: EquipmentDropPayload[]
+    cardDrops: CardDropPayload[]
+  }> {
+    let totalGold = 0
+    let totalDust = 0
+    let totalXp = 0
+    const equipmentDrops: EquipmentDropPayload[] = []
+    const cardDrops: CardDropPayload[] = []
+
+    const { equipmentCatalog, activeCards } = await this.#loadSweepCatalogs(tx)
+
+    for (let i = 0; i < runs; i++) {
+      totalGold += loot.gold
+      totalDust += loot.dust
+      totalXp += loot.xp
+
+      const equipmentDrop = await this.#rollSweepEquipmentDrop(
+        tx,
+        userId,
+        loot,
+        equipmentCatalog,
+        substatRanges,
+      )
+      if (equipmentDrop) {
+        equipmentDrops.push(equipmentDrop)
+      }
+
+      const cardDrop = await this.#rollSweepCardDrop(
+        tx,
+        userId,
+        loot,
+        activeCards,
+      )
+      if (cardDrop) {
+        cardDrops.push(cardDrop)
+      }
+
+      await this.#achievementsDomain.track(tx, userId, {
+        kind: 'STAGE_CLEARED',
+        source: 'CAMPAIGN',
+        isBoss,
+        viaSweep: true,
+        flawless: false,
+        understaffed: false,
+      })
+    }
+    return { totalGold, totalDust, totalXp, equipmentDrops, cardDrops }
+  }
+
   async #applyRewards(
     tx: PrimaTransactionClient,
     userId: string,
@@ -968,301 +928,284 @@ export class CampaignDomain {
     xpLevelCap: number,
     substatRanges: SubstatRanges,
     refillEnergy: number,
-    effects: Awaited<ReturnType<ISkillTreeRepository['getEffectsForUser']>>,
+    effects: SkillEffects,
   ): Promise<BattleRewards> {
-    let gold = 0
-    let dust = 0
-    let xp = 0
-    let equipmentDrop: BattleRewards['equipmentDrop'] = null
-    let cardDrop: BattleRewards['cardDrop'] = null
-
-    if (isFirstClear) {
-      const fc = loot.firstClear
-      gold = fc.gold
-      dust = fc.dust
-      xp = fc.xp
-
-      // Guaranteed equipment — broaden to any rarity >= minRarity if the
-      // rolled rarity has no candidates, so a partial catalog never silently
-      // drops the promised drop.
-      if (fc.guaranteedEquipment) {
-        const fcEquipRarity = rollFirstClearEquipmentRarity(fc, Math.random)
-        const minRarity =
-          fc.guaranteedEquipment.minRarity ?? fcEquipRarity ?? 'COMMON'
-        const minIdx = RARITY_ORDER.indexOf(minRarity)
-        const allowedRarities = RARITY_ORDER.slice(minIdx)
-        const catalogRaw = await tx.equipment.findMany({
-          where: {
-            rarity: { in: allowedRarities as Rarity[] },
-            slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] },
-          },
-          select: {
-            id: true,
-            name: true,
-            rarity: true,
-            dropWeight: true,
-            slot: true,
-            setKey: true,
-            bonuses: true,
-          },
-        })
-        const catalog: EquipmentCatalogEntry[] = catalogRaw.map((e) => ({
-          id: e.id,
-          name: e.name,
-          rarity: e.rarity as Rarity,
-          dropWeight: e.dropWeight,
-          slot: e.slot,
-          setKey: e.setKey,
-          bonuses: (e.bonuses ?? {}) as Record<string, number>,
-        }))
-        // Prefer the rolled rarity; fall back to any allowed rarity if empty.
-        let picked = fcEquipRarity
-          ? pickEquipmentForRarity(catalog, fcEquipRarity, Math.random)
-          : null
-        if (!picked && catalog.length > 0) {
-          picked = this.#pickWeighted(catalog, Math.random)
-        }
-        if (picked) {
-          const ue = await tx.userEquipment.create({
-            data: {
-              userId,
-              equipmentId: picked.id,
-              substats: rollInitialSubstats(
-                INITIAL_SUBSTATS_BY_RARITY[
-                  picked.rarity as keyof typeof INITIAL_SUBSTATS_BY_RARITY
-                ],
-                substatRanges,
-                Math.random,
-              ) as unknown as Prisma.InputJsonValue,
-            },
-          })
-          equipmentDrop = {
-            userEquipmentId: ue.id,
-            equipmentId: picked.id,
-            name: picked.name,
-            rarity: picked.rarity,
-            slot: picked.slot,
-            setKey: picked.setKey,
-            level: ue.level,
-            bonuses: picked.bonuses,
-            substats: (ue.substats ?? []) as { key: string; value: number }[],
-            baseBoost: ue.baseBoost,
-          }
-          await this.#achievementsDomain.track(tx, userId, {
-            kind: 'EQUIPMENT_OBTAINED',
-            equipmentId: picked.id,
-            rarity: picked.rarity,
-          })
-        }
-      }
-
-      // Guaranteed card — same fallback.
-      if (fc.guaranteedCard) {
-        const fcCardRarity = rollFirstClearCardRarity(fc, Math.random)
-        const minRarity =
-          fc.guaranteedCard.minRarity ?? fcCardRarity ?? 'COMMON'
-        const minIdx = RARITY_ORDER.indexOf(minRarity)
-        const allowedRarities = RARITY_ORDER.slice(minIdx)
-        // Prefer the rolled rarity; fall back to any allowed.
-        let cardsRaw = fcCardRarity
-          ? await tx.card.findMany({
-              where: {
-                rarity: fcCardRarity,
-                set: { isActive: true },
-              },
-              select: {
-                id: true,
-                name: true,
-                rarity: true,
-                dropWeight: true,
-                imageUrl: true,
-                element: true,
-                set: { select: { name: true } },
-              },
-            })
-          : []
-        if (cardsRaw.length === 0) {
-          cardsRaw = await tx.card.findMany({
-            where: {
-              rarity: { in: allowedRarities as Rarity[] },
-              set: { isActive: true },
-            },
-            select: {
-              id: true,
-              name: true,
-              rarity: true,
-              dropWeight: true,
-              imageUrl: true,
-              element: true,
-              set: { select: { name: true } },
-            },
-          })
-        }
-        // Repli sur la dernière carte si le tirage pondéré ne rend rien.
-        // `picked` est undefined quand cardsRaw est vide : rien à octroyer.
-        const picked =
-          this.#pickWeighted(cardsRaw, Math.random) ??
-          cardsRaw[cardsRaw.length - 1]
-        if (picked) {
-          const { wasDuplicate } = await this.#grantCard(tx, userId, picked.id)
-          cardDrop = {
-            cardId: picked.id,
-            name: picked.name,
-            rarity: picked.rarity as Rarity,
-            wasDuplicate,
-            imageUrl: picked.imageUrl
-              ? this.#storageClient.publicUrl(picked.imageUrl)
-              : null,
-            element: picked.element,
-            setName: picked.set.name,
-          }
-        }
-      }
-    } else {
-      const farm = loot.farm
-      gold = farm.gold
-      dust = farm.dust
-      xp = farm.xp
-
-      const droppedRarity = rollFarmEquipmentDrop(farm, Math.random)
-      if (droppedRarity) {
-        const catalogRaw = await tx.equipment.findMany({
-          where: {
-            rarity: droppedRarity,
-            slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] },
-          },
-          select: {
-            id: true,
-            name: true,
-            rarity: true,
-            dropWeight: true,
-            slot: true,
-            setKey: true,
-            bonuses: true,
-          },
-        })
-        const catalog: EquipmentCatalogEntry[] = catalogRaw.map((e) => ({
-          id: e.id,
-          name: e.name,
-          rarity: e.rarity as Rarity,
-          dropWeight: e.dropWeight,
-          slot: e.slot,
-          setKey: e.setKey,
-          bonuses: (e.bonuses ?? {}) as Record<string, number>,
-        }))
-        const picked = pickEquipmentForRarity(
-          catalog,
-          droppedRarity,
-          Math.random,
+    const gains = isFirstClear ? loot.firstClear : loot.farm
+    const { gold, dust, xp } = gains
+    const { equipmentDrop, cardDrop } = isFirstClear
+      ? await this.#grantFirstClearDrops(
+          tx,
+          userId,
+          loot.firstClear,
+          substatRanges,
         )
-        if (picked) {
-          const ue = await tx.userEquipment.create({
-            data: {
-              userId,
-              equipmentId: picked.id,
-              substats: rollInitialSubstats(
-                INITIAL_SUBSTATS_BY_RARITY[
-                  droppedRarity as keyof typeof INITIAL_SUBSTATS_BY_RARITY
-                ],
-                substatRanges,
-                Math.random,
-              ) as unknown as Prisma.InputJsonValue,
-            },
-          })
-          equipmentDrop = {
-            userEquipmentId: ue.id,
-            equipmentId: picked.id,
-            name: picked.name,
-            rarity: droppedRarity,
-            slot: picked.slot,
-            setKey: picked.setKey,
-            level: ue.level,
-            bonuses: picked.bonuses,
-            substats: (ue.substats ?? []) as { key: string; value: number }[],
-            baseBoost: ue.baseBoost,
-          }
-          await this.#achievementsDomain.track(tx, userId, {
-            kind: 'EQUIPMENT_OBTAINED',
-            equipmentId: picked.id,
-            rarity: droppedRarity,
-          })
-        }
-      }
-
-      if (rollFarmCardDrop(farm, Math.random)) {
-        const cardsRaw = await tx.card.findMany({
-          where: { set: { isActive: true } },
-          select: {
-            id: true,
-            name: true,
-            rarity: true,
-            dropWeight: true,
-            imageUrl: true,
-            element: true,
-            set: { select: { name: true } },
-          },
-        })
-        if (cardsRaw.length > 0) {
-          const cards: CardCatalogEntry[] = cardsRaw.map((c) => ({
-            id: c.id,
-            name: c.name,
-            rarity: c.rarity as Rarity,
-            dropWeight: c.dropWeight,
-            imageUrl: c.imageUrl,
-            element: c.element,
-            setName: c.set.name,
-          }))
-          const picked = this.#pickWeighted(cards, Math.random)
-          if (picked) {
-            const { wasDuplicate } = await this.#grantCard(
-              tx,
-              userId,
-              picked.id,
-            )
-            cardDrop = {
-              cardId: picked.id,
-              name: picked.name,
-              rarity: picked.rarity,
-              wasDuplicate,
-              imageUrl: picked.imageUrl
-                ? this.#storageClient.publicUrl(picked.imageUrl)
-                : null,
-              element: picked.element,
-              setName: picked.setName,
-            }
-          }
-        }
-      }
-    }
+      : await this.#grantFarmDrops(tx, userId, loot.farm, substatRanges)
 
     // Increment XP, then recompute User.level so threshold crossings actually
     // bump the level (parity with gacha.domain). Without this, campaign XP
     // would never trigger level-ups or LEVEL_UP achievements.
+    const { xpBefore, levelBefore } = await this.#creditGainsAndLevel(
+      tx,
+      userId,
+      { gold, dust, xp },
+      { base: xpBase, slope: xpSlope, levelCap: xpLevelCap },
+      refillEnergy,
+      effects,
+    )
+
+    return {
+      gold,
+      dust,
+      xp,
+      xpBefore,
+      levelBefore,
+      isFirstClear,
+      equipmentDrop,
+      cardDrop,
+    }
+  }
+
+  async #grantFirstClearDrops(
+    tx: PrimaTransactionClient,
+    userId: string,
+    fc: FirstClearLoot,
+    substatRanges: SubstatRanges,
+  ): Promise<Pick<BattleRewards, 'equipmentDrop' | 'cardDrop'>> {
+    const equipmentDrop = fc.guaranteedEquipment
+      ? await this.#grantGuaranteedEquipment(
+          tx,
+          userId,
+          fc,
+          fc.guaranteedEquipment.minRarity,
+          substatRanges,
+        )
+      : null
+    const cardDrop = fc.guaranteedCard
+      ? await this.#grantGuaranteedCard(
+          tx,
+          userId,
+          fc,
+          fc.guaranteedCard.minRarity,
+        )
+      : null
+    return { equipmentDrop, cardDrop }
+  }
+
+  // Guaranteed equipment — broaden to any rarity >= minRarity if the
+  // rolled rarity has no candidates, so a partial catalog never silently
+  // drops the promised drop.
+  async #grantGuaranteedEquipment(
+    tx: PrimaTransactionClient,
+    userId: string,
+    fc: FirstClearLoot,
+    guaranteedMinRarity: Rarity | undefined,
+    substatRanges: SubstatRanges,
+  ): Promise<EquipmentDropPayload | null> {
+    const fcEquipRarity = rollFirstClearEquipmentRarity(fc, Math.random)
+    const allowedRarities = raritiesFrom(
+      guaranteedMinRarity ?? fcEquipRarity ?? 'COMMON',
+    )
+    const catalogRaw = await tx.equipment.findMany({
+      where: {
+        rarity: { in: allowedRarities },
+        slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] },
+      },
+      select: EQUIPMENT_CATALOG_SELECT,
+    })
+    const catalog = catalogRaw.map(toEquipmentCatalogEntry)
+    // Prefer the rolled rarity; fall back to any allowed rarity if empty.
+    let picked = fcEquipRarity
+      ? pickEquipmentForRarity(catalog, fcEquipRarity, Math.random)
+      : null
+    if (!picked && catalog.length > 0) {
+      picked = this.#pickWeighted(catalog, Math.random)
+    }
+    if (!picked) {
+      return null
+    }
+    return this.#createEquipmentDrop(
+      tx,
+      userId,
+      picked,
+      picked.rarity,
+      substatRanges,
+    )
+  }
+
+  // Guaranteed card — same fallback.
+  async #grantGuaranteedCard(
+    tx: PrimaTransactionClient,
+    userId: string,
+    fc: FirstClearLoot,
+    guaranteedMinRarity: Rarity | undefined,
+  ): Promise<CardDropPayload | null> {
+    const fcCardRarity = rollFirstClearCardRarity(fc, Math.random)
+    const allowedRarities = raritiesFrom(
+      guaranteedMinRarity ?? fcCardRarity ?? 'COMMON',
+    )
+    // Prefer the rolled rarity; fall back to any allowed.
+    let cardsRaw = fcCardRarity
+      ? await tx.card.findMany({
+          where: { rarity: fcCardRarity, set: { isActive: true } },
+          select: CARD_CATALOG_SELECT,
+        })
+      : []
+    if (cardsRaw.length === 0) {
+      cardsRaw = await tx.card.findMany({
+        where: { rarity: { in: allowedRarities }, set: { isActive: true } },
+        select: CARD_CATALOG_SELECT,
+      })
+    }
+    const cards = cardsRaw.map(toCardCatalogEntry)
+    // Repli sur la dernière carte si le tirage pondéré ne rend rien.
+    // `picked` est undefined quand cards est vide : rien à octroyer.
+    const picked =
+      this.#pickWeighted(cards, Math.random) ?? cards[cards.length - 1]
+    return picked ? this.#createCardDrop(tx, userId, picked) : null
+  }
+
+  async #grantFarmDrops(
+    tx: PrimaTransactionClient,
+    userId: string,
+    farm: FarmLoot,
+    substatRanges: SubstatRanges,
+  ): Promise<Pick<BattleRewards, 'equipmentDrop' | 'cardDrop'>> {
+    let equipmentDrop: BattleRewards['equipmentDrop'] = null
+    const droppedRarity = rollFarmEquipmentDrop(farm, Math.random)
+    if (droppedRarity) {
+      const catalogRaw = await tx.equipment.findMany({
+        where: {
+          rarity: droppedRarity,
+          slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] },
+        },
+        select: EQUIPMENT_CATALOG_SELECT,
+      })
+      const picked = pickEquipmentForRarity(
+        catalogRaw.map(toEquipmentCatalogEntry),
+        droppedRarity,
+        Math.random,
+      )
+      if (picked) {
+        equipmentDrop = await this.#createEquipmentDrop(
+          tx,
+          userId,
+          picked,
+          droppedRarity,
+          substatRanges,
+        )
+      }
+    }
+
+    let cardDrop: BattleRewards['cardDrop'] = null
+    if (rollFarmCardDrop(farm, Math.random)) {
+      const cardsRaw = await tx.card.findMany({
+        where: { set: { isActive: true } },
+        select: CARD_CATALOG_SELECT,
+      })
+      const picked = this.#pickWeighted(
+        cardsRaw.map(toCardCatalogEntry),
+        Math.random,
+      )
+      if (picked) {
+        cardDrop = await this.#createCardDrop(tx, userId, picked)
+      }
+    }
+    return { equipmentDrop, cardDrop }
+  }
+
+  async #createEquipmentDrop(
+    tx: PrimaTransactionClient,
+    userId: string,
+    picked: EquipmentCatalogEntry,
+    rarity: Rarity,
+    substatRanges: SubstatRanges,
+  ): Promise<EquipmentDropPayload> {
+    const ue = await tx.userEquipment.create({
+      data: {
+        userId,
+        equipmentId: picked.id,
+        substats: rollInitialSubstats(
+          INITIAL_SUBSTATS_BY_RARITY[rarity],
+          substatRanges,
+          Math.random,
+        ) as unknown as Prisma.InputJsonValue,
+      },
+    })
+    const drop: EquipmentDropPayload = {
+      userEquipmentId: ue.id,
+      equipmentId: picked.id,
+      name: picked.name,
+      rarity,
+      slot: picked.slot,
+      setKey: picked.setKey,
+      level: ue.level,
+      bonuses: picked.bonuses,
+      substats: (ue.substats ?? []) as { key: string; value: number }[],
+      baseBoost: ue.baseBoost,
+    }
+    await this.#achievementsDomain.track(tx, userId, {
+      kind: 'EQUIPMENT_OBTAINED',
+      equipmentId: picked.id,
+      rarity,
+    })
+    return drop
+  }
+
+  async #createCardDrop(
+    tx: PrimaTransactionClient,
+    userId: string,
+    picked: CardCatalogEntry,
+  ): Promise<CardDropPayload> {
+    const { wasDuplicate } = await this.#grantCard(tx, userId, picked.id)
+    return {
+      cardId: picked.id,
+      name: picked.name,
+      rarity: picked.rarity,
+      wasDuplicate,
+      imageUrl: picked.imageUrl
+        ? this.#storageClient.publicUrl(picked.imageUrl)
+        : null,
+      element: picked.element,
+      setName: picked.setName,
+    }
+  }
+
+  /**
+   * Crédite or/poussière/XP, recalcule le niveau et déclenche les effets de
+   * montée de niveau (succès, paliers, recharge d'énergie). Partagé par le
+   * combat unique et le balayage. Rend l'état AVANT le crédit.
+   */
+  async #creditGainsAndLevel(
+    tx: PrimaTransactionClient,
+    userId: string,
+    gains: { gold: number; dust: number; xp: number },
+    xpCurve: { base: number; slope: number; levelCap: number },
+    refillEnergy: number,
+    effects: SkillEffects,
+  ): Promise<{ xpBefore: number; levelBefore: number }> {
     const userBefore = await tx.user.findUnique({
       where: { id: userId },
       select: { xp: true, level: true },
     })
     const oldLevel = userBefore?.level ?? 1
-    const newXp = (userBefore?.xp ?? 0) + xp
+    const newXp = (userBefore?.xp ?? 0) + gains.xp
     const newLevel = levelAfterXpGain(
       oldLevel,
       newXp,
-      xpBase,
-      xpSlope,
-      xpLevelCap,
+      xpCurve.base,
+      xpCurve.slope,
+      xpCurve.levelCap,
     )
-    const battleGained = skillPointsGained(oldLevel, newLevel)
+    const gained = skillPointsGained(oldLevel, newLevel)
     await tx.user.update({
       where: { id: userId },
       data: {
-        gold: { increment: gold },
-        dust: { increment: dust },
-        dustGenerated: { increment: dust },
+        gold: { increment: gains.gold },
+        dust: { increment: gains.dust },
+        dustGenerated: { increment: gains.dust },
         xp: newXp,
         level: newLevel,
-        ...(battleGained > 0
-          ? { skillPoints: { increment: battleGained } }
-          : {}),
+        ...(gained > 0 ? { skillPoints: { increment: gained } } : {}),
       },
     })
     if (newLevel > oldLevel) {
@@ -1285,17 +1228,123 @@ export class CampaignDomain {
         await this.#combatPointsTx.refillToMaxInTx(tx, userId, effects)
       }
     }
+    return { xpBefore: userBefore?.xp ?? 0, levelBefore: oldLevel }
+  }
 
-    return {
-      gold,
-      dust,
-      xp,
-      xpBefore: userBefore?.xp ?? 0,
-      levelBefore: oldLevel,
-      isFirstClear,
-      equipmentDrop,
-      cardDrop,
+  async #resolveStageAccess(
+    tx: PrimaTransactionClient,
+    stage: StagePosition,
+    progress: CampaignProgress,
+  ): Promise<StageAccess> {
+    const isAlreadyCleared = isStageCleared(stage, progress)
+    const isCurrent =
+      stage.chapter === progress.highestChapter &&
+      stage.index === progress.highestIndex + 1
+    // Cross-chapter unlock requires the previous chapter to be fully
+    // cleared (i.e. highestIndex reached the last stage of that chapter,
+    // which is the boss). Otherwise a player could clear stage 1-1 then
+    // jump straight to 2-1, bypassing the boss gate.
+    const isNewChapterFirst =
+      stage.chapter === progress.highestChapter + 1 &&
+      stage.index === 1 &&
+      (await this.#isActiveChapterFullyCleared(tx, progress))
+    if (!isAlreadyCleared && !isCurrent && !isNewChapterFirst) {
+      throw Boom.forbidden(errorMessage('campaign.stageLocked'))
     }
+    return { isAlreadyCleared, isCurrent, isNewChapterFirst }
+  }
+
+  async #isActiveChapterFullyCleared(
+    tx: PrimaTransactionClient,
+    progress: CampaignProgress,
+  ): Promise<boolean> {
+    const prevChapterMax = await tx.campaignStage.aggregate({
+      where: { chapter: progress.highestChapter },
+      _max: { index: true },
+    })
+    const prevMaxIndex = prevChapterMax._max.index ?? 0
+    return prevMaxIndex > 0 && progress.highestIndex >= prevMaxIndex
+  }
+
+  async #advanceProgress(
+    tx: PrimaTransactionClient,
+    userId: string,
+    stage: StagePosition,
+    access: StageAccess,
+  ): Promise<void> {
+    if (access.isNewChapterFirst) {
+      await tx.userCampaignProgress.update({
+        where: { userId },
+        data: { highestChapter: stage.chapter, highestIndex: stage.index },
+      })
+    } else if (access.isCurrent) {
+      await tx.userCampaignProgress.update({
+        where: { userId },
+        data: { highestIndex: stage.index },
+      })
+    }
+  }
+
+  // Catalog snapshots used to pick drops. La campagne ne droppe que les slots
+  // classiques : les slots de tour (AMULET/GLOVES/BOOTS/BELT) sont
+  // l'exclusivité des tours (§5/§6 design spec).
+  async #loadSweepCatalogs(tx: PrimaTransactionClient): Promise<{
+    equipmentCatalog: EquipmentCatalogEntry[]
+    activeCards: CardCatalogEntry[]
+  }> {
+    const equipmentCatalogRaw = await tx.equipment.findMany({
+      where: { slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] } },
+      select: EQUIPMENT_CATALOG_SELECT,
+    })
+    const activeCardsRaw = await tx.card.findMany({
+      where: { set: { isActive: true } },
+      select: CARD_CATALOG_SELECT,
+    })
+    return {
+      equipmentCatalog: equipmentCatalogRaw.map(toEquipmentCatalogEntry),
+      activeCards: activeCardsRaw.map(toCardCatalogEntry),
+    }
+  }
+
+  async #rollSweepEquipmentDrop(
+    tx: PrimaTransactionClient,
+    userId: string,
+    loot: FarmLoot,
+    catalog: EquipmentCatalogEntry[],
+    substatRanges: SubstatRanges,
+  ): Promise<EquipmentDropPayload | null> {
+    const droppedRarity = rollFarmEquipmentDrop(loot, Math.random)
+    if (!droppedRarity) {
+      return null
+    }
+    const candidate = pickEquipmentForRarity(
+      catalog,
+      droppedRarity,
+      Math.random,
+    )
+    if (!candidate) {
+      return null
+    }
+    return await this.#createEquipmentDrop(
+      tx,
+      userId,
+      candidate,
+      droppedRarity,
+      substatRanges,
+    )
+  }
+
+  async #rollSweepCardDrop(
+    tx: PrimaTransactionClient,
+    userId: string,
+    loot: FarmLoot,
+    activeCards: CardCatalogEntry[],
+  ): Promise<CardDropPayload | null> {
+    if (!rollFarmCardDrop(loot, Math.random) || activeCards.length === 0) {
+      return null
+    }
+    const picked = this.#pickWeighted(activeCards, Math.random)
+    return picked ? await this.#createCardDrop(tx, userId, picked) : null
   }
 
   #pickWeighted<T extends { dropWeight: number }>(

@@ -7,6 +7,7 @@ import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IActivityDomain } from '../../types/domain/activity/activity.domain.interface'
+import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
 import type {
   AddRewardInput,
   ClaimedCard,
@@ -141,6 +142,163 @@ export class RewardsDomain implements RewardsDomainInterface {
     return granted
   }
 
+  /** Packs de palier franchis + recharge d'énergie au level-up. Ne fait rien
+   *  sans montée de niveau. Renvoie le nombre de packs créés. */
+  async #grantLevelUpRewards(
+    tx: PrimaTransactionClient,
+    userId: string,
+    fromLevel: number,
+    toLevel: number,
+    refillEnergy: boolean,
+    upgrades: UserUpgradeEffects,
+  ): Promise<number> {
+    if (toLevel <= fromLevel) {
+      return 0
+    }
+    let created = 0
+    for (const pack of milestonesCrossed(fromLevel, toLevel)) {
+      const milestoneReward = await tx.reward.create({
+        data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
+      })
+      await this.#userRewardRepository.upsertInTx(tx, {
+        userId,
+        rewardId: milestoneReward.id,
+        source: 'LEVEL_UP',
+        sourceId: `level-${pack.level}`,
+      })
+      created++
+    }
+    if (refillEnergy) {
+      await this.#combatPointsTx.refillToMaxInTx(tx, userId, upgrades)
+    }
+    return created
+  }
+
+  async #claimOneTx(
+    tx: PrimaTransactionClient,
+    rewardId: string,
+    userId: string,
+  ): Promise<ClaimResult> {
+    // Re-read inside tx to close TOCTOU window
+    const userReward = await tx.userReward.findUnique({
+      where: { id: rewardId },
+      include: { reward: true },
+    })
+    if (!userReward || userReward.userId !== userId) {
+      throw Boom.notFound(errorMessage('rewards.notFound'))
+    }
+    if (userReward.claimedAt !== null) {
+      throw Boom.conflict(errorMessage('rewards.alreadyClaimed'))
+    }
+
+    const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
+    const {
+      tokens: rewardTokens,
+      dust,
+      xp,
+      gold: rewardGold,
+    } = userReward.reward
+
+    const [upgrades, cfg, teamEffects] = await Promise.all([
+      this.#skillTreeRepository.getEffectsForUser(userId),
+      this.#configService.getMany(
+        'tokenRegenIntervalMinutes',
+        'tokenMaxStock',
+        'xp.base',
+        'xp.slope',
+        'xp.levelCap',
+        'levelup.refillEnergy',
+      ),
+      this.#teamProgressionDomain.effectsForUser(userId),
+    ])
+    const effectiveInterval = effectiveRegenInterval({
+      intervalMinutes: cfg.tokenRegenIntervalMinutes,
+      reductionMinutes: upgrades.regenReductionMinutes,
+      lootBonusPct: teamEffects.loot,
+    })
+    const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
+    const {
+      tokens: regenTokens,
+      newLastTokenAt,
+      overflow,
+    } = calculateTokens(
+      user.lastTokenAt,
+      user.tokens,
+      effectiveInterval,
+      effectiveMaxStock,
+      upgrades.multiTokenChance,
+    )
+
+    const newTokens = regenTokens + rewardTokens
+    const newDust =
+      user.dust + dust + overflowDust(overflow, upgrades.tokenOverflowDust)
+    const newXp = user.xp + xp
+    const newGold = user.gold + rewardGold
+    const newLevel = levelAfterXpGain(
+      user.level,
+      newXp,
+      cfg['xp.base'],
+      cfg['xp.slope'],
+      cfg['xp.levelCap'],
+    )
+
+    const gained = skillPointsGained(user.level, newLevel)
+    await this.#userRepository.updateAfterClaimInTx(tx, userId, {
+      tokens: newTokens,
+      dust: newDust,
+      xp: newXp,
+      level: newLevel,
+      gold: newGold,
+      lastTokenAt: newLastTokenAt ?? undefined,
+      skillPoints: gained > 0 ? { increment: gained } : undefined,
+    })
+    await this.#userRewardRepository.markClaimedInTx(tx, userReward.id)
+
+    const claimedCards = await this.#grantCardRewards(tx, userId, [
+      userReward.reward,
+    ])
+
+    const claimUnlocks = await this.#achievementsDomain.track(tx, userId, {
+      kind: 'REWARD_CLAIMED',
+      rewardId: userReward.rewardId,
+      source: userReward.source,
+    })
+    const levelUnlocks =
+      newLevel > user.level
+        ? await this.#achievementsDomain.track(tx, userId, {
+            kind: 'LEVEL_UP',
+            newLevel,
+          })
+        : []
+
+    await this.#grantLevelUpRewards(
+      tx,
+      userId,
+      user.level,
+      newLevel,
+      cfg['levelup.refillEnergy'] === 1,
+      upgrades,
+    )
+
+    // Count AFTER milestone rewards are created so the caller sees the correct
+    // pending total. Excludes QUEST rewards — the topbar badge never counts them.
+    const pendingRewardsCount = await tx.userReward.count({
+      where: { userId, claimedAt: null, source: { not: 'QUEST' } },
+    })
+
+    return {
+      tokens: newTokens,
+      dust: newDust,
+      xp: newXp,
+      level: newLevel,
+      levelBefore: user.level,
+      gold: newGold,
+      pendingRewardsCount,
+      unlockedAchievements: [...claimUnlocks, ...levelUnlocks],
+      cards: claimedCards,
+    }
+  }
+
   getPending(userId: string): Promise<PendingUserReward[]> {
     return this.#userRewardRepository.findPendingByUser(userId)
   }
@@ -168,135 +326,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     }
 
     const result = await this.#postgresOrm.executeWithTransactionClient(
-      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: refill + milestone loop added, refactor deferred
-      async (tx) => {
-        // Re-read inside tx to close TOCTOU window
-        const userReward = await tx.userReward.findUnique({
-          where: { id: rewardId },
-          include: { reward: true },
-        })
-        if (!userReward || userReward.userId !== userId) {
-          throw Boom.notFound(errorMessage('rewards.notFound'))
-        }
-        if (userReward.claimedAt !== null) {
-          throw Boom.conflict(errorMessage('rewards.alreadyClaimed'))
-        }
-
-        const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
-        const {
-          tokens: rewardTokens,
-          dust,
-          xp,
-          gold: rewardGold,
-        } = userReward.reward
-
-        const [upgrades, cfg, teamEffects] = await Promise.all([
-          this.#skillTreeRepository.getEffectsForUser(userId),
-          this.#configService.getMany(
-            'tokenRegenIntervalMinutes',
-            'tokenMaxStock',
-            'xp.base',
-            'xp.slope',
-            'xp.levelCap',
-            'levelup.refillEnergy',
-          ),
-          this.#teamProgressionDomain.effectsForUser(userId),
-        ])
-        const effectiveInterval = effectiveRegenInterval({
-          intervalMinutes: cfg.tokenRegenIntervalMinutes,
-          reductionMinutes: upgrades.regenReductionMinutes,
-          lootBonusPct: teamEffects.loot,
-        })
-        const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
-        const {
-          tokens: regenTokens,
-          newLastTokenAt,
-          overflow,
-        } = calculateTokens(
-          user.lastTokenAt,
-          user.tokens,
-          effectiveInterval,
-          effectiveMaxStock,
-          upgrades.multiTokenChance,
-        )
-
-        const newTokens = regenTokens + rewardTokens
-        const newDust =
-          user.dust + dust + overflowDust(overflow, upgrades.tokenOverflowDust)
-        const newXp = user.xp + xp
-        const newGold = user.gold + rewardGold
-        const newLevel = levelAfterXpGain(
-          user.level,
-          newXp,
-          cfg['xp.base'],
-          cfg['xp.slope'],
-          cfg['xp.levelCap'],
-        )
-
-        const gained = skillPointsGained(user.level, newLevel)
-        await this.#userRepository.updateAfterClaimInTx(tx, userId, {
-          tokens: newTokens,
-          dust: newDust,
-          xp: newXp,
-          level: newLevel,
-          gold: newGold,
-          lastTokenAt: newLastTokenAt ?? undefined,
-          skillPoints: gained > 0 ? { increment: gained } : undefined,
-        })
-        await this.#userRewardRepository.markClaimedInTx(tx, userReward.id)
-
-        const claimedCards = await this.#grantCardRewards(tx, userId, [
-          userReward.reward,
-        ])
-
-        const claimUnlocks = await this.#achievementsDomain.track(tx, userId, {
-          kind: 'REWARD_CLAIMED',
-          rewardId: userReward.rewardId,
-          source: userReward.source,
-        })
-        const levelUnlocks =
-          newLevel > user.level
-            ? await this.#achievementsDomain.track(tx, userId, {
-                kind: 'LEVEL_UP',
-                newLevel,
-              })
-            : []
-
-        if (newLevel > user.level) {
-          for (const pack of milestonesCrossed(user.level, newLevel)) {
-            const milestoneReward = await tx.reward.create({
-              data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
-            })
-            await this.#userRewardRepository.upsertInTx(tx, {
-              userId,
-              rewardId: milestoneReward.id,
-              source: 'LEVEL_UP',
-              sourceId: `level-${pack.level}`,
-            })
-          }
-          if (cfg['levelup.refillEnergy'] === 1) {
-            await this.#combatPointsTx.refillToMaxInTx(tx, userId, upgrades)
-          }
-        }
-
-        // Count AFTER milestone rewards are created so the caller sees the correct
-        // pending total. Excludes QUEST rewards — the topbar badge never counts them.
-        const pendingRewardsCount = await tx.userReward.count({
-          where: { userId, claimedAt: null, source: { not: 'QUEST' } },
-        })
-
-        return {
-          tokens: newTokens,
-          dust: newDust,
-          xp: newXp,
-          level: newLevel,
-          levelBefore: user.level,
-          gold: newGold,
-          pendingRewardsCount,
-          unlockedAchievements: [...claimUnlocks, ...levelUnlocks],
-          cards: claimedCards,
-        }
-      },
+      (tx) => this.#claimOneTx(tx, rewardId, userId),
       { isolationLevel: 'Serializable' },
     )
     if (result.level > result.levelBefore) {
@@ -492,21 +522,14 @@ export class RewardsDomain implements RewardsDomainInterface {
             },
           )
           allUnlocks.push(...levelUnlocks)
-          for (const pack of milestonesCrossed(initialLevel, newLevel)) {
-            const milestoneReward = await tx.reward.create({
-              data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
-            })
-            await this.#userRewardRepository.upsertInTx(tx, {
-              userId,
-              rewardId: milestoneReward.id,
-              source: 'LEVEL_UP',
-              sourceId: `level-${pack.level}`,
-            })
-            milestonePacksCreated++
-          }
-          if (cfg['levelup.refillEnergy'] === 1) {
-            await this.#combatPointsTx.refillToMaxInTx(tx, userId, upgrades)
-          }
+          milestonePacksCreated = await this.#grantLevelUpRewards(
+            tx,
+            userId,
+            initialLevel,
+            newLevel,
+            cfg['levelup.refillEnergy'] === 1,
+            upgrades,
+          )
         }
 
         return {

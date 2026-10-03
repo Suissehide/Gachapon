@@ -124,8 +124,11 @@ export function pickWeightedRandom(
       return card
     }
   }
-  // biome-ignore lint/style/noNonNullAssertion: cards.length > 0 is guaranteed by the guard above
-  return cards[cards.length - 1]!
+  const last = cards.at(-1)
+  if (!last) {
+    throw new Error('No cards to pick from')
+  }
+  return last
 }
 
 export function pickWeightedRandomWithLuck(
@@ -267,6 +270,112 @@ function rarityGte(a: string, b: string): boolean {
   return (RARITY_ORDER[a] ?? -1) >= (RARITY_ORDER[b] ?? -1)
 }
 
+const GUARANTEE_RARITIES = new Set(['EPIC', 'LEGENDARY'])
+const GOLDEN_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
+
+/**
+ * Restreint le pool d'un tirage hors pitié. Précédence : garantie > boule d'or.
+ * La garantie ne se déclenche qu'au DERNIER tirage du boost (pullsRemaining
+ * === 1) s'il n'est pas encore satisfait. Pool filtré vide → pool d'origine.
+ */
+function narrowPool(
+  cards: CardWithSet[],
+  boosts: readonly BoostState[],
+  isGolden: boolean,
+): { cards: CardWithSet[]; wasBoostGuarantee: boolean } {
+  const guaranteeBoost = boosts.find(
+    (b) => b.guaranteedRarity != null && !b.satisfied && b.pullsRemaining === 1,
+  )
+  if (guaranteeBoost) {
+    const filtered = cards.filter((c) => GUARANTEE_RARITIES.has(c.rarity))
+    return filtered.length > 0
+      ? { cards: filtered, wasBoostGuarantee: true }
+      : { cards, wasBoostGuarantee: false }
+  }
+  if (isGolden) {
+    const filtered = cards.filter((c) => GOLDEN_RARITIES.has(c.rarity))
+    if (filtered.length > 0) {
+      return { cards: filtered, wasBoostGuarantee: false }
+    }
+  }
+  return { cards, wasBoostGuarantee: false }
+}
+
+/** Boosts de poids actifs (rareté nulle ignorée), ou undefined s'il n'y en a aucun. */
+function activeWeightBoosts(
+  boosts: readonly BoostState[],
+):
+  | Array<{ weightMultiplier: number; weightRarity: CardRarity | null }>
+  | undefined {
+  const args = boosts.flatMap((b) =>
+    b.weightMultiplier != null && b.weightRarity != null && b.pullsRemaining > 0
+      ? [
+          {
+            weightMultiplier: b.weightMultiplier,
+            weightRarity: b.weightRarity as CardRarity,
+          },
+        ]
+      : [],
+  )
+  return args.length > 0 ? args : undefined
+}
+
+/** Décrémente en mémoire chaque boost actif et marque satisfaite la garantie
+ *  atteinte par la carte tirée. */
+function consumeBoosts(boosts: BoostState[], card: CardWithSet): void {
+  for (const boost of boosts) {
+    if (boost.pullsRemaining <= 0) {
+      continue
+    }
+    boost.pullsRemaining -= 1
+    boost.pullsConsumed += 1
+    if (
+      boost.guaranteedRarity != null &&
+      !boost.satisfied &&
+      rarityGte(card.rarity, boost.guaranteedRarity)
+    ) {
+      boost.satisfied = true
+    }
+  }
+}
+
+function toBoostState(b: {
+  id: string
+  weightMultiplier: number | null
+  weightRarity: string | null
+  guaranteedRarity: string | null
+  pullsRemaining: number
+  satisfied: boolean
+}): BoostState {
+  return {
+    id: b.id,
+    weightMultiplier: b.weightMultiplier,
+    weightRarity: b.weightRarity,
+    guaranteedRarity: b.guaranteedRarity,
+    pullsRemaining: b.pullsRemaining,
+    satisfied: b.satisfied,
+    pullsConsumed: 0,
+  }
+}
+
+/** Plage de niveaux couverte par les montées d'un batch, ou undefined. */
+function mergeLevelUps(
+  levelUps: ReadonlyArray<{ from: number; to: number } | undefined>,
+): { from: number; to: number } | undefined {
+  const ups = levelUps.filter(
+    (l): l is { from: number; to: number } => l !== undefined,
+  )
+  if (ups.length === 0) {
+    return undefined
+  }
+  return {
+    from: Math.min(...ups.map((l) => l.from)),
+    to: Math.max(...ups.map((l) => l.to)),
+  }
+}
+
+type Unlocks = Awaited<ReturnType<AchievementsDomainInterface['track']>>
+
 type StepOutcome = {
   pull: Awaited<ReturnType<IGachaPullRepository['createInTx']>>
   card: CardWithSet
@@ -373,7 +482,6 @@ export class GachaDomain implements GachaDomainInterface {
     return rows.map((row) => row.cardId)
   }
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: boost + pity + golden-ball precedence logic, refactor deferred
   async #executeSinglePullStep(
     tx: PrimaTransactionClient,
     userId: string,
@@ -386,62 +494,24 @@ export class GachaDomain implements GachaDomainInterface {
       cfg.upgrades.pityReduction ?? 0,
     )
     const isPityForced = stepState.currentPity >= pityThreshold
-    let activeCards = await this.#cardRepository.findActiveForPullInTx(
+    const pool = await this.#cardRepository.findActiveForPullInTx(
       tx,
       isPityForced,
     )
-    if (activeCards.length === 0) {
+    if (pool.length === 0) {
       throw Boom.internal(errorMessage('gacha.noActiveCards'))
     }
-
-    let wasBoostGuarantee = false
 
     const goldenBallChance = cfg.upgrades.goldenBallChance ?? 0
     // Roll golden ball before guarantee check (short-circuit: not rolled when pity fires)
     const isGolden = !isPityForced && Math.random() < goldenBallChance / 100
 
-    if (!isPityForced) {
-      // Guarantee boost fires only on the LAST pull (pullsRemaining === 1) when unsatisfied.
-      // Precedence: guarantee > golden ball.
-      const guaranteeBoost = boosts.find(
-        (b) =>
-          b.guaranteedRarity != null && !b.satisfied && b.pullsRemaining === 1,
-      )
-      if (guaranteeBoost) {
-        const GUARANTEE_RARITIES = new Set(['EPIC', 'LEGENDARY'])
-        const filtered = activeCards.filter((c) =>
-          GUARANTEE_RARITIES.has(c.rarity),
-        )
-        if (filtered.length > 0) {
-          activeCards = filtered
-          wasBoostGuarantee = true
-        }
-        // else: fallback to unfiltered list (existing pattern)
-      } else if (isGolden) {
-        const GOLDEN_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
-        const filtered = activeCards.filter((c) =>
-          GOLDEN_RARITIES.has(c.rarity),
-        )
-        if (filtered.length > 0) {
-          activeCards = filtered
-        }
-      }
-    }
+    const { cards: activeCards, wasBoostGuarantee } = isPityForced
+      ? { cards: pool, wasBoostGuarantee: false }
+      : narrowPool(pool, boosts, isGolden)
 
     // Weight boosts: apply every active boost to its rarity (null ignored defensively)
-    const weightBoostArgs = boosts
-      .filter(
-        (b) =>
-          b.weightMultiplier != null &&
-          b.weightRarity != null &&
-          b.pullsRemaining > 0,
-      )
-      .map((b) => ({
-        weightMultiplier: b.weightMultiplier!,
-        weightRarity: b.weightRarity as CardRarity,
-      }))
-    const weightBoostArg =
-      weightBoostArgs.length > 0 ? weightBoostArgs : undefined
+    const weightBoostArg = activeWeightBoosts(boosts)
 
     const drawn =
       cfg.upgrades.luckMultiplier === 1.0
@@ -461,20 +531,7 @@ export class GachaDomain implements GachaDomainInterface {
       cfg.upgrades.wishlistPullChance ?? 0,
     )
 
-    // Update boost states in memory (decrement all active boosts, set satisfied on guarantee)
-    for (const boost of boosts) {
-      if (boost.pullsRemaining > 0) {
-        boost.pullsRemaining -= 1
-        boost.pullsConsumed += 1
-        if (
-          boost.guaranteedRarity != null &&
-          !boost.satisfied &&
-          rarityGte(card.rarity, boost.guaranteedRarity)
-        ) {
-          boost.satisfied = true
-        }
-      }
-    }
+    consumeBoosts(boosts, card)
 
     const variantLuckMultiplier = cfg.upgrades.variantLuckMultiplier ?? 1
     const rolledVariant = pickVariant(
@@ -553,6 +610,68 @@ export class GachaDomain implements GachaDomainInterface {
     }
   }
 
+  async #loadBoostsInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<BoostState[]> {
+    const rawBoosts = await this.#userBoostRepository.findActiveByUserInTx(
+      tx,
+      userId,
+    )
+    return rawBoosts.map(toBoostState)
+  }
+
+  /** Succès de dépense de jetons et de montée de niveau, suivis en parallèle. */
+  #trackSpendAndLevel(
+    tx: PrimaTransactionClient,
+    userId: string,
+    spentAmount: number,
+    oldLevel: number,
+    newLevel: number,
+  ): Promise<[Unlocks, Unlocks]> {
+    return Promise.all([
+      spentAmount > 0
+        ? this.#achievementsDomain.track(tx, userId, {
+            kind: 'TOKENS_SPENT',
+            amount: spentAmount,
+          })
+        : Promise.resolve([] as Unlocks),
+      newLevel > oldLevel
+        ? this.#achievementsDomain.track(tx, userId, {
+            kind: 'LEVEL_UP',
+            newLevel,
+          })
+        : Promise.resolve([] as Unlocks),
+    ])
+  }
+
+  /** Packs de palier franchis + recharge d'énergie. Rien sans montée de niveau. */
+  async #grantLevelUpRewards(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cfg: PullCfg,
+    oldLevel: number,
+    newLevel: number,
+  ): Promise<void> {
+    if (newLevel <= oldLevel) {
+      return
+    }
+    for (const pack of milestonesCrossed(oldLevel, newLevel)) {
+      const milestoneReward = await tx.reward.create({
+        data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
+      })
+      await this.#userRewardRepository.upsertInTx(tx, {
+        userId,
+        rewardId: milestoneReward.id,
+        source: 'LEVEL_UP',
+        sourceId: `level-${pack.level}`,
+      })
+    }
+    if (cfg.refillEnergyOnLevelUp) {
+      await this.#combatPointsTx.refillToMaxInTx(tx, userId, cfg.upgrades)
+    }
+  }
+
   async #executePullTx(
     tx: PrimaTransactionClient,
     userId: string,
@@ -565,19 +684,7 @@ export class GachaDomain implements GachaDomainInterface {
     }
 
     // Load boosts in TX at step start (single-pull path)
-    const rawBoosts = await this.#userBoostRepository.findActiveByUserInTx(
-      tx,
-      userId,
-    )
-    const boosts: BoostState[] = rawBoosts.map((b) => ({
-      id: b.id,
-      weightMultiplier: b.weightMultiplier,
-      weightRarity: b.weightRarity,
-      guaranteedRarity: b.guaranteedRarity,
-      pullsRemaining: b.pullsRemaining,
-      satisfied: b.satisfied,
-      pullsConsumed: 0,
-    }))
+    const boosts = await this.#loadBoostsInTx(tx, userId)
 
     const step = await this.#executeSinglePullStep(
       tx,
@@ -622,40 +729,14 @@ export class GachaDomain implements GachaDomainInterface {
       gained > 0 ? gained : undefined,
     )
     const spentAmount = isFreePull ? 0 : cfg.pullTokenCost
-    const [spentUnlocks, levelUnlocks] = await Promise.all([
-      spentAmount > 0
-        ? this.#achievementsDomain.track(tx, userId, {
-            kind: 'TOKENS_SPENT',
-            amount: spentAmount,
-          })
-        : Promise.resolve(
-            [] as Awaited<ReturnType<AchievementsDomainInterface['track']>>,
-          ),
-      newLevel > oldLevel
-        ? this.#achievementsDomain.track(tx, userId, {
-            kind: 'LEVEL_UP',
-            newLevel,
-          })
-        : Promise.resolve(
-            [] as Awaited<ReturnType<AchievementsDomainInterface['track']>>,
-          ),
-    ])
-    if (newLevel > oldLevel) {
-      for (const pack of milestonesCrossed(oldLevel, newLevel)) {
-        const milestoneReward = await tx.reward.create({
-          data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
-        })
-        await this.#userRewardRepository.upsertInTx(tx, {
-          userId,
-          rewardId: milestoneReward.id,
-          source: 'LEVEL_UP',
-          sourceId: `level-${pack.level}`,
-        })
-      }
-      if (cfg.refillEnergyOnLevelUp) {
-        await this.#combatPointsTx.refillToMaxInTx(tx, userId, cfg.upgrades)
-      }
-    }
+    const [spentUnlocks, levelUnlocks] = await this.#trackSpendAndLevel(
+      tx,
+      userId,
+      spentAmount,
+      oldLevel,
+      newLevel,
+    )
+    await this.#grantLevelUpRewards(tx, userId, cfg, oldLevel, newLevel)
     return {
       pull: step.pull,
       card: step.card,
@@ -674,6 +755,127 @@ export class GachaDomain implements GachaDomainInterface {
       wasBoostGuarantee: step.wasBoostGuarantee,
       leveledUp:
         newLevel > oldLevel ? { from: oldLevel, to: newLevel } : undefined,
+    }
+  }
+
+  async #executePullBatchTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cfg: PullCfg,
+    count: number,
+  ): Promise<PullBatchResult> {
+    const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
+
+    // Load boosts ONCE at batch start; track in memory across steps
+    const boosts = await this.#loadBoostsInTx(tx, userId)
+
+    // Pre-roll free-pull outcomes for all pulls BEFORE the token guard so that
+    // users with freePullChance > 0 get identical parity to the single-pull path.
+    const preRolledFree = Array.from(
+      { length: count },
+      () => Math.random() < (cfg.upgrades.freePullChance ?? 0) / 100,
+    )
+    const paidCount = preRolledFree.filter((f) => !f).length
+    if (state.currentTokens < paidCount * cfg.pullTokenCost) {
+      throw Boom.paymentRequired(errorMessage('gacha.notEnoughTokens'))
+    }
+    const levelAt = (xp: number) =>
+      levelAfterXpGain(
+        user.level,
+        xp,
+        cfg.xpCurve.base,
+        cfg.xpCurve.slope,
+        cfg.xpCurve.levelCap,
+      )
+    const oldLevel = levelAt(user.xp)
+    const stepResults: StepOutcome[] = []
+    const stepFreePulls: boolean[] = []
+    let currentPity = state.currentPity
+    let totalDust = 0
+    let totalActualCost = 0
+    const xpPerPullBonused = Math.round(
+      cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100),
+    )
+    const totalXp = xpPerPullBonused * count
+    const stepLeveledUp: Array<{ from: number; to: number } | undefined> = []
+    let runningXp = user.xp
+    for (let i = 0; i < count; i++) {
+      const isFreePull = preRolledFree[i] ?? false
+      stepFreePulls.push(isFreePull)
+      totalActualCost += isFreePull ? 0 : cfg.pullTokenCost
+      const step = await this.#executeSinglePullStep(
+        tx,
+        userId,
+        cfg,
+        {
+          currentTokens: state.currentTokens - totalActualCost,
+          currentPity,
+        },
+        boosts,
+      )
+      const levelBefore = levelAt(runningXp)
+      runningXp += xpPerPullBonused
+      const levelAfter = levelAt(runningXp)
+      stepLeveledUp.push(
+        levelAfter > levelBefore
+          ? { from: levelBefore, to: levelAfter }
+          : undefined,
+      )
+      stepResults.push(step)
+      currentPity = step.nextPity
+      totalDust += step.dustEarned
+    }
+
+    // Persist boost decrements ONCE at batch end (bulk decrement per boost)
+    await this.#persistBoostDecrements(tx, boosts)
+
+    const finalTokens = state.currentTokens - totalActualCost
+    const newLevel = levelAt(user.xp + totalXp)
+    const batchGained = skillPointsGained(oldLevel, newLevel)
+    await this.#writeFinalUserUpdate(
+      tx,
+      userId,
+      finalTokens,
+      totalDust + state.overflowDustGained,
+      totalXp,
+      newLevel,
+      currentPity,
+      state.newLastTokenAt,
+      batchGained > 0 ? batchGained : undefined,
+    )
+    const [spentUnlocks, levelUnlocks] = await this.#trackSpendAndLevel(
+      tx,
+      userId,
+      totalActualCost,
+      oldLevel,
+      newLevel,
+    )
+    await this.#grantLevelUpRewards(tx, userId, cfg, oldLevel, newLevel)
+    // Top-level = uniquement les succès NON liés à une carte (dépense de
+    // jetons, montée de niveau). Les succès PULL_COMPLETED sont rattachés
+    // à leur carte ci-dessous. Dédupliqués par clé par sécurité.
+    const batchAchievements = [
+      ...new Map(
+        [...spentUnlocks, ...levelUnlocks].map((a) => [a.key, a]),
+      ).values(),
+    ]
+    return {
+      pulls: stepResults.map((s, idx) => ({
+        pull: s.pull,
+        card: s.card,
+        wasDuplicate: s.wasDuplicate,
+        dustEarned: s.dustEarned,
+        pityCurrent: s.nextPity,
+        wasFreePull: stepFreePulls[idx] ?? false,
+        wasGoldenBall: s.wasGoldenBall,
+        wasBoostGuarantee: s.wasBoostGuarantee,
+        unlockedAchievements: s.unlockedAchievements,
+        leveledUp: stepLeveledUp[idx],
+      })),
+      tokensRemaining: finalTokens,
+      xpGained: totalXp,
+      unlockedAchievements: batchAchievements,
+      leveledUp: mergeLevelUps(stepLeveledUp),
     }
   }
 
@@ -820,197 +1022,7 @@ export class GachaDomain implements GachaDomainInterface {
         wishedCardIds,
       }
       return this.#postgresOrm.executeWithTransactionClient(
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: milestone loop added, refactor deferred
-        async (tx) => {
-          const { user, state } = await this.#loadUserAndInitialState(
-            tx,
-            userId,
-            cfg,
-          )
-
-          // Load boosts ONCE at batch start; track in memory across steps
-          const rawBoosts =
-            await this.#userBoostRepository.findActiveByUserInTx(tx, userId)
-          const boosts: BoostState[] = rawBoosts.map((b) => ({
-            id: b.id,
-            weightMultiplier: b.weightMultiplier,
-            weightRarity: b.weightRarity,
-            guaranteedRarity: b.guaranteedRarity,
-            pullsRemaining: b.pullsRemaining,
-            satisfied: b.satisfied,
-            pullsConsumed: 0,
-          }))
-
-          // Pre-roll free-pull outcomes for all pulls BEFORE the token guard so that
-          // users with freePullChance > 0 get identical parity to the single-pull path.
-          const preRolledFree = Array.from(
-            { length: count },
-            () => Math.random() < (cfg.upgrades.freePullChance ?? 0) / 100,
-          )
-          const paidCount = preRolledFree.filter((f) => !f).length
-          if (state.currentTokens < paidCount * cfg.pullTokenCost) {
-            throw Boom.paymentRequired(errorMessage('gacha.notEnoughTokens'))
-          }
-          const oldLevel = levelAfterXpGain(
-            user.level,
-            user.xp,
-            cfg.xpCurve.base,
-            cfg.xpCurve.slope,
-            cfg.xpCurve.levelCap,
-          )
-          const stepResults: StepOutcome[] = []
-          const stepFreePulls: boolean[] = []
-          let currentPity = state.currentPity
-          let totalDust = 0
-          let totalActualCost = 0
-          const xpPerPullBonused = Math.round(
-            cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100),
-          )
-          const totalXp = xpPerPullBonused * count
-          const stepLeveledUp: Array<{ from: number; to: number } | undefined> =
-            []
-          let runningXp = user.xp
-          for (let i = 0; i < count; i++) {
-            const isFreePull = preRolledFree[i] ?? false
-            stepFreePulls.push(isFreePull)
-            totalActualCost += isFreePull ? 0 : cfg.pullTokenCost
-            const step = await this.#executeSinglePullStep(
-              tx,
-              userId,
-              cfg,
-              {
-                currentTokens: state.currentTokens - totalActualCost,
-                currentPity,
-              },
-              boosts,
-            )
-            const levelBefore = levelAfterXpGain(
-              user.level,
-              runningXp,
-              cfg.xpCurve.base,
-              cfg.xpCurve.slope,
-              cfg.xpCurve.levelCap,
-            )
-            runningXp += xpPerPullBonused
-            const levelAfter = levelAfterXpGain(
-              user.level,
-              runningXp,
-              cfg.xpCurve.base,
-              cfg.xpCurve.slope,
-              cfg.xpCurve.levelCap,
-            )
-            stepLeveledUp.push(
-              levelAfter > levelBefore
-                ? { from: levelBefore, to: levelAfter }
-                : undefined,
-            )
-            stepResults.push(step)
-            currentPity = step.nextPity
-            totalDust += step.dustEarned
-          }
-
-          // Persist boost decrements ONCE at batch end (bulk decrement per boost)
-          await this.#persistBoostDecrements(tx, boosts)
-
-          const finalTokens = state.currentTokens - totalActualCost
-          const newLevel = levelAfterXpGain(
-            user.level,
-            user.xp + totalXp,
-            cfg.xpCurve.base,
-            cfg.xpCurve.slope,
-            cfg.xpCurve.levelCap,
-          )
-          const batchGained = skillPointsGained(oldLevel, newLevel)
-          await this.#writeFinalUserUpdate(
-            tx,
-            userId,
-            finalTokens,
-            totalDust + state.overflowDustGained,
-            totalXp,
-            newLevel,
-            currentPity,
-            state.newLastTokenAt,
-            batchGained > 0 ? batchGained : undefined,
-          )
-          const [spentUnlocks, levelUnlocks] = await Promise.all([
-            totalActualCost > 0
-              ? this.#achievementsDomain.track(tx, userId, {
-                  kind: 'TOKENS_SPENT',
-                  amount: totalActualCost,
-                })
-              : Promise.resolve(
-                  [] as Awaited<
-                    ReturnType<AchievementsDomainInterface['track']>
-                  >,
-                ),
-            newLevel > oldLevel
-              ? this.#achievementsDomain.track(tx, userId, {
-                  kind: 'LEVEL_UP',
-                  newLevel,
-                })
-              : Promise.resolve(
-                  [] as Awaited<
-                    ReturnType<AchievementsDomainInterface['track']>
-                  >,
-                ),
-          ])
-          if (newLevel > oldLevel) {
-            for (const pack of milestonesCrossed(oldLevel, newLevel)) {
-              const milestoneReward = await tx.reward.create({
-                data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
-              })
-              await this.#userRewardRepository.upsertInTx(tx, {
-                userId,
-                rewardId: milestoneReward.id,
-                source: 'LEVEL_UP',
-                sourceId: `level-${pack.level}`,
-              })
-            }
-            if (cfg.refillEnergyOnLevelUp) {
-              await this.#combatPointsTx.refillToMaxInTx(
-                tx,
-                userId,
-                cfg.upgrades,
-              )
-            }
-          }
-          // Top-level = uniquement les succès NON liés à une carte (dépense de
-          // jetons, montée de niveau). Les succès PULL_COMPLETED sont rattachés
-          // à leur carte ci-dessous. Dédupliqués par clé par sécurité.
-          const batchAchievements = [
-            ...new Map(
-              [...spentUnlocks, ...levelUnlocks].map((a) => [a.key, a]),
-            ).values(),
-          ]
-          const pullLevelUps = stepLeveledUp.filter(
-            (l): l is { from: number; to: number } => l !== undefined,
-          )
-          const batchLeveledUp =
-            pullLevelUps.length > 0
-              ? {
-                  from: Math.min(...pullLevelUps.map((l) => l.from)),
-                  to: Math.max(...pullLevelUps.map((l) => l.to)),
-                }
-              : undefined
-          return {
-            pulls: stepResults.map((s, idx) => ({
-              pull: s.pull,
-              card: s.card,
-              wasDuplicate: s.wasDuplicate,
-              dustEarned: s.dustEarned,
-              pityCurrent: s.nextPity,
-              wasFreePull: stepFreePulls[idx] ?? false,
-              wasGoldenBall: s.wasGoldenBall,
-              wasBoostGuarantee: s.wasBoostGuarantee,
-              unlockedAchievements: s.unlockedAchievements,
-              leveledUp: stepLeveledUp[idx],
-            })),
-            tokensRemaining: finalTokens,
-            xpGained: totalXp,
-            unlockedAchievements: batchAchievements,
-            leveledUp: batchLeveledUp,
-          }
-        },
+        (tx) => this.#executePullBatchTx(tx, userId, cfg, count),
         { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
       )
     }

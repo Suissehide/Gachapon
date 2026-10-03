@@ -128,8 +128,13 @@ export function pickWeeklyQuests<T extends { key: string }>(
   // Fisher-Yates shuffle (in-place on sorted copy)
   for (let i = sorted.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1))
-    // biome-ignore lint/style/noNonNullAssertion: indices are always in bounds
-    ;[sorted[i], sorted[j]] = [sorted[j]!, sorted[i]!]
+    const a = sorted[i]
+    const b = sorted[j]
+    if (a === undefined || b === undefined) {
+      throw new Error('Fisher-Yates hors limites')
+    }
+    sorted[i] = b
+    sorted[j] = a
   }
 
   return sorted.slice(0, count)

@@ -62,7 +62,6 @@ export class CardLevelingTx {
 
     return retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
           const userCard = await tx.userCard.findUnique({
             where: { id: userCardId },
@@ -74,24 +73,7 @@ export class CardLevelingTx {
 
           const currentLevel = userCard.level
           const palier = userCard.palier
-          const palierMax = maxLevelInPalier(palier)
-
-          if (targetLevel <= currentLevel) {
-            throw Boom.badRequest(
-              errorMessage('cardLeveling.targetBelowCurrent', {
-                target: targetLevel,
-                current: currentLevel,
-              }),
-            )
-          }
-          if (targetLevel > palierMax) {
-            throw Boom.badRequest(
-              errorMessage('cardLeveling.targetExceedsPalierCap', {
-                target: targetLevel,
-                cap: palierMax,
-              }),
-            )
-          }
+          assertTargetLevel(targetLevel, currentLevel, palier)
 
           const rarity = userCard.card.rarity
           const goldCost = totalGoldCost(
@@ -118,22 +100,7 @@ export class CardLevelingTx {
           if (!user) {
             throw Boom.notFound(errorMessage('user.notFound'))
           }
-          if (user.gold < goldCost) {
-            throw Boom.paymentRequired(
-              errorMessage('cardLeveling.notEnoughGold', {
-                need: goldCost,
-                have: user.gold,
-              }),
-            )
-          }
-          if (user.dust < dustCost) {
-            throw Boom.paymentRequired(
-              errorMessage('cardLeveling.notEnoughDust', {
-                need: dustCost,
-                have: user.dust,
-              }),
-            )
-          }
+          assertCanAfford(user, goldCost, dustCost)
 
           const updatedUser = await tx.user.update({
             where: { id: userId },
@@ -171,6 +138,53 @@ export class CardLevelingTx {
         },
         { isolationLevel: 'Serializable' },
       ),
+    )
+  }
+}
+
+function assertTargetLevel(
+  targetLevel: number,
+  currentLevel: number,
+  palier: number,
+): void {
+  const palierMax = maxLevelInPalier(palier)
+  if (targetLevel <= currentLevel) {
+    throw Boom.badRequest(
+      errorMessage('cardLeveling.targetBelowCurrent', {
+        target: targetLevel,
+        current: currentLevel,
+      }),
+    )
+  }
+  if (targetLevel > palierMax) {
+    throw Boom.badRequest(
+      errorMessage('cardLeveling.targetExceedsPalierCap', {
+        target: targetLevel,
+        cap: palierMax,
+      }),
+    )
+  }
+}
+
+function assertCanAfford(
+  user: { gold: number; dust: number },
+  goldCost: number,
+  dustCost: number,
+): void {
+  if (user.gold < goldCost) {
+    throw Boom.paymentRequired(
+      errorMessage('cardLeveling.notEnoughGold', {
+        need: goldCost,
+        have: user.gold,
+      }),
+    )
+  }
+  if (user.dust < dustCost) {
+    throw Boom.paymentRequired(
+      errorMessage('cardLeveling.notEnoughDust', {
+        need: dustCost,
+        have: user.dust,
+      }),
     )
   }
 }

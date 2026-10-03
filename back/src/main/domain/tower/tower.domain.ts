@@ -326,7 +326,6 @@ export class TowerDomain {
       const setDefs = setBonusesFromConfig(battleCfg)
 
       return this.#postgresOrm.executeWithTransactionClient(
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: motif calqué sur campaign.domain#attackStage
         async (tx) => {
           const towerFloor = await tx.towerFloor.findUnique({
             where: { element_index: { element, index: floor } },
@@ -354,25 +353,11 @@ export class TowerDomain {
             armorPen: battleCfg['combat.baseArmorPen'],
             lifesteal: battleCfg['combat.baseLifesteal'],
           }
-          const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
-            tx,
-            userId,
-            towerTeamKey(element),
-          )
-          if (userCardIds.length === 0) {
-            throw Boom.badRequest(errorMessage('combat.noTeamComposed'))
-          }
-          const teamUnits = await buildPlayerSimUnits(tx, {
-            userId,
-            userCardIds,
+          const teamUnits = await this.#buildPlayerTeam(tx, userId, element, {
             defMitigationRef: battleCfg['combat.defMitigationRef'],
             baseStats,
             setDefs,
-            publicUrl: (key) => this.#storageClient.publicUrl(key),
           })
-          if (teamUnits.length === 0) {
-            throw Boom.badRequest(errorMessage('combat.cardsNotOwnedByPlayer'))
-          }
           const enemyUnits = buildEnemySimUnits(
             towerEnemyTeamSchema.parse(towerFloor.enemyTeam),
             {
@@ -393,112 +378,20 @@ export class TowerDomain {
           })
 
           const won = sim.won === 'A'
-          let rewards: TowerBattleRewards | null = null
-
-          if (won) {
-            const loot = towerFloor.lootTable as unknown as TowerLootTable
-            const isFirstClear = floor > currentHighest
-            const rawLoot = isFirstClear ? loot.firstClear : loot.farm
-            // Bonus de skill tree sur or/xp — dust exclu par design (parité
-            // campagne). Le drop d'équipement n'est PAS un tirage à chance,
-            // donc dropBonus n'a aucune prise ici : équipementDropChance/
-            // cardChance sont passés en valeurs neutres, non réutilisées.
-            const bonused = applyCombatBonuses(
-              {
-                gold: rawLoot.gold,
-                xp: rawLoot.xp,
-                equipmentDropChance: 1,
-                cardChance: 0,
-              },
-              effects,
-            )
-
-            // Pièce garantie — jamais de branche « pas de pièce ». Deux
-            // chemins, un seul contrat PRNG (set d'abord, rareté ensuite —
-            // voir tower-drop.ts) :
-            //  - premier passage : rollTowerFirstClearDrop, rareté avec
-            //    PLANCHER (firstClear.guaranteedEquipment.minRarity, motif
-            //    de la campagne) — ne JAMAIS utiliser farm.equipmentWeights
-            //    ici, sinon le plancher ne se déclenche jamais.
-            //  - farm (déjà nettoyé) : rollTowerDrop, rareté pondérée par
-            //    farm.equipmentWeights, propre à l'étage.
-            const drop = isFirstClear
-              ? rollTowerFirstClearDrop({
-                  element,
-                  firstClear: loot.firstClear,
-                  prng: Math.random,
-                })
-              : rollTowerDrop({
-                  element,
-                  weights: loot.farm.equipmentWeights,
-                  prng: Math.random,
-                })
-            // Un (slot, set, rareté) porte désormais PLUSIEURS pièces, une
-            // par stat principale possible de l'emplacement — d'où un
-            // findMany suivi d'un tirage pondéré là où un findUnique
-            // suffisait. Le `dropWeight` du seed est déjà divisé par la
-            // taille du pool, donc la probabilité du triplet est inchangée :
-            // seule la stat principale est tirée au sort ici.
-            const equipmentDrop = await this.#grantEquipmentDrop(
-              tx,
-              userId,
-              drop,
-              substatRanges,
-            )
-
-            // Alimente les quêtes (STAGE_CLEARED, filtrées sur le seul
-            // `kind` — quest-matching.ts) sans faire progresser les succès
-            // de campagne (G2, relecture finale) : `source: 'TOWER'` fait
-            // renvoyer 0 à stageClearedDelta pour STAGES_CLEARED_COUNT et
-            // BOSS_DEFEATS_COUNT, cf. counter-dispatcher.ts.
-            // `flawless` et `understaffed` sont tous deux calculables ici.
-            // Ce qui n'a pas d'équivalent tour, c'est seulement l'EXEMPTION
-            // de deriveClearFlags (`chapter === 1 && index <= 2`), qui épargne
-            // le joueur des tout premiers étages de campagne avant qu'il ait
-            // trois cartes. Une tour n'est jamais dans ce cas, donc la mesure
-            // s'applique telle quelle.
-            await this.#achievementsDomain.track(tx, userId, {
-              kind: 'STAGE_CLEARED',
-              source: 'TOWER',
-              isBoss: floor === TOWER_FLOOR_COUNT,
-              viaSweep: false,
-              flawless: deriveFlawless(sim.log, teamUnits),
-              understaffed: teamUnits.length < 3,
-            })
-
-            // Progression : n'avance qu'en cas de victoire, jamais en arrière.
-            const newHighest = Math.max(currentHighest, floor)
-            if (newHighest !== currentHighest) {
-              await tx.userTowerProgress.upsert({
-                where: { userId_element: { userId, element } },
-                create: { userId, element, highestFloor: newHighest },
-                update: { highestFloor: newHighest },
+          const rewards: TowerBattleRewards | null = won
+            ? await this.#claimVictory(tx, {
+                userId,
+                element,
+                floor,
+                loot: towerFloor.lootTable as unknown as TowerLootTable,
+                currentHighest,
+                effects,
+                substatRanges,
+                battleCfg,
+                log: sim.log,
+                teamUnits,
               })
-            }
-
-            const { xpBefore, levelBefore } = await this.#applyRewards(
-              tx,
-              userId,
-              bonused.gold,
-              rawLoot.dust,
-              bonused.xp,
-              battleCfg['xp.base'],
-              battleCfg['xp.slope'],
-              battleCfg['xp.levelCap'],
-              battleCfg['levelup.refillEnergy'],
-              effects,
-            )
-
-            rewards = {
-              gold: bonused.gold,
-              dust: rawLoot.dust,
-              xp: bonused.xp,
-              xpBefore,
-              levelBefore,
-              isFirstClear,
-              equipmentDrop,
-            }
-          }
+            : null
 
           await tx.battleResult.create({
             data: {
@@ -666,6 +559,177 @@ export class TowerDomain {
         { isolationLevel: 'Serializable' },
       )
     })
+  }
+
+  /**
+   * Équipe du joueur pour la tour `element`, prête pour la simulation.
+   * Refuse une équipe vide ou dont aucune carte n'appartient au joueur.
+   */
+  async #buildPlayerTeam(
+    tx: PrimaTransactionClient,
+    userId: string,
+    element: TowerElement,
+    opts: {
+      defMitigationRef: number
+      baseStats: CombatStatsBaseline
+      setDefs: ReturnType<typeof setBonusesFromConfig>
+    },
+  ): Promise<SimulatorUnit[]> {
+    const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
+      tx,
+      userId,
+      towerTeamKey(element),
+    )
+    if (userCardIds.length === 0) {
+      throw Boom.badRequest(errorMessage('combat.noTeamComposed'))
+    }
+    const teamUnits = await buildPlayerSimUnits(tx, {
+      userId,
+      userCardIds,
+      ...opts,
+      publicUrl: (key) => this.#storageClient.publicUrl(key),
+    })
+    if (teamUnits.length === 0) {
+      throw Boom.badRequest(errorMessage('combat.cardsNotOwnedByPlayer'))
+    }
+    return teamUnits
+  }
+
+  /**
+   * Victoire de `fight` : butin (premier passage ou farm), pièce garantie,
+   * quêtes, progression puis gains — dans cet ordre, dans la transaction
+   * de l'appelant.
+   */
+  async #claimVictory(
+    tx: PrimaTransactionClient,
+    {
+      userId,
+      element,
+      floor,
+      loot,
+      currentHighest,
+      effects,
+      substatRanges,
+      battleCfg,
+      log,
+      teamUnits,
+    }: {
+      userId: string
+      element: TowerElement
+      floor: number
+      loot: TowerLootTable
+      currentHighest: number
+      effects: Awaited<ReturnType<ISkillTreeRepository['getEffectsForUser']>>
+      substatRanges: SubstatRanges
+      battleCfg: Record<
+        'xp.base' | 'xp.slope' | 'xp.levelCap' | 'levelup.refillEnergy',
+        number
+      >
+      log: Parameters<typeof deriveFlawless>[0]
+      teamUnits: SimulatorUnit[]
+    },
+  ): Promise<TowerBattleRewards> {
+    const isFirstClear = floor > currentHighest
+    const rawLoot = isFirstClear ? loot.firstClear : loot.farm
+    // Bonus de skill tree sur or/xp — dust exclu par design (parité
+    // campagne). Le drop d'équipement n'est PAS un tirage à chance,
+    // donc dropBonus n'a aucune prise ici : équipementDropChance/
+    // cardChance sont passés en valeurs neutres, non réutilisées.
+    const bonused = applyCombatBonuses(
+      {
+        gold: rawLoot.gold,
+        xp: rawLoot.xp,
+        equipmentDropChance: 1,
+        cardChance: 0,
+      },
+      effects,
+    )
+
+    // Pièce garantie — jamais de branche « pas de pièce ». Deux
+    // chemins, un seul contrat PRNG (set d'abord, rareté ensuite —
+    // voir tower-drop.ts) :
+    //  - premier passage : rollTowerFirstClearDrop, rareté avec
+    //    PLANCHER (firstClear.guaranteedEquipment.minRarity, motif
+    //    de la campagne) — ne JAMAIS utiliser farm.equipmentWeights
+    //    ici, sinon le plancher ne se déclenche jamais.
+    //  - farm (déjà nettoyé) : rollTowerDrop, rareté pondérée par
+    //    farm.equipmentWeights, propre à l'étage.
+    const drop = isFirstClear
+      ? rollTowerFirstClearDrop({
+          element,
+          firstClear: loot.firstClear,
+          prng: Math.random,
+        })
+      : rollTowerDrop({
+          element,
+          weights: loot.farm.equipmentWeights,
+          prng: Math.random,
+        })
+    // Un (slot, set, rareté) porte désormais PLUSIEURS pièces, une
+    // par stat principale possible de l'emplacement — d'où un
+    // findMany suivi d'un tirage pondéré là où un findUnique
+    // suffisait. Le `dropWeight` du seed est déjà divisé par la
+    // taille du pool, donc la probabilité du triplet est inchangée :
+    // seule la stat principale est tirée au sort ici.
+    const equipmentDrop = await this.#grantEquipmentDrop(
+      tx,
+      userId,
+      drop,
+      substatRanges,
+    )
+
+    // Alimente les quêtes (STAGE_CLEARED, filtrées sur le seul
+    // `kind` — quest-matching.ts) sans faire progresser les succès
+    // de campagne (G2, relecture finale) : `source: 'TOWER'` fait
+    // renvoyer 0 à stageClearedDelta pour STAGES_CLEARED_COUNT et
+    // BOSS_DEFEATS_COUNT, cf. counter-dispatcher.ts.
+    // `flawless` et `understaffed` sont tous deux calculables ici.
+    // Ce qui n'a pas d'équivalent tour, c'est seulement l'EXEMPTION
+    // de deriveClearFlags (`chapter === 1 && index <= 2`), qui épargne
+    // le joueur des tout premiers étages de campagne avant qu'il ait
+    // trois cartes. Une tour n'est jamais dans ce cas, donc la mesure
+    // s'applique telle quelle.
+    await this.#achievementsDomain.track(tx, userId, {
+      kind: 'STAGE_CLEARED',
+      source: 'TOWER',
+      isBoss: floor === TOWER_FLOOR_COUNT,
+      viaSweep: false,
+      flawless: deriveFlawless(log, teamUnits),
+      understaffed: teamUnits.length < 3,
+    })
+
+    // Progression : n'avance qu'en cas de victoire, jamais en arrière.
+    const newHighest = Math.max(currentHighest, floor)
+    if (newHighest !== currentHighest) {
+      await tx.userTowerProgress.upsert({
+        where: { userId_element: { userId, element } },
+        create: { userId, element, highestFloor: newHighest },
+        update: { highestFloor: newHighest },
+      })
+    }
+
+    const { xpBefore, levelBefore } = await this.#applyRewards(
+      tx,
+      userId,
+      bonused.gold,
+      rawLoot.dust,
+      bonused.xp,
+      battleCfg['xp.base'],
+      battleCfg['xp.slope'],
+      battleCfg['xp.levelCap'],
+      battleCfg['levelup.refillEnergy'],
+      effects,
+    )
+
+    return {
+      gold: bonused.gold,
+      dust: rawLoot.dust,
+      xp: bonused.xp,
+      xpBefore,
+      levelBefore,
+      isFirstClear,
+      equipmentDrop,
+    }
   }
 
   /**
