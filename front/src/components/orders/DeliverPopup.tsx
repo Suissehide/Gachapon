@@ -1,5 +1,5 @@
 import { PackageCheck, WandSparkles } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -49,13 +49,15 @@ export function DeliverPopup({ order, open, onOpenChange }: Props) {
   )
 
   // La popup reste montée dans la ligne, qui peut changer de commande (tri,
-  // rafraîchissement) : on repart de la suggestion à chaque ouverture.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: on ne réinitialise qu'à l'ouverture ou au changement de commande, pas à chaque refetch
-  useEffect(() => {
-    if (open) {
-      setAmounts(fromPicks(order.suggestedPicks))
-    }
-  }, [open, order.id])
+  // rafraîchissement) : on repart de la suggestion à chaque ouverture
+  // (ajustement d'état pendant le rendu, sans effet).
+  const [openedFor, setOpenedFor] = useState<string | null>(null)
+  if (open && openedFor !== order.id) {
+    setOpenedFor(order.id)
+    setAmounts(fromPicks(order.suggestedPicks))
+  } else if (!open && openedFor !== null) {
+    setOpenedFor(null)
+  }
 
   // Ne compte que les cartes encore candidates de leur ligne : une sélection
   // périmée ne peut ni gonfler un compteur ni partir au serveur.
