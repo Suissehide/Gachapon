@@ -1,6 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronDown, Lock } from 'lucide-react'
 import { DropdownMenu } from 'radix-ui'
+import { type PointerEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../libs/utils.ts'
@@ -67,10 +68,32 @@ export function NavGroup({
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const active = group.items.some((item) => isUnder(pathname, item.to))
   const tone = groupTone(group.items)
+  const [open, setOpen] = useState(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  // Survol à la souris seulement : au tactile, le clic garde la main.
+  const hoverOpen = (e: PointerEvent) => {
+    if (e.pointerType !== 'mouse') {
+      return
+    }
+    clearTimeout(closeTimer.current)
+    setOpen(true)
+  }
+  // Délai pour traverser l'écart entre l'onglet et le menu sans le fermer.
+  const hoverClose = (e: PointerEvent) => {
+    if (e.pointerType !== 'mouse') {
+      return
+    }
+    closeTimer.current = setTimeout(() => setOpen(false), 150)
+  }
 
   return (
-    <DropdownMenu.Root modal={false}>
+    <DropdownMenu.Root modal={false} open={open} onOpenChange={setOpen}>
       <DropdownMenu.Trigger
+        onPointerEnter={hoverOpen}
+        onPointerLeave={hoverClose}
+        // Déjà ouvert au survol : un clic souris ne doit pas le refermer.
+        onPointerDown={(e) => e.pointerType === 'mouse' && e.preventDefault()}
         className={cn(tabClass, 'group outline-none', active && 'active')}
         aria-label={
           tone
@@ -92,7 +115,12 @@ export function NavGroup({
         />
       </DropdownMenu.Trigger>
 
-      <DropdownMenuCustomContent align="start" className="min-w-[180px]">
+      <DropdownMenuCustomContent
+        align="start"
+        className="min-w-[180px]"
+        onPointerEnter={hoverOpen}
+        onPointerLeave={hoverClose}
+      >
         {group.items.map((item) => (
           <DropdownMenuCustomItem key={item.to} asChild>
             <Link
