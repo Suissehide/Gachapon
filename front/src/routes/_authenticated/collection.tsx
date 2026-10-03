@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { z } from 'zod'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { CardViewModal } from '../../components/collection/CardViewModal.tsx'
@@ -105,6 +106,9 @@ export function sortEntries(
 }
 
 export const Route = createFileRoute('/_authenticated/collection')({
+  // `card` = clé de l'entrée dont la fiche est ouverte : l'atelier
+  // d'équipement y renvoie, et le retour navigateur y ramène.
+  validateSearch: z.object({ card: z.string().optional() }),
   component: Collection,
 })
 
@@ -150,7 +154,10 @@ function Collection() {
   // displayEntries. Storing the entry itself would freeze level/palier/quantity
   // at the moment of click — subsequent level-ups / ascensions wouldn't be
   // reflected until the modal is reopened.
-  const [detailKey, setDetailKey] = useState<string | null>(null)
+  const { card: detailKey } = Route.useSearch()
+  const navigate = Route.useNavigate()
+  const setDetailKey = (key: string | null) =>
+    navigate({ search: key ? { card: key } : {}, replace: true })
 
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(user?.id)

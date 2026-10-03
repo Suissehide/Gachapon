@@ -1,12 +1,13 @@
+import { useNavigate } from '@tanstack/react-router'
 import {
   Circle,
   Footprints,
   Gem,
   Hand,
-  Layers,
   Link,
   Plus,
   Repeat,
+  Settings2,
   Shield,
   Sword,
 } from 'lucide-react'
@@ -15,29 +16,18 @@ import { Trans, useTranslation } from 'react-i18next'
 
 import type {
   EquipmentInstance,
-  EquipmentSetDefinition,
   EquipmentSlot,
 } from '../../api/equipment.api.ts'
-import i18n, { currentLocale } from '../../i18n/index.ts'
+import i18n from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
-import { cn, formatNumber } from '../../libs/utils.ts'
+import { cn } from '../../libs/utils.ts'
 import {
   useActiveSetsForCard,
-  useCardEquipmentContribution,
   useCardsByPower,
   useEquipmentList,
-  useEquipmentSets,
   useSetColorByKey,
   useSwapEquipment,
 } from '../../queries/useEquipment.ts'
-import {
-  type ActiveSetSummary,
-  type StatBonuses,
-  type StatKey,
-  type StuffStatBonuses,
-  type StuffStatKey,
-  statColorVar,
-} from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
 import { Input, Select } from '../ui/input.tsx'
 import {
@@ -56,9 +46,8 @@ import {
   RARITY_OPTIONS,
   type RarityFilter,
 } from './CollectionFilters.tsx'
-import { EquipmentSlotPopup } from './EquipmentSlotPopup.tsx'
 
-const SLOT_ORDER: EquipmentSlot[] = [
+export const SLOT_ORDER = [
   'WEAPON',
   'ARMOR',
   'RING',
@@ -66,7 +55,7 @@ const SLOT_ORDER: EquipmentSlot[] = [
   'GLOVES',
   'BOOTS',
   'BELT',
-]
+] as const satisfies readonly EquipmentSlot[]
 // Exportés : réutilisés par l'écran de tour (routes/_authenticated/tower.tsx)
 // pour afficher le slot alimenté par chaque tour, sans en recopier une
 // troisième version — equipment.tsx en garde malheureusement déjà une copie
@@ -89,223 +78,6 @@ export const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   BOOTS: Footprints,
   BELT: Link,
 }
-// Libellés courts des stats pour les chips d'apport — ceux déjà employés
-// par le panneau de combat juste au-dessus, pour qu'une carte ne nomme pas la
-// même stat de deux façons.
-const STAT_CHIP_LABELS: Record<string, string> = {
-  hp: i18n.t('common:stats.hp'),
-  atk: i18n.t('common:stats.atk'),
-  def: i18n.t('common:stats.def'),
-  spd: i18n.t('common:stats.spd'),
-  critRate: i18n.t('common:stats.critRate'),
-  critDmg: i18n.t('common:stats.critDmgShort'),
-  armorPen: i18n.t('common:stats.armorPenShort'),
-  lifesteal: i18n.t('common:stats.lifesteal'),
-}
-
-// Toute valeur de stat est entière depuis l'arrondi à la source.
-function formatChipValue(value: number, pct: boolean): string {
-  return `+${formatNumber(Math.round(value), currentLocale())}${pct ? ' %' : ''}`
-}
-
-// Clés stables des segments de jauge : un set demande 2, 3 ou 4 pièces, et
-// les segments sont positionnels — nommés plutôt qu'indexés pour ne pas
-// bâtir une clé React sur un index.
-const SEGMENT_KEYS = ['pc-1', 'pc-2', 'pc-3', 'pc-4']
-
-type GainChip = { id: string; label: string; value: string; color: string }
-
-// Ordre des pastilles : celui des tuiles du `CombatPanel` juste au-dessus,
-// pour qu'une carte n'annonce pas ses stats dans deux ordres différents.
-const CLASSIC_CHIP_ORDER: StatKey[] = ['hp', 'atk', 'def', 'spd']
-const STUFF_CHIP_ORDER: StuffStatKey[] = [
-  'critRate',
-  'critDmg',
-  'armorPen',
-  'lifesteal',
-]
-
-/**
- * Une pastille par stat, jamais plus : le plat et le pourcentage cohabitent
- * dans la même (« PV +540 · +12 % »), et la part des sets est sommée au
- * pourcentage de la stat qu'elle buffe au lieu de former ses propres
- * pastilles en fin de ligne.
- *
- * Les trois blocs reçus sont disjoints — `classic` et `stuff` ne portent que
- * la part des pièces, `setBonuses` que celle des sets (cf.
- * `useCardEquipmentContribution`) — et le serveur les somme de la même façon
- * dans `computeStat` : la fusion n'invente ni ne double aucune valeur.
- *
- * Elle ne masque pas non plus l'apport des sets : le `SetBanner` au-dessus
- * annonce déjà le bonus de chaque set actif en toutes lettres.
- */
-function buildGainChips(
-  classic: StatBonuses,
-  stuff: StuffStatBonuses,
-  setBonuses: Record<string, number>,
-): GainChip[] {
-  const chips: GainChip[] = []
-  const pushChip = (stat: string, flat: number, pct: number) => {
-    if (flat === 0 && pct === 0) {
-      return
-    }
-    const parts: string[] = []
-    if (flat !== 0) {
-      parts.push(formatChipValue(flat, false))
-    }
-    if (pct !== 0) {
-      parts.push(formatChipValue(pct, true))
-    }
-    chips.push({
-      id: stat,
-      label: STAT_CHIP_LABELS[stat] ?? stat.toUpperCase(),
-      value: parts.join(' · '),
-      color: statColorVar(stat),
-    })
-  }
-
-  const setPct = (stat: string) => setBonuses[`${stat}Pct`] ?? 0
-  for (const stat of CLASSIC_CHIP_ORDER) {
-    pushChip(stat, classic[stat].flat, classic[stat].pct + setPct(stat))
-  }
-  for (const stat of STUFF_CHIP_ORDER) {
-    pushChip(stat, 0, stuff[stat] + setPct(stat))
-  }
-
-  // Filet de sécurité : un set dont le bonus porterait sur une stat hors des
-  // deux listes ci-dessus disparaîtrait sans bruit. Il garde sa pastille.
-  const couverts = new Set<string>([...CLASSIC_CHIP_ORDER, ...STUFF_CHIP_ORDER])
-  for (const [key, value] of Object.entries(setBonuses)) {
-    const stat = key.replace(/Pct$|Flat$/, '')
-    if (value !== 0 && !couverts.has(stat)) {
-      const pct = key.endsWith('Pct')
-      pushChip(stat, pct ? 0 : value, pct ? value : 0)
-    }
-  }
-  return chips
-}
-
-/**
- * Bandeau d'un set porté : nom, compteur et jauge d'une case par pièce
- * requise. Remplace la pastille « CÉLÉRITÉ 3/2 », qui ne disait ni le palier
- * atteint ni ce qu'il restait à faire.
- *
- * La maquette dessine 4 segments et deux paliers (2 PC puis 4 PC) ; ici un
- * set a UNE taille (2, 3 ou 4) et UN bonus, donc la jauge porte autant de
- * segments que le set demande de pièces et la ligne de palier est unique.
- */
-function SetBanner({
-  summary,
-  color,
-  bonusLabel,
-}: {
-  summary: ActiveSetSummary
-  color: string
-  bonusLabel: string | undefined
-}) {
-  const { t } = useTranslation('collection')
-  // Porter plus de pièces que le set n'en demande n'apporte rien : la jauge
-  // plafonne, sinon elle déborderait de segments allumés.
-  const filled = Math.min(summary.count, summary.pieces)
-  return (
-    <div
-      className="rounded-[14px] border px-[13px] py-3"
-      style={
-        {
-          '--s': color,
-          background: 'color-mix(in oklab, var(--s) 7%, white)',
-          borderColor: 'color-mix(in oklab, var(--s) 22%, white)',
-        } as React.CSSProperties
-      }
-    >
-      <div className="mb-2.5 flex items-center gap-2">
-        <Layers className="h-3.5 w-3.5 shrink-0 text-[var(--s)]" />
-        <span className="truncate font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--s)]">
-          {summary.label}
-        </span>
-        <span className="ml-auto shrink-0 whitespace-nowrap font-mono text-[11px] tabular-nums text-[color-mix(in_oklab,var(--s)_70%,var(--text))]">
-          {t('collection:slotsPanel.setPieces', {
-            filled,
-            pieces: summary.pieces,
-          })}
-        </span>
-      </div>
-
-      <div className="flex gap-[3px]">
-        {SEGMENT_KEYS.slice(0, summary.pieces).map((segKey, i) => (
-          <span
-            key={segKey}
-            className={cn(
-              'h-1.5 flex-1 rounded-full',
-              i < filled
-                ? 'bg-[var(--s)]'
-                : 'bg-[color-mix(in_oklab,var(--s)_16%,white)]',
-            )}
-          />
-        ))}
-      </div>
-
-      {bonusLabel !== undefined && (
-        <div className="mt-2.5 flex items-center gap-1.5 text-xs">
-          <span
-            className={cn(
-              'shrink-0 rounded-[5px] px-[5px] py-0.5 font-mono text-[10px] tracking-[0.1em]',
-              summary.active
-                ? 'bg-[var(--s)] text-white'
-                : 'bg-[color-mix(in_oklab,var(--s)_14%,white)] text-[color-mix(in_oklab,var(--s)_75%,var(--text))]',
-            )}
-          >
-            {summary.pieces} PC
-          </span>
-          <span
-            className={cn(
-              'truncate font-semibold',
-              summary.active ? 'text-text' : 'text-text-light',
-            )}
-          >
-            {bonusLabel}
-          </span>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/**
- * Apport total, une stat par ligne : le libellé à gauche, la valeur alignée à
- * droite. En pastilles enroulées, l'œil devait sauter d'une largeur à l'autre
- * pour comparer deux stats ; en colonne, les valeurs se lisent dans un seul
- * axe.
- */
-function GainList({ chips }: { chips: GainChip[] }) {
-  return (
-    <div className="mt-3.5 border-t border-[rgba(27,23,38,0.07)] pt-3">
-      <p className="mb-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[rgba(27,23,38,0.42)]">
-        Apport total
-      </p>
-      <ul className="flex flex-col gap-1">
-        {chips.map((chip) => (
-          <li
-            key={chip.id}
-            className="flex items-center gap-2 rounded-lg px-[9px] py-1 font-mono text-xs font-bold tabular-nums"
-            style={
-              {
-                '--c': chip.color,
-                background: 'color-mix(in oklab, var(--c) 9%, white)',
-                color: 'color-mix(in oklab, var(--c) 85%, var(--text))',
-              } as React.CSSProperties
-            }
-          >
-            <i className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--c)]" />
-            <span className="truncate">{chip.label}</span>
-            <span className="ml-auto shrink-0">{chip.value}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
 type Props = {
   userCardId: string
   rarityHex: string
@@ -315,14 +87,18 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
   const { t } = useTranslation('collection')
   const equipment = useEquipmentList()
   const activeSets = useActiveSetsForCard(userCardId)
-  const sets = useEquipmentSets()
-  const contribution = useCardEquipmentContribution(userCardId)
-  const [pickerSlot, setPickerSlot] = useState<EquipmentSlot | null>(null)
+  const navigate = useNavigate()
   const [swapOpen, setSwapOpen] = useState(false)
+  // L'atelier « Équiper » remplace l'ancienne fenêtre par emplacement.
+  const openWorkshop = (slot?: EquipmentSlot) =>
+    navigate({
+      to: '/collection/$userCardId/equipment',
+      params: { userCardId },
+      search: { slot },
+    })
 
   // Couleur d'un set = couleur de la stat qu'il buffe (règle du handoff),
-  // dérivée de `GET /equipment/sets` — même source que les en-têtes de set de
-  // la fenêtre de slot.
+  // dérivée de `GET /equipment/sets`.
   const setColorByKey = useSetColorByKey()
 
   const items = equipment.data?.items ?? []
@@ -331,15 +107,6 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
   for (const item of equippedOnCard) {
     bySlot[item.slot] = item
   }
-
-  const setDefByKey = new Map<string, EquipmentSetDefinition>(
-    (sets.data?.sets ?? []).map((def) => [def.key, def]),
-  )
-  const gainChips = buildGainChips(
-    contribution.classic,
-    contribution.stuff,
-    contribution.setBonuses,
-  )
 
   return (
     <div className="mt-5">
@@ -367,15 +134,29 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
         </p>
       </div>
 
+      {/* Sets portés : pastille, nom, avancement — le détail vit dans l'atelier. */}
       {activeSets.length > 0 && (
-        <div className="mb-3 flex flex-col gap-2">
-          {activeSets.map((summary) => (
-            <SetBanner
-              key={summary.key}
-              summary={summary}
-              color={setColorByKey.get(summary.key) ?? 'var(--stat-def)'}
-              bonusLabel={setDefByKey.get(summary.key)?.bonus.label}
-            />
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {activeSets.map((set) => (
+            <span
+              key={set.key}
+              style={
+                {
+                  '--s': setColorByKey.get(set.key) ?? 'var(--stat-def)',
+                } as React.CSSProperties
+              }
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border border-[rgba(27,23,38,0.1)] bg-card px-2.5 py-1 text-xs font-semibold text-[rgba(27,23,38,0.65)]',
+                set.active &&
+                  'border-[color-mix(in_oklab,var(--s)_45%,white)] bg-[color-mix(in_oklab,var(--s)_10%,white)] text-text',
+              )}
+            >
+              <i className="h-2 w-2 rounded-full bg-[var(--s)]" />
+              {set.label}
+              <span className="font-mono text-[10.5px] font-bold tabular-nums text-[color-mix(in_oklab,var(--s)_75%,var(--text))]">
+                {Math.min(set.count, set.pieces)}/{set.pieces}
+              </span>
+            </span>
           ))}
         </div>
       )}
@@ -389,7 +170,7 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
               <Button
                 key={slot}
                 variant="outline"
-                onClick={() => setPickerSlot(slot)}
+                onClick={() => openWorkshop(slot)}
                 // La rareté et le set ne sont plus écrits sur la tuile : le
                 // survol et les lecteurs d'écran les redonnent en toutes
                 // lettres.
@@ -438,7 +219,7 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
             <Button
               key={slot}
               variant="outline"
-              onClick={() => setPickerSlot(slot)}
+              onClick={() => openWorkshop(slot)}
               style={{ '--rar-hover': rarityHex } as React.CSSProperties}
               className="h-auto flex-col gap-0 rounded-[13px] border-[1.5px] border-dashed border-[rgba(27,23,38,0.14)] bg-[#fbfbf9] px-2 pb-[9px] pt-[11px] transition-transform hover:-translate-y-0.5 hover:bg-[color-mix(in_oklab,var(--rar-hover)_6%,#fbfbf9)] hover:text-[var(--rar-hover)]"
             >
@@ -452,15 +233,14 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
         })}
       </div>
 
-      {gainChips.length > 0 && <GainList chips={gainChips} />}
-
-      {pickerSlot !== null && (
-        <EquipmentSlotPopup
-          slot={pickerSlot}
-          userCardId={userCardId}
-          onClose={() => setPickerSlot(null)}
-        />
-      )}
+      <Button
+        variant="outline"
+        onClick={() => openWorkshop()}
+        className="mt-3 h-auto w-full rounded-[11px] border-[rgba(27,23,38,0.14)] py-[9px] text-[13.5px] font-semibold"
+      >
+        <Settings2 className="h-[15px] w-[15px]" />
+        {t('collection:slotsPanel.manage')}
+      </Button>
 
       {swapOpen && (
         <SwapEquipmentPopup

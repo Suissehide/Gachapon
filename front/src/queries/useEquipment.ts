@@ -13,7 +13,6 @@ import {
   cardPower,
   cardStuffStats,
   computeCardSetBonuses,
-  emptyStuffStatBonuses,
   type StatBonuses,
   type StuffStatBonuses,
   statColorVar,
@@ -49,9 +48,8 @@ export function useEquipmentSets() {
  * stat qu'il buffe (règle du handoff) : elle se déduit donc de
  * `GET /equipment/sets`, pas d'une table de teintes recopiée côté front — un
  * set dont le bonus changerait de stat change de couleur tout seul. Partagé
- * par les tuiles de la fiche de carte (`EquipmentSlotsPanel`) et les en-têtes
- * de set de la fenêtre de slot (`EquipmentSlotPopup`), pour que les deux
- * n'en tiennent pas deux copies.
+ * par les tuiles de la fiche de carte (`EquipmentSlotsPanel`) et l'atelier
+ * (`EquipmentWorkshop`), pour que les deux n'en tiennent pas deux copies.
  */
 export function useSetColorByKey(): Map<string, string> {
   const { data } = useEquipmentSets()
@@ -144,45 +142,6 @@ export function useCardStuffStats(userCardId: string): StuffStatBonuses {
       ),
     [data, sets, userCardId, economy],
   )
-}
-
-/**
- * Ce que l'équipement d'une carte lui apporte, en trois parts séparées :
- * les stats classiques des PIÈCES, leurs stats de stuff, et à part les bonus
- * des SETS actifs. La ligne « Apport total » de la fiche les affiche comme
- * des chips distinctes (« VIT +22 » puis « VIT +10 % »), parce que le joueur
- * arbitre justement entre porter une pièce de plus et compléter un set.
- *
- * Aucune baseline n'entre ici : `useCardStuffStats` sert à afficher les
- * stats FINALES d'une carte, celui-ci ne sert qu'à afficher un écart.
- */
-export function useCardEquipmentContribution(userCardId: string): {
-  classic: StatBonuses
-  stuff: StuffStatBonuses
-  setBonuses: Record<string, number>
-} {
-  const { data } = useEquipmentList()
-  const { data: sets } = useEquipmentSets()
-  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
-  return useMemo(() => {
-    const items = data?.items ?? []
-    const scale = economy.equip.levelScale
-    return {
-      classic: aggregateEquipmentBonuses(items, userCardId, scale),
-      // Sans définitions de set ni baseline : la part des pièces seules.
-      stuff: cardStuffStats(
-        items,
-        userCardId,
-        scale,
-        [],
-        emptyStuffStatBonuses(),
-      ),
-      setBonuses: computeCardSetBonuses(
-        items.filter((i) => i.equippedOnId === userCardId).map((i) => i.setKey),
-        sets?.sets ?? [],
-      ),
-    }
-  }, [data, sets, userCardId, economy.equip.levelScale])
 }
 
 /**

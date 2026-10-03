@@ -61,6 +61,7 @@ import { Route as AdminAdminCombatDebugRouteImport } from './routes/_admin/admin
 import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
 import { Route as AuthenticatedTeamIdRaidRouteImport } from './routes/_authenticated/team/$id_.raid'
 import { Route as AuthenticatedProfileUsernameCollectionRouteImport } from './routes/_authenticated/profile/$username_.collection'
+import { Route as AuthenticatedCollectionUserCardIdEquipmentRouteImport } from './routes/_authenticated/collection_.$userCardId.equipment'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -326,6 +327,12 @@ const AuthenticatedProfileUsernameCollectionRoute =
     path: '/profile/$username/collection',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCollectionUserCardIdEquipmentRoute =
+  AuthenticatedCollectionUserCardIdEquipmentRouteImport.update({
+    id: '/collection_/$userCardId/equipment',
+    path: '/collection/$userCardId/equipment',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -376,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/tower/$element': typeof AuthenticatedTowerElementRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/team/': typeof AuthenticatedTeamIndexRoute
+  '/collection/$userCardId/equipment': typeof AuthenticatedCollectionUserCardIdEquipmentRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
   '/team/$id/raid': typeof AuthenticatedTeamIdRaidRoute
 }
@@ -427,6 +435,7 @@ export interface FileRoutesByTo {
   '/tower/$element': typeof AuthenticatedTowerElementRoute
   '/admin': typeof AdminAdminIndexRoute
   '/team': typeof AuthenticatedTeamIndexRoute
+  '/collection/$userCardId/equipment': typeof AuthenticatedCollectionUserCardIdEquipmentRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
   '/team/$id/raid': typeof AuthenticatedTeamIdRaidRoute
 }
@@ -482,6 +491,7 @@ export interface FileRoutesById {
   '/_authenticated/tower_/$element': typeof AuthenticatedTowerElementRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_authenticated/team/': typeof AuthenticatedTeamIndexRoute
+  '/_authenticated/collection_/$userCardId/equipment': typeof AuthenticatedCollectionUserCardIdEquipmentRoute
   '/_authenticated/profile/$username_/collection': typeof AuthenticatedProfileUsernameCollectionRoute
   '/_authenticated/team/$id_/raid': typeof AuthenticatedTeamIdRaidRoute
 }
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/tower/$element'
     | '/admin/'
     | '/team/'
+    | '/collection/$userCardId/equipment'
     | '/profile/$username/collection'
     | '/team/$id/raid'
   fileRoutesByTo: FileRoutesByTo
@@ -587,6 +598,7 @@ export interface FileRouteTypes {
     | '/tower/$element'
     | '/admin'
     | '/team'
+    | '/collection/$userCardId/equipment'
     | '/profile/$username/collection'
     | '/team/$id/raid'
   id:
@@ -641,6 +653,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tower_/$element'
     | '/_admin/admin/'
     | '/_authenticated/team/'
+    | '/_authenticated/collection_/$userCardId/equipment'
     | '/_authenticated/profile/$username_/collection'
     | '/_authenticated/team/$id_/raid'
   fileRoutesById: FileRoutesById
@@ -1030,6 +1043,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileUsernameCollectionRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/collection_/$userCardId/equipment': {
+      id: '/_authenticated/collection_/$userCardId/equipment'
+      path: '/collection/$userCardId/equipment'
+      fullPath: '/collection/$userCardId/equipment'
+      preLoaderRoute: typeof AuthenticatedCollectionUserCardIdEquipmentRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -1101,6 +1121,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTeamIdRoute: typeof AuthenticatedTeamIdRoute
   AuthenticatedTowerElementRoute: typeof AuthenticatedTowerElementRoute
   AuthenticatedTeamIndexRoute: typeof AuthenticatedTeamIndexRoute
+  AuthenticatedCollectionUserCardIdEquipmentRoute: typeof AuthenticatedCollectionUserCardIdEquipmentRoute
   AuthenticatedProfileUsernameCollectionRoute: typeof AuthenticatedProfileUsernameCollectionRoute
   AuthenticatedTeamIdRaidRoute: typeof AuthenticatedTeamIdRaidRoute
 }
@@ -1125,6 +1146,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTeamIdRoute: AuthenticatedTeamIdRoute,
   AuthenticatedTowerElementRoute: AuthenticatedTowerElementRoute,
   AuthenticatedTeamIndexRoute: AuthenticatedTeamIndexRoute,
+  AuthenticatedCollectionUserCardIdEquipmentRoute:
+    AuthenticatedCollectionUserCardIdEquipmentRoute,
   AuthenticatedProfileUsernameCollectionRoute:
     AuthenticatedProfileUsernameCollectionRoute,
   AuthenticatedTeamIdRaidRoute: AuthenticatedTeamIdRaidRoute,
