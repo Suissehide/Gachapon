@@ -70,6 +70,7 @@ export function NavGroup({
   const tone = groupTone(group.items)
   const [open, setOpen] = useState(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   // Survol à la souris seulement : au tactile, le clic garde la main.
   const hoverOpen = (e: PointerEvent) => {
@@ -90,6 +91,7 @@ export function NavGroup({
   return (
     <DropdownMenu.Root modal={false} open={open} onOpenChange={setOpen}>
       <DropdownMenu.Trigger
+        ref={triggerRef}
         onPointerEnter={hoverOpen}
         onPointerLeave={hoverClose}
         // Déjà ouvert au survol : un clic souris ne doit pas le refermer.
@@ -120,6 +122,12 @@ export function NavGroup({
         className="min-w-[180px]"
         onPointerEnter={hoverOpen}
         onPointerLeave={hoverClose}
+        // Le clic sur l'onglet compte comme « dehors » : sans ça il referme le menu.
+        onPointerDownOutside={(e) => {
+          if (triggerRef.current?.contains(e.target as Node)) {
+            e.preventDefault()
+          }
+        }}
       >
         {group.items.map((item) => (
           <DropdownMenuCustomItem key={item.to} asChild>
