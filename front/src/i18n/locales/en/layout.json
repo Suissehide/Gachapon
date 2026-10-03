@@ -69,6 +69,8 @@
     "openMenuAriaLabel": "Open menu",
     "closeMenuAriaLabel": "Close menu",
     "logoutAriaLabel": "Log out",
+    "changelogAriaLabel": "What's new",
+    "changelogUnreadAriaLabel": "What's new — new version available",
     "myProfileTitle": "My profile",
     "languageLabel": "Language",
     "dustTitle": "Dust — {{amount}}",

@@ -10,6 +10,7 @@ import { useTokenBalance } from '../../queries/useGacha.ts'
 import { useOrders } from '../../queries/useOrders.ts'
 import type { AuthUser } from '../../stores/auth.store'
 import { useAuthStore, useIsGuest } from '../../stores/auth.store'
+import { ChangelogButton } from '../changelog/ChangelogButton.tsx'
 import { NotificationsBadge } from '../notifications/NotificationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
 import { LocaleSwitcher } from '../shared/LocaleSwitcher.tsx'
@@ -146,6 +147,7 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             {user && (
               <>
+                <ChangelogButton />
                 <NotificationsBadge />
                 <RewardsBadge
                   pendingRewardsCount={user.pendingRewardsCount ?? 0}
@@ -184,6 +186,7 @@ export function Navbar() {
                 </div>
                 <span aria-hidden className="h-[30px] w-px bg-text/[0.12]" />
                 <div className="flex items-center gap-2">
+                  <ChangelogButton />
                   <NotificationsBadge />
                   <RewardsBadge
                     pendingRewardsCount={user.pendingRewardsCount ?? 0}

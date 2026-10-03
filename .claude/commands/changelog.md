@@ -7,7 +7,7 @@ allowed-tools: Bash(git log:*), Bash(git rev-parse:*), Bash(cd front && npx biom
 Tu mets à jour le changelog joueur de Gachapon. Il vit maintenant sur **trois
 fichiers** qu'il faut éditer ensemble, jamais un seul à la fois :
 
-- `front/src/routes/changelog.tsx` — la structure (version, ordre des
+- `front/src/components/changelog/ChangelogTimeline.tsx` — la structure (version, ordre des
   entrées, type `new`/`improved`/`fixed` de chacune). Aucun texte n'y vit
   plus depuis la tâche 7c.
 - `front/src/i18n/locales/fr/changelog.json` — le texte français.
@@ -31,7 +31,7 @@ anglais dans la même réponse — il n'y a pas de raison structurelle d'en
 
 ## Procédure
 
-1. **Trouver le point de reprise.** Lis les 3 premières lignes de `front/src/routes/changelog.tsx` : la ligne `// last-synced-commit: <sha>` donne le dernier commit déjà intégré.
+1. **Trouver le point de reprise.** Lis les 3 premières lignes de `front/src/components/changelog/ChangelogTimeline.tsx` : la ligne `// last-synced-commit: <sha>` donne le dernier commit déjà intégré.
 
 2. **Lister les nouveautés.** Récupère les commits depuis ce sha :
    `git log <sha>..HEAD --format="%h|%ci|%s"`
@@ -45,21 +45,21 @@ anglais dans la même réponse — il n'y a pas de raison structurelle d'en
    - `fixed` = correction visible par le joueur
 
 4. **Placer les entrées, dans les trois fichiers.** Par défaut : décide selon l'ampleur.
-   - Petites nouveautés / correctifs → **ajoute-les à la release la plus récente** (en haut du tableau `RELEASES` de `changelog.tsx`) si elle correspond encore à la période courante.
+   - Petites nouveautés / correctifs → **ajoute-les à la release la plus récente** (en haut du tableau `RELEASES` de `ChangelogTimeline.tsx`) si elle correspond encore à la période courante.
    - Lot conséquent ou nouvelle période/thème → **crée une nouvelle release en haut** (incrémente la version mineure : 1.4 → 1.5, ou majeure si c'est un gros cap).
    - Si l'utilisateur a passé une note en argument (`$ARGUMENTS`), suis-la (ex. « nouvelle version », « regroupe avec la dernière »).
 
    Concrètement, pour une **nouvelle version** `X.Y` :
-   - `changelog.tsx` : ajoute `{ version: 'X.Y', entries: [{ type: '...' }, ...] }` en tête de `RELEASES` — un objet par entrée, **rien que son `type`**, dans l'ordre où elles doivent s'afficher.
-   - calcule `versionKey` en remplaçant les points par des underscores (`'X.Y'` → `'vX_Y'`) — c'est la même règle que `versionKey()` dans `changelog.tsx`, ne la réinvente pas autrement.
-   - `fr/changelog.json` : ajoute sous `releases` un bloc `"vX_Y": { "title": "...", "date": "<mois FR, ex. « Août 2026 »>", "summary": "...", "entries": { "e1": "...", "e2": "...", ... } }` — les clés `entries` sont `e1`, `e2`, … dans le même ordre que le tableau `entries` de `changelog.tsx` (l'entrée `n` du tableau ↔ la clé `e<n>`, jamais désynchronisées).
+   - `ChangelogTimeline.tsx` : ajoute `{ version: 'X.Y', entries: [{ type: '...' }, ...] }` en tête de `RELEASES` — un objet par entrée, **rien que son `type`**, dans l'ordre où elles doivent s'afficher.
+   - calcule `versionKey` en remplaçant les points par des underscores (`'X.Y'` → `'vX_Y'`) — c'est la même règle que `versionKey()` dans `ChangelogTimeline.tsx`, ne la réinvente pas autrement.
+   - `fr/changelog.json` : ajoute sous `releases` un bloc `"vX_Y": { "title": "...", "date": "<mois FR, ex. « Août 2026 »>", "summary": "...", "entries": { "e1": "...", "e2": "...", ... } }` — les clés `entries` sont `e1`, `e2`, … dans le même ordre que le tableau `entries` de `ChangelogTimeline.tsx` (l'entrée `n` du tableau ↔ la clé `e<n>`, jamais désynchronisées).
    - `en/changelog.json` : le même bloc `"vX_Y": { ... }`, texte anglais, mêmes clés `title`/`date`/`summary`/`entries.e1..en`. Le `date` anglais traduit le mois (« Août 2026 » → « August 2026 »).
 
-   Pour **ajouter des entrées à la release la plus récente** existante : ajoute les objets `{ type: '...' }` à la fin (ou à l'endroit voulu) du tableau `entries` de cette release dans `changelog.tsx`, puis ajoute les clés `e<n>` correspondantes (en continuant la numérotation existante) dans les DEUX fichiers de locale, sous le bloc `releases.<versionKey>.entries` déjà existant.
+   Pour **ajouter des entrées à la release la plus récente** existante : ajoute les objets `{ type: '...' }` à la fin (ou à l'endroit voulu) du tableau `entries` de cette release dans `ChangelogTimeline.tsx`, puis ajoute les clés `e<n>` correspondantes (en continuant la numérotation existante) dans les DEUX fichiers de locale, sous le bloc `releases.<versionKey>.entries` déjà existant.
 
-5. **Avancer le marqueur.** Récupère le sha courant avec `git rev-parse HEAD` et remplace la valeur de `// last-synced-commit:` par ce sha, dans `changelog.tsx`.
+5. **Avancer le marqueur.** Récupère le sha courant avec `git rev-parse HEAD` et remplace la valeur de `// last-synced-commit:` par ce sha, dans `ChangelogTimeline.tsx`.
 
-6. **Lint.** `cd front && npx biome check --write src/routes/changelog.tsx src/i18n/locales/fr/changelog.json src/i18n/locales/en/changelog.json` — les trois fichiers touchés, pas seulement le `.tsx`.
+6. **Lint.** `cd front && npx biome check --write src/components/changelog/ChangelogTimeline.tsx src/i18n/locales/fr/changelog.json src/i18n/locales/en/changelog.json` — les trois fichiers touchés, pas seulement le `.tsx`.
 
 7. **Résumer** à l'utilisateur : les entrées ajoutées (français ET anglais), dans quelle release, et le nouveau sha de synchro. Ne commit pas sauf demande explicite.
 

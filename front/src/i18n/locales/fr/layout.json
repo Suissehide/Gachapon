@@ -69,6 +69,8 @@
     "openMenuAriaLabel": "Ouvrir le menu",
     "closeMenuAriaLabel": "Fermer le menu",
     "logoutAriaLabel": "Déconnexion",
+    "changelogAriaLabel": "Nouveautés",
+    "changelogUnreadAriaLabel": "Nouveautés — nouvelle version disponible",
     "myProfileTitle": "Mon profil",
     "languageLabel": "Langue",
     "dustTitle": "Poussière — {{amount}}",

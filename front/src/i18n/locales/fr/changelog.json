@@ -10,91 +10,116 @@
     "fixed": "Corrigé"
   },
   "releases": {
+    "v3_5": {
+      "title": "Commandes et Alchimie",
+      "date": "Octobre 2026",
+      "summary": "Deux nouveaux débouchés pour tes doublons, et l’équipement se gère sur sa propre page.",
+      "entries": {
+        "e1": "Le Comptoir : des clients réclament des cartes, livre-leur tes doublons contre de l’or, de la poussière et des jetons — jusqu’à quatre livraisons par jour.",
+        "e2": "L’Alchimie : verse tes doublons dans le chaudron pour obtenir une carte aléatoire de la rareté au-dessus.",
+        "e3": "L’équipement d’une carte se gère sur une page dédiée : les pièces sont classées par gain, avec un aperçu des stats au survol. Un bouton échange aussi tout l’équipement entre deux cartes.",
+        "e4": "Améliorer une commune, une peu commune ou une rare coûte jusqu’à quatre fois moins cher. Le boss de raid perd 30 % de PV, et sa carte épique revient à partir du niveau 3.",
+        "e5": "La boutique de cartes se renouvelle toutes les heures et s’appelle désormais le Marché.",
+        "e6": "Le menu se range en quatre groupes (Collection, Combat, Commerce, Social) qui s’ouvrent au survol, et le set « Royaume des Humains » devient « Humains »."
+      }
+    },
+    "v3_4": {
+      "title": "Gachapon parle anglais",
+      "date": "Septembre 2026",
+      "summary": "Le jeu passe en bilingue et s’ouvre sans compte.",
+      "entries": {
+        "e1": "Tout le jeu est disponible en anglais : choisis ta langue depuis le sélecteur de la barre.",
+        "e2": "Mode invité : joue sans compte depuis l’accueil, puis sauvegarde ta progression par email, Google ou Discord. Équipes, raid et paris restent réservés aux comptes.",
+        "e3": "Chaque équipe a une fiche publique, visible par les non-membres.",
+        "e4": "Le classement se pagine, affiche le vrai nombre de classés et saute directement à ta position.",
+        "e5": "Les cartes montent de nouveau au-delà du niveau 60, la célébration de niveau part aussi hors tirage, et le quota d’attaques de raid est compté par équipe."
+      }
+    },
     "v3_3": {
       "title": "Le boss d’équipe monte d’un cran",
       "date": "Septembre 2026",
-      "summary": "Le boss du raid se renforce à chaque fois que tu le mets à terre, les tirages rares se méritent davantage, et l’équipement se vend sans quitter la fiche de carte.",
+      "summary": "Un raid qui s’adapte à ton équipe, des tirages rares plus rares et une économie resserrée.",
       "entries": {
-        "e1": "Le boss de raid devient une échelle, plus une routine. Il est désormais calibré pour dix membres au minimum : monter une équipe à un seul joueur pour rafler les quatre paliers, c’est fini — il faut du monde, et actif. Chaque semaine où tu l’abats, il revient avec 10 % de points de vie en plus, et ses lots grossissent avec lui ; chaque semaine sans mise à mort, il redescend d’un cran. Ton équipe trouve donc toute seule le palier qui lui correspond, et il remonte à mesure que tu montes en niveau et en équipement. Le niveau s’affiche à côté du nom du boss et dans l’historique des raids passés.",
-        "e2": "Les épiques et les légendaires sont deux fois plus rares. Elles tombaient trop souvent pour ce qu’elles valent : leur poids de tirage est divisé par deux. La pitié, elle, ne bouge pas — le filet qui te garantit une légendaire après une longue série de malchance reste exactement où il était.",
-        "e3": "L’économie se resserre là où elle fuyait. Les packs d’énergie coûtent trois fois plus cher : acheter de l’énergie doit rester un dépannage, jamais une façon de contourner le farm. Les vœux sont retarifés, avec un prix qui dépend de la rareté visée. Et les lots du raid suivent la même logique : un peu plus à chaque niveau de difficulté, mais toujours moins que l’effort supplémentaire qu’il demande.",
-        "e4": "La difficulté PvE a été recalibrée sur de vrais profils de joueur. Chaque étage de tour est désormais taillé pour le niveau et l’équipement qu’on a raisonnablement à ce moment-là, au lieu d’une courbe unique appliquée de bas en haut. La campagne, elle, tient enfin compte de ton équipement : un chapitre ne s’effondre plus parce que tu arrives avec sept pièces posées.",
-        "e5": "Vendre une pièce d’équipement ne demande plus de la chercher. Le bouton est directement sur sa fiche, et la liste regroupe tes pièces par set — les quatre du Fureur ensemble, les trois de l’Affût ensemble — pour voir d’un coup d’œil ce qui te manque pour compléter un bonus.",
-        "e6": "Trois accrocs du quotidien. Sur mobile, le menu n’est plus coupé et les fenêtres trop hautes défilent au lieu de se laisser tronquer. Le bouton de vœu, sur la fiche d’une carte, permet maintenant de retirer un vœu et plus seulement d’en poser un. Et un étage de tour déjà franchi se refarme au prix du balayage, pas à celui d’un combat complet."
+        "e1": "Le boss de raid est calibré pour dix membres minimum. Chaque semaine où tu l’abats, il revient avec 10 % de PV et de lots en plus ; sinon il redescend d’un niveau.",
+        "e2": "Épiques et légendaires sont deux fois plus rares. La pitié ne change pas.",
+        "e3": "Les packs d’énergie coûtent trois fois plus cher, et le prix des vœux dépend de la rareté visée.",
+        "e4": "Tour et campagne sont recalibrées sur de vrais profils de joueur, équipement compris.",
+        "e5": "Une pièce se vend depuis sa fiche, et la liste regroupe tes pièces par set.",
+        "e6": "Sur mobile, le menu n’est plus coupé ; un vœu se retire depuis la fiche de carte ; un étage de tour déjà franchi se rejoue au prix du balayage."
       }
     },
     "v3_2": {
       "title": "Chaque mode garde son équipe",
       "date": "Septembre 2026",
-      "summary": "Une équipe pour la tour de Braise, une autre pour celle de Prisme, une troisième pour la campagne — chacune t’attend là où tu l’as laissée. Et les monstres des tours ont enfin un visage.",
+      "summary": "Une équipe par tour, une pour la campagne, une pour le raid.",
       "entries": {
-        "e1": "La campagne, chacune des quatre tours et le raid ont désormais leur propre équipe. Tu montes une composition contre le feu, tu passes à la tour de Prisme, tu reviens : ta composition anti-feu est toujours là. Plus rien à recomposer à chaque aller-retour. Tant que tu n’as pas touché à un écran, il joue ton équipe de campagne — un nouveau venu n’a donc qu’une équipe à faire, et elle sert partout. Dès que tu modifies celle d’une tour, cette tour devient indépendante et la campagne ne la fait plus bouger ; le bouton « Revenir à l’équipe de campagne », dans l’éditeur, défait ce choix quand tu veux. La liste des tours affiche les trois cartes que chacune emmène, et ton équipe actuelle a été reprise telle quelle : tu ne repars pas de zéro.",
-        "e2": "Les monstres des tours ont enfin un visage. Les 120 ennemis des quarante étages s’affichaient avec une image manquante et s’appelaient tous « Ennemi 1 », en préparation comme en combat. Chaque tour puise maintenant dans les familles de son élément — élémentaires, minotaures, wyvernes et kobolds pour Braise, basilics pour Monolithe — sans jamais répéter deux fois le même sprite dans un étage. Le contre-pick reste donc lisible : une tour, un élément à contrer.",
-        "e3": "Le classement de puissance se lit sur ton équipe de campagne. Avec six équipes possibles, il fallait en désigner une : c’est celle-là qui te représente. Si tu ne soignes que tes équipes de tour, pense à garder une campagne à jour."
+        "e1": "Campagne, tours et raid ont chacun leur équipe. Tant que tu n’y touches pas, un mode reprend ton équipe de campagne.",
+        "e2": "Les 120 monstres des tours ont un nom et un visage, tirés des familles de leur élément.",
+        "e3": "Le classement de puissance se calcule sur ton équipe de campagne."
       }
     },
     "v3_1": {
       "title": "Rejouer sans y passer la soirée",
       "date": "Septembre 2026",
-      "summary": "Un étage déjà battu se relance cinq fois d’un clic, l’équipement se lit d’un coup d’œil, le vœu porte plusieurs cartes — et la courbe de niveau redevient une courbe.",
+      "summary": "Combat multiple, vœux à plusieurs cartes, équipement plus lisible et grosse passe d’équilibrage.",
       "entries": {
-        "e1": "Le combat multiple remplace « Balayer » : un niveau de campagne déjà terminé ne propose plus qu’un bouton, avec ses segments ×1 et ×5 qui affichent chacun leur coût en énergie — le prix montré est celui qui sera débité. Les tours y ont droit à leur tour : un étage franchi se rejoue en série, chaque passage garantit une pièce, et le tarif est le même qu’en campagne.",
-        "e2": "Le vœu porte désormais plusieurs cartes — deux emplacements au départ, jusqu’à cinq avec la compétence « Collectionneur » — et le délai de sept jours entre deux achats disparaît. En échange, le prix redevient le vrai frein : les remises de boutique ne s’appliquent plus au vœu, et elles passent de 25 à 18 %. Les points investis dans l’ancien « Négociant » te sont rendus.",
-        "e3": "L’écran de récompenses encaisse enfin les gros butins : les pièces défilent sur une rangée, les cartes sur une autre, toutes les fiches à la même hauteur, et « Continuer » reste à portée de pouce. La carte gagnée s’affiche nue, avec la même pastille « Nouveau » qu’au tirage.",
-        "e4": "L’équipement se lit sans ouvrir trois écrans : chaque ligne du sélecteur annonce son set, la fiche montre l’avancement du set sur cette carte-là, les tuiles portent la rareté par leur dégradé et affichent « n / 7 équipées » plus l’apport total en stats. La fenêtre d’un emplacement s’ouvre directement sur la pièce portée, les bonus parlent en ATQ et VIT au lieu de ATK et SPD, et les valeurs de stat sont des nombres entiers.",
-        "e5": "Le set « Précision » s’appelle désormais « Affût », et il s’active à trois pièces au lieu de quatre. Son ancien nom promettait de la justesse alors qu’il donne du taux de critique, et il était déjà celui d’un passif de combat. Surtout, à quatre pièces le build critique complet était impossible : Fureur et lui réclamaient huit emplacements pour sept. Fureur (4) et Affût (3) tiennent maintenant pile sur la même carte — dégâts critiques et taux de critique enfin ensemble. Le bonus, lui, ne change pas, pas plus que les noms de tes pièces.",
-        "e6": "Gros coup de règle sur l’équilibrage. La courbe de niveau joueur est multipliée par cinq et l’XP de premier passage divisée par trois : monter au niveau 30 ne tient plus dans une journée. L’arbre de compétences coûte maintenant 109 points — exactement ce qu’un niveau 100 possède — donc plus aucun nœud n’est un sacrifice obligé ; la branche Collection devient enfin désirable (recyclage +30 %, et elle s’ouvre désormais sur ses meilleurs nœuds), les nœuds de butin de Combat redescendent d’un tiers, et le bonus de butin ne gonfle plus la chance de carte, seulement celle d’équipement. « Opulence » ne double plus le plafond d’achat de packs d’énergie : elle le porte à cinq par jour au lieu de six. Enfin, la vitesse ne se tire plus qu’en valeur plate : les pièces qui portaient du % VIT ont été retirées au profit d’une autre sous-stat.",
-        "e7": "Avec la compétence « Opulence », la boutique annonçait « Limite atteinte » dès trois packs d’énergie alors que la compétence en autorisait davantage. Côté campagne, la carte gagnée manquait à l’appel en fin de combat et le résultat d’un balayage n’affichait pas les mêmes fiches qu’une victoire. La fiche de pièce ne s’écrase plus dans les récompenses de tour, la grille d’équipement ne se réordonne plus quand tu améliores une pièce, et deux nœuds de l’arbre ne se chevauchent plus."
+        "e1": "Le combat multiple (×1 ou ×5) remplace « Balayer », en campagne comme en tour.",
+        "e2": "Le vœu porte jusqu’à cinq cartes et le délai de sept jours disparaît ; les remises ne s’y appliquent plus.",
+        "e3": "L’écran de récompenses range pièces et cartes sur deux rangées, « Continuer » toujours à portée.",
+        "e4": "L’équipement se lit d’un coup d’œil : set de chaque pièce, avancement des sets par carte, stats en nombres entiers.",
+        "e5": "« Précision » devient « Affût » et s’active à trois pièces : Fureur (4) et Affût (3) tiennent enfin sur une même carte.",
+        "e6": "Équilibrage : courbe de niveau ×5, arbre de compétences à 109 points (pile le niveau 100), branche Collection revalorisée, plus de % VIT sur l’équipement.",
+        "e7": "Corrections : limite de packs d’énergie avec « Opulence », carte gagnée absente en fin de combat, grille d’équipement qui se réordonnait."
       }
     },
     "v3_0": {
       "title": "Les équipes prennent vie",
       "date": "Septembre 2026",
-      "summary": "Un boss à abattre en groupe chaque semaine, des duels et des paris entre coéquipiers, une progression d’équipe à faire monter — et un annuaire pour trouver les tiens.",
+      "summary": "Raid hebdomadaire, duels, paris, progression d’équipe et recrutement.",
       "entries": {
-        "e1": "Le raid d’équipe : chaque semaine, un boss élémentaire se dresse devant ton équipe — Ignis le Brasier, Nérée la Marée, Sylva la Ronce ou Gorm le Roc — et la rotation change de boss d’une semaine à l’autre. Tout le monde tape sur la même barre de points de vie, deux attaques par jour et par membre, et l’équipe décroche un lot à 25, 50, 75 et 100 % de la barre. La page d’équipe suit les dégâts en direct et montre qui a contribué combien.",
-        "e2": "Les duels de tirage : défie un coéquipier sur vos cinq prochains tirages, chacun engage des cartes, et le meilleur score rafle la mise. Les cartes engagées sont verrouillées le temps du duel — impossible de les recycler en douce. Tu as 24 h pour accepter, 48 h pour tirer.",
-        "e3": "Les paris : ouvre un marché sur les dix prochains tirages d’un coéquipier — « est-ce qu’il sortira au moins un rare ? » — et mise ta poussière. Les autres renchérissent du camp qu’ils veulent et la cote bouge à chaque mise, calculée sur les vraies chances de la table de tirage. Avant de choisir ton camp, tu vois qui a misé de l’autre côté, et combien.",
-        "e4": "La progression d’équipe : tes dégâts de raid, tes duels gagnés, tes paris gagnés et tes tirages rapportent des points chaque semaine, et leur somme fait monter l’équipe de niveau. Chaque niveau donne un point que le chef investit dans l’un des quatre bonus — régénération de jetons, attaques de raid, XP de campagne, coût de reforge — répartis sur 32 rangs, les quatre ouverts dès le premier point.",
-        "e5": "Le recrutement : un annuaire des équipes qui cherchent du monde s’ouvre depuis « Mes équipes ». Tu peux candidater à cinq équipes à la fois, suivre tes candidatures et les annuler ; côté chef, une file d’attente affiche le niveau de chaque candidat, et la cloche prévient des deux côtés. Une candidature expire au bout de sept jours, et un refus t’écarte de cette équipe une semaine.",
-        "e6": "Les deux écrans d’équipe sont refaits : la liste avec ses emblèmes colorés et ses emplacements libres, la fiche en deux colonnes avec le raid, les duels et la table des contributions. Le grade d’officier devient enfin attribuable par le chef, et l’étiquette « Recrue » ne tient plus qu’un jour au lieu d’une semaine."
+        "e1": "Raid d’équipe : chaque semaine un boss élémentaire, deux attaques par jour et par membre, des lots à 25, 50, 75 et 100 %.",
+        "e2": "Duels de tirage : défie un coéquipier sur cinq tirages, chacun mise des cartes, le meilleur score rafle tout.",
+        "e3": "Paris : mise ta poussière sur les dix prochains tirages d’un coéquipier, avec une cote calculée sur les vraies chances.",
+        "e4": "Progression d’équipe : raid, duels, paris et tirages font monter l’équipe, et le chef investit dans quatre bonus.",
+        "e5": "Recrutement : un annuaire des équipes ouvertes, jusqu’à cinq candidatures à la fois.",
+        "e6": "Écrans d’équipe refaits, et le grade d’officier devient attribuable."
       }
     },
     "v2_1": {
       "title": "Cartes, compétences et réglages",
       "date": "Septembre 2026",
-      "summary": "Cinq familles de cartes de plus, un arbre de compétences qui va jusqu’au niveau 100, des quêtes d’équipement et un combat recalibré.",
+      "summary": "Cinq familles de plus, un arbre jusqu’au niveau 100 et un combat recalibré.",
       "entries": {
-        "e1": "Cinq familles rejoignent le classeur — Centaures, Dryades, Kitsunes, Draenei et Lamia — soit 170 cartes de plus. Le jeu compte désormais 18 familles et 602 cartes, dont les illustrations sont servies à la taille de ton écran et chargent donc plus vite.",
-        "e2": "L’arbre de compétences couvre enfin le niveau 100 : les nœuds existants gagnent des paliers, et de nouveaux sommets apparaissent, dont deux qui touchent l’équipement — une remise sur le coût d’amélioration et un bonus au recyclage. Plus aucun effet n’est réparti sur deux nœuds d’une même branche : monter une compétence ne peut plus être un piège.",
-        "e3": "Des quêtes d’équipement entrent dans la rotation : le pool hebdomadaire passe de 7 à 11 quêtes, et la chaîne à faire une fois gagne les trois gestes de découverte — ramasser, améliorer et recycler une pièce. Environ quatre semaines sur cinq contiennent au moins une quête d’équipement.",
-        "e4": "Un guide des éléments s’ouvre depuis l’en-tête de la campagne et des tours : la roue des quatre éléments, la paire Lumière / Ténèbres qui se répond hors cycle, et les multiplicateurs exacts.",
-        "e5": "Le combat est recalibré. La vitesse ne monte plus avec le niveau — ni chez toi ni chez l’ennemi : c’est l’équipement qui décide de l’ordre des tours. Les autres stats gagnent 9 % par niveau au lieu de 6 %. Et les débuts redeviennent franchissables : le premier étage de tour et le premier combat de campagne se gagnent de nouveau avec une main de départ médiocre.",
-        "e6": "Le compteur de garantie annonçait le légendaire un tirage trop tôt. Et la vue agrandie d’une carte est désormais la même partout — tirage, collection, butin de duel — y compris ouverte depuis une fenêtre."
+        "e1": "Centaures, Dryades, Kitsunes, Draenei et Lamia : 170 cartes de plus, 602 au total.",
+        "e2": "L’arbre de compétences couvre le niveau 100, avec deux nouveaux nœuds d’équipement.",
+        "e3": "Des quêtes d’équipement entrent dans la rotation hebdomadaire.",
+        "e4": "Un guide des éléments s’ouvre depuis la campagne et les tours.",
+        "e5": "La vitesse ne monte plus avec le niveau : c’est l’équipement qui décide de l’ordre des tours.",
+        "e6": "Le compteur de garantie annonçait la légendaire un tirage trop tôt."
       }
     },
     "v2_0": {
       "title": "Les Tours et l’Équipement",
       "date": "Septembre 2026",
-      "summary": "Quatre tours élémentaires à gravir, et de quoi équiper tes cartes de pied en cap : sept emplacements, des sets à composer et des sous-stats à chasser.",
+      "summary": "Quatre tours élémentaires et sept emplacements d’équipement par carte.",
       "entries": {
-        "e1": "Les Tours élémentaires : quatre tours de dix étages — Feu, Eau, Nature et Terre. Chaque tour alimente un emplacement précis (les gants au Feu, les bottes à l’Eau, l’amulette à la Nature, la ceinture à la Terre), donc tu montes celle qui lâche la pièce qui te manque. Chaque passage garantit une pièce, et plus tu grimpes, plus elle sort rare.",
-        "e2": "L’équipement : chaque carte porte sept pièces — arme, armure, anneau, amulette, gants, bottes, ceinture. Une pièce a une stat principale et jusqu’à quatre sous-stats, et monte jusqu’au niveau 12 : tous les trois niveaux, une sous-stat apparaît ou se renforce.",
-        "e3": "Les sets : sept sets, mais tous n’ont pas la même taille. Célérité et Colosse s’activent à deux pièces, Affût, Assaut et Percée à trois, Fureur et Sangsue à quatre — de quoi en porter deux à la fois sur une même carte. Attention : le compte se fait carte par carte, pas sur ton inventaire. Le bouton « Bonus de sets » récapitule tout.",
-        "e4": "Deux pièces du même emplacement ne se valent plus : une armure peut sortir en DÉF, en PV, en % DÉF ou en % PV. Il y a désormais une bonne version d’une pièce à chercher, pas seulement une bonne rareté.",
-        "e5": "Ton inventaire d’équipement se trie et se filtre : par rareté, niveau, emplacement, set ou stat principale. Tu peux sélectionner plusieurs pièces d’un coup pour les vendre — avec une confirmation si un légendaire traîne dans le lot.",
-        "e6": "Le butin de campagne suit enfin ta progression : les communes dominent aux premiers étages puis s’éteignent complètement en fin de campagne, pendant que les hautes raretés montent. Un premier passage garantit une pièce sur presque tous les étages, et les boss gardent une longueur d’avance."
+        "e1": "Quatre tours de dix étages, chacune liée à un emplacement d’équipement.",
+        "e2": "Sept pièces par carte, une stat principale et jusqu’à quatre sous-stats, niveau 12 max.",
+        "e3": "Sept sets de deux à quatre pièces, comptés carte par carte.",
+        "e4": "Une même pièce peut sortir avec différentes stats principales : il y a une bonne version à chasser.",
+        "e5": "L’inventaire se trie, se filtre et se vend par lot.",
+        "e6": "Le butin de campagne suit ta progression : moins de communes, plus de hautes raretés."
       }
     },
     "v1_9": {
       "title": "Le combat s’étoffe",
       "date": "Août – Septembre 2026",
-      "summary": "Coups critiques, pénétration d’armure, vol de vie — et des passifs qui réagissent vraiment à ce qui se passe sous tes yeux.",
+      "summary": "Critiques, pénétration, vol de vie et passifs réactifs.",
       "entries": {
-        "e1": "Quatre stats de combat font leur entrée : taux critique, dégâts critiques, pénétration d’armure et vol de vie. Elles ne viennent que de l’équipement — c’est lui qui décide du style de ta carte.",
-        "e2": "Les passifs ne se contentent plus d’un bonus fixe : ils réagissent au déroulé du combat. Vigueur annule un coup fatal, Fortification empile à chaque coup encaissé, Vampirisme double son soin sous la moitié des points de vie, et Hâte comme Exaltation se déclenchent en cours de route.",
-        "e3": "Les combats vont deux fois plus vite. Les cartes encaissent moins et frappent plus fort : fini les échanges interminables où personne ne tombait.",
-        "e4": "Les soins s’affichent dans le déroulé du combat — le vol de vie et les passifs de régénération se voyaient sur les points de vie, mais pas dans le journal."
+        "e1": "Taux et dégâts critiques, pénétration d’armure et vol de vie, apportés par l’équipement.",
+        "e2": "Les passifs réagissent au combat : Vigueur annule un coup fatal, Fortification s’empile, etc.",
+        "e3": "Les combats vont deux fois plus vite.",
+        "e4": "Les soins apparaissent dans le journal de combat."
       }
     },
     "v1_7": {
