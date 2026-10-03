@@ -95,7 +95,7 @@ describe('Orders routes', () => {
     const board = (await getBoard(cookie)).json()
     const view = board.slots[0].order
     expect(view.deliverable).toBe(true)
-    expect(view.lines[0].candidates[0]).toMatchObject({ userCardId: uc.id, available: 2 })
+    expect(view.lines[0].candidates[0]).toMatchObject({ userCardId: uc.id, available: 2, setName: `OrdersSet${suffix}` })
 
     const res = await app.inject({
       method: 'POST',

@@ -63,6 +63,7 @@ export type OrderCandidate = {
   imageUrl: string | null
   rarity: CardRarity
   element: CardElement | null
+  setName: string
   available: number
 }
 

@@ -1,4 +1,25 @@
+import type { TFunction } from 'i18next'
+
 import type { CardElement, CardRarity } from './card.constant.ts'
+
+// Littéraux complets : Tailwind ne voit pas les classes construites.
+export const ORDER_RARITY_DOT: Record<CardRarity, string> = {
+  COMMON: 'bg-rarity-common',
+  UNCOMMON: 'bg-rarity-uncommon',
+  RARE: 'bg-rarity-rare',
+  EPIC: 'bg-rarity-epic',
+  LEGENDARY: 'bg-rarity-legendary',
+}
+
+/** « Rare · Eau » ou « Épique · <set> » — rareté puis filtre de la ligne. */
+export const orderLineLabel = (t: TFunction, line: OrderLineView) =>
+  [
+    t(`common:rarity.${line.rarity.toLowerCase()}`),
+    line.element && t(`common:elements.${line.element.toLowerCase()}`),
+    line.setName,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
 export type DeliveryPick = {
   lineIndex: number
@@ -13,6 +34,7 @@ export type OrderCandidate = {
   imageUrl: string | null
   rarity: CardRarity
   element: CardElement | null
+  setName: string
   available: number
 }
 

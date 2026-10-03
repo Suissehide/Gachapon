@@ -293,7 +293,7 @@ export class OrdersDomain implements IOrdersDomain {
         }),
         prisma.userCard.findMany({
           where: { userId, variant: 'NORMAL', quantity: { gt: 1 } },
-          include: { card: true },
+          include: { card: { include: { set: true } } },
         }),
         Promise.all(
           Array.from({ length: cfg['orders.slots'] }, (_, slot) =>
@@ -317,6 +317,7 @@ export class OrdersDomain implements IOrdersDomain {
         rarity: u.card.rarity,
         element: u.card.element,
         setId: u.card.setId,
+        setName: u.card.set.name,
         name: u.card.name,
         imageUrl: u.card.imageUrl,
       }))
