@@ -75,6 +75,11 @@ const getFoilLayers = (variant: string | null | undefined, isOwned: boolean) =>
     ? (VARIANT_OVERLAYS[variant] ?? null)
     : null
 
+// Fond pâle teinté par la rareté (lit `--rar-light`) : l'état « chargement »
+// d'une carte, partagé par le placeholder, le fond de carte et CardLoadingFace.
+const LOADING_FILL =
+  'linear-gradient(160deg, color-mix(in srgb, var(--rar-light) 40%, #fff) 0%, color-mix(in srgb, var(--rar-light) 65%, #fff) 100%)'
+
 // Loading placeholder — a calm, static, pale rarity-tinted fill shown while the
 // art is still loading. Sits above the <img> (z-1) but below the foil overlays
 // and frame chrome, so a loading card shows its frame/level over a themed fill
@@ -91,10 +96,37 @@ function ArtPlaceholder({ loaded }: { loaded: boolean }) {
       aria-hidden
       className="pointer-events-none absolute inset-0 z-[1]"
       style={{
-        background:
-          'linear-gradient(160deg, color-mix(in srgb, var(--rar-light) 40%, #fff) 0%, color-mix(in srgb, var(--rar-light) 65%, #fff) 100%)',
+        background: LOADING_FILL,
       }}
     />
+  )
+}
+
+/** Carte « en cours de chargement » sans contenu : le fond teinté et le cadre
+ *  qu'affiche une TcgCardFace avant que son image n'arrive. Sert de carte
+ *  mystère (résultat d'alchimie) — le parent fixe la taille (`relative`). */
+export function CardLoadingFace({
+  rarity,
+  compact = false,
+}: {
+  rarity: string
+  compact?: boolean
+}) {
+  const tone = getRarityTone(rarity)
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0 overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.06),0_14px_30px_-18px_rgba(27,23,38,0.4)]"
+      style={
+        {
+          '--rar-light': tone.light,
+          borderRadius: compact ? '8px' : '10px',
+          background: LOADING_FILL,
+        } as CSSProperties
+      }
+    >
+      <InternalFrame compact={compact} />
+    </div>
   )
 }
 
@@ -162,8 +194,7 @@ export function TcgCardFace({
       style={{
         ...rootStyle,
         borderRadius: outerRadius,
-        background:
-          'linear-gradient(160deg, color-mix(in srgb, var(--rar-light) 40%, #fff) 0%, color-mix(in srgb, var(--rar-light) 65%, #fff) 100%)',
+        background: LOADING_FILL,
       }}
       {...holoHandlers}
     >

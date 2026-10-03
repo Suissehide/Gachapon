@@ -7,6 +7,7 @@ import type {
 } from '../../constants/alchemy.constant.ts'
 import type { CardRarity } from '../../constants/card.constant.ts'
 import { cn } from '../../libs/utils.ts'
+import { CardLoadingFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
 
@@ -25,17 +26,6 @@ const RESULT_PANEL: Record<CardRarity, string> = {
   RARE: 'bg-rarity-rare/10 border-rarity-rare/30',
   EPIC: 'bg-rarity-epic/10 border-rarity-epic/30',
   LEGENDARY: 'bg-rarity-legendary/10 border-rarity-legendary/30',
-}
-
-const MYSTERY_FACE: Record<CardRarity, string> = {
-  COMMON:
-    'from-rarity-common-light via-rarity-common to-rarity-common-dark shadow-rarity-common/60',
-  UNCOMMON:
-    'from-rarity-uncommon-light via-rarity-uncommon to-rarity-uncommon-dark shadow-rarity-uncommon/60',
-  RARE: 'from-rarity-rare-light via-rarity-rare to-rarity-rare-dark shadow-rarity-rare/60',
-  EPIC: 'from-rarity-epic-light via-rarity-epic to-rarity-epic-dark shadow-rarity-epic/60',
-  LEGENDARY:
-    'from-rarity-legendary-light via-rarity-legendary to-rarity-legendary-dark shadow-rarity-legendary/60',
 }
 
 type Props = {
@@ -137,15 +127,8 @@ export function Cauldron({
           !full && 'opacity-50',
         )}
       >
-        <div className="aspect-[2/3] w-[72px] shrink-0 rounded-[10px] bg-foreground p-[3px]">
-          <div
-            className={cn(
-              'grid h-full w-full place-items-center rounded-[7px] bg-linear-160 font-display text-[28px] font-extrabold text-primary-foreground shadow-lg',
-              MYSTERY_FACE[tier.toRarity],
-            )}
-          >
-            ?
-          </div>
+        <div className="relative aspect-[2/3] w-[72px] shrink-0">
+          <CardLoadingFace compact rarity={tier.toRarity} />
         </div>
         <div>
           <b className="block text-base text-text">
