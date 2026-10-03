@@ -104,19 +104,19 @@ export function OrderRow({
   return (
     <article
       className={cn(
-        'grid grid-cols-[84px_minmax(0,1fr)] items-center gap-[18px] rounded-[22px] border border-border bg-card py-5 pr-6 pl-5 shadow-card md:grid-cols-[112px_minmax(0,1fr)_auto] md:gap-7',
+        'grid grid-cols-1 items-center gap-[18px] rounded-[22px] border border-border bg-card py-5 pr-6 pl-5 shadow-card md:grid-cols-[112px_minmax(0,1fr)_auto] md:gap-7',
         ready &&
           'border-primary/50 bg-gradient-to-r from-primary/8 via-card to-card shadow-[0_2px_0_rgba(245,158,11,0.08),0_18px_36px_-20px_rgba(245,158,11,0.35)]',
       )}
     >
-      <div className="w-[84px] shrink-0 md:w-[112px]">
+      <div className="mx-auto w-[112px] shrink-0 md:mx-0">
         <CardDisplay
           rarity={order.client.rarity}
           name={order.client.name}
           setName={order.client.setName}
           imageUrl={order.client.imageUrl}
-          element={order.client.element}
           compact
+          showName={false}
         />
       </div>
 
