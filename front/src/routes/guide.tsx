@@ -411,9 +411,12 @@ function GuidePage() {
                     : t(`sectionLabels.${id}`)
                 }
               >
-                {blocks.map((block, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: liste statique, jamais réordonnée
-                  <SectionBlock key={i} id={id} block={block} />
+                {blocks.map((block) => (
+                  <SectionBlock
+                    key={'key' in block ? block.key : block.kind}
+                    id={id}
+                    block={block}
+                  />
                 ))}
               </Section>
             ))}

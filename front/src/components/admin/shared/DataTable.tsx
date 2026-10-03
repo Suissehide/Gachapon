@@ -41,6 +41,8 @@ type DataTableProps<TData extends { id: string }> = {
   onSelectionChange?: (ids: string[]) => void
 }
 
+const SKELETON_KEYS = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`)
+
 export function DataTable<TData extends { id: string }>({
   isLoading,
   emptyIcon,
@@ -52,9 +54,8 @@ export function DataTable<TData extends { id: string }>({
   if (isLoading) {
     return (
       <div className="space-y-2 p-5">
-        {Array.from({ length: 8 }, (_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: skeleton rows are static, never reordered
-          <div key={i} className="h-9 animate-pulse rounded-lg bg-border" />
+        {SKELETON_KEYS.map((key) => (
+          <div key={key} className="h-9 animate-pulse rounded-lg bg-border" />
         ))}
       </div>
     )

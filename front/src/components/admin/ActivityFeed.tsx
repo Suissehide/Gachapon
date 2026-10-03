@@ -203,6 +203,8 @@ const EVENT_META: Record<
   },
 }
 
+const SKELETON_KEYS = Array.from({ length: 6 }, (_, i) => `skeleton-${i}`)
+
 export function ActivityFeed() {
   const { t } = useTranslation('admin')
   const { data, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -237,10 +239,9 @@ export function ActivityFeed() {
         </p>
         <div className="flex max-h-[480px] flex-col gap-1 overflow-y-auto">
           {isPending &&
-            Array.from({ length: 6 }).map((_, i) => (
+            SKELETON_KEYS.map((key) => (
               <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, never reordered
-                key={i}
+                key={key}
                 className="flex items-start gap-2.5 rounded-lg px-2 py-1.5"
               >
                 <div className="mt-0.5 h-4 w-4 shrink-0 animate-pulse rounded bg-border" />

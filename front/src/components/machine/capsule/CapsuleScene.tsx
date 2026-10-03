@@ -41,6 +41,115 @@ function randomBurstTarget(alt: number): BurstTarget {
   }
 }
 
+// Coup d'éclat unique quand la couleur du palier perce pendant la charge.
+function fireStingOnce(
+  anim: CapsuleAnim,
+  tier: TeaseTier | null,
+  rawReveal: number,
+  firedRef: { current: boolean },
+) {
+  if (firedRef.current || tier === null || rawReveal <= 0.45) {
+    return
+  }
+  firedRef.current = true
+  gsap
+    .timeline()
+    .to(anim, { sting: 1, duration: 0.12, ease: 'power1.out' })
+    .to(anim, { sting: 0, duration: 0.7, ease: 'power2.out' })
+  if (tier >= 1) {
+    capsuleAudio.sting(tier)
+  }
+}
+
+// Pose de la capsule pour la frame : à-coup de shake, vibration de charge,
+// inhale, puis ouverture des deux coques. `vibrateAmp` arrive déjà multiplié
+// par le boost de tuning et l'atténuation reduced-motion.
+function poseCapsule(
+  group: THREE.Group,
+  top: THREE.Group,
+  bottom: THREE.Group,
+  anim: CapsuleAnim,
+  target: BurstTarget,
+  vibrateAmp: number,
+  t: number,
+) {
+  const c = anim.charge
+  group.rotation.set(0, 0, 0)
+  group.position.set(0, 0, 0)
+  let scale = BALL_SCALE * anim.pop
+
+  if (anim.burstT > 0 && anim.burstT < 1) {
+    const kb = burstProfile(anim.burstT)
+    group.rotation.x = target.rx * kb
+    group.rotation.y = target.ry * kb
+    group.rotation.z = target.rz * kb
+    group.position.x = target.rz * kb * 0.12
+  }
+
+  if (c > 0) {
+    const amp = vibrateAmp * c * c
+    const f = 18 + c * 34
+    group.position.x += Math.sin(t * f) * amp
+    group.position.y += Math.sin(t * f * 1.17 + 1.3) * amp
+    group.rotation.z += Math.sin(t * f * 0.89 + 2.1) * amp * 0.9
+    const pulse = 1 + Math.sin(t * (6 + c * 22)) * 0.015 * (1 + c * 2)
+    scale *= (1 + c * 0.06) * pulse
+  }
+
+  scale *= 1 - anim.inhale * 0.14
+  group.position.y -= anim.inhale * 0.06
+  group.scale.setScalar(Math.max(0.0001, scale))
+
+  const split = anim.split
+  top.position.y = split * 3.2
+  top.rotation.z = split * 0.8
+  bottom.position.y = -split * 3.2
+  bottom.rotation.z = -split * 0.5
+}
+
+// Teinte et intensités des matériaux + lumière interne pour la frame.
+function shadeCapsule(
+  anim: CapsuleAnim,
+  shell: THREE.Color,
+  color: THREE.Color,
+  bottomMat: THREE.MeshStandardMaterial | null,
+  seamMat: THREE.MeshStandardMaterial | null,
+  lidMat: THREE.MeshPhysicalMaterial | null,
+  coreMat: THREE.MeshStandardMaterial | null,
+  light: THREE.PointLight | null,
+) {
+  const c = anim.charge
+  const split = anim.split
+  const fadeAlpha = split < 0.55 ? 1 : 1 - (split - 0.55) / 0.45
+  const darken = 1 - anim.inhale * 0.7
+  if (bottomMat) {
+    bottomMat.color.copy(shell)
+    bottomMat.emissive.copy(color)
+    bottomMat.emissiveIntensity = (0.12 + c * 1.6 + anim.sting * 1.1) * darken
+    bottomMat.transparent = split > 0
+    bottomMat.opacity = fadeAlpha
+  }
+  if (seamMat) {
+    seamMat.color.copy(shell)
+  }
+  if (lidMat) {
+    lidMat.emissive.copy(color)
+    lidMat.emissiveIntensity = c * 1.4 * darken
+    lidMat.opacity = 0.42 * fadeAlpha
+  }
+  if (coreMat) {
+    coreMat.emissive.copy(color)
+    coreMat.emissiveIntensity =
+      (0.35 + c * 4.2 + anim.sting * 2.5) * darken + split * 7
+    coreMat.transparent = split > 0
+    coreMat.opacity = fadeAlpha
+  }
+  if (light) {
+    light.color.copy(color)
+    light.intensity = (c * 6 + anim.sting * 3) * darken + split * 18
+  }
+}
+
 type Props = {
   anim: CapsuleAnim
   teaseTier: TeaseTier | null
@@ -261,7 +370,6 @@ export function CapsuleScene({
     }
   }, [teaseTier])
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: boucle de rendu — chaque bloc lit `anim`, la découper coûterait des allocations par frame
   useFrame((state, delta) => {
     const group = groupRef.current
     const top = topRef.current
@@ -287,91 +395,32 @@ export function CapsuleScene({
     tmpColor.copy(neutralShell).lerp(targetShell.current, rawReveal)
     curShell.lerp(tmpColor, k)
 
-    if (
-      !stingFiredRef.current &&
-      tierRef.current !== null &&
-      rawReveal > 0.45
-    ) {
-      stingFiredRef.current = true
-      gsap
-        .timeline()
-        .to(anim, { sting: 1, duration: 0.12, ease: 'power1.out' })
-        .to(anim, { sting: 0, duration: 0.7, ease: 'power2.out' })
-      if (tierRef.current >= 1) {
-        capsuleAudio.sting(tierRef.current)
-      }
+    fireStingOnce(anim, tierRef.current, rawReveal, stingFiredRef)
+
+    poseCapsule(
+      group,
+      top,
+      bottom,
+      anim,
+      burstTargetRef.current,
+      cfg.vibrateAmp * tuningRef.current.vibrateBoost * reducedAmp,
+      t,
+    )
+    if (seamRef.current) {
+      seamRef.current.visible = anim.split <= 0
     }
-
-    group.rotation.set(0, 0, 0)
-    group.position.set(0, 0, 0)
-    let scale = BALL_SCALE * anim.pop
-
-    if (anim.burstT > 0 && anim.burstT < 1) {
-      const kb = burstProfile(anim.burstT)
-      const target = burstTargetRef.current
-      group.rotation.x = target.rx * kb
-      group.rotation.y = target.ry * kb
-      group.rotation.z = target.rz * kb
-      group.position.x = target.rz * kb * 0.12
-    }
-
-    if (c > 0) {
-      const amp =
-        cfg.vibrateAmp * tuningRef.current.vibrateBoost * c * c * reducedAmp
-      const f = 18 + c * 34
-      group.position.x += Math.sin(t * f) * amp
-      group.position.y += Math.sin(t * f * 1.17 + 1.3) * amp
-      group.rotation.z += Math.sin(t * f * 0.89 + 2.1) * amp * 0.9
-      const pulse = 1 + Math.sin(t * (6 + c * 22)) * 0.015 * (1 + c * 2)
-      scale *= (1 + c * 0.06) * pulse
-    }
-
-    scale *= 1 - anim.inhale * 0.14
-    group.position.y -= anim.inhale * 0.06
-    group.scale.setScalar(Math.max(0.0001, scale))
+    shadeCapsule(
+      anim,
+      curShell,
+      curColor,
+      bottomMatRef.current,
+      seamMatRef.current,
+      lidMatRef.current,
+      coreMatRef.current,
+      lightRef.current,
+    )
 
     const split = anim.split
-    top.position.y = split * 3.2
-    top.rotation.z = split * 0.8
-    bottom.position.y = -split * 3.2
-    bottom.rotation.z = -split * 0.5
-    const fadeAlpha = split < 0.55 ? 1 : 1 - (split - 0.55) / 0.45
-    if (seamRef.current) {
-      seamRef.current.visible = split <= 0
-    }
-
-    const darken = 1 - anim.inhale * 0.7
-    const bottomMat = bottomMatRef.current
-    if (bottomMat) {
-      bottomMat.color.copy(curShell)
-      bottomMat.emissive.copy(curColor)
-      bottomMat.emissiveIntensity = (0.12 + c * 1.6 + anim.sting * 1.1) * darken
-      bottomMat.transparent = split > 0
-      bottomMat.opacity = fadeAlpha
-    }
-    if (seamMatRef.current) {
-      seamMatRef.current.color.copy(curShell)
-    }
-    const lidMat = lidMatRef.current
-    if (lidMat) {
-      lidMat.emissive.copy(curColor)
-      lidMat.emissiveIntensity = c * 1.4 * darken
-      lidMat.opacity = 0.42 * fadeAlpha
-    }
-    const coreMat = coreMatRef.current
-    if (coreMat) {
-      coreMat.emissive.copy(curColor)
-      coreMat.emissiveIntensity =
-        (0.35 + c * 4.2 + anim.sting * 2.5) * darken + split * 7
-      coreMat.transparent = split > 0
-      coreMat.opacity = fadeAlpha
-    }
-    const light = lightRef.current
-    if (light) {
-      light.color.copy(curColor)
-      light.intensity = (c * 6 + anim.sting * 3) * darken + split * 18
-    }
-
     auraUniforms.uTime.value = t
     auraUniforms.uIntensity.value =
       (0.25 +

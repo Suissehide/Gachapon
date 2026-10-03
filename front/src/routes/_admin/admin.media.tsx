@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Images, Upload } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CreateCardSheet } from '../../components/admin/cards/CreateCardSheet'
@@ -56,6 +56,7 @@ function AdminMediaPage() {
   const [confirmBulk, setConfirmBulk] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dropzoneLabelId = useId()
 
   useEffect(() => {
     if (selected.size === 0) {
@@ -151,9 +152,8 @@ function AdminMediaPage() {
       />
 
       {/* Zone upload */}
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop upload zone */}
-      <div
-        role="presentation"
+      <section
+        aria-labelledby={dropzoneLabelId}
         className={`mb-6 rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
           dragging ? 'border-primary bg-primary/10' : 'border-border'
         }`}
@@ -165,7 +165,7 @@ function AdminMediaPage() {
         onDrop={handleDrop}
       >
         <Upload className="mx-auto mb-2 h-6 w-6 text-text-light" />
-        <p className="text-sm text-text-light">
+        <p id={dropzoneLabelId} className="text-sm text-text-light">
           {t('media.dropzone.instructionsBefore')}{' '}
           <button
             type="button"
@@ -196,7 +196,7 @@ function AdminMediaPage() {
             {err.filename} : {err.reason}
           </p>
         ))}
-      </div>
+      </section>
 
       {/* Toolbar */}
       <div className="mb-4 flex items-center gap-3 flex-wrap">

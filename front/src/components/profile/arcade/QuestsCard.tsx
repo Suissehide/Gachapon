@@ -13,6 +13,10 @@ import { useQuests } from '../../../queries/useQuests'
 import { Card, CardTitle } from '../../ui/card'
 
 const VISIBLE_COUNT = 4
+const SKELETON_KEYS = Array.from(
+  { length: VISIBLE_COUNT },
+  (_, i) => `skeleton-${i}`,
+)
 
 /**
  * Preview order: quests in progress first (closest to done), then untouched,
@@ -140,10 +144,9 @@ export function QuestsCard() {
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          {Array.from({ length: VISIBLE_COUNT }).map((_, i) => (
+          {SKELETON_KEYS.map((key) => (
             <div
-              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholders
-              key={i}
+              key={key}
               className="h-[58px] animate-pulse rounded-xl border border-border bg-muted/30"
             />
           ))}

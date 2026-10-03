@@ -47,33 +47,32 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
       </div>
       <div className="flex-1 space-y-1 overflow-y-auto p-2">
         {filteredSets.map((set) => (
-          // biome-ignore lint/a11y/useSemanticElements: cannot use <button> — it contains nested action buttons
+          // Le bouton de sélection et les actions sont frères (un <button>
+          // ne peut pas en contenir d'autres) ; son `::after` couvre toute la
+          // ligne pour qu'elle reste cliquable partout hors des actions.
           <div
             key={set.id}
-            role="button"
-            tabIndex={0}
-            className={`group flex w-full cursor-pointer items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors ${
+            className={`group relative flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors ${
               selectedSetId === set.id
                 ? 'border border-primary/30 bg-primary/10'
                 : 'hover:bg-surface'
             }`}
-            onClick={() => onSelect(set.id)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onSelect(set.id)
-              }
-            }}
           >
-            <div className="min-w-0 flex-1">
-              <p
-                className={`truncate text-sm font-medium ${
+            <Button
+              variant="transparent"
+              size="bare"
+              onClick={() => onSelect(set.id)}
+              aria-pressed={selectedSetId === set.id}
+              className="block min-w-0 flex-1 text-left font-normal after:absolute after:inset-0 after:rounded-lg focus-visible:ring-2"
+            >
+              <span
+                className={`block truncate text-sm font-medium ${
                   selectedSetId === set.id ? 'text-primary' : 'text-text'
                 }`}
               >
                 {set.name}
-              </p>
-              <div className="mt-0.5 flex items-center gap-1.5">
+              </span>
+              <span className="mt-0.5 flex items-center gap-1.5">
                 <span className="text-xs text-text-light">
                   {set._count.cards}
                 </span>
@@ -88,16 +87,15 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                     ? t('cards.setSheet.statusActive')
                     : t('cards.setSheet.statusInactive')}
                 </span>
-              </div>
-            </div>
-            <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+              </span>
+            </Button>
+            <div className="relative flex gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
               <Button
                 size="icon-sm"
                 variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation()
+                onClick={() =>
                   updateSet.mutate({ id: set.id, isActive: !set.isActive })
-                }}
+                }
                 title={t('cards.sidebar.toggleActiveTooltip')}
               >
                 <Power className="h-3 w-3" />
@@ -105,10 +103,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
               <Button
                 size="icon-sm"
                 variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setEditSet(set)
-                }}
+                onClick={() => setEditSet(set)}
                 title={t('common.editTooltip')}
               >
                 <Pencil className="h-3 w-3" />
@@ -117,10 +112,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                 size="icon-sm"
                 variant="ghost"
                 className="text-destructive hover:text-destructive"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  deleteSet.mutate(set.id)
-                }}
+                onClick={() => deleteSet.mutate(set.id)}
                 title={t('common.deleteTooltip')}
               >
                 <Trash2 className="h-3 w-3" />

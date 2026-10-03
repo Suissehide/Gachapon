@@ -16,7 +16,6 @@ const Z_INDEXES: Record<(typeof CANVAS_KEYS)[number], number> = {
 type Props = { refs: CanvasRefs; scoped?: boolean }
 
 export function RevealCanvases({ refs, scoped = false }: Props) {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Dynamic key access to refs properties; individual refs in deps array
   useEffect(() => {
     const resize = () => {
       for (const key of CANVAS_KEYS) {
@@ -37,7 +36,7 @@ export function RevealCanvases({ refs, scoped = false }: Props) {
     resize()
     window.addEventListener('resize', resize)
     return () => window.removeEventListener('resize', resize)
-  }, [refs.dots, refs.speed, refs.ink, refs.wave, refs.pt, refs.chrom, scoped])
+  }, [refs, scoped])
 
   return (
     <>

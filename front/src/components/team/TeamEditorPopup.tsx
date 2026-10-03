@@ -39,6 +39,7 @@ import {
 } from '../ui/popup.tsx'
 
 const MAX_TEAM_SIZE = 3
+const SLOT_KEYS = Array.from({ length: MAX_TEAM_SIZE }, (_, i) => `slot-${i}`)
 
 function fmt(n: number): string {
   return formatNumber(n, currentLocale())
@@ -196,13 +197,12 @@ export function TeamEditorPopup({
           {/* Slots — kept smaller by constraining the row width so the 3 slots
               don't take the full popup width. */}
           <div className="mx-auto grid w-full max-w-[420px] grid-cols-3 gap-3">
-            {Array.from({ length: MAX_TEAM_SIZE }).map((_, i) => {
+            {SLOT_KEYS.map((key, i) => {
               const id = selectedIds[i] ?? null
               const uc = id ? (cardsById.get(id) ?? null) : null
               return (
                 <Slot
-                  // biome-ignore lint/suspicious/noArrayIndexKey: fixed slot index
-                  key={i}
+                  key={key}
                   index={i}
                   card={uc}
                   power={uc ? powerOf(uc) : undefined}

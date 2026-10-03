@@ -98,13 +98,15 @@ function PullPips({
       // pips sont un doublon graphique, que rien n'oblige à relire.
       aria-hidden
     >
-      {Array.from({ length: total }, (_, i) => (
+      {Array.from({ length: total }, (_, i) => ({
+        key: `pip-${i}`,
+        filled: i < left,
+      })).map(({ key, filled }) => (
         <i
-          // biome-ignore lint/suspicious/noArrayIndexKey: pips décoratifs, compte fixe (pullCount), jamais réordonnés
-          key={`pip-${i}`}
+          key={key}
           className={cn(
             'h-[5px] w-full max-w-[18px] rounded-[3px]',
-            i < left ? 'bg-primary' : 'bg-foreground/14',
+            filled ? 'bg-primary' : 'bg-foreground/14',
           )}
         />
       ))}

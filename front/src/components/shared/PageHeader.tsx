@@ -65,8 +65,9 @@ export function PageHeader({
               const isLast = i === breadcrumbs.length - 1
               return (
                 <span
-                  // biome-ignore lint/suspicious/noArrayIndexKey: fil d'Ariane statique, ordonné, jamais réordonné — l'index EST l'identité du cran
-                  key={`${crumb.label}-${i}`}
+                  // Libellé seul ambigu (un nom d'équipe peut valoir celui
+                  // de l'accueil) : la cible du lien départage.
+                  key={`${crumb.to ?? ''}|${crumb.label}`}
                   className="flex items-center gap-x-1.5"
                 >
                   {i > 0 && (

@@ -19,11 +19,14 @@ export function useLiveFeed(opts?: { teamId?: string; rarities?: string[] }) {
   const raritiesKey = rarities && rarities.length > 0 ? rarities.join(',') : ''
   const [liveEntries, setLiveEntries] = useState<FeedEntry[]>([])
 
-  // Réinitialiser les entrées live quand le filtre change
-  // biome-ignore lint/correctness/useExhaustiveDependencies: teamId/raritiesKey sont le DÉCLENCHEUR du reset, jamais lus dans le corps — motif pré-existant, hors périmètre de la tâche 5
-  useEffect(() => {
+  // Réinitialiser les entrées live quand le filtre change (ajustement
+  // pendant le rendu, pas d'effet)
+  const filterKey = `${teamId ?? ''}|${raritiesKey}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey)
     setLiveEntries([])
-  }, [teamId, raritiesKey])
+  }
 
   // Stable ref so the WS subscription doesn't re-bind on every render just
   // because the rarities array reference changes.

@@ -12,6 +12,8 @@ import { Card, CardTitle } from '../../ui/card'
 
 type Props = { profile: UserProfile }
 
+const SEGMENT_KEYS = Array.from({ length: 20 }, (_, i) => `segment-${i}`)
+
 export function XPCard({ profile }: Props) {
   const { t } = useTranslation('profile')
   const locale = currentLocale()
@@ -53,10 +55,9 @@ export function XPCard({ profile }: Props) {
           }}
         />
         <div className="absolute inset-0 flex">
-          {Array.from({ length: 20 }).map((_, i) => (
+          {SEGMENT_KEYS.map((key) => (
             <span
-              // biome-ignore lint/suspicious/noArrayIndexKey: static decorative segments, no reorder
-              key={i}
+              key={key}
               className="flex-1 border-r border-white/45 last:border-r-0"
             />
           ))}

@@ -246,6 +246,14 @@ export function FarmResultPopup({
   onClose: () => void
 }) {
   const { t } = useTranslation('combat')
+  // Une même carte peut tomber plusieurs fois dans un balayage : la clé est
+  // l'id de la carte suivi de son rang d'apparition (1re, 2e, …).
+  const seen = new Map<string, number>()
+  const keyedCardDrops = cardDrops.map((drop) => {
+    const occurrence = (seen.get(drop.cardId) ?? 0) + 1
+    seen.set(drop.cardId, occurrence)
+    return { drop, key: `${drop.cardId}-${occurrence}` }
+  })
   return (
     <Popup
       open
@@ -304,12 +312,8 @@ export function FarmResultPopup({
             ))}
           </DropRail>
           <DropRail>
-            {cardDrops.map((c, i) => (
-              <CardDropReward
-                // biome-ignore lint/suspicious/noArrayIndexKey: une même carte peut tomber deux fois dans un balayage
-                key={`${c.cardId}-${i}`}
-                drop={c}
-              />
+            {keyedCardDrops.map(({ drop, key }) => (
+              <CardDropReward key={key} drop={drop} />
             ))}
           </DropRail>
 

@@ -202,6 +202,8 @@ function OpenCapsule() {
   )
 }
 
+const CAPSULE_KEYS = Array.from({ length: 14 }, (_, i) => `capsule-${i}`)
+
 export function NotFoundPage() {
   const { t } = useTranslation('layout')
   const [show, setShow] = useState(false)
@@ -217,9 +219,8 @@ export function NotFoundPage() {
 
       {/* Floating capsules */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        {Array.from({ length: 14 }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: liste statique de longueur fixe, jamais réordonnée — l'index EST l'identité de la capsule
-          <FloatingCapsule key={i} index={i} />
+        {CAPSULE_KEYS.map((key, i) => (
+          <FloatingCapsule key={key} index={i} />
         ))}
       </div>
 

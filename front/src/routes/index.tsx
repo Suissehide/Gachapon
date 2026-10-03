@@ -594,21 +594,17 @@ function LandingPage() {
           </div>
 
           {/* Structured FAQ — duplicate cue for Google */}
-          <script
-            type="application/ld+json"
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: seule façon d'émettre du JSON-LD ; JSON.stringify d'une constante du module, aucune donnée utilisateur
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                '@context': 'https://schema.org',
-                '@type': 'FAQPage',
-                mainEntity: faqItems.map((item) => ({
-                  '@type': 'Question',
-                  name: item.q,
-                  acceptedAnswer: { '@type': 'Answer', text: item.a },
-                })),
-              }),
-            }}
-          />
+          <script type="application/ld+json">
+            {JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: faqItems.map((item) => ({
+                '@type': 'Question',
+                name: item.q,
+                acceptedAnswer: { '@type': 'Answer', text: item.a },
+              })),
+            })}
+          </script>
         </div>
       </section>
 

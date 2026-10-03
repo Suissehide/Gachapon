@@ -1,6 +1,6 @@
 // front/src/components/machine/reveal/useRevealEffect.ts
 import type React from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { createRef, useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   EFFECT_CONFIG,
@@ -365,14 +365,15 @@ export function useRevealEffect(
 } {
   const scoped = options?.scoped ?? false
   const containerRef = useRef<HTMLDivElement>(null)
-  const canvasRefs: CanvasRefs = {
-    dots: useRef<HTMLCanvasElement>(null),
-    speed: useRef<HTMLCanvasElement>(null),
-    ink: useRef<HTMLCanvasElement>(null),
-    wave: useRef<HTMLCanvasElement>(null),
-    pt: useRef<HTMLCanvasElement>(null),
-    chrom: useRef<HTMLCanvasElement>(null),
-  }
+  // Created once so its identity is stable across renders (safe in deps).
+  const [canvasRefs] = useState<CanvasRefs>(() => ({
+    dots: createRef<HTMLCanvasElement>(),
+    speed: createRef<HTMLCanvasElement>(),
+    ink: createRef<HTMLCanvasElement>(),
+    wave: createRef<HTMLCanvasElement>(),
+    pt: createRef<HTMLCanvasElement>(),
+    chrom: createRef<HTMLCanvasElement>(),
+  }))
 
   const [impactVisible, setImpactVisible] = useState(false)
   const [impactPos, setImpactPos] = useState<{ x: number; y: number } | null>(
@@ -398,7 +399,6 @@ export function useRevealEffect(
 
   // ── Canvas helpers ───────────────────────────────────────────────────────────
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: canvasRefs and containerRef are stable refs
   const clearCanvases = useCallback(() => {
     const W = scoped
       ? (containerRef.current?.clientWidth ?? window.innerWidth)
@@ -417,11 +417,10 @@ export function useRevealEffect(
       const canvas = canvasRefs[key].current
       canvas?.getContext('2d')?.clearRect(0, 0, W, H)
     }
-  }, [scoped])
+  }, [scoped, canvasRefs])
 
   // ── RAF tick — deps [] because it only reads stable refs ────────────────────
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: effectState, canvasRefs, and containerRef are stable refs
   const tick = useCallback((): void => {
     const s = effectState.current
     const W = scoped
@@ -434,21 +433,21 @@ export function useRevealEffect(
     drawTick(s, canvasRefs, W, H)
 
     s.rafId = hasActiveEffects(s) ? requestAnimationFrame(tick) : null
-  }, [scoped])
+  }, [scoped, canvasRefs])
 
   // ── Timer helpers ─────────────────────────────────────────────────────────────
 
-  const addTimer = (fn: () => void, delay: number): void => {
+  const addTimer = useCallback((fn: () => void, delay: number): void => {
     const id = setTimeout(fn, delay)
     effectState.current.timers.push(id)
-  }
+  }, [])
 
-  const ensureRAF = (): void => {
+  const ensureRAF = useCallback((): void => {
     const s = effectState.current
     if (!s.rafId) {
       s.rafId = requestAnimationFrame(tick)
     }
-  }
+  }, [tick])
 
   // ── Reset / cleanup ──────────────────────────────────────────────────────────
 
@@ -483,7 +482,6 @@ export function useRevealEffect(
 
   // ── triggerReveal ────────────────────────────────────────────────────────────
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: addTimer and ensureRAF are inline wrappers over stable effectState ref — safe to omit
   const triggerReveal = useCallback((): void => {
     const s = effectState.current
     const container = containerRef.current
@@ -571,7 +569,7 @@ export function useRevealEffect(
     addTimer(() => setImpactVisible(false), 500 + 600 + 150)
 
     ensureRAF()
-  }, [effectKey, scoped])
+  }, [effectKey, scoped, clearAll, addTimer, ensureRAF])
 
   const hideScanline = useCallback(() => setScanlineVisible(false), [])
 

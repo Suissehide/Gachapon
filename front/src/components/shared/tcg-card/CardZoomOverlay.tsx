@@ -129,7 +129,6 @@ export function CardZoomOverlay({
   return createPortal(
     // `z-[110]` et non 60 : les modales du projet sont en z-100, et cette vue
     // s'ouvre par-dessus l'une d'elles.
-    // biome-ignore lint/a11y/noStaticElementInteractions: fermeture au clic sur le fond ; Échap est géré par l'écouteur ci-dessus
     <div
       ref={rootRef}
       // `pointer-events-auto` n'est pas redondant : tant qu'une modale Radix
@@ -138,9 +137,19 @@ export function CardZoomOverlay({
       // souris du tout — pas de survol sur la carte, et les clics traversent
       // jusqu'à la modale en dessous.
       className="pointer-events-auto fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-[fadeIn_200ms_ease-out]"
-      role="presentation"
-      onClick={onClose}
     >
+      {/* Le fond est un bouton : cliquer à côté de la carte ferme. Hors de
+       *  l'ordre de tabulation et caché aux lecteurs d'écran — Échap et la
+       *  croix ci-dessous font déjà ce travail au clavier. */}
+      <Button
+        variant="transparent"
+        size="bare"
+        tabIndex={-1}
+        aria-hidden
+        onClick={onClose}
+        className="absolute inset-0 cursor-default rounded-none"
+      />
+
       <Button
         variant="ghost"
         size="icon"
@@ -151,14 +160,9 @@ export function CardZoomOverlay({
         <X size={18} />
       </Button>
 
-      {/* Seuls la carte et sa légende avalent le clic ; la marge autour reste
-       *  inerte, donc cliquer à côté ferme. */}
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: enveloppe d'arrêt de propagation, pas une zone interactive */}
-      <div
-        className="flex flex-col items-center gap-5 duration-300 animate-in fade-in-0 zoom-in-95"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
+      {/* Posée AU-DESSUS du fond (`relative`) : la carte et sa légende
+       *  n'atteignent jamais le bouton de fond, la marge autour si. */}
+      <div className="relative flex flex-col items-center gap-5 duration-300 animate-in fade-in-0 zoom-in-95">
         {header}
 
         <CardDisplay

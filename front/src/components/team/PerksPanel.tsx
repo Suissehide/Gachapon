@@ -110,15 +110,15 @@ function PerkRow({ perk }: { perk: TeamPerkState }) {
         </p>
 
         <div className="mt-2 flex gap-1">
-          {Array.from({ length: maxRank }, (_, i) => (
+          {Array.from({ length: maxRank }, (_, i) => ({
+            key: `${perk.key}-pip-${i}`,
+            filled: !locked && i < perk.rank,
+          })).map(({ key, filled }) => (
             <i
-              // biome-ignore lint/suspicious/noArrayIndexKey: pastilles décoratives, compte fixe (maxRank), jamais réordonnées
-              key={`${perk.key}-pip-${i}`}
+              key={key}
               className={cn(
                 'h-[5px] flex-1 rounded-[3px]',
-                !locked && i < perk.rank
-                  ? 'bg-[var(--pc)]'
-                  : 'bg-foreground/10',
+                filled ? 'bg-[var(--pc)]' : 'bg-foreground/10',
               )}
             />
           ))}

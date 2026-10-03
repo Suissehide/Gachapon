@@ -34,10 +34,11 @@ export function FeaturedCardsFan({ cards }: Props) {
         const isHovered = hovered === i
         const isDimmed = hovered !== null && hovered !== i
         return (
-          // biome-ignore lint/a11y/noStaticElementInteractions: hover-only decorative fan, keyboard nav not required
-          // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-label kept for screen readers describing the hovered card
+          // `role="img"` : chaque carte de l'éventail se lit comme une image
+          // nommée, ce qui rend `aria-label` valide. Le survol est décoratif.
           <div
             key={card.id}
+            role="img"
             className="w-[var(--fan-card-w)] transition-all duration-[350ms]"
             style={{
               transform: isHovered
@@ -51,8 +52,8 @@ export function FeaturedCardsFan({ cards }: Props) {
               transitionTimingFunction: 'cubic-bezier(.2,.8,.2,1)',
               zIndex: isHovered ? 50 : i,
             }}
-            onMouseEnter={() => setHovered(i)}
-            onMouseLeave={() => setHovered(null)}
+            onPointerEnter={() => setHovered(i)}
+            onPointerLeave={() => setHovered(null)}
             aria-label={`${card.name} — ${card.rarity}`}
           >
             <CardDisplay

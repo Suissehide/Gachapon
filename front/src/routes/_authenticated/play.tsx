@@ -107,7 +107,199 @@ const AMBIENT_PARTICLES = [
 
 const SKIP_KEY = 'play.skipAnimations'
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: page-level orchestrator coordinates multiple state machines and phase branches
+// Boutons flottants : son, revoir le tutoriel, sauter les animations
+function PlayFloatingControls({
+  soundOn,
+  onToggleSound,
+  skipAnimations,
+  onToggleSkip,
+  onOpenTutorial,
+}: {
+  soundOn: boolean
+  onToggleSound: () => void
+  skipAnimations: boolean
+  onToggleSkip: () => void
+  onOpenTutorial: () => void
+}) {
+  const { t } = useTranslation('gacha')
+  return (
+    <div className="fixed bottom-4 right-4 z-5 flex items-center gap-2 sm:bottom-5 sm:right-5">
+      <button
+        type="button"
+        aria-label={
+          soundOn ? t('gacha:page.soundOff') : t('gacha:page.soundOn')
+        }
+        title={soundOn ? t('gacha:page.soundOff') : t('gacha:page.soundOn')}
+        className={cn(
+          'inline-flex cursor-pointer items-center rounded-full border bg-card p-2.5 shadow-md transition-colors',
+          soundOn
+            ? 'border-amber-soft bg-primary/5 text-primary-dark'
+            : 'border-border-dark text-text-light hover:text-text',
+        )}
+        onClick={onToggleSound}
+      >
+        {soundOn ? (
+          <Volume2 className="h-3.5 w-3.5" />
+        ) : (
+          <VolumeX className="h-3.5 w-3.5" />
+        )}
+      </button>
+      <button
+        type="button"
+        aria-label={t('gacha:page.replayTutorial')}
+        title={t('gacha:page.replayTutorial')}
+        className="inline-flex cursor-pointer items-center rounded-full border border-border-dark bg-card p-2.5 text-text-light shadow-md transition-colors hover:text-text"
+        onClick={onOpenTutorial}
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        title={t('gacha:page.skipAnimations')}
+        className={cn(
+          'inline-flex cursor-pointer items-center gap-2 rounded-full border bg-card px-3.5 py-2.5 text-[12.5px] font-semibold shadow-md transition-colors',
+          skipAnimations
+            ? 'border-amber-soft bg-primary/5 text-primary-dark'
+            : 'border-border-dark text-text-light hover:text-text',
+        )}
+        onClick={onToggleSkip}
+      >
+        <SkipForward className="h-3.5 w-3.5" />
+        <span className="hidden min-[721px]:inline">
+          {t('gacha:page.skipAnimations')}
+        </span>
+      </button>
+    </div>
+  )
+}
+
+/* ── Fullscreen pull-cycle overlay ─────────────────────────────────
+ *  Covers the entire viewport (including the topbar) so ball → flash
+ *  → reveal → replay all happen against continuous black — no HUD
+ *  flashes between phases. Mounted from ball-shake onwards, unmounted
+ *  when the user closes the reveal or the pull errors back to idle. */
+function PullCycleOverlay({
+  phase,
+  teaseTier,
+  result,
+  soundOn,
+  onToggleSound,
+  onCapsuleBurst,
+  onClose,
+  onPullAgain,
+  onCardRevealed,
+  onAllRevealed,
+}: {
+  phase: Phase
+  teaseTier: TeaseTier | null
+  result: PullBatchResult | null
+  soundOn: boolean
+  onToggleSound: () => void
+  onCapsuleBurst: () => void
+  onClose: () => void
+  onPullAgain: (count: number) => void
+  onCardRevealed: (index: number) => void
+  onAllRevealed: () => void
+}) {
+  const { t } = useTranslation('gacha')
+  // Flash au burst de la capsule — teinté à la couleur du palier teasé.
+  // Il reste monté pendant reveal-grid : c'est le MÊME élément DOM, donc
+  // l'animation CSS ne redémarre pas et le fondu se termine par-dessus la
+  // carte de dos — sans ça le flash est démonté en pleine opacité au
+  // changement de phase et la transition se coupe net.
+  const showFlash = phase === 'ball-flash' || phase === 'reveal-grid'
+  const flashColor = tierConfig(teaseTier).flash
+  return (
+    <div className="fixed inset-0 z-[100] overflow-hidden bg-black animate-in fade-in-0 duration-500">
+      {/* Permanent soft aurora glow behind the reveal so the backdrop
+       *  never reads as flat black once the capsule has opened. */}
+      {phase === 'reveal-grid' && (
+        <div className="reveal-aurora pointer-events-none absolute inset-0 animate-in fade-in-0 duration-1000" />
+      )}
+      {/* Persistent ambient particles — subtle drift once the reveal is open */}
+      {phase === 'reveal-grid' && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {AMBIENT_PARTICLES.map((p) => (
+            <div
+              key={p.id}
+              className="particle absolute rounded-full bg-white/25"
+              style={
+                {
+                  top: p.top,
+                  left: p.left,
+                  width: p.size,
+                  height: p.size,
+                  '--delay': p.delay,
+                  '--duration': p.duration,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Capsule scene — chorégraphie gsap + bloom, rarity-aware */}
+      {phase === 'capsule' && (
+        <div className="absolute inset-0">
+          <CapsuleStage teaseTier={teaseTier} onBurst={onCapsuleBurst} />
+        </div>
+      )}
+
+      {/* Flash between burst and reveal — teinté rareté, fondu qui se
+       *  prolonge par-dessus l'arrivée de la carte */}
+      {showFlash && (
+        <div
+          className="pointer-events-none absolute inset-0 z-40 animate-[ballFlash_900ms_ease-out_forwards]"
+          style={{
+            mixBlendMode: 'screen',
+            background: `radial-gradient(circle at 50% 50%, #ffffff 0%, #ffffff 28%, ${flashColor} 62%, ${flashColor} 100%)`,
+          }}
+        />
+      )}
+
+      {/* Mute — visible pendant tout le cycle de tirage */}
+      <button
+        type="button"
+        aria-label={
+          soundOn ? t('gacha:page.soundOff') : t('gacha:page.soundOnShort')
+        }
+        title={
+          soundOn ? t('gacha:page.soundOff') : t('gacha:page.soundOnShort')
+        }
+        className="absolute bottom-4 left-4 z-50 inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-white/10 p-2.5 text-white/80 backdrop-blur transition-colors hover:text-white"
+        onClick={onToggleSound}
+      >
+        {soundOn ? (
+          <Volume2 className="h-4 w-4" />
+        ) : (
+          <VolumeX className="h-4 w-4" />
+        )}
+      </button>
+
+      {/* Pulling spinner (skip-anim path) */}
+      {phase === 'pulling' && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-sm text-white/70">
+            {t('gacha:page.pullingTitle')}
+          </p>
+        </div>
+      )}
+
+      {/* Reveal grid */}
+      {phase === 'reveal-grid' && result && (
+        <RevealGrid
+          results={result.pulls}
+          tokensRemaining={result.tokensRemaining}
+          onClose={onClose}
+          onPullAgain={onPullAgain}
+          onCardRevealed={onCardRevealed}
+          onAllRevealed={onAllRevealed}
+        />
+      )}
+    </div>
+  )
+}
+
 function Play() {
   const { t } = useTranslation('gacha')
   const [phase, setPhase] = useState<Phase>('idle')
@@ -166,8 +358,6 @@ function Play() {
 
   const { data: balance } = useTokenBalance()
   const { mutate: pullBatchMutation, isPending: pullPending } = usePullBatch()
-  const setUser = useAuthStore((s) => s.setUser)
-  const user = useAuthStore((s) => s.user)
   const username = useAuthStore((s) => s.user?.username ?? '')
   const { toast } = useToast()
   const qc = useQueryClient()
@@ -291,12 +481,19 @@ function Play() {
     localStorage.setItem(SKIP_KEY, String(skipAnimations))
   }, [skipAnimations])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional minimal dep — full deps cause a feedback loop with auth store
+  // Recopie le solde dans le user du store. Lu via getState() : ce n'est pas
+  // une dépendance réactive — s'abonner à `user` ferait repartir l'effet à
+  // chaque setUser, qui modifie justement `user`.
+  const balanceTokens = balance?.tokens
   useEffect(() => {
-    if (balance && user && user.tokens !== balance.tokens) {
-      setUser({ ...user, tokens: balance.tokens })
+    if (balanceTokens === undefined) {
+      return
     }
-  }, [balance?.tokens])
+    const { user, setUser } = useAuthStore.getState()
+    if (user && user.tokens !== balanceTokens) {
+      setUser({ ...user, tokens: balanceTokens })
+    }
+  }, [balanceTokens])
 
   useEffect(() => {
     wsClient.connect(API_URL)
@@ -415,19 +612,13 @@ function Play() {
     phase === 'ball-flash' ||
     phase === 'reveal-grid' ||
     phase === 'pulling'
-  // Flash au burst de la capsule — teinté à la couleur du palier teasé.
-  // Il reste monté pendant reveal-grid : c'est le MÊME élément DOM, donc
-  // l'animation CSS ne redémarre pas et le fondu se termine par-dessus la
-  // carte de dos — sans ça le flash est démonté en pleine opacité au
-  // changement de phase et la transition se coupe net.
-  const showFlash = phase === 'ball-flash' || phase === 'reveal-grid'
-  const flashColor = tierConfig(teaseTier).flash
   const showActions = phase === 'idle'
   const canPullX1 = tokens >= 1 && phase === 'idle' && !pullPending
   const canPullX10 = tokens >= 10 && phase === 'idle' && !pullPending
 
   const [ratesOpen, setRatesOpen] = useState(false)
   const pullCost = economy.gacha.pullTokenCost
+  const toggleSound = () => setSoundOn(soundOn === 'true' ? 'false' : 'true')
 
   return (
     <div
@@ -543,60 +734,13 @@ function Play() {
         </div>
       </div>
 
-      {/* Boutons flottants : revoir le tutoriel + sauter les animations */}
-      <div className="fixed bottom-4 right-4 z-5 flex items-center gap-2 sm:bottom-5 sm:right-5">
-        <button
-          type="button"
-          aria-label={
-            soundOn === 'true'
-              ? t('gacha:page.soundOff')
-              : t('gacha:page.soundOn')
-          }
-          title={
-            soundOn === 'true'
-              ? t('gacha:page.soundOff')
-              : t('gacha:page.soundOn')
-          }
-          className={cn(
-            'inline-flex cursor-pointer items-center rounded-full border bg-card p-2.5 shadow-md transition-colors',
-            soundOn === 'true'
-              ? 'border-amber-soft bg-primary/5 text-primary-dark'
-              : 'border-border-dark text-text-light hover:text-text',
-          )}
-          onClick={() => setSoundOn(soundOn === 'true' ? 'false' : 'true')}
-        >
-          {soundOn === 'true' ? (
-            <Volume2 className="h-3.5 w-3.5" />
-          ) : (
-            <VolumeX className="h-3.5 w-3.5" />
-          )}
-        </button>
-        <button
-          type="button"
-          aria-label={t('gacha:page.replayTutorial')}
-          title={t('gacha:page.replayTutorial')}
-          className="inline-flex cursor-pointer items-center rounded-full border border-border-dark bg-card p-2.5 text-text-light shadow-md transition-colors hover:text-text"
-          onClick={() => setTutorialOpen(true)}
-        >
-          <HelpCircle className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          title={t('gacha:page.skipAnimations')}
-          className={cn(
-            'inline-flex cursor-pointer items-center gap-2 rounded-full border bg-card px-3.5 py-2.5 text-[12.5px] font-semibold shadow-md transition-colors',
-            skipAnimations
-              ? 'border-amber-soft bg-primary/5 text-primary-dark'
-              : 'border-border-dark text-text-light hover:text-text',
-          )}
-          onClick={() => setSkipAnimations((s) => !s)}
-        >
-          <SkipForward className="h-3.5 w-3.5" />
-          <span className="hidden min-[721px]:inline">
-            {t('gacha:page.skipAnimations')}
-          </span>
-        </button>
-      </div>
+      <PlayFloatingControls
+        soundOn={soundOn === 'true'}
+        onToggleSound={toggleSound}
+        skipAnimations={skipAnimations}
+        onToggleSkip={() => setSkipAnimations((s) => !s)}
+        onOpenTutorial={() => setTutorialOpen(true)}
+      />
 
       {/* ── Fullscreen pull-cycle overlay ─────────────────────────────────
        *  Covers the entire viewport (including the topbar) so ball → flash
@@ -604,100 +748,18 @@ function Play() {
        *  flashes between phases. Mounted from ball-shake onwards, unmounted
        *  when the user closes the reveal or the pull errors back to idle. */}
       {inPullCycleFullscreen && (
-        <div className="fixed inset-0 z-[100] overflow-hidden bg-black animate-in fade-in-0 duration-500">
-          {/* Permanent soft aurora glow behind the reveal so the backdrop
-           *  never reads as flat black once the capsule has opened. */}
-          {phase === 'reveal-grid' && (
-            <div className="reveal-aurora pointer-events-none absolute inset-0 animate-in fade-in-0 duration-1000" />
-          )}
-          {/* Persistent ambient particles — subtle drift once the reveal is open */}
-          {phase === 'reveal-grid' && (
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              {AMBIENT_PARTICLES.map((p) => (
-                <div
-                  key={p.id}
-                  className="particle absolute rounded-full bg-white/25"
-                  style={
-                    {
-                      top: p.top,
-                      left: p.left,
-                      width: p.size,
-                      height: p.size,
-                      '--delay': p.delay,
-                      '--duration': p.duration,
-                    } as CSSProperties
-                  }
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Capsule scene — chorégraphie gsap + bloom, rarity-aware */}
-          {showCapsule && (
-            <div className="absolute inset-0">
-              <CapsuleStage
-                teaseTier={teaseTier}
-                onBurst={handleCapsuleBurst}
-              />
-            </div>
-          )}
-
-          {/* Flash between burst and reveal — teinté rareté, fondu qui se
-           *  prolonge par-dessus l'arrivée de la carte */}
-          {showFlash && (
-            <div
-              className="pointer-events-none absolute inset-0 z-40 animate-[ballFlash_900ms_ease-out_forwards]"
-              style={{
-                mixBlendMode: 'screen',
-                background: `radial-gradient(circle at 50% 50%, #ffffff 0%, #ffffff 28%, ${flashColor} 62%, ${flashColor} 100%)`,
-              }}
-            />
-          )}
-
-          {/* Mute — visible pendant tout le cycle de tirage */}
-          <button
-            type="button"
-            aria-label={
-              soundOn === 'true'
-                ? t('gacha:page.soundOff')
-                : t('gacha:page.soundOnShort')
-            }
-            title={
-              soundOn === 'true'
-                ? t('gacha:page.soundOff')
-                : t('gacha:page.soundOnShort')
-            }
-            className="absolute bottom-4 left-4 z-50 inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-white/10 p-2.5 text-white/80 backdrop-blur transition-colors hover:text-white"
-            onClick={() => setSoundOn(soundOn === 'true' ? 'false' : 'true')}
-          >
-            {soundOn === 'true' ? (
-              <Volume2 className="h-4 w-4" />
-            ) : (
-              <VolumeX className="h-4 w-4" />
-            )}
-          </button>
-
-          {/* Pulling spinner (skip-anim path) */}
-          {phase === 'pulling' && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <p className="text-sm text-white/70">
-                {t('gacha:page.pullingTitle')}
-              </p>
-            </div>
-          )}
-
-          {/* Reveal grid */}
-          {phase === 'reveal-grid' && result && (
-            <RevealGrid
-              results={result.pulls}
-              tokensRemaining={result.tokensRemaining}
-              onClose={handleClose}
-              onPullAgain={handlePullAgain}
-              onCardRevealed={handleCardRevealed}
-              onAllRevealed={handleAllRevealed}
-            />
-          )}
-        </div>
+        <PullCycleOverlay
+          phase={phase}
+          teaseTier={teaseTier}
+          result={result}
+          soundOn={soundOn === 'true'}
+          onToggleSound={toggleSound}
+          onCapsuleBurst={handleCapsuleBurst}
+          onClose={handleClose}
+          onPullAgain={handlePullAgain}
+          onCardRevealed={handleCardRevealed}
+          onAllRevealed={handleAllRevealed}
+        />
       )}
 
       <RatesModal open={ratesOpen} onClose={() => setRatesOpen(false)} />

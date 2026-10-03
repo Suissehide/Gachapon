@@ -139,23 +139,23 @@ function RaidAttackPageContent() {
   const [sceneDone, setSceneDone] = useState(false)
   const inBattle = result !== null && !sceneDone
 
-  // La boîte de préparation ne navigue plus depuis son propre `onClose` :
-  // le bouton « Modifier » de BattlePrepModal appelle toujours `onClose`
-  // juste avant `onEditTeam` (même geste pour « fermer avant d'ouvrir
-  // l'éditeur » que pour un abandon volontaire), donc `onClose` ne peut pas
-  // savoir tout seul lequel des deux c'est. On se contente d'y fermer la
-  // boîte (état pur), et cet effet décide APRÈS coup, une fois le rendu
-  // retombé avec l'état final de ce même clic (React 18 regroupe les deux
-  // mises à jour dans le même commit), si personne n'a pris le relais
-  // (éditeur ouvert, attaque en cours ou déjà lancée) — sinon seulement, on
-  // quitte vers la page d'équipe.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: ne doit réagir qu'à une fermeture de prepOpen elle-même — avec result/inBattle en deps, la fermeture du popup de résultat (qui navigue déjà lui-même) redéclencherait l'effet et naviguerait une seconde fois
+  // Fermer la boîte de préparation (Échap, croix, « Retour ») quitte vers la
+  // page d'équipe — mais le bouton « Modifier » de BattlePrepModal appelle
+  // `onClose` juste avant `onEditTeam`, donc `onClose` ne peut pas naviguer
+  // lui-même. Il ne fait que demander le départ ; `onEditTeam`, appelé dans
+  // le même clic, l'annule, et les deux mises à jour tombent dans le même
+  // commit : l'effet ne voit que la décision finale.
+  const [leaveRequested, setLeaveRequested] = useState(false)
   useEffect(() => {
-    if (prepOpen || editorOpen || inBattle || result || attack.isPending) {
-      return
+    if (leaveRequested) {
+      navigate({ to: '/team/$id', params: { id } })
     }
-    navigate({ to: '/team/$id', params: { id } })
-  }, [prepOpen])
+  }, [leaveRequested, navigate, id])
+
+  const closePrep = () => {
+    setPrepOpen(false)
+    setLeaveRequested(true)
+  }
 
   if (raid.isPending || raid.isError || !raid.data) {
     return <RaidGate raid={raid} id={id} />
@@ -234,7 +234,10 @@ function RaidAttackPageContent() {
       )}
 
       {raid.data && !inBattle && !result && (
-        <Popup open={prepOpen} onOpenChange={setPrepOpen}>
+        <Popup
+          open={prepOpen}
+          onOpenChange={(open) => (open ? setPrepOpen(true) : closePrep())}
+        >
           <PopupContent size="lg">
             <BattlePrepModal
               eyebrow={t('raidPage.prepEyebrow', {
@@ -261,9 +264,10 @@ function RaidAttackPageContent() {
               onFight={handleAttack}
               onEditTeam={() => {
                 setPrepOpen(false)
+                setLeaveRequested(false)
                 setEditorOpen(true)
               }}
-              onClose={() => setPrepOpen(false)}
+              onClose={closePrep}
             />
           </PopupContent>
         </Popup>

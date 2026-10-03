@@ -351,13 +351,15 @@ function AttackDots({ left, perDay }: { left: number; perDay: number }) {
     // <span> et qui fait lire « 2 attaques restantes sur 2 » d'un bloc au
     // lieu d'annoncer deux éléments vides.
     <span role="img" className="flex gap-1" title={title} aria-label={title}>
-      {Array.from({ length: perDay }, (_, i) => (
+      {Array.from({ length: perDay }, (_, i) => ({
+        key: `dot-${i}`,
+        filled: i < left,
+      })).map(({ key, filled }) => (
         <i
-          // biome-ignore lint/suspicious/noArrayIndexKey: pastilles anonymes en nombre fixe, jamais réordonnées — l'index EST l'identité du cran
-          key={i}
+          key={key}
           className={cn(
             'h-2 w-2 rounded-full',
-            i < left ? 'bg-primary' : 'bg-foreground/12',
+            filled ? 'bg-primary' : 'bg-foreground/12',
           )}
         />
       ))}

@@ -220,6 +220,69 @@ function DispensingRampCollider() {
   )
 }
 
+const GLOBE_R = 0.42 // max distance from globe center
+
+// Clamp la vitesse puis ramène le corps dans le globe s'il s'en est échappé.
+// Renvoie sa hauteur relative au centre du globe (avant correction).
+function confineBody(body: RapierRigidBody, maxSpeed: number): number {
+  const vel = body.linvel()
+  const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
+  if (speed > maxSpeed) {
+    const s = maxSpeed / speed
+    body.setLinvel({ x: vel.x * s, y: vel.y * s, z: vel.z * s }, true)
+  }
+
+  const pos = body.translation()
+  const rx = pos.x
+  const ry = pos.y - GLOBE_Y
+  const rz = pos.z
+  const dist = Math.sqrt(rx * rx + ry * ry + rz * rz)
+  if (dist > GLOBE_R) {
+    const s = GLOBE_R / dist
+    body.setTranslation({ x: rx * s, y: ry * s + GLOBE_Y, z: rz * s }, true)
+    body.setLinvel({ x: 0, y: 0, z: 0 }, true)
+  }
+  return ry
+}
+
+// Agitation du tirage : le fond vibre — petits pops rares, réservés aux
+// capsules de la moitié basse, la gravité garde le tas naturel.
+function agitateBody(body: RapierRigidBody, ry: number, agitation: number) {
+  if (agitation <= 0.02 || ry >= 0 || Math.random() >= agitation * 0.1) {
+    return
+  }
+  const k = agitation * 0.006
+  body.applyImpulse(
+    {
+      x: (Math.random() - 0.5) * k * 1.6,
+      y: Math.random() * k,
+      z: (Math.random() - 0.5) * k * 1.6,
+    },
+    true,
+  )
+}
+
+function jiggleBodies(bodies: (RapierRigidBody | null)[], strength: number) {
+  for (const body of bodies) {
+    if (!body) {
+      continue
+    }
+    const vel = body.linvel()
+    const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
+    if (speed > 1.0) {
+      continue // skip if already moving fast
+    }
+    body.applyImpulse(
+      {
+        x: (Math.random() - 0.5) * strength,
+        y: 0,
+        z: (Math.random() - 0.5) * strength,
+      },
+      true,
+    )
+  }
+}
+
 // Jiggle au drag caméra + agitation pilotée par la timeline du tirage :
 // pendant la phase « brassage », les capsules reçoivent de vraies impulsions
 // physiques (latérales + pops verticaux) — la machine remue pour de vrai.
@@ -232,80 +295,23 @@ function CapsuleStirrer({
 }) {
   const prevAzimuth = useRef(0)
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: boucle physique par frame — clamp, confinement, agitation et jiggle partagent l'itération sur les corps
   useFrame(({ camera }) => {
     const azimuth = Math.atan2(camera.position.x, camera.position.z)
     const delta = azimuth - prevAzimuth.current
     prevAzimuth.current = azimuth
 
-    // Clamp velocities + force balls inside globe
     const maxSpeed = anim.agitation > 0 ? 2 : 1.5
-    const globeR = 0.42 // max distance from globe center
     for (const body of bodies.current ?? []) {
       if (!body) {
         continue
       }
-
-      // Clamp speed
-      const vel = body.linvel()
-      const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
-      if (speed > maxSpeed) {
-        const s = maxSpeed / speed
-        body.setLinvel({ x: vel.x * s, y: vel.y * s, z: vel.z * s }, true)
-      }
-
-      // Force back inside globe if escaped
-      const pos = body.translation()
-      const rx = pos.x
-      const ry = pos.y - GLOBE_Y
-      const rz = pos.z
-      const dist = Math.sqrt(rx * rx + ry * ry + rz * rz)
-      if (dist > globeR) {
-        const s = globeR / dist
-        body.setTranslation({ x: rx * s, y: ry * s + GLOBE_Y, z: rz * s }, true)
-        body.setLinvel({ x: 0, y: 0, z: 0 }, true)
-      }
-
-      // Agitation du tirage : le fond vibre — petits pops rares, réservés aux
-      // capsules de la moitié basse, la gravité garde le tas naturel.
-      if (
-        anim.agitation > 0.02 &&
-        ry < 0 &&
-        Math.random() < anim.agitation * 0.1
-      ) {
-        const k = anim.agitation * 0.006
-        body.applyImpulse(
-          {
-            x: (Math.random() - 0.5) * k * 1.6,
-            y: Math.random() * k,
-            z: (Math.random() - 0.5) * k * 1.6,
-          },
-          true,
-        )
-      }
+      const ry = confineBody(body, maxSpeed)
+      agitateBody(body, ry, anim.agitation)
     }
 
     // Jiggle au drag caméra (comportement historique)
     if (Math.abs(delta) > 0.005) {
-      const strength = Math.min(Math.abs(delta) * 0.3, 0.015)
-      for (const body of bodies.current ?? []) {
-        if (!body) {
-          continue
-        }
-        const vel = body.linvel()
-        const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
-        if (speed > 1.0) {
-          continue // skip if already moving fast
-        }
-        body.applyImpulse(
-          {
-            x: (Math.random() - 0.5) * strength,
-            y: 0,
-            z: (Math.random() - 0.5) * strength,
-          },
-          true,
-        )
-      }
+      jiggleBodies(bodies.current ?? [], Math.min(Math.abs(delta) * 0.3, 0.015))
     }
   })
 

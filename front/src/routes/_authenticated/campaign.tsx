@@ -545,7 +545,48 @@ function ChapterTab({
 
 // ── Level card ──────────────────────────────────────────────────────────────
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: renders every stage status variant (locked/current/boss/cleared) with its own styling branch
+function levelStateClass(stage: CampaignStage): string {
+  if (stage.status === 'locked') {
+    return 'border-dashed border-[rgba(27,23,38,0.12)] bg-[#f4f1ec] opacity-75 cursor-not-allowed'
+  }
+  if (stage.status === 'current') {
+    return 'border-amber-300 bg-gradient-to-br from-[#fffaf0] to-white shadow-[0_2px_0_rgba(245,158,11,0.1),0_16px_32px_-18px_rgba(245,158,11,0.35)] cursor-pointer hover:-translate-y-0.5'
+  }
+  if (stage.isBoss) {
+    return 'border-amber-400 bg-gradient-to-br from-[#fff7ed] to-white cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-16px_rgba(245,158,11,0.35)]'
+  }
+  return 'border-[rgba(27,23,38,0.08)] bg-[#fafaf7] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-16px_rgba(27,23,38,0.22)]'
+}
+
+function LevelMark({ stage }: { stage: CampaignStage }) {
+  if (stage.status === 'locked') {
+    return (
+      <span className="text-text-light/40">
+        <Lock className="h-4 w-4" />
+      </span>
+    )
+  }
+  if (stage.isBoss) {
+    return (
+      <span className="text-amber-500">
+        <Crown className="h-4 w-4" />
+      </span>
+    )
+  }
+  if (stage.status === 'current') {
+    return (
+      <span className="text-amber-500">
+        <Star className="h-4 w-4 fill-current" />
+      </span>
+    )
+  }
+  return (
+    <span className="text-emerald-600">
+      <Check className="h-4 w-4" />
+    </span>
+  )
+}
+
 function LevelCard({
   stage,
   onOpen,
@@ -564,35 +605,6 @@ function LevelCard({
   const base =
     'group relative rounded-2xl border-[1.5px] p-4 transition-all min-h-[92px]'
 
-  let stateClass =
-    'border-[rgba(27,23,38,0.08)] bg-[#fafaf7] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-16px_rgba(27,23,38,0.22)]'
-  if (isLocked) {
-    stateClass =
-      'border-dashed border-[rgba(27,23,38,0.12)] bg-[#f4f1ec] opacity-75 cursor-not-allowed'
-  } else if (isCurrent) {
-    stateClass =
-      'border-amber-300 bg-gradient-to-br from-[#fffaf0] to-white shadow-[0_2px_0_rgba(245,158,11,0.1),0_16px_32px_-18px_rgba(245,158,11,0.35)] cursor-pointer hover:-translate-y-0.5'
-  } else if (isBoss) {
-    stateClass =
-      'border-amber-400 bg-gradient-to-br from-[#fff7ed] to-white cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-16px_rgba(245,158,11,0.35)]'
-  }
-
-  const markIcon = isLocked ? (
-    <Lock className="h-4 w-4" />
-  ) : isBoss ? (
-    <Crown className="h-4 w-4" />
-  ) : isCurrent ? (
-    <Star className="h-4 w-4 fill-current" />
-  ) : (
-    <Check className="h-4 w-4" />
-  )
-
-  const markColor = isLocked
-    ? 'text-text-light/40'
-    : isCurrent || isBoss
-      ? 'text-amber-500'
-      : 'text-emerald-600'
-
   return (
     <button
       type="button"
@@ -602,10 +614,10 @@ function LevelCard({
         }
       }}
       disabled={isLocked}
-      className={`${base} ${stateClass} text-left`}
+      className={`${base} ${levelStateClass(stage)} text-left`}
     >
       <div className="flex items-center gap-2.5">
-        <span className={markColor}>{markIcon}</span>
+        <LevelMark stage={stage} />
         <span
           className={`font-display text-[17px] font-extrabold ${
             isLocked ? 'text-text-light/50' : 'text-text'

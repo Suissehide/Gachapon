@@ -212,17 +212,14 @@ export function BattleScene({
     completedRef.current = false
   }, [initialUnits])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on new log identity
-  useEffect(() => {
-    setUnits(initialUnits)
-    setLogIndex(0)
-    setFloatsByUnit({})
-    setBadgesByUnit({})
-    setAttackingId(null)
-    setTargetedIds([])
-    setIsPaused(false)
-    completedRef.current = false
-  }, [initialUnits, log])
+  // Nouveau combat (log ou équipes) : on rejoue depuis le début. Ajusté
+  // pendant le rendu plutôt que dans un effet, pour que l'effet de lecture
+  // ne voie jamais l'ancien logIndex avec le nouveau log.
+  const [playedBattle, setPlayedBattle] = useState({ initialUnits, log })
+  if (playedBattle.initialUnits !== initialUnits || playedBattle.log !== log) {
+    setPlayedBattle({ initialUnits, log })
+    doReplay()
+  }
 
   const runAttackEntry = useCallback(
     (entry: BattleLogEntry, delay: number) => {

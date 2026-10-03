@@ -460,10 +460,13 @@ function ResultPanel({
         />
       ) : (
         <pre className="text-xs font-mono whitespace-pre-wrap max-h-[60vh] overflow-y-auto">
-          {result.log.map((entry, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: log is immutable result data
-            <LogLine key={i} entry={entry} />
-          ))}
+          {/* Le journal n'a pas d'id par entrée : son rang dans le combat
+              en tient lieu, il ne bouge jamais. */}
+          {result.log
+            .map((entry, i) => ({ entry, key: `log-${i}` }))
+            .map(({ entry, key }) => (
+              <LogLine key={key} entry={entry} />
+            ))}
         </pre>
       )}
     </div>

@@ -22,17 +22,9 @@ function VerifyEmailPage() {
   const [state, setState] = useState<'loading' | 'success' | 'error'>('loading')
   const [errorMsg, setErrorMsg] = useState('')
 
-  // Ne doit s'exécuter qu'au montage : token vient de l'URL et ne change pas
-  // pendant la vie de la page. Dépendances omises, une par une :
-  // - fetchMe (store Zustand), verifyEmail (mutation React Query), navigate
-  //   (routeur) : références stables entre rendus, préexistant à cette tâche.
-  // - t (react-i18next, AJOUTÉ par la tâche 11b) : sûr ici précisément parce
-  //   que useLocale().switchTo fait une navigation dure sur tout changement
-  //   de langue (window.location.assign, voir src/i18n/useLocale.ts:34-45) —
-  //   ce composant est donc toujours démonté avant qu'un `t` d'une autre
-  //   langue puisse exister. Ne pas copier ce biome-ignore vers un effet où
-  //   `t` serait une dépendance réellement variable.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: fetchMe/verifyEmail/navigate/t sont des références stables (voir ci-dessus) ; effet volontairement au montage seul
+  // S'exécute une seule fois : token vient de l'URL, fetchMe/verifyEmail/
+  // navigate sont stables, et t aussi car useLocale().switchTo recharge la
+  // page à chaque changement de langue (src/i18n/useLocale.ts).
   useEffect(() => {
     if (!token) {
       setState('error')
@@ -50,7 +42,7 @@ function VerifyEmailPage() {
         setErrorMsg(err.message)
       },
     })
-  }, [])
+  }, [token, t, verifyEmail, fetchMe, navigate])
 
   return (
     <div className="min-h-screen bg-background text-foreground">

@@ -36,21 +36,20 @@ const RARITY_COLORS: Record<string, string> = {
   LEGENDARY: 'text-rarity-legendary',
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: composant existant, hors périmètre du changement de couleurs
-export function MediaDetailPanel({
-  item,
-  onDelete,
-  isDeleting,
-  onCreateCard,
+interface MediaFilenameProps {
+  mediaKey: string
+  filename: string
+  onRename: (from: string, newName: string) => Promise<void>
+  isRenaming?: boolean
+}
+
+function MediaFilename({
+  mediaKey,
+  filename,
   onRename,
   isRenaming,
-}: MediaDetailPanelProps) {
+}: MediaFilenameProps) {
   const { t } = useTranslation('admin')
-  const [copied, setCopied] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-
-  const filename = item.key.split('/').pop() ?? item.key
-
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [renameValue, setRenameValue] = useState('')
@@ -76,7 +75,7 @@ export function MediaDetailPanel({
       return
     }
     try {
-      await onRename(item.key, trimmed)
+      await onRename(mediaKey, trimmed)
       setIsEditing(false)
       setRenameError(null)
     } catch (err) {
@@ -95,6 +94,140 @@ export function MediaDetailPanel({
       }
     }
   }
+
+  return isEditing ? (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1.5">
+        <Input
+          value={renameValue}
+          onChange={(e) => {
+            setRenameValue(e.target.value)
+            setRenameError(null)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSubmitRename()
+            }
+            if (e.key === 'Escape') {
+              handleCancelEdit()
+            }
+          }}
+          disabled={isRenaming}
+          className="h-7 text-sm"
+          autoFocus
+        />
+        <button
+          type="button"
+          onClick={handleSubmitRename}
+          disabled={isRenaming}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-success hover:bg-success/10 disabled:opacity-50"
+        >
+          <Check className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={handleCancelEdit}
+          disabled={isRenaming}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-text-light hover:bg-muted disabled:opacity-50"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {renameError && (
+        <p className="text-[11px] text-destructive">{renameError}</p>
+      )}
+    </div>
+  ) : (
+    <div className="group flex items-center gap-1.5">
+      <p className="truncate text-sm font-semibold text-text" title={filename}>
+        {filename}
+      </p>
+      <button
+        type="button"
+        onClick={handleStartEdit}
+        className="shrink-0 text-text-light opacity-0 transition-opacity hover:text-text group-hover:opacity-100"
+        title={t('media.detail.renameTooltip')}
+      >
+        <Pencil className="h-3 w-3" />
+      </button>
+    </div>
+  )
+}
+
+interface MediaDeleteActionProps {
+  mediaKey: string
+  orphan: boolean
+  onDelete: (key: string) => void
+  isDeleting?: boolean
+}
+
+function MediaDeleteAction({
+  mediaKey,
+  orphan,
+  onDelete,
+  isDeleting,
+}: MediaDeleteActionProps) {
+  const { t } = useTranslation('admin')
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const handleDelete = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true)
+      return
+    }
+    onDelete(mediaKey)
+    setConfirmDelete(false)
+  }
+
+  return confirmDelete ? (
+    <div className="flex gap-2">
+      <Button
+        variant="destructive"
+        size="sm"
+        className="flex-1"
+        onClick={handleDelete}
+        disabled={isDeleting}
+      >
+        {isDeleting
+          ? t('media.detail.deleting')
+          : t('media.detail.confirmDelete')}
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+        {t('media.detail.cancel')}
+      </Button>
+    </div>
+  ) : (
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled={!orphan || isDeleting}
+      onClick={handleDelete}
+      className={`w-full gap-2 ${
+        orphan
+          ? 'border border-destructive/20 text-destructive hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive'
+          : 'cursor-not-allowed opacity-40'
+      }`}
+    >
+      <Trash2 className="h-3.5 w-3.5" />
+      {orphan
+        ? t('media.detail.deleteMedia')
+        : t('media.detail.usedMediaNotDeletable')}
+    </Button>
+  )
+}
+
+export function MediaDetailPanel({
+  item,
+  onDelete,
+  isDeleting,
+  onCreateCard,
+  onRename,
+  isRenaming,
+}: MediaDetailPanelProps) {
+  const { t } = useTranslation('admin')
+  const [copied, setCopied] = useState(false)
+
+  const filename = item.key.split('/').pop() ?? item.key
   const sizeKb = (item.size / 1024).toFixed(0)
   // `dayjs.locale()` suit la locale du site depuis main.tsx (voir le piège
   // transverse du lot 2) : ce format n'a plus besoin de connaître la langue.
@@ -104,15 +237,6 @@ export function MediaDetailPanel({
     await navigator.clipboard.writeText(item.url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-  }
-
-  const handleDelete = () => {
-    if (!confirmDelete) {
-      setConfirmDelete(true)
-      return
-    }
-    onDelete(item.key)
-    setConfirmDelete(false)
   }
 
   return (
@@ -164,66 +288,12 @@ export function MediaDetailPanel({
             {t('media.detail.fileSectionTitle')}
           </span>
         </div>
-        {isEditing ? (
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <Input
-                value={renameValue}
-                onChange={(e) => {
-                  setRenameValue(e.target.value)
-                  setRenameError(null)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSubmitRename()
-                  }
-                  if (e.key === 'Escape') {
-                    handleCancelEdit()
-                  }
-                }}
-                disabled={isRenaming}
-                className="h-7 text-sm"
-                autoFocus
-              />
-              <button
-                type="button"
-                onClick={handleSubmitRename}
-                disabled={isRenaming}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-success hover:bg-success/10 disabled:opacity-50"
-              >
-                <Check className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                disabled={isRenaming}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-text-light hover:bg-muted disabled:opacity-50"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            {renameError && (
-              <p className="text-[11px] text-destructive">{renameError}</p>
-            )}
-          </div>
-        ) : (
-          <div className="group flex items-center gap-1.5">
-            <p
-              className="truncate text-sm font-semibold text-text"
-              title={filename}
-            >
-              {filename}
-            </p>
-            <button
-              type="button"
-              onClick={handleStartEdit}
-              className="shrink-0 text-text-light opacity-0 transition-opacity hover:text-text group-hover:opacity-100"
-              title={t('media.detail.renameTooltip')}
-            >
-              <Pencil className="h-3 w-3" />
-            </button>
-          </div>
-        )}
+        <MediaFilename
+          mediaKey={item.key}
+          filename={filename}
+          onRename={onRename}
+          isRenaming={isRenaming}
+        />
         <p
           className="mt-0.5 truncate text-[11px] text-text-light/70"
           title={item.key}
@@ -288,45 +358,12 @@ export function MediaDetailPanel({
         </Button>
 
         <div className="mt-1 border-t border-border pt-2">
-          {confirmDelete ? (
-            <div className="flex gap-2">
-              <Button
-                variant="destructive"
-                size="sm"
-                className="flex-1"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting
-                  ? t('media.detail.deleting')
-                  : t('media.detail.confirmDelete')}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setConfirmDelete(false)}
-              >
-                {t('media.detail.cancel')}
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!item.orphan || isDeleting}
-              onClick={handleDelete}
-              className={`w-full gap-2 ${
-                item.orphan
-                  ? 'border border-destructive/20 text-destructive hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive'
-                  : 'cursor-not-allowed opacity-40'
-              }`}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              {item.orphan
-                ? t('media.detail.deleteMedia')
-                : t('media.detail.usedMediaNotDeletable')}
-            </Button>
-          )}
+          <MediaDeleteAction
+            mediaKey={item.key}
+            orphan={item.orphan}
+            onDelete={onDelete}
+            isDeleting={isDeleting}
+          />
         </div>
       </div>
     </div>

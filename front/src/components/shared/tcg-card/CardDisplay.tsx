@@ -161,7 +161,7 @@ export function CardDisplay({
     }
   }, [])
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!interactive || !cardRef.current) {
       return
     }
@@ -189,7 +189,7 @@ export function CardDisplay({
     }
   }
 
-  const handleMouseLeave = () => {
+  const handlePointerLeave = () => {
     if (!interactive) {
       return
     }
@@ -215,11 +215,12 @@ export function CardDisplay({
   const overlayRadius = compact ? 'rounded-[10px]' : 'rounded-[13px]'
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: hitbox for cursor-driven tilt on the card — not a control, decorative surface only
+    // Surface de survol pour l'inclinaison au curseur : décorative, pas un
+    // contrôle. Évènements pointeur, qui couvrent aussi le stylet.
     <div
       className={hitboxClass}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
     >
       <div className={`${sizeClass} perspective-[900px]`}>
         <div

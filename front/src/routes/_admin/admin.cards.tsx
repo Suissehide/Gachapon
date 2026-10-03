@@ -60,13 +60,17 @@ function AdminCards() {
   const [selectedSetIds, setSelectedSetIds] = useState<string[]>([])
   const [selectedElements, setSelectedElements] = useState<string[]>([])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset filters when view changes
-  useEffect(() => {
+  // Changer de vue réinitialise les filtres
+  const changeView = (next: 'sets' | 'all') => {
+    if (next === view) {
+      return
+    }
+    setView(next)
     setSearchQuery('')
     setSelectedRarities([])
     setSelectedSetIds([])
     setSelectedElements([])
-  }, [view])
+  }
 
   const { data: setsData } = useAdminSets()
 
@@ -133,7 +137,7 @@ function AdminCards() {
           <>
             <SegmentedControl
               value={view}
-              onChange={setView}
+              onChange={changeView}
               options={[
                 {
                   value: 'sets',

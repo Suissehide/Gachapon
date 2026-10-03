@@ -1,5 +1,6 @@
 import { Recycle, Star, X } from 'lucide-react'
 import type { CSSProperties } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { CardVariant } from '../../constants/card.constant'
@@ -127,6 +128,23 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   // même fenêtre — voir useCardClassicStatsWithSetBonuses.
   const bonuses = useCardClassicStatsWithSetBonuses(entry?.userCard?.id ?? '')
 
+  // Échap ferme, où que soit le focus. `defaultPrevented` : une modale Radix
+  // ouverte par-dessus (elle écoute en capture et marque l'évènement) ferme
+  // seule, sans emporter celle-ci.
+  const open = entry !== null
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) {
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   if (!entry) {
     return null
   }
@@ -156,26 +174,23 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
       : null
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss pattern — role="presentation" signals it is intentional
-    <div
-      className="fixed inset-x-0 bottom-0 top-[var(--topbar-h)] z-[100] overflow-y-auto bg-black/55 backdrop-blur-md"
-      role="presentation"
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          onClose()
-        }
-      }}
-    >
-      <div className="flex min-h-full items-center justify-center px-4 py-10">
-        <div className="flex flex-wrap items-center justify-center gap-8 animate-in fade-in-0 zoom-in-95 duration-300 md:gap-10">
-          {/* Card column — only the card area itself swallows the click; empty
-           * flex padding around it stays inert so the backdrop close fires. */}
-          {/* biome-ignore lint/a11y/noStaticElementInteractions: stop-propagation wrapper, not a user-facing interactive region */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
+    <div className="fixed inset-x-0 bottom-0 top-[var(--topbar-h)] z-[100] overflow-y-auto bg-black/55 backdrop-blur-md">
+      <div className="relative flex min-h-full items-center justify-center px-4 py-10">
+        {/* Backdrop as a button: clicking beside the card closes. Out of the
+         * tab order and hidden from screen readers — Escape and the X button
+         * already cover the keyboard. */}
+        <Button
+          variant="transparent"
+          size="bare"
+          tabIndex={-1}
+          aria-hidden
+          onClick={onClose}
+          className="absolute inset-0 cursor-default rounded-none"
+        />
+        {/* Click-through layout: only the card and the panel take the pointer,
+         * the gaps between them fall through to the backdrop. */}
+        <div className="pointer-events-none relative flex flex-wrap items-center justify-center gap-8 animate-in fade-in-0 zoom-in-95 duration-300 md:gap-10">
+          <div className="pointer-events-auto">
             <CardDisplay
               rarity={card.rarity}
               name={card.name}
@@ -194,10 +209,8 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
           </div>
 
           <Card
-            className="flex max-h-[calc(100dvh-var(--topbar-h)-5rem)] w-full max-w-[400px] flex-col overflow-y-auto overscroll-contain rounded-[22px] border-[rgba(27,23,38,0.06)] p-6 shadow-[0_2px_0_rgba(27,23,38,0.03),0_30px_60px_-28px_rgba(27,23,38,0.4)] md:w-[400px]"
+            className="pointer-events-auto flex max-h-[calc(100dvh-var(--topbar-h)-5rem)] w-full max-w-[400px] flex-col overflow-y-auto overscroll-contain rounded-[22px] border-[rgba(27,23,38,0.06)] p-6 shadow-[0_2px_0_rgba(27,23,38,0.03),0_30px_60px_-28px_rgba(27,23,38,0.4)] md:w-[400px]"
             style={panelStyle}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-start justify-between gap-3">
