@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Cauldron } from '../../components/alchemy/Cauldron.tsx'
@@ -13,8 +13,23 @@ import {
   type AlchemyPick,
   type AlchemyTier,
 } from '../../constants/alchemy.constant.ts'
+import type { CardRarity } from '../../constants/card.constant.ts'
+import type { PullBatchEntry } from '../../constants/gacha.constant.ts'
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion.ts'
 import { cn } from '../../libs/utils.ts'
-import { useAlchemy, useTransmute } from '../../queries/useAlchemy.ts'
+import {
+  transmuteResultToRevealEntry,
+  useAlchemy,
+  useTransmute,
+} from '../../queries/useAlchemy.ts'
+import { useRewardRevealStore } from '../../stores/rewardReveal.store.ts'
+
+// three.js hors du chunk de la page : chargé au premier « Transmuter ».
+const TransmuteFx = lazy(() =>
+  import('../../components/alchemy/TransmuteFx.tsx').then((m) => ({
+    default: m.TransmuteFx,
+  })),
+)
 
 export const Route = createFileRoute('/_authenticated/alchemy')({
   component: AlchemyPage,
@@ -24,6 +39,42 @@ function AlchemyPage() {
   const { t } = useTranslation(['alchemy', 'common'])
   const { data } = useAlchemy()
   const [selected, setSelected] = useState<AlchemyFromRarity | null>(null)
+  // Vit ici, pas dans Workbench : celui-ci est remonté dès que le refetch
+  // post-transmutation change les candidats, en pleine animation.
+  const transmute = useTransmute()
+  const reveal = useRewardRevealStore((s) => s.reveal)
+  const reduced = usePrefersReducedMotion()
+  const [fx, setFx] = useState<CardRarity | null>(null)
+  // Le reveal attend l'animation ET la réponse : le premier arrivé attend l'autre.
+  const entry = useRef<PullBatchEntry | null>(null)
+  const fxDone = useRef(true)
+  const tryReveal = () => {
+    if (fxDone.current && entry.current) {
+      reveal([entry.current])
+      entry.current = null
+    }
+  }
+  const startTransmute = (tier: AlchemyTier, picks: AlchemyPick[]) => {
+    entry.current = null
+    fxDone.current = reduced
+    if (!reduced) {
+      setFx(tier.toRarity)
+    }
+    transmute.mutate(
+      { fromRarity: tier.fromRarity, picks },
+      {
+        onSuccess: (result) => {
+          entry.current = transmuteResultToRevealEntry(result)
+          tryReveal()
+        },
+        // Le toast d'erreur vient de useTransmute ; on coupe juste l'animation.
+        onError: () => {
+          setFx(null)
+          fxDone.current = true
+        },
+      },
+    )
+  }
 
   const tiers = data?.tiers ?? []
   const defaultTier =
@@ -77,6 +128,8 @@ function AlchemyPage() {
 
           <Workbench
             tier={activeTier}
+            pending={transmute.isPending || fx !== null}
+            onTransmute={(picks) => startTransmute(activeTier, picks)}
             // Change de cran ou de stock (transmutation réussie, carte sortie
             // des candidats) → reset : `amounts` ne doit jamais garder des
             // quantités qui dépassent le nouveau disponible.
@@ -86,13 +139,34 @@ function AlchemyPage() {
           />
         </>
       )}
+
+      {fx && (
+        <Suspense fallback={null}>
+          <TransmuteFx
+            rarity={fx}
+            resolved={transmute.isSuccess}
+            onDone={() => {
+              setFx(null)
+              fxDone.current = true
+              tryReveal()
+            }}
+          />
+        </Suspense>
+      )}
     </PageShell>
   )
 }
 
 /** Sélection partagée entre la liste des doublons et le chaudron ; démarre vide. */
-function Workbench({ tier }: { tier: AlchemyTier }) {
-  const transmute = useTransmute()
+function Workbench({
+  tier,
+  pending,
+  onTransmute,
+}: {
+  tier: AlchemyTier
+  pending: boolean
+  onTransmute: (picks: AlchemyPick[]) => void
+}) {
   const [amounts, setAmounts] = useState<Record<string, number>>({})
 
   // Seules les piles encore candidates comptent : une carte sortie du cran
@@ -124,7 +198,7 @@ function Workbench({ tier }: { tier: AlchemyTier }) {
           tier={tier}
           amounts={amounts}
           picked={picked}
-          pending={transmute.isPending}
+          pending={pending}
           onBump={bump}
           onAuto={() =>
             setAmounts(
@@ -137,9 +211,7 @@ function Workbench({ tier }: { tier: AlchemyTier }) {
             )
           }
           onClear={() => setAmounts({})}
-          onTransmute={() =>
-            transmute.mutate({ fromRarity: tier.fromRarity, picks })
-          }
+          onTransmute={() => onTransmute(picks)}
         />
       </div>
     </div>
