@@ -76,8 +76,13 @@ export function validateIngredients(
     perCard.set(userCard.id, (perCard.get(userCard.id) ?? 0) + pick.amount)
   }
   for (const [id, amount] of perCard) {
-    // biome-ignore lint/style/noNonNullAssertion: chaque id vient d'une carte trouvée ci-dessus
-    const { quantity } = userCards.get(id)!
+    const userCard = userCards.get(id)
+    if (!userCard) {
+      throw new Error(
+        `Carte ${id} introuvable alors qu'elle vient d'être trouvée`,
+      )
+    }
+    const { quantity } = userCard
     if (quantity - amount < 1) {
       throw Boom.badRequest(
         errorMessage('alchemy.wouldLeaveZeroCopies', { amount, quantity }),

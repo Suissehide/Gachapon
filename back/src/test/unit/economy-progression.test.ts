@@ -205,8 +205,10 @@ function simulate(days: number, { alchemy = 'none' as AlchemyStrategy } = {}): S
       // Du cran le plus bas au plus haut : une sortie du jour peut déjà
       // nourrir le cran suivant (cascade).
       for (const rarity of ALCHEMY_FROM_RARITIES) {
-        // biome-ignore lint/style/noNonNullAssertion: POOL couvre toutes les raretés
-        const p = POOL.find((x) => x.rarity === rarity)!
+        const p = POOL.find((x) => x.rarity === rarity)
+        if (!p) {
+          throw new Error(`POOL ne couvre pas la rareté ${rarity}`)
+        }
         const draws = totalPulls * pRarity(p) + alchemyIn[rarity]
         const dupes = draws - distinctOf(p.cards, draws)
         const newDupes = dupes - prevDupes[rarity]
@@ -218,8 +220,11 @@ function simulate(days: number, { alchemy = 'none' as AlchemyStrategy } = {}): S
         stock[rarity] += newDupes
         const n = Math.floor(stock[rarity] / DEFAULTS[ALCHEMY_COST_KEYS[rarity]])
         stock[rarity] -= n * DEFAULTS[ALCHEMY_COST_KEYS[rarity]]
-        // biome-ignore lint/style/noNonNullAssertion: aucun cran depuis LEGENDARY
-        alchemyIn[nextRarity(rarity)!] += n
+        const upperRarity = nextRarity(rarity)
+        if (!upperRarity) {
+          throw new Error(`Pas de rareté suivante pour ${rarity}`)
+        }
+        alchemyIn[upperRarity] += n
       }
       dust += QUEST_DUST_PER_DAY
     } else {

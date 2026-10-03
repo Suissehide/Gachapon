@@ -57,6 +57,16 @@ export function Cauldron({
   const filled: AlchemyStack[] = tier.candidates.flatMap((c) =>
     Array<AlchemyStack>(amounts[c.userCardId] ?? 0).fill(c),
   )
+  // Clé stable par carte + occurrence (pas la position dans la grille).
+  const occurrences = new Map<string, number>()
+  const slots: { key: string; card?: AlchemyStack }[] = filled.map((c) => {
+    const occurrence = (occurrences.get(c.userCardId) ?? 0) + 1
+    occurrences.set(c.userCardId, occurrence)
+    return { key: `${c.userCardId}-${occurrence}`, card: c }
+  })
+  while (slots.length < tier.cost) {
+    slots.push({ key: `empty-${slots.length - filled.length}` })
+  }
   // 6 ou 8 emplacements : deux rangées plutôt qu'une ligne qui déborde.
   const columns = tier.cost <= 5 ? tier.cost : Math.ceil(tier.cost / 2)
 
@@ -78,12 +88,10 @@ export function Cauldron({
         className="grid justify-center gap-2"
         style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 60px))` }}
       >
-        {Array.from({ length: tier.cost }, (_, k) => {
-          const c = filled[k]
+        {slots.map(({ key, card: c }) => {
           return c ? (
             <Button
-              // biome-ignore lint/suspicious/noArrayIndexKey: emplacements fixes, l'index EST l'emplacement
-              key={k}
+              key={key}
               type="button"
               variant="none"
               size="bare"
@@ -108,8 +116,7 @@ export function Cauldron({
             </Button>
           ) : (
             <div
-              // biome-ignore lint/suspicious/noArrayIndexKey: emplacements fixes, l'index EST l'emplacement
-              key={k}
+              key={key}
               className="aspect-[2/3] w-full rounded-lg border-[1.5px] border-dashed border-foreground/16 bg-foreground/[0.02]"
             />
           )

@@ -76,8 +76,13 @@ export function validateDelivery(
   }
 
   for (const [id, amount] of perCard) {
-    // biome-ignore lint/style/noNonNullAssertion: chaque id de perCard vient d'une carte trouvée ci-dessus
-    const { quantity } = userCards.get(id)!
+    const userCard = userCards.get(id)
+    if (!userCard) {
+      throw new Error(
+        `Carte ${id} introuvable alors qu'elle vient d'être trouvée`,
+      )
+    }
+    const { quantity } = userCard
     if (quantity - amount < 1) {
       throw Boom.badRequest(
         errorMessage('orders.wouldLeaveZeroCopies', { amount, quantity }),

@@ -29,8 +29,11 @@ function lineFromSeed(
   if (seed.element) {
     options.push({ rarity: seed.rarity, element: seed.element })
   }
-  // biome-ignore lint/style/noNonNullAssertion: options n'est jamais vide
-  return options[pickIndex(options.length, rng)]!
+  const picked = options[pickIndex(options.length, rng)]
+  if (!picked) {
+    throw new Error('options ne peut pas être vide')
+  }
+  return picked
 }
 
 const sameCriteria = (
@@ -121,6 +124,9 @@ export function generateOrderLines(input: {
 }
 
 export function pickClient(pool: PoolCard[], rng: Rng): string {
-  // biome-ignore lint/style/noNonNullAssertion: le domaine garantit un pool non vide
-  return pool[pickIndex(pool.length, rng)]!.id
+  const card = pool[pickIndex(pool.length, rng)]
+  if (!card) {
+    throw new Error('pool ne peut pas être vide')
+  }
+  return card.id
 }

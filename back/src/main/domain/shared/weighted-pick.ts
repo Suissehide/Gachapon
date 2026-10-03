@@ -15,6 +15,9 @@ export function weightedPick<T extends { dropWeight: number }>(
       return c
     }
   }
-  // biome-ignore lint/style/noNonNullAssertion: appelé avec une liste non vide
-  return items.findLast((c) => c.dropWeight > 0) ?? items[items.length - 1]!
+  const fallback = items.findLast((c) => c.dropWeight > 0) ?? items.at(-1)
+  if (!fallback) {
+    throw new Error('weightedPick appelé avec une liste vide')
+  }
+  return fallback
 }

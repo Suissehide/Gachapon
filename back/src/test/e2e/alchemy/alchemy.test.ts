@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { mondayOfUtcWeek } from '../../../main/domain/quests/quest-matching'
+import type { PostgresPrismaClient } from '../../../main/infra/orm/postgres-client'
 import { buildTestApp } from '../../helpers/build-test-app'
 import { createGuest, randomTestIpv6 } from '../../helpers/guest'
 
@@ -8,8 +9,7 @@ const periodKey = mondayOfUtcWeek(new Date())
 
 describe('Alchemy routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
-  // biome-ignore lint/suspicious/noExplicitAny: accès au cradle IoC comme les autres e2e
-  let prisma: any
+  let prisma: PostgresPrismaClient
   const suffix = Date.now()
 
   // Même rengaine que orders.test.ts : une IP distincte par appel évite de

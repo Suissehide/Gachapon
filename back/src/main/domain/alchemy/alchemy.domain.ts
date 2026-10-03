@@ -83,10 +83,13 @@ export class AlchemyDomain implements IAlchemyDomain {
       tiers: ALCHEMY_FROM_RARITIES.map((fromRarity) => {
         const cost = costs[ALCHEMY_COST_KEYS[fromRarity]]
         const candidates = stacks.filter((s) => s.rarity === fromRarity)
+        const toRarity = nextRarity(fromRarity)
+        if (!toRarity) {
+          throw new Error(`Pas de rareté suivante pour ${fromRarity}`)
+        }
         return {
           fromRarity,
-          // biome-ignore lint/style/noNonNullAssertion: ALCHEMY_FROM_RARITIES exclut LEGENDARY
-          toRarity: nextRarity(fromRarity)!,
+          toRarity,
           cost,
           candidates,
           maxTransmutations: maxTransmutations(candidates, cost),
