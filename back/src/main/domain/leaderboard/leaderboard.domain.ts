@@ -16,6 +16,7 @@ import type {
 } from '../../types/infra/orm/repositories/leaderboard.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { RedisClientInterface } from '../../types/infra/redis/redis-client'
+import { unitPower } from '../campaign/campaign-power'
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
 import { computeFinalStats } from '../combat/combat-stats.domain'
 import {
@@ -380,7 +381,17 @@ export class LeaderboardDomain implements ILeaderboardDomain {
           baseStats,
           equipment: [...(c.equipmentBonuses as EquipmentBonuses[]), setBonus],
         })
-        return sum + stats.hp + stats.atk + stats.def + stats.spd
+        // Même jauge que l'éditeur d'équipe (cardPower côté front) : stats
+        // arrondies une à une, puis la vitesse multiplie l'ensemble.
+        return (
+          sum +
+          unitPower({
+            baseHp: Math.round(stats.hp),
+            baseAtk: Math.round(stats.atk),
+            baseDef: Math.round(stats.def),
+            baseSpd: Math.round(stats.spd),
+          })
+        )
       }, 0)
       return { userId, palier, combatPower }
     })
