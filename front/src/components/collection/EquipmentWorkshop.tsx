@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowLeft, Check, Sparkles } from 'lucide-react'
+import { ArrowLeft, Check, Plus, Repeat, Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -53,6 +53,8 @@ import { PageHeader } from '../shared/PageHeader.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
+import { Label } from '../ui/label.tsx'
+import { Switch } from '../ui/switch.tsx'
 import { SLOT_ICONS, SLOT_LABELS, SLOT_ORDER } from './EquipmentSlotsPanel.tsx'
 
 const STAT_LABEL: Record<LabStat, string> = {
@@ -184,6 +186,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
   const advice = adviceFor(card)
   const [prio, setPrio] = useState<LabStat[]>(advice.prio)
   const [setFilter, setSetFilter] = useState<string[]>([])
+  const [hideWornElsewhere, setHideWornElsewhere] = useState(false)
   const [selId, setSelId] = useState<string | null>(null)
   const [hovId, setHovId] = useState<string | null>(null)
   const [destroy, setDestroy] = useState(false)
@@ -225,6 +228,12 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
   const slotItems = items.filter((i) => i.slot === slot)
   const rows = slotItems
     .filter((i) => setFilter.length === 0 || setFilter.includes(i.setKey))
+    .filter(
+      (i) =>
+        !hideWornElsewhere ||
+        i.equippedOnId === null ||
+        i.equippedOnId === ucId,
+    )
     .map((it) => {
       const simItems = withPiece(items, it, ucId)
       const next = labTotals(simItems, ctx)
@@ -235,7 +244,14 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
         ds: it.equippedOnId === ucId ? 0 : prioScore(next, cur, prio),
       }
     })
-    .sort((a, b) => b.ds - a.ds || b.next.power - a.next.power)
+    // La pièce portée ici d'abord, puis par gain.
+    .sort(
+      (a, b) =>
+        Number(b.it.equippedOnId === ucId) -
+          Number(a.it.equippedOnId === ucId) ||
+        b.ds - a.ds ||
+        b.next.power - a.next.power,
+    )
 
   // Aperçu : la pièce survolée, sinon celle ouverte — si elle n'est pas déjà portée ici.
   const previewRow = destroy
@@ -517,6 +533,17 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
             }
           />
 
+          <div className="mb-1.5 flex items-center gap-2">
+            <Switch
+              id="hide-worn-elsewhere"
+              checked={hideWornElsewhere}
+              onCheckedChange={setHideWornElsewhere}
+            />
+            <Label htmlFor="hide-worn-elsewhere" className="text-[13px]">
+              {t('collection:workshop.hideWornElsewhere')}
+            </Label>
+          </div>
+
           {slotItems.length === 0 ? (
             <p className="my-2 rounded-[14px] border-[1.5px] border-dashed border-[rgba(27,23,38,0.12)] p-5 text-center text-[13px] text-text-light">
               {t('collection:workshop.emptySlot')}
@@ -567,35 +594,53 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
                     destroy && !free && 'opacity-45',
                   )}
                 >
-                  <Button
-                    variant="transparent"
-                    size="bare"
-                    disabled={destroy && !free}
-                    aria-expanded={destroy ? undefined : open}
-                    aria-pressed={destroy ? ck : undefined}
-                    onMouseEnter={() => !destroy && setHovId(it.id)}
-                    onMouseLeave={() => setHovId(null)}
-                    onClick={() => clickRow(it.id)}
-                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] justify-normal gap-3 rounded-[14px] py-3 pl-2.5 pr-3.5 text-left font-normal text-text disabled:opacity-100"
-                  >
-                    <RowMarker destroy={destroy} checked={ck} />
-                    <PieceSummary
-                      item={it}
-                      isCur={isCur}
-                      open={open}
-                      prio={prio}
-                      mainValue={mainValue}
-                      fx={fx}
-                    />
-                    {!isCur && !destroy && <Verdict ds={ds} />}
-                  </Button>
+                  <div className="flex items-center">
+                    <Button
+                      variant="transparent"
+                      size="bare"
+                      disabled={destroy && !free}
+                      aria-expanded={destroy ? undefined : open}
+                      aria-pressed={destroy ? ck : undefined}
+                      onMouseEnter={() => !destroy && setHovId(it.id)}
+                      onMouseLeave={() => setHovId(null)}
+                      onClick={() => clickRow(it.id)}
+                      className="grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)_auto] justify-normal gap-3 rounded-[14px] py-3 pl-2.5 pr-3.5 text-left font-normal text-text disabled:opacity-100"
+                    >
+                      <RowMarker destroy={destroy} checked={ck} />
+                      <PieceSummary
+                        item={it}
+                        isCur={isCur}
+                        open={open}
+                        prio={prio}
+                        mainValue={mainValue}
+                        fx={fx}
+                      />
+                      {!isCur && !destroy && <Verdict ds={ds} />}
+                    </Button>
+                    {!destroy && (
+                      <RowAction
+                        isCur={isCur}
+                        slotTaken={bySlot.has(slot)}
+                        takenFrom={it.equippedOnCardName}
+                        busy={busy}
+                        onHover={() => setHovId(it.id)}
+                        onLeave={() => setHovId(null)}
+                        onClick={() =>
+                          isCur
+                            ? unequipItem.mutate(it.id)
+                            : equipItem.mutate({
+                                userEquipmentId: it.id,
+                                targetUserCardId: ucId,
+                              })
+                        }
+                      />
+                    )}
+                  </div>
 
                   {open && (
                     <PieceDetail
                       item={it}
                       mainValue={mainValue}
-                      isCur={isCur}
-                      slotTaken={bySlot.has(slot)}
                       gold={gold}
                       busy={busy}
                       highlight={highlight}
@@ -607,13 +652,6 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
                         salvageBonus,
                       )}
                       confirmSell={confirm === it.id}
-                      onEquip={() =>
-                        equipItem.mutate({
-                          userEquipmentId: it.id,
-                          targetUserCardId: ucId,
-                        })
-                      }
-                      onUnequip={() => unequipItem.mutate(it.id)}
                       onUpgrade={() => {
                         setHighlight(null)
                         upgradeItem.mutate(it.id, {
@@ -691,6 +729,52 @@ function DestroyBar({
           : t('collection:workshop.destroy', { amount })}
       </Button>
     </div>
+  )
+}
+
+// Équiper / remplacer / déséquiper sans ouvrir le détail.
+function RowAction({
+  isCur,
+  slotTaken,
+  takenFrom,
+  busy,
+  onHover,
+  onLeave,
+  onClick,
+}: {
+  isCur: boolean
+  slotTaken: boolean
+  takenFrom: string | null
+  busy: boolean
+  onHover: () => void
+  onLeave: () => void
+  onClick: () => void
+}) {
+  const { t } = useTranslation('collection')
+  const label = isCur
+    ? t('collection:workshop.unequip')
+    : slotTaken
+      ? t('collection:workshop.replace')
+      : t('collection:workshop.equip')
+  const Icon = isCur ? X : slotTaken ? Repeat : Plus
+  return (
+    <Button
+      variant={isCur ? 'outline' : 'amber'}
+      size="icon-sm"
+      disabled={busy}
+      aria-label={label}
+      title={
+        takenFrom && !isCur
+          ? label + t('collection:workshop.takenFrom', { name: takenFrom })
+          : label
+      }
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+      onClick={onClick}
+      className="mr-3 shrink-0"
+    >
+      <Icon className="h-4 w-4" />
+    </Button>
   )
 }
 
@@ -923,8 +1007,6 @@ function SetFilter({
 function PieceDetail({
   item,
   mainValue,
-  isCur,
-  slotTaken,
   gold,
   busy,
   highlight,
@@ -932,15 +1014,11 @@ function PieceDetail({
   milestone,
   sellGold,
   confirmSell,
-  onEquip,
-  onUnequip,
   onUpgrade,
   onSell,
 }: {
   item: EquipmentInstance
   mainValue: number
-  isCur: boolean
-  slotTaken: boolean
   gold: number
   busy: boolean
   highlight: string | null
@@ -948,8 +1026,6 @@ function PieceDetail({
   milestone: number
   sellGold: number
   confirmSell: boolean
-  onEquip: () => void
-  onUnequip: () => void
   onUpgrade: () => void
   onSell: () => void
 }) {
@@ -1006,32 +1082,6 @@ function PieceDetail({
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        {!isCur && (
-          <Button
-            variant="amber"
-            disabled={busy}
-            onClick={onEquip}
-            className={ACT}
-          >
-            {slotTaken
-              ? t('collection:workshop.replace')
-              : t('collection:workshop.equip')}
-            {item.equippedOnCardName &&
-              t('collection:workshop.takenFrom', {
-                name: item.equippedOnCardName,
-              })}
-          </Button>
-        )}
-        {isCur && (
-          <Button
-            variant="outline"
-            disabled={busy}
-            onClick={onUnequip}
-            className={ACT}
-          >
-            {t('collection:workshop.unequip')}
-          </Button>
-        )}
         <Button
           variant="outline"
           disabled={busy || cost === null || gold < cost}
