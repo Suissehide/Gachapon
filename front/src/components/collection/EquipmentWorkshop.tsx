@@ -613,6 +613,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
                         open={open}
                         prio={prio}
                         mainValue={mainValue}
+                        setLabel={setDef.get(it.setKey)?.label}
                         fx={fx}
                       />
                       {!isCur && !destroy && <Verdict ds={ds} />}
@@ -832,6 +833,7 @@ function PieceSummary({
   open,
   prio,
   mainValue,
+  setLabel,
   fx,
 }: {
   item: EquipmentInstance
@@ -839,6 +841,7 @@ function PieceSummary({
   open: boolean
   prio: LabStat[]
   mainValue: number
+  setLabel: string | undefined
   fx: { up: boolean; def: EquipmentSetDefinition } | null
 }) {
   const { t } = useTranslation('collection')
@@ -855,6 +858,12 @@ function PieceSummary({
         <span className="font-mono text-[10.5px] font-bold uppercase tracking-[0.1em] text-[color-mix(in_oklab,var(--r)_75%,var(--text))]">
           {RARITY_LABEL_FR[it.rarity]}
         </span>
+        {setLabel && (
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color-mix(in_oklab,var(--s)_75%,var(--text))]">
+            <i className="h-2 w-2 rounded-full bg-[var(--s)]" />
+            {setLabel}
+          </span>
+        )}
         {isCur && (
           <span className="text-xs font-bold text-[#15803d]">
             {t('collection:workshop.equipped')}
