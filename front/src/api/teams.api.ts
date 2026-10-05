@@ -160,7 +160,6 @@ export const TeamsApi = {
       `${apiUrl}${TEAM_ROUTES.removeMember(teamId, userId)}`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
       },
     )
     if (!res.ok) {
@@ -232,7 +231,6 @@ export const TeamsApi = {
   leaveTeam: async (teamId: string): Promise<void> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.leave(teamId)}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
     })
     if (!res.ok) {
       await handleHttpErrorFromServer(
