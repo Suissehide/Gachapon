@@ -35,20 +35,47 @@ function at<T>(table: readonly T[], index: number, what: string): T {
   return value
 }
 
-export const CHAPTER_COUNT = 9
+export const CHAPTER_COUNT = 15
 export const STAGES_PER_CHAPTER = 10
+const TOTAL_STAGES = CHAPTER_COUNT * STAGES_PER_CHAPTER
 
-// Courbe de difficulté CONTINUE et CONCAVE sur le n° de stage global
-// n = (chapitre-1)×10 + index (1..90) : mult(n) = (1 + 0.08·(n-1))^2.5.
+// --- Courbe de RÉFÉRENCE ----------------------------------------------------
+//
+// La difficulté est calibrée sur une campagne de RÉFÉRENCE de 9 chapitres
+// (90 étages) : ancres de PV, rareté des ennemis, joueur de référence et
+// butin y sont exprimés. Les 15 chapitres réels en sont un étirement :
+// `curvePosition` place chaque étage sur cette échelle (1-1 en 1, 15-10 en
+// 90, linéairement entre les deux). Les boss, qui tombent entre deux étages
+// de référence, ont leur propre facteur (BOSS_GEAR_COMPENSATION).
+export const REFERENCE_CHAPTERS = 9
+const REFERENCE_STAGES = REFERENCE_CHAPTERS * STAGES_PER_CHAPTER
+
+/** Position d'un étage global (1..150) sur la courbe de référence (1..90). */
+export function curvePosition(globalStageNumber: number): number {
+  return (
+    1 + ((globalStageNumber - 1) * (REFERENCE_STAGES - 1)) / (TOTAL_STAGES - 1)
+  )
+}
+
+/** Chapitre de référence (1..9) d'une position de la courbe. */
+export function referenceChapter(position: number): number {
+  return Math.min(
+    REFERENCE_CHAPTERS,
+    Math.max(1, Math.ceil(Math.round(position) / STAGES_PER_CHAPTER)),
+  )
+}
+
+// Courbe de difficulté CONTINUE et CONCAVE sur la position de référence
+// p (1..90) : mult(p) = (1 + 0.08·(p-1))^2.5.
 // Utilisée UNIQUEMENT pour le BUTIN (loot) — plus pour les stats ennemies.
 const CURVE_A = 0.08
 const CURVE_B = 2.5
 
 // Progression joueur attendue par chapitre : l'ennemi s'y aligne (base de
 // rareté + enemyScale) pour que ses stats ET sa vitesse scalent comme le
-// joueur sous l'ATB. PV/ATQ/DEF = médianes des 602 cartes après la hausse
-// par archétype du 2026-10-07 (scripts/rebalance-cards.py les affiche) ; la
-// vitesse, que cette hausse ne touche pas, garde ses valeurs historiques.
+// joueur sous l'ATB. PV/ATQ/DEF = médianes des 602 cartes
+// (scripts/rebalance-cards.py les affiche) ; la vitesse garde ses valeurs
+// historiques.
 export const RARITY_BASE = {
   COMMON: { hp: 124, atk: 24, def: 14, spd: 89 },
   UNCOMMON: { hp: 162, atk: 35, def: 17, spd: 95 },
@@ -56,6 +83,7 @@ export const RARITY_BASE = {
   EPIC: { hp: 454, atk: 76, def: 41, spd: 102 },
   LEGENDARY: { hp: 761, atk: 122, def: 58, spd: 103 },
 } as const
+// Indexée par chapitre de RÉFÉRENCE (1..9), comme toute la calibration.
 const RARITY_BY_CHAPTER = [
   'COMMON',
   'UNCOMMON',
@@ -81,164 +109,206 @@ const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 
 // --- Courbe de difficulté : PV par ancres, sans marche ---------------------
 //
-// Refonte du 2026-10-07. La courbe précédente (niveau × ascension ×
-// compensation d'équipement fittée par chapitre) suivait un joueur qui
-// changeait de cartes ET d'équipement EN BLOC à chaque frontière : les
-// ennemis y sautaient de ×1,9 à ×3,6 (4-9 → 5-1), et le chapitre 5 supposait
-// trois légendaires — un joueur resté en épiques y tombait de 88 % à 0 %.
+// Le joueur de référence (`campaignProfile`, harnais `balance-calibration.ts`)
+// améliore ses cartes et ses pièces UNE à la fois et plafonne en épiques. Les
+// ancres sont les PV (avant NORMAL_FACTOR) d'un ennemi normal qui donnent
+// ~88 % de victoire à ce joueur, une par étage normal, indexée par sa
+// POSITION sur la courbe de référence (`curvePosition`) : le joueur change de
+// carte par marches, des ancres plus espacées creusaient les étages
+// intermédiaires. Entre deux ancres (et pour les boss), interpolation
+// GÉOMÉTRIQUE. Les stats suivent les PV : `enemyScale` = PV visés / PV de
+// base de la rareté. NB : 5 points de victoire ne valent que ~2 % de stats,
+// tant le combat 3v3 est tranché.
 //
-// Désormais le joueur de référence (`campaignProfile`, harnais
-// `balance-calibration.ts`) améliore ses cartes et ses pièces UNE à la fois au
-// fil des chapitres, et reste en épiques. Les ancres ci-dessous sont les PV
-// (avant NORMAL_FACTOR) d'un ennemi normal qui donnent ~88 % de victoire à ce
-// joueur. Entre deux ancres, interpolation GÉOMÉTRIQUE étage par étage. Les
-// stats suivent les PV : `enemyScale` = PV visés / PV de base de la rareté du
-// chapitre.
-//
-// Refittées le 2026-10-07 (soir), après la hausse des stats de base par
-// archétype et le doublement des % d'équipement, puis le 2026-10-08 : les
-// cibles, d'abord abaissées à 83 / 65 %, sont revenues à 88 / 70 % (la
-// campagne paraissait monter bien plus vite que les cartes). NB : 5 points
-// de victoire ne valent que ~2 % de stats ennemies, tant le combat 3v3 est
-// tranché.
-// UNE ANCRE PAR ÉTAGE normal désormais : avec des ancres aux étages 1/5/9
-// seulement, les étages 2 et 8 des chapitres 1-4 tombaient à 40-60 %, parce
-// que le joueur de référence change de carte aux étages 3, 6 et 9.
-//
-// Méthode (reproductible) : `SIM_MODE=campaign-fit SIM_STAGES=all` de
-// scripts/tower-sim.ts mesure les PV qui donnent la cible à chaque étage,
-// puis la courbe retenue en est l'ENVELOPPE INFÉRIEURE — jamais au-dessus de
-// la mesure (un étage ne doit pas être plus dur que sa cible), pas plafonné
-// à ×1,2 par étage et ×1,34 à une frontière de chapitre, au moins +0,1 % par
-// étage. Un CREUX de mesure (étage qui réclame moins que le précédent) est
-// d'abord relevé de 1 % au plus, pour ne pas abaisser tout ce qui le précède
-// — pas davantage : 3 % de stats valent ~11 points de victoire ici. Ce qui s'écarte de la mesure, et pourquoi :
-// - Chapitre 1 : tutoriel, calé sur ~95 % de victoire (boss compris), et
-//   1-1 / 1-2 mesurés sur un joueur SANS équipement (première pièce garantie
-//   à l'étage 3) ; le pas plafonné fait du reste du chapitre une rampe plus
-//   facile que la mesure.
-// - Chapitre 5 : ses étages n'alignent que deux familles (Feu/Eau/Feu), un
-//   contre-pick Eau y bat deux ennemis sur trois et la mesure réclamait ×1,8
-//   d'un coup après 4-9. Le plafond de pas en fait une rampe : plus facile
-//   que la cible (75 à 99 % des PV mesurés), sans mur.
+// Méthode : `SIM_MODE=campaign-fit SIM_STAGES=all` de scripts/tower-sim.ts
+// mesure les PV qui donnent la cible à chaque étage ; la courbe retenue en
+// est l'ENVELOPPE INFÉRIEURE — jamais au-dessus de la mesure, pas plafonné à
+// ×1,2 par étage et ×1,34 à une frontière de chapitre, au moins +0,1 % et
+// +2 PV par étage, creux de mesure relevés de 1 % au plus (3 % de stats valent ~11
+// points de victoire). Écarts assumés (chapitres de référence) :
+// - Chapitre 1 : tutoriel, ~95 % de victoire, 1-1 et 1-2 mesurés sur un
+//   joueur SANS équipement (première pièce garantie à la position 3).
+// - Chapitre 5 : deux familles seulement (Feu/Eau/Feu), un contre-pick Eau
+//   y bat deux ennemis sur trois et la mesure réclamait ×1,8 d'un coup. Le
+//   plafond de pas en fait une rampe plus facile que la cible, sans mur.
 // - Chapitre 6 : le joueur y stagne (pièces UNCOMMON n12 → RARE n6), la
-//   mesure y est plate voire décroissante (16 643 PV à 6-1, 15 358 à 6-5) ;
-//   la courbe y suit la croissance minimale, son début est plus facile que
-//   la cible.
+//   mesure y est plate voire décroissante ; la courbe suit la croissance
+//   minimale, son début est plus facile que la cible.
 export const NORMAL_HP_ANCHORS: readonly (readonly [number, number])[] = [
-  [1, 134],
-  [2, 148],
-  [3, 178],
-  [4, 213],
-  [5, 256],
-  [6, 307],
-  [7, 368],
-  [8, 442],
-  [9, 530],
-  [11, 705],
-  [12, 718],
-  [13, 862],
-  [14, 908],
-  [15, 965],
-  [16, 1127],
-  [17, 1195],
-  [18, 1220],
-  [19, 1445],
-  [21, 1830],
-  [22, 1876],
-  [23, 2251],
-  [24, 2434],
-  [25, 2489],
-  [26, 2987],
-  [27, 3142],
-  [28, 3238],
-  [29, 3886],
-  [31, 4953],
-  [32, 5064],
-  [33, 5494],
-  [34, 5909],
-  [35, 6409],
-  [36, 6592],
-  [37, 6756],
-  [38, 6990],
-  [39, 7332],
-  [41, 9825],
-  [42, 11790],
-  [43, 13976],
-  [44, 14516],
-  [45, 14973],
-  [46, 14988],
-  [47, 15003],
-  [48, 15018],
-  [49, 15033],
-  [51, 15048],
-  [52, 15063],
-  [53, 15078],
-  [54, 15093],
-  [55, 15109],
-  [56, 15514],
-  [57, 15555],
-  [58, 15858],
-  [59, 15874],
-  [61, 20704],
-  [62, 21392],
-  [63, 21759],
-  [64, 22471],
-  [65, 23683],
-  [66, 24257],
-  [67, 24900],
-  [68, 25975],
-  [69, 26612],
-  [71, 27284],
-  [72, 27311],
-  [73, 27987],
-  [74, 29004],
-  [75, 29356],
-  [76, 29385],
-  [77, 30240],
-  [78, 30424],
-  [79, 31250],
-  [81, 31801],
-  [82, 31833],
-  [83, 31865],
-  [84, 31897],
-  [85, 31928],
-  [86, 31960],
-  [87, 31992],
-  [88, 32024],
-  [89, 32056],
+  [1.0, 133],
+  [1.6, 144],
+  [2.19, 146],
+  [2.79, 176],
+  [3.39, 197],
+  [3.99, 236],
+  [4.58, 284],
+  [5.18, 291],
+  [5.78, 349],
+  [6.97, 417],
+  [7.57, 484],
+  [8.17, 487],
+  [8.77, 569],
+  [9.36, 572],
+  [9.96, 619],
+  [10.56, 699],
+  [11.15, 702],
+  [11.75, 733],
+  [12.95, 880],
+  [13.54, 908],
+  [14.14, 911],
+  [14.74, 962],
+  [15.34, 967],
+  [15.93, 1122],
+  [16.53, 1185],
+  [17.13, 1188],
+  [17.72, 1234],
+  [18.92, 1287],
+  [19.52, 1443],
+  [20.11, 1446],
+  [20.71, 1627],
+  [21.31, 1630],
+  [21.91, 1684],
+  [22.5, 2021],
+  [23.1, 2114],
+  [23.7, 2130],
+  [24.89, 2737],
+  [25.49, 2742],
+  [26.09, 3291],
+  [26.68, 3459],
+  [27.28, 3488],
+  [27.88, 3570],
+  [28.48, 3582],
+  [29.07, 4298],
+  [29.67, 4964],
+  [30.87, 4971],
+  [31.46, 4978],
+  [32.06, 5080],
+  [32.66, 5501],
+  [33.26, 5509],
+  [33.85, 5910],
+  [34.45, 5918],
+  [35.05, 6359],
+  [35.64, 6468],
+  [36.84, 7489],
+  [37.44, 7610],
+  [38.03, 7930],
+  [38.63, 8172],
+  [39.23, 8182],
+  [39.83, 9819],
+  [40.42, 10166],
+  [41.02, 11986],
+  [41.62, 12000],
+  [42.81, 12501],
+  [43.41, 12516],
+  [44.01, 13076],
+  [44.6, 13695],
+  [45.2, 13711],
+  [45.8, 13735],
+  [46.4, 13750],
+  [46.99, 13766],
+  [47.59, 13782],
+  [48.79, 13798],
+  [49.38, 13813],
+  [49.98, 14204],
+  [50.58, 15067],
+  [51.17, 15084],
+  [51.77, 15101],
+  [52.37, 15118],
+  [52.97, 15135],
+  [53.56, 15152],
+  [54.76, 15169],
+  [55.36, 15186],
+  [55.95, 15221],
+  [56.55, 15471],
+  [57.15, 15538],
+  [57.74, 15759],
+  [58.34, 15777],
+  [58.94, 16095],
+  [59.54, 16113],
+  [60.73, 20895],
+  [61.33, 20918],
+  [61.93, 21118],
+  [62.52, 21974],
+  [63.12, 21998],
+  [63.72, 22148],
+  [64.32, 22172],
+  [64.91, 22196],
+  [65.51, 22220],
+  [66.7, 22244],
+  [67.3, 22268],
+  [67.9, 22835],
+  [68.5, 22860],
+  [69.09, 23675],
+  [69.69, 23972],
+  [70.29, 23998],
+  [70.89, 24264],
+  [71.48, 24339],
+  [72.68, 28058],
+  [73.28, 28088],
+  [73.87, 28754],
+  [74.47, 28785],
+  [75.07, 29501],
+  [75.66, 29532],
+  [76.26, 29564],
+  [76.86, 30012],
+  [77.46, 30063],
+  [78.65, 31448],
+  [79.25, 31481],
+  [79.85, 31878],
+  [80.44, 31912],
+  [81.04, 31946],
+  [81.64, 31980],
+  [82.23, 32014],
+  [82.83, 32048],
+  [83.43, 32082],
+  [84.62, 32116],
+  [85.22, 32150],
+  [85.82, 32184],
+  [86.42, 32218],
+  [87.01, 32252],
+  [87.61, 32287],
+  [88.21, 32321],
+  [88.81, 32355],
+  [89.4, 32390],
 ]
 const GROWTH_AFTER_LAST_ANCHOR = 1.003
 
-/** PV de base (avant NORMAL_FACTOR) visés à un étage global. */
-export function targetHp(globalStageNumber: number): number {
-  const suivante = NORMAL_HP_ANCHORS.findIndex(
-    ([stage]) => stage >= globalStageNumber,
-  )
+/**
+ * PV de base (avant NORMAL_FACTOR) visés à une POSITION de la courbe de
+ * référence (1..90, fractionnaire) — voir `curvePosition`.
+ */
+export function targetHp(position: number): number {
+  const suivante = NORMAL_HP_ANCHORS.findIndex(([stage]) => stage >= position)
   if (suivante === -1) {
     const [stage, hp] = at(
       NORMAL_HP_ANCHORS,
       NORMAL_HP_ANCHORS.length - 1,
       'Ancres de PV',
     )
-    return hp * GROWTH_AFTER_LAST_ANCHOR ** (globalStageNumber - stage)
+    return hp * GROWTH_AFTER_LAST_ANCHOR ** (position - stage)
   }
   const [stageB, hpB] = at(NORMAL_HP_ANCHORS, suivante, 'Ancres de PV')
-  if (suivante === 0 || stageB === globalStageNumber) {
+  if (suivante === 0 || stageB === position) {
     return hpB
   }
   const [stageA, hpA] = at(NORMAL_HP_ANCHORS, suivante - 1, 'Ancres de PV')
-  return hpA * (hpB / hpA) ** ((globalStageNumber - stageA) / (stageB - stageA))
+  return hpA * (hpB / hpA) ** ((position - stageA) / (stageB - stageA))
 }
 
-/** Multiplicateur de stats ennemies à un étage global (1..90). */
+/** Base de rareté des ennemis d'un étage global (1..150). */
+function rarityBaseAt(globalStageNumber: number) {
+  const chapter = referenceChapter(curvePosition(globalStageNumber))
+  return RARITY_BASE[
+    at(RARITY_BY_CHAPTER, chapter - 1, 'Rareté par chapitre de référence')
+  ]
+}
+
+/** Multiplicateur de stats ennemies à un étage global (1..150). */
 export function enemyScale(globalStageNumber: number): number {
-  const chapter = Math.min(
-    CHAPTER_COUNT,
-    Math.max(1, Math.ceil(globalStageNumber / STAGES_PER_CHAPTER)),
+  return (
+    targetHp(curvePosition(globalStageNumber)) /
+    rarityBaseAt(globalStageNumber).hp
   )
-  const rarity = at(RARITY_BY_CHAPTER, chapter - 1, 'Rareté par chapitre')
-  return targetHp(globalStageNumber) / RARITY_BASE[rarity].hp
 }
 
 /**
@@ -247,13 +317,14 @@ export function enemyScale(globalStageNumber: number): number {
  * Les boss ne peuvent pas partager le facteur des étages normaux : leur cible
  * diffère (70 % contre 88 %) et leurs multiplicateurs propres (PV ×3.25,
  * AOE_3) ne tombent pas au même endroit selon le chapitre. Mesuré : avec le
- * seul facteur des étages normaux, les neuf boss s'étalent de 0 % à 100 % de
- * victoire ; avec celui-ci, ils tiennent leur cible (refit du 2026-10-07).
+ * seul facteur des étages normaux, les boss s'étalent de 0 % à 100 % de
+ * victoire ; avec celui-ci, ils tiennent leur cible.
  */
 // Le boss 1-10 est fitté sur la cible du tutoriel (~95 %), comme le reste du
 // chapitre 1.
 const BOSS_GEAR_COMPENSATION: readonly number[] = [
-  0.9, 1.2, 0.92, 1.09, 1.29, 0.91, 0.93, 1.25, 1.23,
+  0.94, 1.08, 0.91, 0.97, 1.07, 0.95, 0.9, 1.31, 1.41, 1.18, 0.98, 0.97, 1.24,
+  1.22, 1.22,
 ]
 
 export function bossGearCompensation(chapter: number): number {
@@ -304,7 +375,8 @@ function globalStage(chapter: number, stageIndex: number): number {
 }
 
 export function difficultyMult(chapter: number, stageIndex: number): number {
-  return (1 + CURVE_A * (globalStage(chapter, stageIndex) - 1)) ** CURVE_B
+  const position = curvePosition(globalStage(chapter, stageIndex))
+  return (1 + CURVE_A * (position - 1)) ** CURVE_B
 }
 
 // Le bestiaire (familles, sprites, élément par famille) vit dans
@@ -312,8 +384,8 @@ export function difficultyMult(chapter: number, stageIndex: number): number {
 // qu'un monstre ait un élément en campagne et un autre en tour.
 //
 // Comme chaque étage tire ses 3 slots dans 3 familles différentes (voir
-// STAGE_LOOKS), les étages des chapitres 1-4 et 6-9 présentent naturellement
-// 3 éléments distincts. Exception : le chapitre 5 (CHAPTER_FAMILIES) n'a que
+// STAGE_LOOKS), les étages de tous les chapitres sauf le 5 présentent
+// naturellement 3 éléments distincts. Exception : le chapitre 5 (CHAPTER_FAMILIES) n'a que
 // 2 familles (krakens, wyverns), donc ses étages ne présentent que 2 éléments
 // distincts sur 3 slots.
 
@@ -329,7 +401,13 @@ export const BOSS_ELEMENT_BY_CHAPTER: readonly Element[] = [
   'LIGHT', // ch.6 mobs : FIRE · EARTH · DARK
   'DARK', // ch.7 mobs : WATER · FIRE · LIGHT
   'NATURE', // ch.8 mobs : WATER · FIRE · DARK
-  'FIRE', // ch.9 mobs : EARTH · DARK · WATER
+  'EARTH', // ch.9 mobs : WATER · NATURE · DARK
+  'WATER', // ch.10 mobs : EARTH · FIRE · DARK
+  'DARK', // ch.11 mobs : LIGHT · FIRE · NATURE
+  'LIGHT', // ch.12 mobs : WATER · FIRE · EARTH
+  'NATURE', // ch.13 mobs : LIGHT · WATER · DARK
+  'EARTH', // ch.14 mobs : FIRE · DARK · NATURE
+  'FIRE', // ch.15 mobs : EARTH · DARK · WATER
 ]
 
 // Familles peuplant chaque chapitre (difficulté croissante), étages 1-9.
@@ -342,12 +420,23 @@ const CHAPTER_FAMILIES: FamilySlug[][] = [
   ['wyverns', 'basilisks', 'specters'], // FIRE · EARTH · DARK
   ['krakens', 'minotaurs', 'wisps'], // WATER · FIRE · LIGHT
   ['hydras', 'elementals', 'gnolls'], // WATER · FIRE · DARK
+  ['hydras', 'mimics', 'specters'], // WATER · NATURE · DARK
+  ['basilisks', 'wyverns', 'gnolls'], // EARTH · FIRE · DARK
+  ['wisps', 'minotaurs', 'wolves'], // LIGHT · FIRE · NATURE
+  ['krakens', 'elementals', 'basilisks'], // WATER · FIRE · EARTH
+  ['wisps', 'hydras', 'gnolls'], // LIGHT · WATER · DARK
+  ['minotaurs', 'specters', 'wolves'], // FIRE · DARK · NATURE
   ['basilisks', 'specters', 'krakens'], // EARTH · DARK · WATER
 ]
 
-// Boss (étage 10 de chaque chapitre) : cards/monsters/bosses/BOSS-001..019.
+// Boss (étage 10 de chaque chapitre) : cards/monsters/bosses/BOSS-NNN.
+// BOSS-010..013 sont les boss de RAID (raid.definitions.ts) : la campagne ne
+// les prend jamais. Les chapitres 9 à 14 prennent les six images libres
+// (014..019), le 15 prend la 009.
 const BOSS_SLUG = 'bosses'
-const BOSS_COUNT = 19
+const BOSS_SPRITE_BY_CHAPTER: readonly number[] = [
+  1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16, 17, 18, 19, 9,
+]
 
 // Apparence cosmétique ET élément par étage : clé `${chapter}-${index}`, valeur
 // = une entrée par slot d'ennemi. `appearance` = sous-chemin MinIO (sans cards/
@@ -366,7 +455,7 @@ const STAGE_LOOKS: Record<string, StageLook[]> = (() => {
   })
   CHAPTER_FAMILIES.forEach((fams, ci) => {
     const chapter = ci + 1
-    for (let stage = 1; stage <= 9; stage++) {
+    for (let stage = 1; stage < STAGES_PER_CHAPTER; stage++) {
       looks[`${chapter}-${stage}`] = [0, 1, 2].map((slot) =>
         nextLook(
           at(
@@ -377,10 +466,12 @@ const STAGE_LOOKS: Record<string, StageLook[]> = (() => {
         ),
       )
     }
-    const bossNum = String(((chapter - 1) % BOSS_COUNT) + 1).padStart(3, '0')
+    const bossNum = String(
+      at(BOSS_SPRITE_BY_CHAPTER, ci, 'Sprite de boss par chapitre'),
+    ).padStart(3, '0')
     // Pas de `family` pour le boss : son élément vient de
     // BOSS_ELEMENT_BY_CHAPTER (voir bossEnemyTeam), pas de FAMILY_ELEMENTS.
-    looks[`${chapter}-10`] = [
+    looks[`${chapter}-${STAGES_PER_CHAPTER}`] = [
       {
         appearance: `monsters/${BOSS_SLUG}/BOSS-${bossNum}`,
       },
@@ -394,8 +485,7 @@ function looksForStage(chapter: number, stageIndex: number): StageLook[] {
 }
 
 export function enemyPower(chapter: number, stageIndex: number) {
-  const rb =
-    RARITY_BASE[at(RARITY_BY_CHAPTER, chapter - 1, 'Rareté par chapitre')]
+  const rb = rarityBaseAt(globalStage(chapter, stageIndex))
   const scale = enemyScale(globalStage(chapter, stageIndex))
   return {
     baseHp: Math.round(rb.hp * NORMAL_FACTOR * scale),
@@ -441,8 +531,7 @@ export function normalEnemyTeam(chapter: number, stageIndex: number) {
 }
 
 export function bossEnemyTeam(chapter: number, stageIndex: number) {
-  const rb =
-    RARITY_BASE[at(RARITY_BY_CHAPTER, chapter - 1, 'Rareté par chapitre')]
+  const rb = rarityBaseAt(globalStage(chapter, stageIndex))
   const looks = looksForStage(chapter, stageIndex)
   const scale =
     enemyScale(globalStage(chapter, stageIndex)) * bossGearCompensation(chapter)
@@ -460,12 +549,10 @@ export function bossEnemyTeam(chapter: number, stageIndex: number) {
       attackPattern: 'AOE_3',
       appearance: at(looks, 0, `Apparence du boss ${chapter}-${stageIndex}`)
         .appearance,
-      element: BOSS_ELEMENT_BY_CHAPTER[chapter - 1],
+      element: at(BOSS_ELEMENT_BY_CHAPTER, chapter - 1, 'Élément de boss'),
     },
   ]
 }
-
-const TOTAL_STAGES = CHAPTER_COUNT * STAGES_PER_CHAPTER
 
 // Ordre croissant des raretés — sert à interpoler les poids de farm et à
 // nommer les planchers de premier passage.
@@ -544,6 +631,42 @@ function firstClearFloorAt(progress: number): string {
   return 'EPIC'
 }
 
+// --- Butin : total de la campagne CONSTANT malgré l'étirement ---------------
+//
+// Le total de la campagne est celui de la campagne de référence : l'étirer ne
+// doit pas multiplier ce qu'elle rapporte. Le FARM d'un étage est un
+// rendement par combat, il suit simplement la position (`difficultyMult`).
+// Les gains one-shot sont répartis :
+// - premier passage normal : ×81/135, pour que les 135 étages normaux
+//   paient ce que paient les 81 de référence ;
+// - équipement garanti au premier passage : seulement à l'étage où la
+//   position franchit un entier, soit une pièce par étage de référence ;
+// - boss : le facteur ×1,5 par chapitre suit le chapitre de RÉFÉRENCE
+//   (fractionnaire), et BOSS_LOOT_SHARE ramène la somme des 15 boss à celle
+//   des 9 de référence. Carte garantie seulement aux boss où le chapitre de
+//   référence franchit un entier : 9 cartes (3 rares, 5 épiques,
+//   1 légendaire).
+const NORMAL_STAGES = TOTAL_STAGES - CHAPTER_COUNT
+const FIRST_CLEAR_SHARE =
+  (REFERENCE_STAGES - REFERENCE_CHAPTERS) / NORMAL_STAGES
+
+/** Chapitre de référence FRACTIONNAIRE d'un boss : 1 au chapitre 1, 9 au 15. */
+function bossReferenceChapter(chapter: number): number {
+  return 1 + ((chapter - 1) * (REFERENCE_CHAPTERS - 1)) / (CHAPTER_COUNT - 1)
+}
+
+const BOSS_LOOT_SHARE = (() => {
+  let reference = 0
+  for (let k = 1; k <= REFERENCE_CHAPTERS; k++) {
+    reference += 1.5 ** (k - 1)
+  }
+  let stretched = 0
+  for (let c = 1; c <= CHAPTER_COUNT; c++) {
+    stretched += 1.5 ** (bossReferenceChapter(c) - 1)
+  }
+  return reference / stretched
+})()
+
 export function lootTableNormal(chapter: number, stageIndex: number) {
   const d = difficultyMult(chapter, stageIndex)
   const farmScale = d ** FARM_EXP
@@ -559,15 +682,23 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
     xp: number
     guaranteedEquipment?: { minRarity: string }
   } = {
-    gold: Math.round(FIRST_CLEAR_GOLD_BASE * firstClearScale),
-    dust: Math.round(FIRST_CLEAR_DUST_BASE * firstClearScale),
-    xp: Math.round(FIRST_CLEAR_XP_BASE * firstClearScale),
+    gold: Math.round(
+      FIRST_CLEAR_GOLD_BASE * firstClearScale * FIRST_CLEAR_SHARE,
+    ),
+    dust: Math.round(
+      FIRST_CLEAR_DUST_BASE * firstClearScale * FIRST_CLEAR_SHARE,
+    ),
+    xp: Math.round(FIRST_CLEAR_XP_BASE * firstClearScale * FIRST_CLEAR_SHARE),
   }
-  // Équipement garanti partout SAUF sur les deux tout premiers étages de la
-  // campagne, le temps que le joueur voie un combat avant de recevoir du
-  // stuff. C'était « index >= 3 », donc réinitialisé à chaque chapitre : les
-  // étages 9-1 et 9-2 ne donnaient toujours rien.
-  if (globalStage(chapter, stageIndex) >= 3) {
+  // Équipement garanti à partir de la position 3 de la courbe (le temps que
+  // le joueur voie quelques combats avant de recevoir du stuff), et
+  // seulement là où la position franchit un entier — voir FIRST_CLEAR_SHARE.
+  const g = globalStage(chapter, stageIndex)
+  const position = curvePosition(g)
+  if (
+    position >= 3 &&
+    Math.floor(position) > Math.floor(curvePosition(g - 1))
+  ) {
     firstClear.guaranteedEquipment = { minRarity }
   }
 
@@ -584,10 +715,10 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
   }
 }
 
-// Plancher garanti des boss : RARE pour les chapitres 1-3, EPIC pour les 4-8,
-// LEGENDARY pour le boss 9-10 qui conclut la campagne. La légendaire terminale
-// est une récompense one-shot après 90 étages, à mettre en regard du taux de
-// tirage de 0,20 %.
+// Plancher garanti des boss : RARE pour les chapitres de référence 1-3, EPIC
+// pour les 4-8, LEGENDARY pour le boss final (référence 9). La légendaire
+// terminale est une récompense one-shot en fin de campagne, à mettre en
+// regard du taux de tirage de 0,20 %.
 //
 // Carte ET équipement suivent la MÊME échelle : l'équipement était figé à
 // RARE pour les neuf boss, si bien que le boss final garantissait la même
@@ -597,11 +728,21 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
 const BOSS_LOOT_PROGRESS_BONUS = 0.15
 
 function bossFloor(chapter: number): string {
-  return chapter <= 3 ? 'RARE' : chapter <= 8 ? 'EPIC' : 'LEGENDARY'
+  const reference = Math.floor(bossReferenceChapter(chapter))
+  return reference <= 3 ? 'RARE' : reference <= 8 ? 'EPIC' : 'LEGENDARY'
+}
+
+/** Ce boss garantit-il une carte ? Voir BOSS_LOOT_SHARE. */
+function bossGivesCard(chapter: number): boolean {
+  return (
+    chapter === 1 ||
+    Math.floor(bossReferenceChapter(chapter)) >
+      Math.floor(bossReferenceChapter(chapter - 1))
+  )
 }
 
 export function bossLoot(chapter: number) {
-  const m = 1.5 ** (chapter - 1)
+  const m = 1.5 ** (bossReferenceChapter(chapter) - 1) * BOSS_LOOT_SHARE
   const atBossStage = lootTableNormal(chapter, STAGES_PER_CHAPTER)
   return {
     firstClear: {
@@ -613,7 +754,9 @@ export function bossLoot(chapter: number) {
       // seul — autant que les 30 premiers niveaux réunis.
       xp: Math.round(65 * m),
       guaranteedEquipment: { minRarity: bossFloor(chapter) },
-      guaranteedCard: { minRarity: bossFloor(chapter) },
+      ...(bossGivesCard(chapter)
+        ? { guaranteedCard: { minRarity: bossFloor(chapter) } }
+        : {}),
     },
     farm: {
       gold: Math.round(atBossStage.farm.gold * BOSS_FARM_PREMIUM),

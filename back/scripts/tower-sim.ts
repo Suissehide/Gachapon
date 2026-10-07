@@ -15,7 +15,7 @@
 //   SIM_MODE=fit       …                                   # re-fitte la courbe
 //   SIM_MODE=aoe       …                                   # coût d'une unité AOE_3
 //   SIM_MODE=campaign  …                                   # la campagne face au stuff
-//   SIM_MODE=campaign-fit …                                # re-fitte ancres + boss
+//   SIM_MODE=campaign-fit …                                # re-fitte les boss (SIM_STAGES : étages)
 //
 // Variables : SIM_RUNS (défaut 200), SIM_EQUIP, SIM_EQUIP_RARITY,
 // SIM_GEAR_COUNTS, SIM_LEVELS, SIM_COUNTERPICK=none.
@@ -43,9 +43,11 @@ import {
   bossEnemyTeam,
   bossGearCompensation,
   CHAPTER_COUNT,
-  NORMAL_HP_ANCHORS,
+  curvePosition,
   normalEnemyTeam,
   type RARITY_BASE,
+  referenceChapter,
+  STAGES_PER_CHAPTER,
   targetHp,
 } from '../src/main/domain/content/campaign.definitions'
 import {
@@ -311,11 +313,13 @@ function campaign(): void {
 }
 
 // --- Fit campagne : ancres de PV et compensation des boss -------------------
-// Pour chaque étage d'ancre (NORMAL_HP_ANCHORS) et chaque boss, le
+// Pour chaque boss (et, avec SIM_STAGES, chaque étage normal demandé), le
 // multiplicateur des ennemis tels qu'ils sont seedés qui amène le joueur de
-// référence (`campaignProfile`) à sa cible. Nouvelle ancre = PV visés × ce
-// multiplicateur ; nouvelle compensation de boss = l'ancienne × le sien.
-// Le chapitre 1 est un tutoriel : il vise SIM_TUTORIAL (défaut 0.95).
+// référence (`campaignProfile`) à sa cible. Nouvelle compensation de boss =
+// l'ancienne × ce multiplicateur. Pour un étage normal, le script imprime
+// `[position, PV]` : NORMAL_HP_ANCHORS est indexée par la position de
+// l'étage sur la courbe de référence (`curvePosition`), pas par l'étage.
+// Le chapitre de référence 1 est un tutoriel : il vise SIM_TUTORIAL (0.95).
 function fitMult(chapter: number, index: number, target: number): number {
   let lo = 0.1
   let hi = 10
@@ -338,24 +342,25 @@ function fitMult(chapter: number, index: number, target: number): number {
 
 function campaignFit(): void {
   const tutorial = Number(process.env.SIM_TUTORIAL ?? 0.95)
+  const cible = (stage: number, normal: number) =>
+    referenceChapter(curvePosition(stage)) === 1 ? tutorial : normal
   console.log(`# Fit campagne — ${RUNS} runs, tutoriel à ${tutorial}`)
-  // SIM_STAGES=all (ou une liste d'étages globaux) fitte d'autres étages que
-  // les ancres actuelles — pour en choisir de nouvelles.
+  const total = CHAPTER_COUNT * STAGES_PER_CHAPTER
   const stages =
     process.env.SIM_STAGES === 'all'
-      ? Array.from({ length: 90 }, (_, i) => i + 1).filter((n) => n % 10 !== 0)
-      : process.env.SIM_STAGES
-        ? process.env.SIM_STAGES.split(',').map(Number)
-        : NORMAL_HP_ANCHORS.map(([stage]) => stage)
+      ? Array.from({ length: total }, (_, i) => i + 1).filter(
+          (n) => n % STAGES_PER_CHAPTER !== 0,
+        )
+      : (process.env.SIM_STAGES?.split(',').map(Number) ?? [])
   const anchors: string[] = []
   for (const stage of stages) {
-    const chapter = Math.ceil(stage / 10)
-    const index = ((stage - 1) % 10) + 1
-    const target = chapter === 1 ? tutorial : CAMPAIGN_TARGETS.normal
-    const m = fitMult(chapter, index, target)
-    const hp = Math.round(targetHp(stage) * m)
+    const chapter = Math.ceil(stage / STAGES_PER_CHAPTER)
+    const index = ((stage - 1) % STAGES_PER_CHAPTER) + 1
+    const m = fitMult(chapter, index, cible(stage, CAMPAIGN_TARGETS.normal))
+    const position = curvePosition(stage)
+    const hp = Math.round(targetHp(position) * m)
     console.log(`${chapter}-${index}\t×${m.toFixed(3)}\t${hp} PV`)
-    anchors.push(`  [${stage}, ${hp}],`)
+    anchors.push(`  [${Math.round(position * 100) / 100}, ${hp}],`)
   }
   const boss: string[] = []
   for (
@@ -363,14 +368,22 @@ function campaignFit(): void {
     process.env.SIM_STAGES === undefined && chapter <= CHAPTER_COUNT;
     chapter++
   ) {
-    const target = chapter === 1 ? tutorial : CAMPAIGN_TARGETS.boss
-    const m = fitMult(chapter, 10, target)
+    const stage = chapter * STAGES_PER_CHAPTER
+    const m = fitMult(
+      chapter,
+      STAGES_PER_CHAPTER,
+      cible(stage, CAMPAIGN_TARGETS.boss),
+    )
     const comp = Math.round(bossGearCompensation(chapter) * m * 100) / 100
     console.log(`${chapter}-10\t×${m.toFixed(3)}\tcompensation ${comp}`)
     boss.push(String(comp))
   }
-  console.log(`\nNORMAL_HP_ANCHORS = [\n${anchors.join('\n')}\n]`)
-  console.log(`BOSS_GEAR_COMPENSATION = [${boss.join(', ')}]`)
+  if (anchors.length > 0) {
+    console.log(`\nNORMAL_HP_ANCHORS = [\n${anchors.join('\n')}\n]`)
+  }
+  if (boss.length > 0) {
+    console.log(`BOSS_GEAR_COMPENSATION = [${boss.join(', ')}]`)
+  }
 }
 
 const MODES: Record<string, () => void> = {

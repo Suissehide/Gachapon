@@ -7,6 +7,7 @@ import {
   CHAPTER_COUNT,
   STAGES_PER_CHAPTER,
   bossLoot,
+  curvePosition,
   lootTableNormal,
 } from '../../main/domain/content/campaign.definitions'
 import { SHOP_ITEMS } from '../../main/domain/content/shop.definitions'
@@ -76,13 +77,13 @@ function goldToLevel(target: number): number {
   return Math.round(sum)
 }
 
-// MODEL: post-ATB, les ennemis scalent comme les joueurs (rarity+level+palier,
-// niveau ennemi = numéro de stage global — cf. enemyPower, campaign.ts). La
-// porte de progression est donc la parité de niveau, pas la courbe de butin
-// (difficultyMult, désormais loot-only). LEVEL_PARITY ∈ [0.8, 1.2].
+// MODEL: post-ATB, les ennemis scalent comme les joueurs : le niveau requis
+// est la position de l'étage sur la courbe de référence (`curvePosition`,
+// 1..90). La porte de progression est donc la parité de niveau, pas la courbe
+// de butin (difficultyMult, désormais loot-only). LEVEL_PARITY ∈ [0.8, 1.2].
 const LEVEL_PARITY = 1.0
 function levelRequired(globalStage: number): number {
-  return Math.max(1, Math.ceil(globalStage * LEVEL_PARITY))
+  return Math.max(1, Math.ceil(curvePosition(globalStage) * LEVEL_PARITY))
 }
 
 function stageLoot(globalStage: number) {
@@ -316,7 +317,7 @@ describe('economy-progression — partie complète en ~3 mois', () => {
   // se termine vers J90, ce qui colle au « partie complète en ~3 mois » que ce
   // fichier garde depuis la spec du 2026-07-21 : la cible n'a pas bougé, c'est
   // la simulation qui a rattrapé la taille réelle de la campagne.
-  it('campagne (90 stages) terminée entre J80 et J95', () => {
+  it('campagne complète terminée entre J80 et J95', () => {
     const doneDay = traj.find((s) => s.stage >= LAST_STAGE)?.day
     expect(doneDay).toBeGreaterThanOrEqual(80)
     expect(doneDay).toBeLessThanOrEqual(95)

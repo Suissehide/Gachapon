@@ -54,7 +54,13 @@
       "6": "Volcan",
       "7": "Toundra",
       "8": "Abysses",
-      "9": "Faille"
+      "9": "Marais",
+      "10": "Désert",
+      "11": "Ruines",
+      "12": "Cimes",
+      "13": "Tempête",
+      "14": "Citadelle",
+      "15": "Faille"
     },
     "chapterFallback": "Chapitre {{n}}",
     "loading": "Chargement de la campagne…",

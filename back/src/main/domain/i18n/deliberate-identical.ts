@@ -111,7 +111,7 @@ export function deliberateIdenticalValues(): ReadonlySet<string> {
 
   // CampaignStage n'a pas de table de définitions : `campaignStageLabel` EST
   // la source, et son gabarit (« 3-10 Boss ») est identique dans les deux
-  // langues par construction — les 90 étages seraient donc 90 faux positifs.
+  // langues par construction — les 150 étages seraient donc 150 faux positifs.
   // On énumère les coordonnées connues du code plutôt que d'exclure
   // `campaignStage.label` en bloc : si un dixième chapitre arrive,
   // `CHAPTER_COUNT` bouge avec lui.

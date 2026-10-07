@@ -71,7 +71,9 @@ export const Route = createFileRoute('/_authenticated/campaign')({
 // `combat:campaign.chapterTitles.<n>` i18n keys, also read by
 // battle.$stageId.tsx's chapterTitle() — a single source keeps both screens'
 // chapter lists in sync.
-const CHAPTER_HUES = [35, 150, 320, 200, 280, 12, 195, 235, 355]
+const CHAPTER_HUES = [
+  35, 150, 320, 200, 280, 12, 195, 235, 110, 50, 170, 215, 260, 300, 355,
+]
 
 function chapterMeta(n: number): { title: string; hue: number } {
   const key = `combat:campaign.chapterTitles.${n}`

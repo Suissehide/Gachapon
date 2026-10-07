@@ -163,7 +163,7 @@
       "info": "Tu peux <strong>réinitialiser</strong> l'arbre à tout moment contre de la poussière, selon le nombre de points investis : tous tes points te sont rendus."
     },
     "campagne": {
-      "intro": "La <strong>campagne</strong> compte neuf chapitres (Plaines, Forêt des Murmures, Cendres, Océan, Cristaux, Volcan, Toundra, Abysses, Faille) de 10 étapes chacun, de plus en plus difficiles.",
+      "intro": "La <strong>campagne</strong> compte quinze chapitres (Plaines, Forêt des Murmures, Cendres, Océan, Cristaux, Volcan, Toundra, Abysses, Marais, Désert, Ruines, Cimes, Tempête, Citadelle, Faille) de 10 étapes chacun, de plus en plus difficiles.",
       "list": {
         "i1": "Tu combats avec une équipe de <strong>trois cartes maximum</strong>. Les boss affrontent seuls tes trois cartes.",
         "i2": "L'écran de <strong>préparation</strong> montre les adversaires, les récompenses, le coût en énergie et un verdict : <pill>Avantage</pill> <pill>Équilibré</pill> <pill>Risqué</pill>.",

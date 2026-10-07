@@ -140,21 +140,18 @@ const SLOT_MAIN_STATS: Record<EquipmentSlot, (keyof EquipmentBonuses)[]> = {
 // pourcentage y serait hors-échelle face aux autres stats. Le seul %VIT du jeu
 // est le bonus du set Célérité, dont la magnitude est fixe.
 //
-// Les barèmes en pourcentage (hpPct/atkPct/defPct) ont été DOUBLÉS le
-// 2026-10-07 (24 % à légendaire niveau 1, 50 % au niveau 12). À 12 %, une
-// arme légendaire niveau 12 en % ne battait sa version plate (+242 ATQ)
-// qu'au-delà de ~970 ATQ, soit le palier 5 pour une carte légendaire et
-// jamais pour une commune : le % était un piège. Doublé, et avec les stats
-// de base relevées par archétype (scripts/rebalance-cards.py), la bascule
-// tombe vers le palier 3-4 pour le rôle qui porte la stat — un Mage veut de
-// l'ATQ %, un Tank des PV et de la DEF %, une carte de bas niveau du plat.
+// Les barèmes en pourcentage (hpPct/atkPct/defPct) valent 24 % à légendaire
+// niveau 1, 50 % au niveau 12. Avec les stats de base différenciées par
+// archétype (scripts/rebalance-cards.py), le % bat le plat vers le palier
+// 3-4 pour le rôle qui porte la stat — un Mage veut de l'ATQ %, un Tank des
+// PV et de la DEF %, une carte de bas niveau du plat.
 //
 // La DEF a son PROPRE barème plat, ~2,3× sous celui de l'ATQ. La réduction
 // de dégâts vaut DEF / (référence + DEF), où la référence suit le niveau et
 // le palier de la carte (`mitigationRefFor`) : un bonus plat pèse donc
 // énormément en début de jeu (référence ~180 au niveau 10) et plus rien en
 // fin (~1 670 au niveau 70). Au barème de l'ATQ, une armure légendaire
-// faisait passer un Tank niveau 10 de 25 % à 76 % de réduction.
+// ferait passer un Tank niveau 10 de 25 % à 76 % de réduction.
 const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
   atkFlat: { COMMON: 18, UNCOMMON: 28, RARE: 45, EPIC: 72, LEGENDARY: 115 },
   defFlat: { COMMON: 8, UNCOMMON: 12, RARE: 20, EPIC: 32, LEGENDARY: 50 },

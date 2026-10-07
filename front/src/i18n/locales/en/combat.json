@@ -54,7 +54,13 @@
       "6": "Volcano",
       "7": "Tundra",
       "8": "Abyss",
-      "9": "Rift"
+      "9": "Marsh",
+      "10": "Desert",
+      "11": "Ruins",
+      "12": "Peaks",
+      "13": "Storm",
+      "14": "Citadel",
+      "15": "Rift"
     },
     "chapterFallback": "Chapter {{n}}",
     "loading": "Loading the campaign…",

@@ -51,7 +51,9 @@ export type { TowerElement }
  *
  * La jauge reste un outil d'AFFICHAGE. Pour calibrer, le simulateur.
  */
-const FLOOR_SCALE = [2.6, 6.2, 11, 16.2, 33.5, 51, 55.9, 65.6, 78.4, 94.5] as const
+const FLOOR_SCALE = [
+  2.6, 6.2, 11, 16.2, 33.5, 51, 55.9, 65.6, 78.4, 94.5,
+] as const
 
 /**
  * Échelle du BUTIN — délibérément découplée de la difficulté, et gelée sur
@@ -155,7 +157,7 @@ type FloorSprites = readonly [string, string, string]
 /**
  * Sprites d'une tour — mêmes règles que la campagne, source commune
  * (`bestiary.definitions.ts`), mais curseur SÉPARÉ : les tours ne doivent pas
- * décaler les monstres des 90 étages de campagne déjà en base.
+ * décaler les monstres des étages de campagne déjà en base.
  *
  * Une tour ne puise que dans les familles de SON élément (`FAMILIES_BY_ELEMENT`),
  * si bien que le sprite et l'`element` de l'ennemi ne peuvent pas diverger et

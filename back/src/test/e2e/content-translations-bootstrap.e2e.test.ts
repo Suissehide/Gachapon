@@ -37,7 +37,7 @@ import { buildTestApp } from '../helpers/build-test-app'
  * d'image de carte, `chapter` de campagne) sont par ailleurs choisies pour
  * ne correspondre à aucune fixture existante (voir commentaires).
  */
-// Chapitre hors de toute plage réelle (CHAPTER_COUNT = 9), réservé aux lignes
+// Chapitre hors de toute plage réelle (CHAPTER_COUNT = 15), réservé aux lignes
 // sondes de cette suite et supprimé à la fin.
 const PROBE_CHAPTER = 777
 
@@ -398,7 +398,7 @@ describe('backfill des traductions au démarrage', () => {
   // CampaignStage — clé stable : [chapter, index], mais PAS de liste de
   // définitions bilingues séparée : la cible est calculée depuis les
   // coordonnées de la ligne elle-même (`campaignStageLabel`). `chapter: 777`
-  // est hors de toute plage réelle (CHAPTER_COUNT = 9) et n'est utilisé par
+  // est hors de toute plage réelle (CHAPTER_COUNT = 15) et n'est utilisé par
   // aucun autre fichier e2e (vérifié par recherche) : ce test peut choisir sa
   // cible sans dépendre d'aucune autre fixture.
   //

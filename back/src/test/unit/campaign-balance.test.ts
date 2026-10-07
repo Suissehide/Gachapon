@@ -13,24 +13,37 @@ import {
   bossEnemyTeam,
   bossGearCompensation,
   bossLoot,
+  CHAPTER_COUNT,
+  curvePosition,
   difficultyMult,
   enemyPower,
   RARITY_BASE,
   enemyScale,
   lootTableNormal,
   normalEnemyTeam,
+  referenceChapter,
+  STAGES_PER_CHAPTER,
 } from '../../main/domain/content/campaign.definitions'
 
+const TOTAL_STAGES = CHAPTER_COUNT * STAGES_PER_CHAPTER
+const chapitres = Array.from({ length: CHAPTER_COUNT }, (_, i) => i + 1)
+const etagesNormaux = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+/** Chapitre et étage d'un numéro d'étage global. */
+const coord = (n: number) =>
+  [
+    Math.ceil(n / STAGES_PER_CHAPTER),
+    ((n - 1) % STAGES_PER_CHAPTER) + 1,
+  ] as const
+
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
-  it('stage 1-1 : valeur ancre exacte (ancre 134 PV, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {124,24,14,89}, scale = 134 / 124 (première ancre de PV,
-    // fittée le 2026-10-08 sur un joueur SANS équipement : la première pièce
-    // garantie tombe à l'étage 3), NORMAL_FACTOR = 0,971.
-    // hp: 134×0.971 = 130.1 → 130 ; atk: 24×0.971×1.0806 = 25.2 → 25
-    // def: 14×0.971×1.0806 = 14.7 → 15 ; spd: 89 tel quel — la vitesse
+  it('stage 1-1 : valeur ancre exacte (ancre 133 PV, NORMAL_FACTOR=0.971)', () => {
+    // rb = COMMON {124,24,14,89}, scale = 133 / 124 (première ancre de PV,
+    // fittée sur un joueur SANS équipement), NORMAL_FACTOR = 0,971.
+    // hp: 133×0.971 = 129.1 → 129 ; atk: 24×0.971×1.0726 = 25.0 → 25
+    // def: 14×0.971×1.0726 = 14.6 → 15 ; spd: 89 tel quel — la vitesse
     // échappe au facteur ET à l'échelle, elle reste la base de rareté.
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 130,
+      baseHp: 129,
       baseAtk: 25,
       baseDef: 15,
       baseSpd: 89,
@@ -45,15 +58,13 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', 
     // — un boss d'étage 80 y paraissait 23 fois plus fort qu'il ne l'est.
     // Elle est désormais figée des deux côtés, et seul l'équipement la bouge.
     expect(enemyPower(1, 9).baseSpd).toBe(enemyPower(1, 1).baseSpd)
-    expect(enemyPower(9, 9).baseSpd).toBe(RARITY_BASE.EPIC.spd)
+    expect(enemyPower(CHAPTER_COUNT, 9).baseSpd).toBe(RARITY_BASE.EPIC.spd)
   })
 
-  it('les PV sont STRICTEMENT croissants sur les 90 stages globaux', () => {
+  it('les PV sont STRICTEMENT croissants sur toute la campagne', () => {
     let prevHp = -1
-    for (let n = 1; n <= 90; n++) {
-      const chapter = Math.floor((n - 1) / 10) + 1
-      const index = ((n - 1) % 10) + 1
-      const hp = enemyPower(chapter, index).baseHp
+    for (let n = 1; n <= TOTAL_STAGES; n++) {
+      const hp = enemyPower(...coord(n)).baseHp
       expect(hp).toBeGreaterThan(prevHp)
       prevHp = hp
     }
@@ -67,21 +78,15 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', 
 
 describe('enemyScale — courbe à ancres, sans marche', () => {
   it("l'étage 1 est l'ancre : scale = PV de l'ancre / PV de base COMMON", () => {
-    expect(enemyScale(1)).toBeCloseTo(134 / RARITY_BASE.COMMON.hp, 10)
+    expect(enemyScale(1)).toBeCloseTo(133 / RARITY_BASE.COMMON.hp, 10)
   })
 
   it('aucune marche : PV des étages normaux, frontières de chapitre comprises', () => {
-    // Ce que le test protège (2026-10-07) : la courbe ne saute plus au
-    // changement de chapitre. Avant, 4-9 → 5-1 faisait ×3,6 en PV, et un
-    // joueur resté en épiques y passait de 88 % à 0 % de victoire.
-    //
-    // Pas maximal par étage : 1,22, atteint dans la rampe du tutoriel
-    // (chapitre 1) — 98 PV à 1-1 → 118 à 1-2. Une frontière franchit DEUX
-    // étages (le boss est entre les deux) : ×1,35 au plus, soit ~1,16 par
-    // étage, le rythme d'un chapitre.
-    const hp = (n: number) =>
-      enemyPower(Math.ceil(n / 10), ((n - 1) % 10) + 1).baseHp
-    for (let n = 2; n <= 90; n++) {
+    // La courbe ne saute pas au changement de chapitre : un joueur qui suit
+    // la progression attendue ne rencontre pas de mur. Une frontière franchit
+    // DEUX étages (le boss est entre les deux) : ×1,35 au plus.
+    const hp = (n: number) => enemyPower(...coord(n)).baseHp
+    for (let n = 2; n <= TOTAL_STAGES; n++) {
       if (n % 10 === 0) {
         continue // boss
       }
@@ -114,15 +119,13 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
       baseSpd: 89,
       attackPattern: 'AOE_3',
     })
-    // …et ces valeurs restent celles d'un boss de tutoriel : ~1 700 PV
-    // depuis le refit du 2026-10-07 (645 avant), pour des cartes communes
-    // aux PV et à l'équipement relevés.
-    expect(boss.baseHp).toBeGreaterThan(1400)
-    expect(boss.baseHp).toBeLessThan(2000)
+    // …et ces valeurs restent celles d'un boss de tutoriel.
+    expect(boss.baseHp).toBeGreaterThan(800)
+    expect(boss.baseHp).toBeLessThan(1400)
   })
 
-  it('pour chaque chapitre (1-9) : solo, AOE_3, PV > ennemi normal du stage 9', () => {
-    for (let chapter = 1; chapter <= 9; chapter++) {
+  it('pour chaque chapitre : solo, AOE_3, PV > ennemi normal du stage 9', () => {
+    for (const chapter of chapitres) {
       const bosses = bossEnemyTeam(chapter, 10)
       const normals = normalEnemyTeam(chapter, 9)
       expect(bosses).toHaveLength(1)
@@ -133,59 +136,72 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
 })
 
 describe('lootTableNormal — butin lissé sur la difficulté', () => {
-  it("1-1 : butin réduit, PAS d'équipement garanti (trivial)", () => {
-    const fc = lootTableNormal(1, 1).firstClear
-    expect(fc.gold).toBe(120)
-    expect(fc.dust).toBe(30)
-    expect(fc.xp).toBe(7)
-    expect(fc.guaranteedEquipment).toBeUndefined()
+  it('premier passage = barème × difficulté^0,75 × 81/135 (total de référence)', () => {
+    // Les 135 étages normaux paient ce que payaient les 81 de la campagne de
+    // référence : chaque premier passage en touche la part 81/135.
+    for (const [c, i] of [[1, 1], [4, 6], [CHAPTER_COUNT, 9]] as const) {
+      const fc = lootTableNormal(c, i).firstClear
+      const echelle = difficultyMult(c, i) ** 0.75 * (81 / 135)
+      expect(fc.gold).toBe(Math.round(120 * echelle))
+      expect(fc.dust).toBe(Math.round(30 * echelle))
+      expect(fc.xp).toBe(Math.round(7 * echelle))
+    }
   })
 
-  it('1-3 : équipement garanti à partir de 1-3 (COMMON)', () => {
-    const fc = lootTableNormal(1, 3).firstClear
-    // 120 × (1.16^2.5)^0.75 ≈ 159
-    expect(fc.gold).toBe(159)
-    expect(fc.guaranteedEquipment).toEqual({ minRarity: 'COMMON' })
+  it('pas d’équipement garanti avant la position 3 de la courbe', () => {
+    for (let n = 1; curvePosition(n) < 3; n++) {
+      expect(lootTableNormal(...coord(n)).firstClear.guaranteedEquipment).toBe(
+        undefined,
+      )
+    }
+    expect(lootTableNormal(1, 5).firstClear.guaranteedEquipment).toEqual({
+      minRarity: 'COMMON',
+    })
   })
 
-  it("1-9 : ramp jusqu'en fin de chapitre", () => {
-    const fc = lootTableNormal(1, 9).firstClear
-    // 120 × 3.444^0.75 ≈ 303 ; 30 × 3.444^0.75 ≈ 76
-    expect(fc.gold).toBe(303)
-    expect(fc.dust).toBe(76)
-    // Le plancher suit l'avancement GLOBAL, pas l'index dans le chapitre :
-    // 1-9 n'est qu'au dixième de la campagne, il reste donc en COMMON.
-    expect(fc.guaranteedEquipment).toEqual({ minRarity: 'COMMON' })
+  it('autant de pièces garanties que la campagne de référence (88)', () => {
+    // 79 étages normaux (3 à 89) + 9 boss dans la campagne de référence.
+    let pieces = 0
+    for (let n = 1; n <= TOTAL_STAGES; n++) {
+      const [c, i] = coord(n)
+      const fc =
+        i === STAGES_PER_CHAPTER
+          ? bossLoot(c).firstClear
+          : lootTableNormal(c, i).firstClear
+      if (fc.guaranteedEquipment) {
+        pieces++
+      }
+    }
+    expect(pieces).toBe(88)
   })
 
   // Le défaut que la linéarisation corrige : tout dépendait de `stageIndex`,
   // donc se réinitialisait à chaque chapitre — 9-3 lâchait le même butin que
   // 1-3, et le plancher COMMON ne tombait que sur l'index 3.
   it('le plancher de premier passage progresse sur la campagne entière', () => {
-    const plancher = (c: number, i: number) =>
-      lootTableNormal(c, i).firstClear.guaranteedEquipment?.minRarity
-    expect(plancher(1, 3)).toBe('COMMON')
-    expect(plancher(3, 5)).toBe('UNCOMMON')
-    expect(plancher(6, 5)).toBe('RARE')
-    expect(plancher(9, 5)).toBe('EPIC')
-    // Un même index ne donne plus le même plancher d'un chapitre à l'autre.
-    expect(plancher(9, 3)).not.toBe(plancher(1, 3))
-  })
-
-  it('équipement garanti partout sauf sur les deux premiers étages de la campagne', () => {
-    const garanti = (c: number, i: number) =>
-      lootTableNormal(c, i).firstClear.guaranteedEquipment !== undefined
-    expect(garanti(1, 1)).toBe(false)
-    expect(garanti(1, 2)).toBe(false)
-    expect(garanti(1, 3)).toBe(true)
-    // C'était « index >= 3 », donc 9-1 et 9-2 ne donnaient rien non plus.
-    expect(garanti(9, 1)).toBe(true)
+    const ordre = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC']
+    const planchers: number[] = []
+    for (let n = 1; n <= TOTAL_STAGES; n++) {
+      const [c, i] = coord(n)
+      const plancher =
+        i === STAGES_PER_CHAPTER
+          ? undefined
+          : lootTableNormal(c, i).firstClear.guaranteedEquipment?.minRarity
+      if (plancher) {
+        planchers.push(ordre.indexOf(plancher))
+      }
+    }
+    expect(planchers[0]).toBe(0)
+    expect(planchers[planchers.length - 1]).toBe(3)
+    for (let k = 1; k < planchers.length; k++) {
+      expect(planchers[k]).toBeGreaterThanOrEqual(planchers[k - 1] ?? 0)
+    }
   })
 
   it('les communes décroissent strictement du début à la fin de la campagne', () => {
     const communes: number[] = []
-    for (let c = 1; c <= 9; c++) {
-      for (let i = 1; i <= 9; i++) {
+    for (const c of chapitres) {
+      for (const i of etagesNormaux) {
         communes.push(lootTableNormal(c, i).farm.equipmentWeights.COMMON ?? 0)
       }
     }
@@ -193,11 +209,12 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
       expect(communes[n]).toBeLessThan(communes[n - 1])
     }
     expect(communes[0]).toBe(90)
-    // Le dernier étage normal (9-9) est à 1 %, et la courbe atteint zéro au
-    // bout de la campagne — les communes s'éteignent au lieu de se réarmer à
-    // chaque chapitre.
-    expect(communes[communes.length - 1]).toBe(1)
-    expect(lootTableNormal(9, 10).farm.equipmentWeights.COMMON ?? 0).toBe(0)
+    // Les communes s'éteignent au bout de la campagne au lieu de se réarmer
+    // à chaque chapitre.
+    expect(communes[communes.length - 1]).toBeLessThanOrEqual(1)
+    expect(
+      lootTableNormal(CHAPTER_COUNT, 10).farm.equipmentWeights.COMMON ?? 0,
+    ).toBe(0)
   })
 
   it('le farm 1-1 reste au plancher historique (50 gold / 4 dust / 6 xp)', () => {
@@ -217,7 +234,7 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
 
 describe('bossLoot — prime de farm alignée sur la difficulté réelle', () => {
   it('farm boss = farm du stage de même position ×1.25', () => {
-    for (let chapter = 1; chapter <= 9; chapter++) {
+    for (const chapter of chapitres) {
       const atBossStage = lootTableNormal(chapter, 10).farm
       const boss = bossLoot(chapter).farm
       expect(boss.gold).toBe(Math.round(atBossStage.gold * 1.25))
@@ -226,23 +243,49 @@ describe('bossLoot — prime de farm alignée sur la difficulté réelle', () =>
     }
   })
 
-  it("le boss 2-10 ne domine plus le farm du chapitre 3 (régression de l'exploit)", () => {
-    // Ancien ×2.5 : boss 2-10 = 45 dust, mieux que TOUT le chapitre 3 (max 27).
-    // Désormais la progression le rattrape en quelques stages.
-    const bossDust = bossLoot(2).farm.dust
-    expect(lootTableNormal(3, 5).farm.dust).toBeGreaterThanOrEqual(bossDust)
-    expect(lootTableNormal(3, 7).farm.dust).toBeGreaterThan(bossDust)
+  it('en début de campagne, le farm d’un boss est rattrapé au chapitre d’après', () => {
+    // Un ancien ×2,5 rendait le boss 2-10 plus rentable que TOUT le chapitre
+    // 3. En fin de campagne la courbe de butin s'aplatit et la prime ×1,25
+    // demande plus d'un chapitre pour être rattrapée : c'est voulu, le boss
+    // y est aussi le combat le plus dur.
+    for (let chapter = 1; chapter <= 3; chapter++) {
+      expect(lootTableNormal(chapter + 1, 9).farm.dust).toBeGreaterThanOrEqual(
+        bossLoot(chapter).farm.dust,
+      )
+    }
   })
 
-  it('le first-clear boss reste un jackpot chapitre-based', () => {
-    const fc = bossLoot(1).firstClear
-    expect(fc.gold).toBe(1650)
-    expect(fc.dust).toBe(1000)
-    expect(fc.xp).toBe(65)
-    expect(fc.guaranteedEquipment).toEqual({ minRarity: 'RARE' })
-    // carte garantie : RARE ch.1-3, EPIC ch.4-8, LEGENDARY ch.9
-    expect(fc.guaranteedCard).toEqual({ minRarity: 'RARE' })
-    expect(bossLoot(4).firstClear.guaranteedCard).toEqual({ minRarity: 'EPIC' })
+  it('les 15 boss rapportent ce que rapportaient les 9 de référence', () => {
+    // Référence : 1650 or × 1,5^(k-1), k = 1..9.
+    let reference = 0
+    for (let k = 1; k <= 9; k++) {
+      reference += 1650 * 1.5 ** (k - 1)
+    }
+    const total = chapitres.reduce((s, c) => s + bossLoot(c).firstClear.gold, 0)
+    expect(total / reference).toBeCloseTo(1, 2)
+  })
+
+  it('cartes garanties : 3 rares, 5 épiques, 1 légendaire au boss final', () => {
+    const cartes = chapitres
+      .map((c) => bossLoot(c).firstClear.guaranteedCard?.minRarity)
+      .filter((r) => r !== undefined)
+    expect(cartes).toEqual([
+      'RARE',
+      'RARE',
+      'RARE',
+      'EPIC',
+      'EPIC',
+      'EPIC',
+      'EPIC',
+      'EPIC',
+      'LEGENDARY',
+    ])
+    expect(bossLoot(CHAPTER_COUNT).firstClear.guaranteedCard).toEqual({
+      minRarity: 'LEGENDARY',
+    })
+    expect(bossLoot(1).firstClear.guaranteedEquipment).toEqual({
+      minRarity: 'RARE',
+    })
   })
 })
 
@@ -256,8 +299,8 @@ describe('éléments des monstres — un élément par famille de bestiaire', ()
   })
 
   it('chaque monstre de chaque stage normal porte un élément', () => {
-    for (let chapter = 1; chapter <= 9; chapter++) {
-      for (let index = 1; index <= 9; index++) {
+    for (const chapter of chapitres) {
+      for (const index of etagesNormaux) {
         const team = normalEnemyTeam(chapter, index)
         expect(team).toHaveLength(3)
         for (const e of team) {
@@ -268,7 +311,7 @@ describe('éléments des monstres — un élément par famille de bestiaire', ()
   })
 
   it('le boss de chaque chapitre porte l’élément de son chapitre', () => {
-    for (let chapter = 1; chapter <= 9; chapter++) {
+    for (const chapter of chapitres) {
       const [boss] = bossEnemyTeam(chapter, 10)
       expect(boss.element).toBe(BOSS_ELEMENT_BY_CHAPTER[chapter - 1])
     }
@@ -285,8 +328,8 @@ describe('éléments des monstres — un élément par famille de bestiaire', ()
 
   it('l’élément d’un monstre correspond à la famille de son sprite', () => {
     // appearance = "monsters/{slug}/{CODE}" ; slug = clé de FAMILY_ELEMENTS.
-    for (let chapter = 1; chapter <= 9; chapter++) {
-      for (let index = 1; index <= 9; index++) {
+    for (const chapter of chapitres) {
+      for (const index of etagesNormaux) {
         for (const e of normalEnemyTeam(chapter, index)) {
           const slug = e.appearance.split('/')[1]
           expect(e.element).toBe(FAMILY_ELEMENTS[slug])
@@ -296,17 +339,17 @@ describe('éléments des monstres — un élément par famille de bestiaire', ()
   })
 })
 
-describe('chapitres 6 à 9', () => {
-  it('les 9 boss ont un élément absent des mobs de leur chapitre', () => {
-    expect(BOSS_ELEMENT_BY_CHAPTER).toHaveLength(9)
-    for (let chapter = 1; chapter <= 9; chapter++) {
+describe('boss de chapitre', () => {
+  it('chaque boss a un élément absent des mobs de son chapitre', () => {
+    expect(BOSS_ELEMENT_BY_CHAPTER).toHaveLength(CHAPTER_COUNT)
+    for (const chapter of chapitres) {
       const bossElement = BOSS_ELEMENT_BY_CHAPTER[chapter - 1]
       if (!bossElement) {
         throw new Error(`Pas d'élément de boss pour le chapitre ${chapter}`)
       }
       expect(ELEMENTS).toContain(bossElement)
       const mobElements = new Set(
-        [1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((index) =>
+        etagesNormaux.flatMap((index) =>
           normalEnemyTeam(chapter, index).map((e) => e.element),
         ),
       )
@@ -314,32 +357,24 @@ describe('chapitres 6 à 9', () => {
     }
   })
 
-  it('les chapitres 6 à 9 présentent 3 éléments DISTINCTS par étage', () => {
-    for (let chapter = 6; chapter <= 9; chapter++) {
-      for (let index = 1; index <= 9; index++) {
+  it('tous les chapitres sauf le 5 présentent 3 éléments DISTINCTS par étage', () => {
+    for (const chapter of chapitres.filter((c) => c !== 5)) {
+      for (const index of etagesNormaux) {
         const els = normalEnemyTeam(chapter, index).map((e) => e.element)
         expect(new Set(els).size).toBe(3)
       }
     }
   })
 
-  it('les sprites de boss 6 à 9 existent déjà (BOSS-006..009)', () => {
-    for (let chapter = 6; chapter <= 9; chapter++) {
-      const [boss] = bossEnemyTeam(chapter, 10)
-      expect(boss.appearance).toBe(`monsters/bosses/BOSS-00${chapter}`)
+  it('sprites de boss distincts, existants, jamais ceux du raid (BOSS-010..013)', () => {
+    const sprites = chapitres.map((c) => bossEnemyTeam(c, 10)[0].appearance)
+    expect(new Set(sprites).size).toBe(CHAPTER_COUNT)
+    for (const sprite of sprites) {
+      const numero = Number(sprite.match(/BOSS-(\d{3})$/)?.[1])
+      expect(numero).toBeGreaterThanOrEqual(1)
+      expect(numero).toBeLessThanOrEqual(19)
+      expect(numero >= 10 && numero <= 13).toBe(false)
     }
-  })
-
-  it('la carte garantie des boss : RARE (1-3), EPIC (4-8), LEGENDARY (9)', () => {
-    expect(bossLoot(3).firstClear.guaranteedCard).toEqual({
-      minRarity: 'RARE',
-    })
-    expect(bossLoot(8).firstClear.guaranteedCard).toEqual({
-      minRarity: 'EPIC',
-    })
-    expect(bossLoot(9).firstClear.guaranteedCard).toEqual({
-      minRarity: 'LEGENDARY',
-    })
   })
 })
 
@@ -354,9 +389,9 @@ describe('mitigation des ennemis', () => {
   })
 
   it('les boss aussi, facteur de boss compris', () => {
-    const boss = bossEnemyTeam(9, 10)[0]
+    const boss = bossEnemyTeam(CHAPTER_COUNT, 10)[0]
     expect(boss.mitigationScale).toBeCloseTo(
-      enemyScale(90) * bossGearCompensation(9),
+      enemyScale(TOTAL_STAGES) * bossGearCompensation(CHAPTER_COUNT),
       6,
     )
   })
@@ -367,14 +402,11 @@ describe('mitigation des ennemis', () => {
       const k = 100 * e.mitigationScale
       return 1 - k / (k + e.baseDef)
     }
-    // Chapitres 5 et 9 sont tous deux EPIC (RARITY_BY_CHAPTER) : à
+    // 8-5 et 15-9 sont tous deux en base EPIC (RARITY_BY_CHAPTER) : à
     // rareté égale, la réduction ne doit pas dériver avec l'étage global
-    // malgré la DEF ×3 du chapitre 9. NB : chapitre 1 (COMMON) n'est PAS
-    // comparable ici, sa DEF de base (5) n'est pas sur la même échelle que
-    // celle d'un EPIC (17) — ce n'est pas le même monstre, la
-    // différence de réduction entre paliers de rareté est voulue.
-    // Sans correction, le chapitre 9 dérivait jusqu'à 82 % de réduction.
-    expect(reduction(9, 9)).toBeCloseTo(reduction(5, 5), 2)
+    // malgré la DEF ×3 de la fin de campagne. Une rareté différente n'est PAS
+    // comparable : ce n'est pas le même monstre.
+    expect(reduction(CHAPTER_COUNT, 9)).toBeCloseTo(reduction(8, 5), 2)
   })
 })
 
@@ -390,19 +422,27 @@ describe("compensation d'équipement — la campagne mesurée contre un joueur �
     // Bande large (±18 points) : le taux de victoire est une fonction
     // quasi binaire des stats (23 % d'écart entre 90 % et 10 % de victoire),
     // et ce test doit signaler une DÉRIVE, pas du bruit d'échantillonnage.
-    // Le chapitre 1 est exclu : c'est un tutoriel, volontairement gagné.
+    // Le chapitre de référence 1 est exclu : c'est un tutoriel, volontairement
+    // gagné.
     //
-    // Trois étages sont PLUS FACILES que la cible par construction, et
-    // documentés comme tels sur NORMAL_HP_ANCHORS : le chapitre 5 (deux
-    // familles seulement, la mesure y réclame ×1,8 d'un coup que le
-    // plafond de pas refuse) et celui du 6 (joueur qui stagne, mesure
-    // décroissante). Le plafond haut ne s'y applique pas ; le plancher, si.
-    const plusFaciles = new Set(['5-1', '5-5', '5-9', '6-1'])
-    for (let chapitre = 2; chapitre <= 9; chapitre++) {
+    // Certains étages sont PLUS FACILES que la cible par construction, et
+    // documentés comme tels sur NORMAL_HP_ANCHORS : ceux du chapitre de
+    // référence 5 (deux familles seulement, la mesure y réclame ×1,8 d'un
+    // coup que le plafond de pas refuse) et le début du 6 (joueur qui stagne,
+    // mesure décroissante). Le plafond haut ne s'y applique pas ; le
+    // plancher, si.
+    for (const chapitre of chapitres) {
       for (const index of [1, 5, 9]) {
+        const position = curvePosition(
+          (chapitre - 1) * STAGES_PER_CHAPTER + index,
+        )
+        if (referenceChapter(position) === 1) {
+          continue
+        }
         const mesure = campaignWinRate({ chapter: chapitre, index, runs: 60 })
         expect(mesure).toBeGreaterThanOrEqual(CAMPAIGN_TARGETS.normal - 0.18)
-        if (!plusFaciles.has(`${chapitre}-${index}`)) {
+        const plusFacile = position >= 40.5 && position <= 52.5
+        if (!plusFacile) {
           expect(mesure).toBeLessThanOrEqual(CAMPAIGN_TARGETS.normal + 0.12)
         }
       }
@@ -411,7 +451,7 @@ describe("compensation d'équipement — la campagne mesurée contre un joueur �
 
   it('chaque boss tient la sienne', () => {
     // Le boss 1-10 est exclu : boss de tutoriel, volontairement gagné.
-    for (let chapitre = 2; chapitre <= 9; chapitre++) {
+    for (const chapitre of chapitres.slice(1)) {
       const mesure = campaignWinRate({ chapter: chapitre, index: 10, runs: 60 })
       expect(mesure).toBeGreaterThanOrEqual(CAMPAIGN_TARGETS.boss - 0.18)
       expect(mesure).toBeLessThanOrEqual(CAMPAIGN_TARGETS.boss + 0.18)
@@ -420,8 +460,7 @@ describe("compensation d'équipement — la campagne mesurée contre un joueur �
 
   it('le chapitre 1 reste un tutoriel : on le gagne', () => {
     // 1-1 et 1-2 sont mesurés SANS équipement : un nouveau joueur n'a aucune
-    // pièce avant le premier passage de l'étage 3. Supposé équipé, 1-1 était
-    // tombé à 2 % pour lui (2026-10-08).
+    // pièce avant le premier passage de l'étage 3.
     expect(campaignProfile(1, 1).pieces).toEqual([])
     expect(campaignProfile(1, 2).pieces).toEqual([])
     for (const index of [1, 2, 5, 9]) {
@@ -431,16 +470,15 @@ describe("compensation d'équipement — la campagne mesurée contre un joueur �
     }
   })
 
-  it("durcir la difficulté n'a pas déplacé le butin", () => {
+  it('le farm suit la position sur la courbe, pas l’étage', () => {
     // Le butin de campagne passe par `difficultyMult` (CURVE_A/CURVE_B), une
-    // courbe INDÉPENDANTE de `enemyScale`. C'est ce qui a permis de recalibrer
-    // la difficulté sans toucher à l'économie — contrairement aux tours, où
-    // les deux lisaient la même constante et où il a fallu les séparer.
-    // Valeurs relevées AVANT l'ajout de la compensation d'équipement.
+    // courbe INDÉPENDANTE de `enemyScale` : recalibrer la difficulté ne touche
+    // pas l'économie. Le boss final est à la position 90, comme le 9-10 de la
+    // campagne de référence.
     expect(lootTableNormal(1, 1).farm.gold).toBe(50)
-    expect(lootTableNormal(5, 5).farm.gold).toBe(454)
-    expect(lootTableNormal(9, 9).farm.gold).toBe(1054)
-    expect(bossLoot(9).firstClear.gold).toBe(42288)
+    expect(lootTableNormal(CHAPTER_COUNT, 10).farm.gold).toBe(
+      Math.round(50 * ((1 + 0.08 * 89) ** 2.5) ** 0.585),
+    )
   })
 
 })

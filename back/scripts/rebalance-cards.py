@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Relève PV / ATQ / DEF des cartes selon leur ARCHÉTYPE (2026-10-07).
+"""Relève PV / ATQ / DEF des cartes selon leur ARCHÉTYPE.
 
 Pourquoi : l'équipement en % multiplie la stat de base de la carte. Tant que
 les rôles se ressemblaient (Tank commun : 7 de DEF, Mage : 4 — 6,5 % contre

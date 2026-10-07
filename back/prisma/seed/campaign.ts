@@ -10,7 +10,7 @@ import {
 } from '../../src/main/domain/content/campaign.definitions'
 
 /**
- * Écrit les 90 étages de campagne. Les données elles-mêmes vivent dans
+ * Écrit les étages de campagne. Les données elles-mêmes vivent dans
  * `src/main/domain/content/campaign.definitions.ts` : elles sont partagées
  * avec le backfill de traductions, qui est du code de production.
  */

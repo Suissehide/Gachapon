@@ -38,9 +38,10 @@ import { computeEquippedCardStats } from '../../src/main/domain/combat/equipped-
 import { buildEnemySimUnits } from '../../src/main/domain/combat/sim-units'
 import {
   bossEnemyTeam,
-  CHAPTER_COUNT,
+  curvePosition,
   normalEnemyTeam,
   RARITY_BASE,
+  REFERENCE_CHAPTERS,
   STAGES_PER_CHAPTER,
 } from '../../src/main/domain/content/campaign.definitions'
 import { buildEquipmentCatalog } from '../../src/main/domain/content/equipment.definitions'
@@ -474,12 +475,6 @@ export function towerReferenceWinRate(floor: number, runs = 80): number {
  * n'avaient simplement jamais été mesurées contre un joueur réellement
  * équipé, `GEAR_PROFILES` de `balance-sim.ts` ignorant le bloc crit /
  * pénétration.
- *
- * Abaissées à 83 / 65 % le 2026-10-07 avec la hausse des stats par
- * archétype, puis remontées le 2026-10-08 : le joueur de référence porte
- * 7 pièces toutes en % (doublés), les ennemis avaient donc monté de ×1,6 à
- * ×1,8 quand les cartes ne montaient que de ×1,2 à ×1,34 — la campagne
- * paraissait avoir grimpé bien plus vite que les cartes.
  */
 export const CAMPAIGN_TARGETS = { normal: 0.88, boss: 0.7 } as const
 
@@ -558,7 +553,7 @@ export function campaignPieces(
   index: number,
 ): { rarity: CardRarity; level: number }[] {
   const actuel = tierPieces(chapter)
-  if (chapter >= CHAPTER_COUNT) {
+  if (chapter >= REFERENCE_CHAPTERS) {
     return actuel
   }
   const suivant = tierPieces(chapter + 1)
@@ -570,9 +565,8 @@ export function campaignPieces(
     return porte ? [porte] : []
   })
   // Au chapitre 1, le joueur n'a encore RIEN : la première pièce garantie
-  // tombe au premier passage de l'étage 3 (`lootTableNormal`), puis une par
-  // étage. Le supposer équipé dès 1-1 rendait l'étage 1-1 ingagnable pour un
-  // nouveau joueur (2 % de victoire, mesuré le 2026-10-08).
+  // tombe au premier passage de l'étage 3 (`lootTableNormal`). Le supposer
+  // équipé dès 1-1 rend l'étage ingagnable pour un nouveau joueur.
   return chapter === 1 ? pieces.slice(0, Math.max(0, index - 2)) : pieces
 }
 
@@ -586,14 +580,24 @@ export function campaignProfile(
   chapter: number,
   index: number,
 ): ReferenceProfile {
-  const globalStage = (chapter - 1) * 10 + index
+  // Le joueur d'un étage est celui de son étage ÉQUIVALENT sur la courbe de
+  // référence de 90 étages (`curvePosition`) : cartes, équipement et niveau
+  // sont exprimés en chapitres et étages de RÉFÉRENCE.
+  const reference = Math.round(
+    curvePosition((chapter - 1) * STAGES_PER_CHAPTER + index),
+  )
+  const refChapter = Math.ceil(reference / STAGES_PER_CHAPTER)
+  const refIndex = reference - (refChapter - 1) * STAGES_PER_CHAPTER
   return {
-    level: Math.min(globalStage, 70),
-    cardRarities: campaignCardRarities(chapter, index),
-    ...gearTier(chapter),
-    pieces: campaignPieces(chapter, index),
-    campaignSlotRarity: campaignSlotRarityAt(chapter),
-    target: index === 10 ? CAMPAIGN_TARGETS.boss : CAMPAIGN_TARGETS.normal,
+    level: Math.min(reference, 70),
+    cardRarities: campaignCardRarities(refChapter, refIndex),
+    ...gearTier(refChapter),
+    pieces: campaignPieces(refChapter, refIndex),
+    campaignSlotRarity: campaignSlotRarityAt(refChapter),
+    target:
+      index === STAGES_PER_CHAPTER
+        ? CAMPAIGN_TARGETS.boss
+        : CAMPAIGN_TARGETS.normal,
   }
 }
 
