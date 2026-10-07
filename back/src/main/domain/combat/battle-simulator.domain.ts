@@ -90,6 +90,11 @@ export type LogEntry =
       unitId: string
       passive: string
       payload: Record<string, number>
+      /**
+       * Unité qui subit `payload.damage` quand ce n'est pas `unitId`
+       * (RIPOSTE : le porteur renvoie, l'attaquant encaisse).
+       */
+      targetId?: string
     }
   | { type: 'DEATH'; unitId: string }
   | { type: 'REBIRTH'; unitId: string; restoredHp: number }
@@ -954,7 +959,8 @@ function applyRiposte(
     type: 'PASSIVE',
     unitId: target.id,
     passive: 'RIPOSTE',
-    payload: { reflected },
+    payload: { damage: reflected },
+    targetId: attacker.id,
   })
   if (attacker.currentHp <= 0) {
     finalizeDeath(attacker, log)

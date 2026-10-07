@@ -52,12 +52,13 @@ function applyEntry(entry: BattleLogEntry, units: SceneUnit[]): SceneUnit[] {
       const unitId = entry.unitId as string
       const payload =
         (entry.payload as { healed?: number; damage?: number }) ?? {}
-      // Dégâts subis par l'unité du passif hors entrée ATTACK : ticks de
-      // BURN/POISON, part encaissée par un GUARDIAN.
+      // Dégâts hors entrée ATTACK : ticks de BURN/POISON, part encaissée
+      // par un GUARDIAN (sur `unitId`), renvoi de RIPOSTE (sur `targetId`).
       if (payload.damage && payload.damage > 0) {
         const damage = payload.damage
+        const victimId = (entry.targetId as string | undefined) ?? unitId
         return units.map((u) =>
-          u.id === unitId
+          u.id === victimId
             ? { ...u, currentHp: Math.max(0, u.currentHp - damage) }
             : u,
         )
@@ -279,7 +280,8 @@ export function BattleScene({
         pushFloat(unitId, payload.healed, 'heal')
       }
       if (payload.damage && payload.damage > 0) {
-        pushFloat(unitId, payload.damage, 'damage')
+        const victimId = (entry.targetId as string | undefined) ?? unitId
+        pushFloat(victimId, payload.damage, 'damage')
       }
       setUnits((cur) => applyEntry(entry, cur))
       const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)

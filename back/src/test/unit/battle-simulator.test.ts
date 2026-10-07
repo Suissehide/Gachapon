@@ -310,7 +310,8 @@ describe('simulateBattle', () => {
     )
     expect(riposteLogs.length).toBeGreaterThanOrEqual(1)
     if (riposteLogs[0]?.type === 'PASSIVE') {
-      expect(riposteLogs[0].payload.reflected).toBeGreaterThan(0)
+      expect(riposteLogs[0].payload.damage).toBeGreaterThan(0)
+      expect(riposteLogs[0].targetId).toBe('A0')
     }
   })
 
