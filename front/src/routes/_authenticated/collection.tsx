@@ -41,7 +41,10 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
-import { useEquipmentList } from '../../queries/useEquipment.ts'
+import {
+  useEquipmentList,
+  useEquipmentSets,
+} from '../../queries/useEquipment.ts'
 import { useMyDuel } from '../../queries/useMyDuel.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import {
@@ -162,6 +165,7 @@ function Collection() {
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(user?.id)
   const { data: equipData } = useEquipmentList()
+  const { data: setsData } = useEquipmentSets()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
   const allCards = useMemo(() => catalogData?.cards ?? [], [catalogData?.cards])
@@ -175,11 +179,16 @@ function Collection() {
     for (const uc of userCards) {
       map.set(
         uc.id,
-        aggregateEquipmentBonuses(items, uc.id, economy.equip.levelScale),
+        aggregateEquipmentBonuses(
+          items,
+          uc.id,
+          economy.equip.levelScale,
+          setsData?.sets ?? [],
+        ),
       )
     }
     return map
-  }, [equipData?.items, userCards, economy.equip.levelScale])
+  }, [equipData?.items, setsData, userCards, economy.equip.levelScale])
 
   const displayEntries = useMemo((): DisplayEntry[] => {
     const ownedByCardId = new Map<string, UserCard[]>()

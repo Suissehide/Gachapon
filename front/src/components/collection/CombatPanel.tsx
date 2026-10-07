@@ -29,7 +29,7 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig'
 import {
-  useCardClassicStatsWithSetBonuses,
+  useCardEquipmentBonuses,
   useCardStuffStats,
 } from '../../queries/useEquipment'
 import { useLevelUpCard } from '../../queries/useLevelUpCard'
@@ -102,7 +102,7 @@ export function CombatPanel({
   // Bonus de set (2/4 pièces) inclus, pas seulement catalogue+substats — la
   // fiche de carte doit afficher les mêmes stats que le combat réel
   // (equipped-card-stats.ts, back).
-  const classicBonuses = useCardClassicStatsWithSetBonuses(userCardId)
+  const classicBonuses = useCardEquipmentBonuses(userCardId)
   const stuffStats = useCardStuffStats(userCardId)
   const hp = Math.round(
     finalStatWithBonuses(

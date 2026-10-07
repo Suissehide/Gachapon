@@ -18,7 +18,10 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
-import { useEquipmentList } from '../../queries/useEquipment.ts'
+import {
+  useEquipmentList,
+  useEquipmentSets,
+} from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
 import {
   aggregateEquipmentBonuses,
@@ -69,6 +72,7 @@ export function TeamEditorPopup({
   const isCampaign = teamKey === CAMPAIGN_TEAM_KEY
   const collection = useUserCollection(userId)
   const { data: equipData } = useEquipmentList()
+  const { data: setsData } = useEquipmentSets()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
   const initialIds = useMemo(
@@ -101,11 +105,16 @@ export function TeamEditorPopup({
     for (const uc of collection.data?.cards ?? []) {
       map.set(
         uc.id,
-        aggregateEquipmentBonuses(items, uc.id, economy.equip.levelScale),
+        aggregateEquipmentBonuses(
+          items,
+          uc.id,
+          economy.equip.levelScale,
+          setsData?.sets ?? [],
+        ),
       )
     }
     return map
-  }, [equipData?.items, collection.data, economy.equip.levelScale])
+  }, [equipData?.items, setsData, collection.data, economy.equip.levelScale])
 
   const powerOf = useMemo(
     () => (uc: UserCard) =>

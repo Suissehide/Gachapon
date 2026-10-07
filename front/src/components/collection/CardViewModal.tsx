@@ -12,7 +12,7 @@ import {
 } from '../../constants/card.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import i18n from '../../i18n/index.ts'
-import { useCardClassicStatsWithSetBonuses } from '../../queries/useEquipment.ts'
+import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
 import type { WishlistResponse } from '../../queries/useWishlist.ts'
 import { useToggleWishlist, useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
@@ -123,10 +123,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   const { data: wishlist } = useWishlist()
   const { mutate: toggleWishlist, isPending: settingWishlist } =
     useToggleWishlist()
-  // Bonus de set (2/4 pièces) inclus : la face de carte doit annoncer les
-  // mêmes PV/ATQ/DEF/VIT que CombatPanel, affiché juste en dessous dans la
-  // même fenêtre — voir useCardClassicStatsWithSetBonuses.
-  const bonuses = useCardClassicStatsWithSetBonuses(entry?.userCard?.id ?? '')
+  const bonuses = useCardEquipmentBonuses(entry?.userCard?.id ?? '')
 
   // Échap ferme, où que soit le focus. `defaultPrevented` : une modale Radix
   // ouverte par-dessus (elle écoute en capture et marque l'évènement) ferme

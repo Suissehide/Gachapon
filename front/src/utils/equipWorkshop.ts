@@ -6,12 +6,10 @@ import type { Card, CardVariant } from '../constants/card.constant'
 import {
   aggregateEquipmentBonuses,
   cardStuffStats,
-  computeCardSetBonuses,
   computePower,
   displayStatBases,
   displayStats,
   type StuffStatBonuses,
-  withCardSetBonuses,
 } from './cardStats'
 
 /**
@@ -68,12 +66,11 @@ export function labTotals(
   items: EquipmentInstance[],
   ctx: LabContext,
 ): LabTotals {
-  const setKeys = items
-    .filter((i) => i.equippedOnId === ctx.userCardId)
-    .map((i) => i.setKey)
-  const bonuses = withCardSetBonuses(
-    aggregateEquipmentBonuses(items, ctx.userCardId, ctx.levelScale),
-    computeCardSetBonuses(setKeys, ctx.setDefs),
+  const bonuses = aggregateEquipmentBonuses(
+    items,
+    ctx.userCardId,
+    ctx.levelScale,
+    ctx.setDefs,
   )
   const s = displayStats(ctx.card, ctx.level, ctx.variant, ctx.palier, bonuses)
   const stuff = cardStuffStats(

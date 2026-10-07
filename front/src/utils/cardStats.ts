@@ -158,14 +158,16 @@ function accumulateItemBonuses(
 }
 
 /**
- * Aggregate the flat/percent bonuses of every equipment piece equipped on a
- * given card: catalog base scaled by instance level (baseBoost added on the
- * first key — the item's base bonus), plus substats. Mirrors
- * `effectiveEquipmentBonuses` + `computeFinalStats` in the backend.
+ * Bonus PV/ATQ/DEF/VIT d'une carte : catalogue mis à l'échelle du niveau de
+ * la pièce (baseBoost sur la première clé), sous-stats, puis bonus de set.
+ * Miroir de `computeEquippedCardStats` côté back. Source unique de tous les
+ * écrans (collection, fiche, atelier, éditeur d'équipe) : sans les sets à un
+ * seul endroit, la même carte affichait des puissances différentes.
  */
 export function aggregateEquipmentBonuses(
   items: {
     equippedOnId: string | null
+    setKey: string
     bonuses: Record<string, number>
     level: number
     substats: { key: string; value: number }[]
@@ -173,15 +175,20 @@ export function aggregateEquipmentBonuses(
   }[],
   userCardId: string,
   equipLevelScale: number,
+  setDefs: EquipmentSetDefinition[],
 ): StatBonuses {
   const acc = emptyStatBonuses()
-  for (const item of items) {
-    if (item.equippedOnId !== userCardId) {
-      continue
-    }
+  const equippedHere = items.filter((i) => i.equippedOnId === userCardId)
+  for (const item of equippedHere) {
     accumulateItemBonuses(acc, item, equipLevelScale)
   }
-  return acc
+  return withCardSetBonuses(
+    acc,
+    computeCardSetBonuses(
+      equippedHere.map((i) => i.setKey),
+      setDefs,
+    ),
+  )
 }
 
 // --- Stats de stuff : critRate, critDmg, armorPen, lifesteal ---
@@ -357,19 +364,8 @@ export function activeSetsForCard(
     .sort((a, b) => b.count - a.count)
 }
 
-/**
- * Replie les bonus de set (2/4 pièces) dans des bonus PV/ATQ/DEF/VIT déjà
- * agrégés (catalogue + substats). Fonction pure utilisée par
- * `useCardClassicStatsWithSetBonuses`, elle-même consommée par `CombatPanel`
- * et `CardViewModal` — les deux blocs qui affichent PV/ATQ/DEF/VIT côte à
- * côte dans la même fenêtre. Les autres consommateurs de
- * `aggregateEquipmentBonuses`/`useCardEquipmentBonuses` (tri de collection
- * dans `CollectionCard`/`collection.tsx`, puissance d'équipe dans
- * `TeamEditorPopup`) ne l'utilisent pas : leur écart préexistant avec le
- * combat réel est hors périmètre de cette carte, et jamais vu côte à côte
- * avec `CombatPanel`.
- */
-export function withCardSetBonuses(
+// Replie les bonus de set dans des bonus PV/ATQ/DEF/VIT déjà agrégés.
+function withCardSetBonuses(
   bonuses: StatBonuses,
   setBonuses: Record<string, number>,
 ): StatBonuses {
