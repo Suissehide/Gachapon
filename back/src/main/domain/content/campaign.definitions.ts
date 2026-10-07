@@ -46,13 +46,15 @@ const CURVE_B = 2.5
 
 // Progression joueur attendue par chapitre : l'ennemi s'y aligne (base de
 // rareté + enemyScale) pour que ses stats ET sa vitesse scalent comme le
-// joueur sous l'ATB. Valeurs = médianes du roster (prisma/seed/cards.ts).
+// joueur sous l'ATB. PV/ATQ/DEF = médianes des 602 cartes après la hausse
+// par archétype du 2026-10-07 (scripts/rebalance-cards.py les affiche) ; la
+// vitesse, que cette hausse ne touche pas, garde ses valeurs historiques.
 export const RARITY_BASE = {
-  COMMON: { hp: 101, atk: 20, def: 5, spd: 89 },
-  UNCOMMON: { hp: 135, atk: 29, def: 7, spd: 95 },
-  RARE: { hp: 192, atk: 40, def: 10, spd: 97 },
-  EPIC: { hp: 338, atk: 62, def: 17, spd: 102 },
-  LEGENDARY: { hp: 587, atk: 98, def: 30, spd: 103 },
+  COMMON: { hp: 124, atk: 24, def: 14, spd: 89 },
+  UNCOMMON: { hp: 162, atk: 35, def: 17, spd: 95 },
+  RARE: { hp: 230, atk: 50, def: 20, spd: 97 },
+  EPIC: { hp: 454, atk: 76, def: 41, spd: 102 },
+  LEGENDARY: { hp: 761, atk: 122, def: 58, spd: 103 },
 } as const
 const RARITY_BY_CHAPTER = [
   'COMMON',
@@ -88,53 +90,122 @@ const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 // Désormais le joueur de référence (`campaignProfile`, harnais
 // `balance-calibration.ts`) améliore ses cartes et ses pièces UNE à la fois au
 // fil des chapitres, et reste en épiques. Les ancres ci-dessous sont les PV
-// (avant NORMAL_FACTOR) d'un ennemi normal qui donnent ~88 % de victoire à ce
-// joueur, mesurés aux étages 1, 5 et 9 de chaque chapitre ; entre deux
-// ancres, interpolation GÉOMÉTRIQUE étage par étage. Les stats suivent les
-// PV : `enemyScale` = PV visés / PV de base de la rareté du chapitre.
+// (avant NORMAL_FACTOR) d'un ennemi normal qui donnent ~83 % de victoire à ce
+// joueur. Entre deux ancres, interpolation GÉOMÉTRIQUE étage par étage. Les
+// stats suivent les PV : `enemyScale` = PV visés / PV de base de la rareté du
+// chapitre.
 //
-// Trois écarts assumés à la mesure :
-// - Le chapitre 1 reste un tutoriel : 1-1 inchangé (101 PV de base → 98 PV),
-//   le reste calé sur ~97 % de victoire plutôt que 88 %.
-// - Le chapitre 5 n'a pas d'ancre : ses étages n'alignent que deux familles
-//   (Feu/Eau/Feu), un contre-pick Eau y bat deux ennemis sur trois et la
-//   mesure y réclamait ×1,8 d'un coup. La courbe le traverse en pente
-//   régulière : il est plus facile pour qui contre-picke, sans mur.
-// - Le joueur stagne au chapitre 6 (pièces UNCOMMON n12 → RARE n6) puis
-//   bondit au 7 (palier 7) : la mesure réclamait ×1,33 entre 6-9 et 7-1, et
-//   creusait au milieu du 6 (9 454 → 9 145 → 9 559). On abaisse le début du 6
-//   (8 700) et celui du 7 (11 000 contre 12 698) — un étage plus facile que
-//   la cible ne fait pas de mur.
-// - Les mesures non croissantes (milieu du ch.6, ch.9) sont omises : la
-//   campagne reste strictement croissante, au moins +0,3 % par étage après la
-//   dernière ancre.
-const NORMAL_HP_ANCHORS: readonly (readonly [number, number])[] = [
-  [1, 101],
-  [5, 215],
-  [9, 400],
-  [11, 527],
-  [15, 718],
-  [19, 1073],
-  [21, 1352],
-  [25, 1777],
-  [29, 2707],
-  [31, 3216],
-  [35, 3874],
-  [39, 4416],
-  [51, 8700],
-  [59, 9600],
-  [61, 11000],
-  [65, 13958],
-  [69, 15723],
-  [71, 15979],
-  [75, 16601],
-  [79, 17912],
-  [81, 18368],
+// Refittées le 2026-10-07 (soir), après la hausse des stats de base par
+// archétype et le doublement des % d'équipement : cibles abaissées de 5
+// points (88 → 83 %, boss 70 → 65 %), ennemis relevés de ×1,7 à ×1,9.
+// UNE ANCRE PAR ÉTAGE normal désormais : avec des ancres aux étages 1/5/9
+// seulement, les étages 2 et 8 des chapitres 1-4 tombaient à 40-60 %, parce
+// que le joueur de référence change de carte aux étages 3, 6 et 9.
+//
+// Méthode (reproductible) : `SIM_MODE=campaign-fit SIM_STAGES=all` de
+// scripts/tower-sim.ts mesure les PV qui donnent la cible à chaque étage,
+// puis la courbe retenue en est l'ENVELOPPE INFÉRIEURE — jamais au-dessus de
+// la mesure (un étage ne doit pas être plus dur que sa cible), pas plafonné
+// à ×1,2 par étage et ×1,34 à une frontière de chapitre, au moins +0,1 % par
+// étage. Un CREUX de mesure (étage qui réclame moins que le précédent) est
+// d'abord relevé de 1 % au plus, pour ne pas abaisser tout ce qui le précède
+// — pas davantage : 3 % de stats valent ~11 points de victoire ici. Ce qui s'écarte de la mesure, et pourquoi :
+// - Chapitre 1 : tutoriel, calé sur ~92 % de victoire (boss compris).
+// - Chapitre 5 : ses étages n'alignent que deux familles (Feu/Eau/Feu), un
+//   contre-pick Eau y bat deux ennemis sur trois et la mesure réclamait ×1,8
+//   d'un coup après 4-9. Le plafond de pas en fait une rampe : plus facile
+//   que la cible (75 à 99 % des PV mesurés), sans mur.
+// - Chapitre 6 : le joueur y stagne (pièces UNCOMMON n12 → RARE n6), la
+//   mesure y est plate voire décroissante (16 643 PV à 6-1, 15 358 à 6-5) ;
+//   la courbe y suit la croissance minimale, son début est plus facile que
+//   la cible.
+export const NORMAL_HP_ANCHORS: readonly (readonly [number, number])[] = [
+  [1, 166],
+  [2, 183],
+  [3, 220],
+  [4, 264],
+  [5, 295],
+  [6, 354],
+  [7, 424],
+  [8, 502],
+  [9, 571],
+  [11, 712],
+  [12, 730],
+  [13, 876],
+  [14, 925],
+  [15, 986],
+  [16, 1149],
+  [17, 1207],
+  [18, 1245],
+  [19, 1467],
+  [21, 1847],
+  [22, 1906],
+  [23, 2287],
+  [24, 2475],
+  [25, 2521],
+  [26, 3025],
+  [27, 3197],
+  [28, 3265],
+  [29, 3918],
+  [31, 5011],
+  [32, 5152],
+  [33, 5568],
+  [34, 6014],
+  [35, 6505],
+  [36, 6712],
+  [37, 6833],
+  [38, 7110],
+  [39, 7407],
+  [41, 9925],
+  [42, 11910],
+  [43, 14165],
+  [44, 14857],
+  [45, 15373],
+  [46, 15388],
+  [47, 15403],
+  [48, 15419],
+  [49, 15434],
+  [51, 15450],
+  [52, 15465],
+  [53, 15481],
+  [54, 15496],
+  [55, 15512],
+  [56, 15715],
+  [57, 15774],
+  [58, 16118],
+  [59, 16134],
+  [61, 21218],
+  [62, 21796],
+  [63, 22249],
+  [64, 23219],
+  [65, 24020],
+  [66, 24696],
+  [67, 25389],
+  [68, 26293],
+  [69, 27200],
+  [71, 27750],
+  [72, 27778],
+  [73, 28785],
+  [74, 29643],
+  [75, 29975],
+  [76, 30053],
+  [77, 30700],
+  [78, 31395],
+  [79, 32019],
+  [81, 32675],
+  [82, 32733],
+  [83, 32765],
+  [84, 32798],
+  [85, 32831],
+  [86, 32864],
+  [87, 32897],
+  [88, 32929],
+  [89, 32962],
 ]
 const GROWTH_AFTER_LAST_ANCHOR = 1.003
 
 /** PV de base (avant NORMAL_FACTOR) visés à un étage global. */
-function targetHp(globalStageNumber: number): number {
+export function targetHp(globalStageNumber: number): number {
   const suivante = NORMAL_HP_ANCHORS.findIndex(
     ([stage]) => stage >= globalStageNumber,
   )
@@ -168,15 +239,15 @@ export function enemyScale(globalStageNumber: number): number {
  * Facteur propre à chaque BOSS, par-dessus la courbe des étages normaux.
  *
  * Les boss ne peuvent pas partager le facteur des étages normaux : leur cible
- * diffère (70 % contre 88 %) et leurs multiplicateurs propres (PV ×3.25,
+ * diffère (65 % contre 83 %) et leurs multiplicateurs propres (PV ×3.25,
  * AOE_3) ne tombent pas au même endroit selon le chapitre. Mesuré : avec le
  * seul facteur des étages normaux, les neuf boss s'étalent de 0 % à 100 % de
- * victoire ; avec celui-ci, de 67 % à 74 % (refit du 2026-10-07).
+ * victoire ; avec celui-ci, ils tiennent leur cible (refit du 2026-10-07).
  */
-// Le boss 1-10 garde ses PV de tutoriel (~645) : 0.47 le laisse bien
-// au-dessus de 70 %, comme le reste du chapitre 1.
+// Le boss 1-10 est fitté sur la cible du tutoriel (~92 %), comme le reste du
+// chapitre 1.
 const BOSS_GEAR_COMPENSATION: readonly number[] = [
-  0.47, 1.21, 0.93, 1.23, 1.4, 1, 0.94, 1.26, 1.21,
+  0.88, 1.2, 0.92, 1.09, 1.26, 0.9, 0.91, 1.23, 1.2,
 ]
 
 export function bossGearCompensation(chapter: number): number {

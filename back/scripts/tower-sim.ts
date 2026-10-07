@@ -15,11 +15,14 @@
 //   SIM_MODE=fit       …                                   # re-fitte la courbe
 //   SIM_MODE=aoe       …                                   # coût d'une unité AOE_3
 //   SIM_MODE=campaign  …                                   # la campagne face au stuff
+//   SIM_MODE=campaign-fit …                                # re-fitte ancres + boss
 //
 // Variables : SIM_RUNS (défaut 200), SIM_EQUIP, SIM_EQUIP_RARITY,
 // SIM_GEAR_COUNTS, SIM_LEVELS, SIM_COUNTERPICK=none.
 
 import {
+  CAMPAIGN_TARGETS,
+  campaignWinRate as campaignReferenceWinRate,
   type ReferenceProfile,
   referenceTeam,
   towerFloorProfile,
@@ -38,8 +41,12 @@ import {
 import { buildEnemySimUnits } from '../src/main/domain/combat/sim-units'
 import {
   bossEnemyTeam,
+  bossGearCompensation,
+  CHAPTER_COUNT,
+  NORMAL_HP_ANCHORS,
   normalEnemyTeam,
   type RARITY_BASE,
+  targetHp,
 } from '../src/main/domain/content/campaign.definitions'
 import {
   TOWER_FLOOR_COUNT,
@@ -303,7 +310,76 @@ function campaign(): void {
   console.log(`# raretés de carte par chapitre : ${CAMPAIGN_RARITY.join(' ')}`)
 }
 
-const MODES: Record<string, () => void> = { grid, fit, aoe, campaign }
+// --- Fit campagne : ancres de PV et compensation des boss -------------------
+// Pour chaque étage d'ancre (NORMAL_HP_ANCHORS) et chaque boss, le
+// multiplicateur des ennemis tels qu'ils sont seedés qui amène le joueur de
+// référence (`campaignProfile`) à sa cible. Nouvelle ancre = PV visés × ce
+// multiplicateur ; nouvelle compensation de boss = l'ancienne × le sien.
+// Le chapitre 1 est un tutoriel : il vise SIM_TUTORIAL (défaut 0.92).
+function fitMult(chapter: number, index: number, target: number): number {
+  let lo = 0.1
+  let hi = 10
+  for (let i = 0; i < 16; i++) {
+    const mid = Math.sqrt(lo * hi)
+    const win = campaignReferenceWinRate({
+      chapter,
+      index,
+      runs: RUNS,
+      mult: mid,
+    })
+    if (win >= target) {
+      lo = mid
+    } else {
+      hi = mid
+    }
+  }
+  return lo
+}
+
+function campaignFit(): void {
+  const tutorial = Number(process.env.SIM_TUTORIAL ?? 0.92)
+  console.log(`# Fit campagne — ${RUNS} runs, tutoriel à ${tutorial}`)
+  // SIM_STAGES=all (ou une liste d'étages globaux) fitte d'autres étages que
+  // les ancres actuelles — pour en choisir de nouvelles.
+  const stages =
+    process.env.SIM_STAGES === 'all'
+      ? Array.from({ length: 90 }, (_, i) => i + 1).filter((n) => n % 10 !== 0)
+      : process.env.SIM_STAGES
+        ? process.env.SIM_STAGES.split(',').map(Number)
+        : NORMAL_HP_ANCHORS.map(([stage]) => stage)
+  const anchors: string[] = []
+  for (const stage of stages) {
+    const chapter = Math.ceil(stage / 10)
+    const index = ((stage - 1) % 10) + 1
+    const target = chapter === 1 ? tutorial : CAMPAIGN_TARGETS.normal
+    const m = fitMult(chapter, index, target)
+    const hp = Math.round(targetHp(stage) * m)
+    console.log(`${chapter}-${index}\t×${m.toFixed(3)}\t${hp} PV`)
+    anchors.push(`  [${stage}, ${hp}],`)
+  }
+  const boss: string[] = []
+  for (
+    let chapter = 1;
+    process.env.SIM_STAGES === undefined && chapter <= CHAPTER_COUNT;
+    chapter++
+  ) {
+    const target = chapter === 1 ? tutorial : CAMPAIGN_TARGETS.boss
+    const m = fitMult(chapter, 10, target)
+    const comp = Math.round(bossGearCompensation(chapter) * m * 100) / 100
+    console.log(`${chapter}-10\t×${m.toFixed(3)}\tcompensation ${comp}`)
+    boss.push(String(comp))
+  }
+  console.log(`\nNORMAL_HP_ANCHORS = [\n${anchors.join('\n')}\n]`)
+  console.log(`BOSS_GEAR_COMPENSATION = [${boss.join(', ')}]`)
+}
+
+const MODES: Record<string, () => void> = {
+  grid,
+  fit,
+  aoe,
+  campaign,
+  'campaign-fit': campaignFit,
+}
 const mode = process.env.SIM_MODE ?? 'grid'
 const run = MODES[mode]
 if (!run) {

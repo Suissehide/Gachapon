@@ -51,7 +51,7 @@ export type { TowerElement }
  *
  * La jauge reste un outil d'AFFICHAGE. Pour calibrer, le simulateur.
  */
-const FLOOR_SCALE = [2.5, 5.4, 9.5, 13.5, 26.5, 39.5, 45, 51, 59, 67.5] as const
+const FLOOR_SCALE = [2.6, 6.2, 11, 16.2, 33.5, 51, 55.9, 65.6, 78.4, 94.5] as const
 
 /**
  * Échelle du BUTIN — délibérément découplée de la difficulté, et gelée sur

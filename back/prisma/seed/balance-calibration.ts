@@ -410,16 +410,16 @@ export function towerWinRate(opts: {
  * sortent du barème commun (GEAR_LADDER).
  */
 const TOWER_FLOOR_TARGETS: Record<number, number> = {
-  1: 0.85,
-  2: 0.75,
-  3: 0.7,
-  4: 0.65,
-  5: 0.6,
-  6: 0.6,
-  7: 0.6,
-  8: 0.55,
-  9: 0.5,
-  10: 0.45,
+  1: 0.8,
+  2: 0.7,
+  3: 0.65,
+  4: 0.6,
+  5: 0.55,
+  6: 0.55,
+  7: 0.55,
+  8: 0.5,
+  9: 0.45,
+  10: 0.4,
 }
 
 /**
@@ -475,7 +475,7 @@ export function towerReferenceWinRate(floor: number, runs = 80): number {
  * équipé, `GEAR_PROFILES` de `balance-sim.ts` ignorant le bloc crit /
  * pénétration.
  */
-export const CAMPAIGN_TARGETS = { normal: 0.88, boss: 0.7 } as const
+export const CAMPAIGN_TARGETS = { normal: 0.83, boss: 0.65 } as const
 
 /**
  * Rareté des trois cartes du joueur à un étage de campagne.

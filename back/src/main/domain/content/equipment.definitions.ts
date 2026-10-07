@@ -140,27 +140,33 @@ const SLOT_MAIN_STATS: Record<EquipmentSlot, (keyof EquipmentBonuses)[]> = {
 // pourcentage y serait hors-échelle face aux autres stats. Le seul %VIT du jeu
 // est le bonus du set Célérité, dont la magnitude est fixe.
 //
-// Les barèmes en pourcentage (hpPct/atkPct/defPct) sont calibrés sur
-// le budget que la spec donne déjà à la stat principale : « bonus de base
-// ×2.1 au niveau 12, soit 25.2 % sur la stat principale » (repris tel quel
-// dans GEAR_PROFILES de scripts/balance-sim.ts). D'où 12 % à légendaire
-// niveau 1, qui redonne 25.2 % au niveau 12. La vitesse est plafonnée plus
-// bas : sous ATB elle multiplie le rendement au lieu de s'y ajouter.
-// Le plancher des raretés basses est relevé par rapport à la courbe des
-// barèmes plats (qui donnerait 1.9 % à commune) pour qu'une principale en
-// pourcentage ne vaille jamais moins qu'une sous-stat du même type (3-8 %).
+// Les barèmes en pourcentage (hpPct/atkPct/defPct) ont été DOUBLÉS le
+// 2026-10-07 (24 % à légendaire niveau 1, 50 % au niveau 12). À 12 %, une
+// arme légendaire niveau 12 en % ne battait sa version plate (+242 ATQ)
+// qu'au-delà de ~970 ATQ, soit le palier 5 pour une carte légendaire et
+// jamais pour une commune : le % était un piège. Doublé, et avec les stats
+// de base relevées par archétype (scripts/rebalance-cards.py), la bascule
+// tombe vers le palier 3-4 pour le rôle qui porte la stat — un Mage veut de
+// l'ATQ %, un Tank des PV et de la DEF %, une carte de bas niveau du plat.
+//
+// La DEF a son PROPRE barème plat, ~2,3× sous celui de l'ATQ. La réduction
+// de dégâts vaut DEF / (référence + DEF), où la référence suit le niveau et
+// le palier de la carte (`mitigationRefFor`) : un bonus plat pèse donc
+// énormément en début de jeu (référence ~180 au niveau 10) et plus rien en
+// fin (~1 670 au niveau 70). Au barème de l'ATQ, une armure légendaire
+// faisait passer un Tank niveau 10 de 25 % à 76 % de réduction.
 const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
   atkFlat: { COMMON: 18, UNCOMMON: 28, RARE: 45, EPIC: 72, LEGENDARY: 115 },
-  defFlat: { COMMON: 18, UNCOMMON: 28, RARE: 45, EPIC: 72, LEGENDARY: 115 },
+  defFlat: { COMMON: 8, UNCOMMON: 12, RARE: 20, EPIC: 32, LEGENDARY: 50 },
   // Divisé par ~5 : la vitesse ne suivant plus le niveau, une pièce se compare
   // désormais à une base d'environ 100 et non à une base gonflée par la
   // progression. À l'ancien barème, un seul anneau légendaire niveau 12
   // donnait +130, soit plus du double de la vitesse d'une carte.
   spdFlat: { COMMON: 2, UNCOMMON: 3, RARE: 5, EPIC: 8, LEGENDARY: 12 },
   hpFlat: { COMMON: 80, UNCOMMON: 130, RARE: 210, EPIC: 340, LEGENDARY: 540 },
-  hpPct: { COMMON: 3, UNCOMMON: 4.5, RARE: 6.5, EPIC: 9, LEGENDARY: 12 },
-  atkPct: { COMMON: 3, UNCOMMON: 4.5, RARE: 6.5, EPIC: 9, LEGENDARY: 12 },
-  defPct: { COMMON: 3, UNCOMMON: 4.5, RARE: 6.5, EPIC: 9, LEGENDARY: 12 },
+  hpPct: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },
+  atkPct: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },
+  defPct: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },
   critRatePct: { COMMON: 6, UNCOMMON: 9, RARE: 14, EPIC: 21, LEGENDARY: 32 },
   critDmgPct: { COMMON: 12, UNCOMMON: 19, RARE: 30, EPIC: 46, LEGENDARY: 70 },
   armorPenPct: { COMMON: 7, UNCOMMON: 11, RARE: 17, EPIC: 26, LEGENDARY: 40 },

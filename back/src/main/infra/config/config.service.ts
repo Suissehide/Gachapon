@@ -186,7 +186,11 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // Baissé de 30 % le 2026-10-02 (162000 avant) : le boss tombait trop
   // rarement. La carte épique du palier 100 % ne vient plus qu'aux niveaux
   // difficiles (RAID_EPIC_CARD_MIN_LEVEL, raid.definitions.ts).
-  'raid.baseHpPerMember': 113400,
+  // ×1,35 le 2026-10-07 (113400 avant) : la hausse des stats de base par
+  // archétype et le doublement des % d'équipement font monter de 35 % les
+  // dégâts de l'équipe de référence (épiques palier 5, équipement réel du
+  // harnais balance-calibration.ts) ; la difficulté du raid est inchangée.
+  'raid.baseHpPerMember': 153000,
   // Effectif MINIMUM facturé dans les PV du boss, même pour une équipe plus
   // petite : sans lui, monter une équipe à un joueur donnait un boss à sa
   // taille et les quatre paliers toutes les semaines.
@@ -233,7 +237,9 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // 540 points, soit ~1060 avec les tirages et les duels — l'ordre de grandeur de
   // la maquette (1180 pour le meilleur contributeur). A 2, un membre marquait
   // 81000 points et l'equipe touchait le niveau 50 en moins de deux semaines.
-  'teamPoints.damagePerPoint': 300,
+  // 405 depuis le 2026-10-07 : suit raid.baseHpPerMember (x1,35), pour que la
+  // part de raid d'un membre vaille toujours ~540 points.
+  'teamPoints.damagePerPoint': 405,
   // Duels et paris rapportent DÉLIBÉRÉMENT peu. Ils sont bon marché à
   // lancer : un duel se règle dès que les deux joueurs ont fait leurs 5
   // tirages — quelques minutes pour qui en fait 60 par jour — et un parieur

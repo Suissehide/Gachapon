@@ -21,20 +21,17 @@ import {
 } from '../../main/domain/content/campaign.definitions'
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
-  it('stage 1-1 : valeur ancre exacte (scale=1, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {101,20,5,89}, scale = 1, NORMAL_FACTOR = 0,971.
-    // hp: 101×0.971 = 98.07 → 98 ; atk: 20×0.971 = 19.42 → 19
-    // def: 5×0.971 = 4.855 → 5 ; spd: 89 tel quel — la vitesse échappe au
-    // facteur ET à l'échelle, elle reste la base de rareté.
-    //
-    // Le durcissement (et la compensation du gel de la vitesse) passent par la
-    // MONTÉE progressive, neutre jusqu'à l'étage 10 : le tout premier combat
-    // garde donc ses valeurs d'origine. Appliqués à plat, ils le rendaient
-    // ingagnable avec trois communes médiocres.
+  it('stage 1-1 : valeur ancre exacte (ancre 166 PV, NORMAL_FACTOR=0.971)', () => {
+    // rb = COMMON {124,24,14,89}, scale = 166 / 124 (première ancre de PV,
+    // refit du 2026-10-07 après la hausse des stats par archétype),
+    // NORMAL_FACTOR = 0,971.
+    // hp: 166×0.971 = 161.2 → 161 ; atk: 24×0.971×1.3387 = 31.2 → 31
+    // def: 14×0.971×1.3387 = 18.2 → 18 ; spd: 89 tel quel — la vitesse
+    // échappe au facteur ET à l'échelle, elle reste la base de rareté.
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 98,
-      baseAtk: 19,
-      baseDef: 5,
+      baseHp: 161,
+      baseAtk: 31,
+      baseDef: 18,
       baseSpd: 89,
     })
   })
@@ -68,8 +65,8 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', 
 })
 
 describe('enemyScale — courbe à ancres, sans marche', () => {
-  it("l'étage 1 est l'ancre : scale = 1", () => {
-    expect(enemyScale(1)).toBeCloseTo(1, 10)
+  it("l'étage 1 est l'ancre : scale = PV de l'ancre / PV de base COMMON", () => {
+    expect(enemyScale(1)).toBeCloseTo(166 / RARITY_BASE.COMMON.hp, 10)
   })
 
   it('aucune marche : PV des étages normaux, frontières de chapitre comprises', () => {
@@ -103,21 +100,24 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     expect(boss.attackPattern).toBe('AOE_3')
     // La vitesse ne suit plus l'échelle : elle vaut la base de rareté.
     expect(boss.baseSpd).toBe(RARITY_BASE.COMMON.spd)
-    // Ancre exacte : COMMON {101,20,5,89}, BOSS_FACTOR = 0,92, et l'échelle
-    // du boss = enemyScale(10) × bossGearCompensation(1). Pour ce boss-là, le
-    // second facteur le maintient à ses PV de tutoriel, sous la cible de
-    // 70 % des huit autres.
+    // Ancre exacte : base COMMON, BOSS_FACTOR = 0,92, et l'échelle du boss =
+    // enemyScale(10) × bossGearCompensation(1). Pour ce boss-là, le second
+    // facteur le cale sur la cible du tutoriel (~92 %), au-dessus des 65 %
+    // des huit autres.
+    const rb = RARITY_BASE.COMMON
     const echelle = enemyScale(10) * bossGearCompensation(1)
     expect(boss).toMatchObject({
-      baseHp: Math.round(101 * 3.25 * 0.92 * echelle),
-      baseAtk: Math.round(20 * 0.92 * echelle),
-      baseDef: Math.round(5 * 1.2 * 0.92 * echelle),
+      baseHp: Math.round(rb.hp * 3.25 * 0.92 * echelle),
+      baseAtk: Math.round(rb.atk * 0.92 * echelle),
+      baseDef: Math.round(rb.def * 1.2 * 0.92 * echelle),
       baseSpd: 89,
       attackPattern: 'AOE_3',
     })
-    // …et ces valeurs restent celles d'un boss de tutoriel.
-    expect(boss.baseHp).toBeGreaterThan(500)
-    expect(boss.baseHp).toBeLessThan(700)
+    // …et ces valeurs restent celles d'un boss de tutoriel : ~1 700 PV
+    // depuis le refit du 2026-10-07 (645 avant), pour des cartes communes
+    // aux PV et à l'équipement relevés.
+    expect(boss.baseHp).toBeGreaterThan(1400)
+    expect(boss.baseHp).toBeLessThan(2000)
   })
 
   it('pour chaque chapitre (1-9) : solo, AOE_3, PV > ennemi normal du stage 9', () => {
@@ -390,11 +390,20 @@ describe("compensation d'équipement — la campagne mesurée contre un joueur �
     // quasi binaire des stats (23 % d'écart entre 90 % et 10 % de victoire),
     // et ce test doit signaler une DÉRIVE, pas du bruit d'échantillonnage.
     // Le chapitre 1 est exclu : c'est un tutoriel, volontairement gagné.
+    //
+    // Trois étages sont PLUS FACILES que la cible par construction, et
+    // documentés comme tels sur NORMAL_HP_ANCHORS : le chapitre 5 (deux
+    // familles seulement, la mesure y réclame ×1,8 d'un coup que le
+    // plafond de pas refuse) et celui du 6 (joueur qui stagne, mesure
+    // décroissante). Le plafond haut ne s'y applique pas ; le plancher, si.
+    const plusFaciles = new Set(['5-1', '5-5', '5-9', '6-1'])
     for (let chapitre = 2; chapitre <= 9; chapitre++) {
       for (const index of [1, 5, 9]) {
         const mesure = campaignWinRate({ chapter: chapitre, index, runs: 60 })
         expect(mesure).toBeGreaterThanOrEqual(CAMPAIGN_TARGETS.normal - 0.18)
-        expect(mesure).toBeLessThanOrEqual(CAMPAIGN_TARGETS.normal + 0.12)
+        if (!plusFaciles.has(`${chapitre}-${index}`)) {
+          expect(mesure).toBeLessThanOrEqual(CAMPAIGN_TARGETS.normal + 0.12)
+        }
       }
     }
   })
