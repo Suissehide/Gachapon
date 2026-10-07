@@ -508,7 +508,7 @@ export const CARDS = [
     baseDef: 30,
     baseSpd: 106,
     element: 'LIGHT',
-    passiveKey: 'NEMESIS',
+    passiveKey: 'STUN',
   }, // Combattant
   {
     id: 'HUM-038',

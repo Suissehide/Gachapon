@@ -30,6 +30,10 @@ export type PassiveKey =
   // --- Famille provocation / ciblage ---
   | 'GUARDIAN'
   | 'HUNT'
+  // --- Famille contrôle / affaiblissement ---
+  | 'STUN'
+  | 'WEAKEN'
+  | 'SUNDER'
 
 export interface PassiveEffect {
   /**
@@ -451,6 +455,52 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     describe(palier) {
       return localizedDescribe('HUNT', clampPalier(palier))
+    },
+  },
+
+  // -------------------------------------------------------------------------
+  // Famille contrôle / affaiblissement
+  // -------------------------------------------------------------------------
+  STUN: {
+    key: 'STUN',
+    rarityHint: 'LEGENDARY',
+    get label() {
+      return localizedLabel('STUN')
+    },
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 23 + 7 * p } // chance d'étourdir la cible
+    },
+    describe(palier) {
+      return localizedDescribe('STUN', clampPalier(palier))
+    },
+  },
+  WEAKEN: {
+    key: 'WEAKEN',
+    rarityHint: 'EPIC',
+    get label() {
+      return localizedLabel('WEAKEN')
+    },
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 10 + 2 * p } // ATQ retirée à la cible
+    },
+    describe(palier) {
+      return localizedDescribe('WEAKEN', clampPalier(palier))
+    },
+  },
+  SUNDER: {
+    key: 'SUNDER',
+    rarityHint: 'EPIC',
+    get label() {
+      return localizedLabel('SUNDER')
+    },
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 30 + 9 * p } // DEF retirée à la cible
+    },
+    describe(palier) {
+      return localizedDescribe('SUNDER', clampPalier(palier))
     },
   },
 }

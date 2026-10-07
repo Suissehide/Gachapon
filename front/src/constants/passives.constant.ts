@@ -198,6 +198,27 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
       return i18n.t('passives:HUNT.describe', { value: 28 + 7 * p })
     },
   },
+  STUN: {
+    name: i18n.t('passives:STUN.name'),
+    describe: (palier) => {
+      const p = clampPalierForPassiveDisplay(palier)
+      return i18n.t('passives:STUN.describe', { value: 23 + 7 * p })
+    },
+  },
+  WEAKEN: {
+    name: i18n.t('passives:WEAKEN.name'),
+    describe: (palier) => {
+      const p = clampPalierForPassiveDisplay(palier)
+      return i18n.t('passives:WEAKEN.describe', { value: 10 + 2 * p })
+    },
+  },
+  SUNDER: {
+    name: i18n.t('passives:SUNDER.name'),
+    describe: (palier) => {
+      const p = clampPalierForPassiveDisplay(palier)
+      return i18n.t('passives:SUNDER.describe', { value: 30 + 9 * p })
+    },
+  },
 }
 
 export const describePassive = (

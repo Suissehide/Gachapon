@@ -22,6 +22,20 @@ describe('passives', () => {
       expect(PASSIVES.HUNT.compute(6).valuePct).toBe(70)
     })
   })
+  describe('famille contrôle / affaiblissement', () => {
+    it('STUN : 30% at P1, 65% at P6 (chance d étourdir)', () => {
+      expect(PASSIVES.STUN.compute(1).valuePct).toBe(30)
+      expect(PASSIVES.STUN.compute(6).valuePct).toBe(65)
+    })
+    it('WEAKEN : 12% at P1, 22% at P6 (ATQ retirée)', () => {
+      expect(PASSIVES.WEAKEN.compute(1).valuePct).toBe(12)
+      expect(PASSIVES.WEAKEN.compute(6).valuePct).toBe(22)
+    })
+    it('SUNDER : 39% at P1, 84% at P6 (DEF retirée)', () => {
+      expect(PASSIVES.SUNDER.compute(1).valuePct).toBe(39)
+      expect(PASSIVES.SUNDER.compute(6).valuePct).toBe(84)
+    })
+  })
   describe('CRIT', () => {
     // Tâche 9 : la magnitude (chance de critique) est cédée à critRate/critDmg.
     // Le passif ne porte plus que la cadence, fixe, indépendante du palier.

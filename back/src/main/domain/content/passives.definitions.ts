@@ -220,4 +220,32 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     describeEn: (p) =>
       `Marks the target of its first hit: while it lives, its team's attacks target it with a ${28 + 7 * p}% chance`,
   },
+
+  // -------------------------------------------------------------------------
+  // Famille contrôle / affaiblissement
+  // -------------------------------------------------------------------------
+  STUN: {
+    labelFr: 'Étourdissement',
+    labelEn: 'Stun',
+    describeFr: (p) =>
+      `Chaque coup a ${23 + 7 * p} % de chance d'étourdir la cible, qui saute sa prochaine action`,
+    describeEn: (p) =>
+      `Each hit has a ${23 + 7 * p}% chance to stun the target, which skips its next action`,
+  },
+  WEAKEN: {
+    labelFr: 'Affaiblissement',
+    labelEn: 'Weaken',
+    describeFr: (p) =>
+      `Chaque coup réduit de ${10 + 2 * p} % l'ATQ de la cible pendant ses 2 prochaines actions`,
+    describeEn: (p) =>
+      `Each hit lowers the target's ATK by ${10 + 2 * p}% for its next 2 actions`,
+  },
+  SUNDER: {
+    labelFr: 'Brise-armure',
+    labelEn: 'Sunder',
+    describeFr: (p) =>
+      `Chaque coup réduit de ${30 + 9 * p} % la DEF de la cible pendant ses 2 prochaines actions`,
+    describeEn: (p) =>
+      `Each hit lowers the target's DEF by ${30 + 9 * p}% for its next 2 actions`,
+  },
 }

@@ -1515,6 +1515,63 @@ describe('passifs dynamiques — collision avec les stats', () => {
   })
 })
 
+describe('famille contrôle / affaiblissement', () => {
+  const actions = (log: LogEntry[], id: string) =>
+    log.filter((e) => e.type === 'ATTACK' && e.attackerId === id).length
+
+  it('STUN fait sauter des actions, jamais deux de suite', () => {
+    const r = simulateBattle({
+      seed: 'stun',
+      teamA: [makeUnit('A0', { hp: 1_000_000, atk: 1, spd: 300, passiveKey: 'STUN', palier: 6 })],
+      teamB: [makeUnit('B0', { hp: 1_000_000, atk: 1, spd: 100 })],
+      timeoutTurns: 30,
+    })
+    const sautes = r.log.filter(
+      (e) => e.type === 'PASSIVE' && e.passive === 'STUN' && e.unitId === 'B0',
+    ).length
+    expect(sautes).toBeGreaterThan(0)
+    // Insensible après un saut : B0 joue au moins une fois entre deux sauts.
+    expect(actions(r.log, 'B0')).toBeGreaterThanOrEqual(sautes - 1)
+    const sequence = r.log.flatMap((e) =>
+      e.type === 'PASSIVE' && e.passive === 'STUN' && e.unitId === 'B0'
+        ? ['saut']
+        : e.type === 'ATTACK' && e.attackerId === 'B0'
+          ? ['action']
+          : [],
+    )
+    expect(sequence.join(' ')).not.toContain('saut saut')
+  })
+
+  // WEAKEN et SUNDER ne consomment aucun tirage prng() : même seed, mêmes coups.
+  const premierCoupDe = (
+    attaquant: string,
+    passifA0: string | null,
+  ): number => {
+    const r = simulateBattle({
+      seed: 'debuff',
+      teamA: [
+        makeUnit('A0', { hp: 1_000_000, atk: 100, spd: 999, critRate: 0, passiveKey: passifA0, palier: 6 }),
+        makeUnit('A1', { hp: 1_000_000, atk: 100, spd: 500, critRate: 0 }),
+      ],
+      teamB: [makeUnit('B0', { hp: 1_000_000, atk: 100, def: 100, spd: 100, critRate: 0 })],
+      timeoutTurns: 2,
+    })
+    const coup = r.log.find((e) => e.type === 'ATTACK' && e.attackerId === attaquant)
+    if (coup?.type !== 'ATTACK') {
+      throw new Error(`aucun coup de ${attaquant}`)
+    }
+    return coup.damages[0]!.final
+  }
+
+  it('WEAKEN réduit les dégâts infligés par la cible', () => {
+    expect(premierCoupDe('B0', 'WEAKEN')).toBeLessThan(premierCoupDe('B0', null))
+  })
+
+  it('SUNDER fait frapper plus fort toute l équipe sur la cible', () => {
+    expect(premierCoupDe('A1', 'SUNDER')).toBeGreaterThan(premierCoupDe('A1', null))
+  })
+})
+
 const MAX_CHARGES = 5
 
 describe('passifs dynamiques — anciens bâtons de stats', () => {

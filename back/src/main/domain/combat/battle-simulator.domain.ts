@@ -201,6 +201,16 @@ interface DotEffect {
   turnsLeft: number
 }
 
+/** Baisse temporaire d'une stat (WEAKEN : ATQ, SUNDER : DEF). */
+interface Debuff {
+  pct: number
+  /** Actions restantes de l'unité affaiblie. */
+  turnsLeft: number
+}
+
+/** Durée de WEAKEN et SUNDER, en actions de la cible. */
+const DEBUFF_TURNS = 2
+
 interface BattleUnit {
   id: string
   side: Side
@@ -241,6 +251,12 @@ interface BattleUnit {
   huntedBy: Side | null
   /** Le coup en cours a été attiré par TAUNT : dégâts réduits, voir resolveAttackOnTarget. */
   taunted: boolean
+  /** STUN : saute sa prochaine action. */
+  stunned: boolean
+  /** Vient de sauter une action : insensible à STUN jusqu'à sa prochaine action jouée. */
+  stunImmune: boolean
+  weaken: Debuff | null
+  sunder: Debuff | null
 }
 
 function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
@@ -288,6 +304,10 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     vengeanceMark: 0,
     huntedBy: null,
     taunted: false,
+    stunned: false,
+    stunImmune: false,
+    weaken: null,
+    sunder: null,
   }
 }
 
@@ -572,7 +592,13 @@ function resolveFortifyMult(target: BattleUnit): number {
 
 function resolveEffectiveDef(attacker: BattleUnit, target: BattleUnit): number {
   const armorPenPct = Math.max(0, Math.min(100, attacker.armorPen))
-  return target.def * resolveFortifyMult(target) * (1 - armorPenPct / 100)
+  const sunderPct = target.sunder?.pct ?? 0
+  return (
+    target.def *
+    resolveFortifyMult(target) *
+    (1 - sunderPct / 100) *
+    (1 - armorPenPct / 100)
+  )
 }
 
 /**
@@ -735,6 +761,14 @@ function resolveEmpowerMult(attacker: BattleUnit): number {
   )
 }
 
+/** ATQ du coup : EMPOWER (charges) et WEAKEN (affaiblissement subi). */
+function resolveAttackerAtk(attacker: BattleUnit): number {
+  const weakenPct = attacker.weaken?.pct ?? 0
+  return (
+    attacker.effectiveAtk * resolveEmpowerMult(attacker) * (1 - weakenPct / 100)
+  )
+}
+
 function resolveAttackOnTarget(
   attacker: BattleUnit,
   target: BattleUnit,
@@ -766,7 +800,7 @@ function resolveAttackOnTarget(
   const effectiveDef = resolveEffectiveDef(attacker, target)
 
   let raw = computeRawDamage(
-    attacker.effectiveAtk * resolveEmpowerMult(attacker),
+    resolveAttackerAtk(attacker),
     effectiveDef,
     target.mitigationRef,
     prng,
@@ -827,6 +861,7 @@ function resolveAttackOnTarget(
   if (final > 0) {
     applyDotOnHit(attacker, target, log)
     applyHamper(attacker, target, log)
+    applyControlOnHit(attacker, target, prng, log)
   }
 
   // lifesteal (attaquant) — soin sur les dégâts infligés, borné aux PV max.
@@ -1069,6 +1104,60 @@ function applyHamper(
     passive: 'HAMPER',
     payload: { pushedPct: attacker.passiveValuePct },
   })
+}
+
+/**
+ * Contrôle sur un coup qui inflige des dégâts :
+ * - STUN : X % de chance que la cible saute sa prochaine action (tirage
+ *   prng() seulement pour un porteur, et jamais sur une cible insensible) ;
+ * - WEAKEN / SUNDER : -X % d'ATQ / de DEF pendant DEBUFF_TURNS actions de la
+ *   cible, durée renouvelée à chaque coup.
+ */
+function applyControlOnHit(
+  attacker: BattleUnit,
+  target: BattleUnit,
+  prng: () => number,
+  log: LogEntry[],
+): void {
+  if (!target.alive) {
+    return
+  }
+  const pct = attacker.passiveValuePct
+  switch (attacker.passiveKey) {
+    case 'STUN':
+      if (target.stunned || target.stunImmune || prng() >= pct / 100) {
+        return
+      }
+      target.stunned = true
+      break
+    case 'WEAKEN':
+      target.weaken = { pct, turnsLeft: DEBUFF_TURNS }
+      break
+    case 'SUNDER':
+      target.sunder = { pct, turnsLeft: DEBUFF_TURNS }
+      break
+    default:
+      return
+  }
+  log.push({
+    type: 'PASSIVE',
+    unitId: attacker.id,
+    passive: attacker.passiveKey,
+    payload: { pct },
+  })
+}
+
+/** Décompte d'une action pour WEAKEN / SUNDER, en fin de tour de l'unité. */
+function tickDebuffs(u: BattleUnit): void {
+  for (const key of ['weaken', 'sunder'] as const) {
+    const debuff = u[key]
+    if (debuff) {
+      debuff.turnsLeft -= 1
+      if (debuff.turnsLeft <= 0) {
+        u[key] = null
+      }
+    }
+  }
 }
 
 /**
@@ -1376,7 +1465,18 @@ function runActorTurn(
   elementMults: ElementMults,
 ): void {
   applyDotsToUnit(actor, log)
-  if (actor.alive) {
+  if (actor.alive && actor.stunned) {
+    // STUN — l'action est perdue ; insensible jusqu'à la prochaine jouée.
+    actor.stunned = false
+    actor.stunImmune = true
+    log.push({
+      type: 'PASSIVE',
+      unitId: actor.id,
+      passive: 'STUN',
+      payload: { skipped: 1 },
+    })
+  } else if (actor.alive) {
+    actor.stunImmune = false
     performUnitAction(actor, units, prng, log, elementMults)
     // Compteur de cadence : incrémenté après l'action, jamais avant — les
     // passifs de cadence (tâche 9) se basent sur (attackCount + 1) % N.
@@ -1390,6 +1490,7 @@ function runActorTurn(
     applyBlessingFromUnit(actor, units, log)
     applySanctuaryFromUnit(actor, units, log)
   }
+  tickDebuffs(actor)
 }
 
 export function simulateBattle(input: SimulatorInput): SimulatorResult {

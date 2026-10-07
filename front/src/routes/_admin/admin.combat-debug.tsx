@@ -57,6 +57,9 @@ const PASSIVE_KEYS = [
   'MOMENTUM',
   'GUARDIAN',
   'HUNT',
+  'STUN',
+  'WEAKEN',
+  'SUNDER',
 ] as const
 
 const DEFAULT_TEAM_A: SimulatorUnit[] = [

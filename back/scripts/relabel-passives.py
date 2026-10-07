@@ -25,6 +25,9 @@ NOUVEAUX_LIBELLES = {
     'TAUNT': 'Provocation',
     'GUARDIAN': 'Garde du corps',
     'HUNT': 'Marque du chasseur',
+    'STUN': 'Étourdissement',
+    'WEAKEN': 'Affaiblissement',
+    'SUNDER': 'Brise-armure',
     'VIGOR': 'Second souffle',
     'HASTE': 'Célérité',
     'FORTIFY': 'Fortification',
@@ -39,7 +42,7 @@ CLES_RENOMMEES = {
     'VAMPIRISM': 'TAUNT',
 }
 
-# Cartes qui changent de passif (migration 20261007120200).
+# Cartes qui changent de passif (migrations 20261007120200 et 20261007120300).
 CARTES_REASSIGNEES = {
     'DEM-030': 'TAUNT',
     'ORC-029': 'TAUNT',
@@ -47,6 +50,12 @@ CARTES_REASSIGNEES = {
     'CEN-034': 'GUARDIAN',
     'MOR-031': 'HUNT',
     'SIR-035': 'HUNT',
+    'DRE-033': 'STUN',
+    'HUM-037': 'STUN',
+    'LAM-031': 'WEAKEN',
+    'FEE-033': 'WEAKEN',
+    'TAB-029': 'SUNDER',
+    'ELF-033': 'SUNDER',
 }
 
 apply = '--apply' in sys.argv

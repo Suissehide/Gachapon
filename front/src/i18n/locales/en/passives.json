@@ -94,5 +94,17 @@
   "HUNT": {
     "name": "Hunter's Mark",
     "describe": "Marks the target of its first hit: while it lives, its team's attacks target it with a {{value}}% chance."
+  },
+  "STUN": {
+    "name": "Stun",
+    "describe": "Each hit has a {{value}}% chance to stun the target, which skips its next action."
+  },
+  "WEAKEN": {
+    "name": "Weaken",
+    "describe": "Each hit lowers the target's ATK by {{value}}% for its next 2 actions."
+  },
+  "SUNDER": {
+    "name": "Sunder",
+    "describe": "Each hit lowers the target's DEF by {{value}}% for its next 2 actions."
   }
 }

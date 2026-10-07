@@ -94,5 +94,17 @@
   "HUNT": {
     "name": "Marque du chasseur",
     "describe": "Marque la cible de son premier coup : tant qu'elle vit, les attaques de son équipe la visent avec {{value}} % de chance."
+  },
+  "STUN": {
+    "name": "Étourdissement",
+    "describe": "Chaque coup a {{value}} % de chance d'étourdir la cible, qui saute sa prochaine action."
+  },
+  "WEAKEN": {
+    "name": "Affaiblissement",
+    "describe": "Chaque coup réduit de {{value}} % l'ATQ de la cible pendant ses 2 prochaines actions."
+  },
+  "SUNDER": {
+    "name": "Brise-armure",
+    "describe": "Chaque coup réduit de {{value}} % la DEF de la cible pendant ses 2 prochaines actions."
   }
 }
