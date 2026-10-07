@@ -33,7 +33,7 @@ const ATTACK_PATTERNS: AttackPattern[] = [
 ]
 
 const PASSIVE_KEYS = [
-  'VAMPIRISM',
+  'TAUNT',
   'AEGIS',
   'BANNER',
   'RIPOSTE',
@@ -55,6 +55,8 @@ const PASSIVE_KEYS = [
   'BURN',
   'POISON',
   'MOMENTUM',
+  'GUARDIAN',
+  'HUNT',
 ] as const
 
 const DEFAULT_TEAM_A: SimulatorUnit[] = [

@@ -1,7 +1,7 @@
 {
-  "VAMPIRISM": {
-    "name": "Vampirism",
-    "describe": "Below 50% HP, its lifesteal is doubled."
+  "TAUNT": {
+    "name": "Taunt",
+    "describe": "Single-target enemy attacks target it with a {{value}}% chance, and those hits deal 55% less damage to it."
   },
   "AEGIS": {
     "name": "Aegis",
@@ -41,7 +41,7 @@
   },
   "BULWARK": {
     "name": "Bulwark",
-    "describe": "Absorbs a shield worth {{value}}% of max HP."
+    "describe": "Starts the battle with a shield worth {{value}}% of its max HP."
   },
   "FURY": {
     "name": "Fury",
@@ -86,5 +86,13 @@
   "MOMENTUM": {
     "name": "Momentum",
     "describe": "After each action, advances the most delayed ally's action gauge by {{value}}%."
+  },
+  "GUARDIAN": {
+    "name": "Bodyguard",
+    "describe": "Redirects {{value}}% of the damage dealt to its allies onto itself, and takes only a fifth of it."
+  },
+  "HUNT": {
+    "name": "Hunter's Mark",
+    "describe": "Marks the target of its first hit: while it lives, its team's attacks target it with a {{value}}% chance."
   }
 }

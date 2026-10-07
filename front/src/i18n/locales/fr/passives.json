@@ -1,7 +1,7 @@
 {
-  "VAMPIRISM": {
-    "name": "Vampirisme",
-    "describe": "Sous 50 % de ses PV, son vol de vie est doublé."
+  "TAUNT": {
+    "name": "Provocation",
+    "describe": "Les attaques ennemies à cible unique le visent avec {{value}} % de chance, et ces coups lui font 55 % de dégâts en moins."
   },
   "AEGIS": {
     "name": "Égide",
@@ -41,7 +41,7 @@
   },
   "BULWARK": {
     "name": "Bouclier",
-    "describe": "Absorbe un bouclier de {{value}} % des PV max."
+    "describe": "Commence le combat avec un bouclier de {{value}} % de ses PV max."
   },
   "FURY": {
     "name": "Furie",
@@ -86,5 +86,13 @@
   "MOMENTUM": {
     "name": "Élan",
     "describe": "Après chaque action, fait avancer de {{value}} % la jauge de l'allié le plus en retard."
+  },
+  "GUARDIAN": {
+    "name": "Garde du corps",
+    "describe": "Détourne sur lui {{value}} % des dégâts subis par ses alliés, et n'en subit qu'un cinquième."
+  },
+  "HUNT": {
+    "name": "Marque du chasseur",
+    "describe": "Marque la cible de son premier coup : tant qu'elle vit, les attaques de son équipe la visent avec {{value}} % de chance."
   }
 }

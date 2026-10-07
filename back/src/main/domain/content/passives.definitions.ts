@@ -26,11 +26,13 @@ function pct(value: number, lang: 'fr' | 'en'): string {
 }
 
 export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
-  VAMPIRISM: {
-    labelFr: 'Vampirisme',
-    labelEn: 'Vampirism',
-    describeFr: () => 'Sous 50 % de ses PV, son vol de vie est doublé',
-    describeEn: () => 'Below 50% HP, its lifesteal is doubled',
+  TAUNT: {
+    labelFr: 'Provocation',
+    labelEn: 'Taunt',
+    describeFr: (p) =>
+      `Les attaques ennemies à cible unique le visent avec ${20 + 5 * p} % de chance, et ces coups lui font 55 % de dégâts en moins`,
+    describeEn: (p) =>
+      `Single-target enemy attacks target it with a ${20 + 5 * p}% chance, and those hits deal 55% less damage to it`,
   },
   AEGIS: {
     labelFr: 'Égide',
@@ -102,8 +104,10 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   BULWARK: {
     labelFr: 'Bouclier',
     labelEn: 'Bulwark',
-    describeFr: (p) => `Absorbe un bouclier de ${25 + 6 * p} % des PV max`,
-    describeEn: (p) => `Absorbs a shield worth ${25 + 6 * p}% of max HP`,
+    describeFr: (p) =>
+      `Commence le combat avec un bouclier de ${25 + 6 * p} % de ses PV max`,
+    describeEn: (p) =>
+      `Starts the battle with a shield worth ${25 + 6 * p}% of its max HP`,
   },
 
   FURY: {
@@ -195,5 +199,25 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
       `Après chaque action, fait avancer de ${20 + 7 * p} % la jauge de l'allié le plus en retard`,
     describeEn: (p) =>
       `After each action, advances the most delayed ally's action gauge by ${20 + 7 * p}%`,
+  },
+
+  // -------------------------------------------------------------------------
+  // Famille provocation / ciblage
+  // -------------------------------------------------------------------------
+  GUARDIAN: {
+    labelFr: 'Garde du corps',
+    labelEn: 'Bodyguard',
+    describeFr: (p) =>
+      `Détourne sur lui ${25 + 6 * p} % des dégâts subis par ses alliés, et n'en subit qu'un cinquième`,
+    describeEn: (p) =>
+      `Redirects ${25 + 6 * p}% of the damage dealt to its allies onto itself, and takes only a fifth of it`,
+  },
+  HUNT: {
+    labelFr: 'Marque du chasseur',
+    labelEn: "Hunter's Mark",
+    describeFr: (p) =>
+      `Marque la cible de son premier coup : tant qu'elle vit, les attaques de son équipe la visent avec ${28 + 7 * p} % de chance`,
+    describeEn: (p) =>
+      `Marks the target of its first hit: while it lives, its team's attacks target it with a ${28 + 7 * p}% chance`,
   },
 }

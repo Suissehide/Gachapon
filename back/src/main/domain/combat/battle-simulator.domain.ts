@@ -133,6 +133,15 @@ function mulberry32(seed: number): () => number {
 // ---------------------------------------------------------------------------
 
 const ACTION_THRESHOLD = 1000
+/**
+ * Part des dégâts réellement subie par un porteur de TAUNT (coups qu'il a
+ * attirés) et de GUARDIAN (part détournée). Sans atténuation, déplacer les
+ * dégâts sur une seule carte affaiblit l'équipe (mesuré : -7 % et -5 %) ;
+ * valeurs calibrées au banc d'essai (scripts/passive-bench.ts). Les textes
+ * de passives.definitions.ts et du front les citent : les garder alignés.
+ */
+const TAUNT_DAMAGE_MULT = 0.45
+const GUARDIAN_DAMAGE_MULT = 0.2
 const BASE_SPD_REF = 100
 /** Plafond d'empilement des passifs de charges (FORTIFY, EMPOWER). */
 const MAX_STACKS = 5
@@ -228,6 +237,10 @@ interface BattleUnit {
   stacks: Record<string, number>
   /** Marque de NEMESIS : 1 = a frappé un ennemi, 2 = en a abattu un. */
   vengeanceMark: 0 | 1 | 2
+  /** Camp dont un porteur de HUNT a marqué cette unité ; null = non marquée. */
+  huntedBy: Side | null
+  /** Le coup en cours a été attiré par TAUNT : dégâts réduits, voir resolveAttackOnTarget. */
+  taunted: boolean
 }
 
 function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
@@ -273,6 +286,8 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     hitsTaken: 0,
     stacks: {},
     vengeanceMark: 0,
+    huntedBy: null,
+    taunted: false,
   }
 }
 
@@ -324,10 +339,62 @@ function preferAdvantagedTargets<T extends { element: string | null }>(
   return advantaged.length > 0 ? advantaged : enemies
 }
 
+/**
+ * Cible imposée avant tout tirage habituel, ou null :
+ * - TAUNT (camp visé) : X % de chance de viser un porteur ;
+ * - HUNT (camp de l'attaquant) : sinon, X % de chance de viser l'ennemi marqué.
+ * Les tirages prng() n'ont lieu que si un porteur existe : sans ces passifs,
+ * la séquence PRNG est inchangée.
+ */
+function forcedTarget(
+  attacker: BattleUnit,
+  enemies: BattleUnit[],
+  units: BattleUnit[],
+  prng: () => number,
+  log: LogEntry[],
+): BattleUnit | null {
+  const taunters = enemies.filter((e) => e.passiveKey === 'TAUNT')
+  if (taunters.length > 0) {
+    const pct = Math.max(...taunters.map((t) => t.passiveValuePct))
+    if (prng() < pct / 100) {
+      const taunter = pickRandom(taunters, 1, prng)[0] ?? null
+      if (taunter) {
+        taunter.taunted = true
+        log.push({
+          type: 'PASSIVE',
+          unitId: taunter.id,
+          passive: 'TAUNT',
+          payload: {},
+        })
+      }
+      return taunter
+    }
+  }
+  const marked = enemies.find((e) => e.huntedBy === attacker.side)
+  const hunters = units.filter(
+    (u) => u.side === attacker.side && u.alive && u.passiveKey === 'HUNT',
+  )
+  if (marked && hunters.length > 0) {
+    const pct = Math.max(...hunters.map((h) => h.passiveValuePct))
+    if (prng() < pct / 100) {
+      log.push({
+        type: 'PASSIVE',
+        unitId: attacker.id,
+        passive: 'HUNT',
+        payload: {},
+      })
+      return marked
+    }
+  }
+  return null
+}
+
 function selectTargets(
   attacker: BattleUnit,
   enemies: BattleUnit[],
+  units: BattleUnit[],
   prng: () => number,
+  log: LogEntry[],
 ): BattleUnit[] {
   if (enemies.length === 0) {
     return []
@@ -336,20 +403,23 @@ function selectTargets(
   if (attacker.attackPattern === 'AOE_3') {
     return [...enemies]
   }
-  const preferred = preferAdvantagedTargets(attacker.element, enemies)
+  const forced = forcedTarget(attacker, enemies, units, prng, log)
+  const pool = forced ? enemies.filter((e) => e !== forced) : enemies
+  const preferred = preferAdvantagedTargets(attacker.element, pool)
   switch (attacker.attackPattern) {
     case 'BASIC':
     case 'MONO_AMPLIFIED':
     case 'MONO_DOUBLE':
-      return pickRandom(preferred, 1, prng)
+      return forced ? [forced] : pickRandom(preferred, 1, prng)
     case 'MULTI_2': {
-      const picked = pickRandom(preferred, 2, prng)
-      if (picked.length >= 2) {
-        return picked
+      const wanted = forced ? 1 : 2
+      const picked = pickRandom(preferred, wanted, prng)
+      if (picked.length < wanted) {
+        // Pas assez de cibles avantagées : on complète avec le reste du pool.
+        const rest = pool.filter((e) => !picked.includes(e))
+        picked.push(...pickRandom(rest, wanted - picked.length, prng))
       }
-      // Une seule cible avantagée : on complète avec le reste du pool.
-      const rest = enemies.filter((e) => !picked.includes(e))
-      return [...picked, ...pickRandom(rest, 2 - picked.length, prng)]
+      return forced ? [forced, ...picked] : picked
     }
   }
 }
@@ -405,6 +475,7 @@ function patternDamageMultiplier(pattern: AttackPattern): number {
 
 interface StrikeContext {
   attacker: BattleUnit
+  units: BattleUnit[]
   targets: BattleUnit[]
   prng: () => number
   log: LogEntry[]
@@ -531,25 +602,48 @@ function resolveCrit(
 }
 
 /**
- * lifesteal (attaquant) — VAMPIRISM double ce lifesteal sous 50 % de PV de
- * l'attaquant ; sans lifesteal de base (stuff), le passif ne fait rien — la
- * synergie est voulue.
+ * GUARDIAN — le premier allié vivant de la cible portant le passif (hors la
+ * cible elle-même) détourne X % des dégâts du coup et n'en subit qu'une
+ * part (GUARDIAN_DAMAGE_MULT) : son bouclier d'abord, puis ses PV. Renvoie la part détournée, à retirer des dégâts de la cible.
+ * Journalisé avec `damage` pour que le replay retire ces PV au gardien.
  */
-function resolveLifesteal(attacker: BattleUnit, log: LogEntry[]): number {
-  if (
-    attacker.passiveKey !== 'VAMPIRISM' ||
-    attacker.currentHp >= attacker.maxHp / 2 ||
-    attacker.lifesteal <= 0
-  ) {
-    return attacker.lifesteal
+function applyGuardian(
+  target: BattleUnit,
+  units: BattleUnit[],
+  final: number,
+  log: LogEntry[],
+): number {
+  if (final <= 0) {
+    return 0
   }
+  const guardian = units.find(
+    (u) =>
+      u.side === target.side &&
+      u.alive &&
+      u.id !== target.id &&
+      u.passiveKey === 'GUARDIAN',
+  )
+  if (!guardian) {
+    return 0
+  }
+  const taken = Math.round((final * guardian.passiveValuePct) / 100)
+  if (taken <= 0) {
+    return 0
+  }
+  const subi = Math.round(taken * GUARDIAN_DAMAGE_MULT)
+  const absorbed = Math.min(guardian.shield, subi)
+  guardian.shield -= absorbed
+  guardian.currentHp = Math.max(0, guardian.currentHp - (subi - absorbed))
   log.push({
     type: 'PASSIVE',
-    unitId: attacker.id,
-    passive: 'VAMPIRISM',
-    payload: {},
+    unitId: guardian.id,
+    passive: 'GUARDIAN',
+    payload: { damage: subi - absorbed },
   })
-  return attacker.lifesteal * 2
+  if (guardian.currentHp <= 0) {
+    finalizeDeath(guardian, log)
+  }
+  return taken
 }
 
 /**
@@ -644,11 +738,17 @@ function resolveEmpowerMult(attacker: BattleUnit): number {
 function resolveAttackOnTarget(
   attacker: BattleUnit,
   target: BattleUnit,
+  units: BattleUnit[],
   prng: () => number,
   log: LogEntry[],
   patternMultiplier: number,
   elementMults: ElementMults,
 ): DamageEntry {
+  // TAUNT — lu et remis à zéro avant l'esquive, pour ne jamais fuir sur un
+  // coup suivant non attiré.
+  const attire = target.taunted
+  target.taunted = false
+
   // AEGIS roll
   if (target.passiveKey === 'AEGIS') {
     const roll = prng()
@@ -679,6 +779,9 @@ function resolveAttackOnTarget(
   }
 
   raw = applyPassiveDamageModifiers(attacker, target, raw, log)
+  if (attire) {
+    raw *= TAUNT_DAMAGE_MULT
+  }
 
   // Roue élémentaire — avantage/désavantage de l'attaquant sur la cible.
   const elMult = elementMultiplier(
@@ -692,6 +795,9 @@ function resolveAttackOnTarget(
   }
 
   let final = Math.round(raw)
+
+  // GUARDIAN (allié de la cible) — encaisse une part des dégâts à sa place.
+  final -= applyGuardian(target, units, final, log)
 
   // BULWARK (target) — le bouclier absorbe les dégâts avant les PV.
   if (target.shield > 0 && final > 0) {
@@ -724,10 +830,8 @@ function resolveAttackOnTarget(
   }
 
   // lifesteal (attaquant) — soin sur les dégâts infligés, borné aux PV max.
-  // VAMPIRISM (tâche 9) double ce lifesteal sous 50 % de PV de l'attaquant.
-  const lifestealEffectif = resolveLifesteal(attacker, log)
-  if (lifestealEffectif > 0 && final > 0) {
-    const soin = Math.round((final * lifestealEffectif) / 100)
+  if (attacker.lifesteal > 0 && final > 0) {
+    const soin = Math.round((final * attacker.lifesteal) / 100)
     const avant = attacker.currentHp
     attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + soin)
     const rendu = attacker.currentHp - avant
@@ -874,7 +978,15 @@ function processDeaths(
 }
 
 function performStrike(ctx: StrikeContext): void {
-  const { attacker, targets, prng, log, patternMultiplier, elementMults } = ctx
+  const {
+    attacker,
+    units,
+    targets,
+    prng,
+    log,
+    patternMultiplier,
+    elementMults,
+  } = ctx
   const damages: DamageEntry[] = []
   const targetIds = targets.map((t) => t.id)
 
@@ -882,6 +994,7 @@ function performStrike(ctx: StrikeContext): void {
     const entry = resolveAttackOnTarget(
       attacker,
       target,
+      units,
       prng,
       log,
       patternMultiplier,
@@ -894,6 +1007,40 @@ function performStrike(ctx: StrikeContext): void {
 
   processRiposteOnSurvivors(attacker, targets, damages, log)
   processDeaths(attacker, targets, log)
+  applyHuntMark(attacker, targets, damages, units, log)
+}
+
+/**
+ * HUNT — sans ennemi marqué vivant, le porteur marque la première cible
+ * survivante qu'il vient de toucher (voir forcedTarget pour l'effet).
+ */
+function applyHuntMark(
+  attacker: BattleUnit,
+  targets: BattleUnit[],
+  damages: DamageEntry[],
+  units: BattleUnit[],
+  log: LogEntry[],
+): void {
+  if (attacker.passiveKey !== 'HUNT' || !attacker.alive) {
+    return
+  }
+  const dejaMarque = units.some(
+    (u) => u.alive && u.side !== attacker.side && u.huntedBy === attacker.side,
+  )
+  if (dejaMarque) {
+    return
+  }
+  const cible = targets.find((t, i) => t.alive && !damages[i]?.dodged)
+  if (!cible) {
+    return
+  }
+  cible.huntedBy = attacker.side
+  log.push({
+    type: 'PASSIVE',
+    unitId: attacker.id,
+    passive: 'HUNT',
+    payload: { marked: 1 },
+  })
 }
 
 /**
@@ -983,12 +1130,13 @@ function performUnitAction(
     if (enemies.length === 0) {
       return
     }
-    const targets = selectTargets(attacker, enemies, prng)
+    const targets = selectTargets(attacker, enemies, units, prng, log)
     if (targets.length === 0) {
       return
     }
     performStrike({
       attacker,
+      units,
       targets,
       prng,
       log,

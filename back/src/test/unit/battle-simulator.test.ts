@@ -261,37 +261,26 @@ describe('simulateBattle', () => {
     expect(dodgeRate).toBeLessThan(0.4)
   })
 
-  // 9. VAMPIRISM ne double le lifesteal que sous 50 % de PV (tâche 9 :
-  // le passif a cédé sa magnitude au lifesteal de stuff, cf. tests dédiés
-  // plus bas dans « passifs dynamiques — collision avec les stats »).
-  // Ce test couvre la branche complémentaire : tant que l'attaquant reste
-  // au-dessus de 50 % de PV, aucun déclenchement ne doit être journalisé,
-  // même s'il inflige des dégâts et porte un lifesteal de base.
-  it("VAMPIRISM ne se déclenche pas tant que l'attaquant reste au-dessus de 50 % de PV", () => {
-    const vamp = makeUnit('A0', {
-      hp: 1_000_000,
-      atk: 200,
-      lifesteal: 10,
-      spd: 999,
-      passiveKey: 'VAMPIRISM',
-      palier: 6,
-    })
-    const enemy = makeUnit('B0', {
-      hp: 100000,
-      atk: 300,
-      def: 0,
-      spd: 300,
-    })
-    const result = simulateBattle({
-      teamA: [vamp],
-      teamB: [enemy],
-      seed: 'vamp-above-half',
-      timeoutTurns: 8,
-    })
-    const vampLogs = result.log.filter(
-      (e) => e.type === 'PASSIVE' && e.passive === 'VAMPIRISM',
-    )
-    expect(vampLogs.length).toBe(0)
+  // 9. TAUNT — attire les coups à cible unique, et ces coups font moins mal.
+  it('TAUNT attire les coups à cible unique sur le porteur', () => {
+    const coupsSur = (passiveKey: string | null) => {
+      const r = simulateBattle({
+        seed: 'taunt',
+        teamA: [makeUnit('A0', { atk: 1, spd: 999 })],
+        teamB: [
+          makeUnit('B0', { hp: 1_000_000, spd: 1, passiveKey, palier: 6 }),
+          makeUnit('B1', { hp: 1_000_000, spd: 1 }),
+        ],
+        timeoutTurns: 2,
+      })
+      const cibles = r.log.flatMap((e) =>
+        e.type === 'ATTACK' && e.attackerId === 'A0' ? e.targetIds : [],
+      )
+      return cibles.filter((id) => id === 'B0').length / cibles.length
+    }
+    // Sans passif ~50 % ; avec 50 % de provocation, ~75 %.
+    expect(coupsSur(null)).toBeLessThan(0.6)
+    expect(coupsSur('TAUNT')).toBeGreaterThan(0.65)
   })
 
   // 10. RIPOSTE reflects damage
@@ -1458,77 +1447,71 @@ describe('passifs dynamiques — collision avec les stats', () => {
     ).toBe(true)
   })
 
-  it('VAMPIRISM double le vol de vie sous 50 % de PV', () => {
-    const r = simulateBattle({
-      seed: 'vamp',
-      teamA: [
-        makeUnit('A0', {
-          passiveKey: 'VAMPIRISM',
-          hp: 1000,
-          lifesteal: 10,
-          atk: 200,
-        }),
-      ],
-      teamB: [makeUnit('B0', { hp: 100000, atk: 300, spd: 300 })],
-    })
-    expect(
-      r.log.some((e) => e.type === 'PASSIVE' && e.passive === 'VAMPIRISM'),
-    ).toBe(true)
-  })
-
-  // Relecture round 1 : le test ci-dessus ne prouve que le déclenchement
-  // (présence du log PASSIVE), pas la magnitude du soin. Test différentiel :
-  // même fixture, même seed, avec et sans le passif. VAMPIRISM (resolveLifesteal)
-  // ne consomme aucun tirage prng() — c'est un pur calcul — donc les dégâts
-  // infligés et le nombre de soins sont rigoureusement identiques entre les
-  // deux parties ; seule la magnitude de chaque soin doit différer, d'un
-  // facteur exactement 2.
-  it('VAMPIRISM double effectivement le MONTANT du soin, pas seulement le déclenchement', () => {
-    const lifesteal = 10
-    const build = (passiveKey: string | null): SimulatorInput => ({
-      seed: 'vamp-magnitude',
-      teamA: [makeUnit('A0', { hp: 1000, atk: 200, lifesteal, passiveKey })],
-      teamB: [makeUnit('B0', { hp: 100000, atk: 300, spd: 300 })],
-      timeoutTurns: 10,
-    })
-
-    const withVamp = simulateBattle(build('VAMPIRISM'))
-    const withoutVamp = simulateBattle(build(null))
-
-    const healsWith = withVamp.log.filter(
-      (e) => e.type === 'HEAL' && e.unitId === 'A0',
+  it('GUARDIAN détourne une part des dégâts d un allié et n en subit qu un cinquième', () => {
+    // GUARDIAN ne consomme aucun tirage prng() : même seed, mêmes coups.
+    const build = (passiveKey: string | null) =>
+      simulateBattle({
+        seed: 'guardian',
+        teamA: [
+          makeUnit('A0', { hp: 1_000_000, atk: 1, spd: 1, passiveKey, palier: 6 }),
+          makeUnit('A1', { hp: 1_000_000, atk: 1, spd: 1 }),
+        ],
+        teamB: [makeUnit('B0', { atk: 1000, spd: 999, critRate: 0 })],
+        timeoutTurns: 2,
+      }).log
+    const coupsSurA1 = (log: LogEntry[]) =>
+      log.flatMap((e) =>
+        e.type === 'ATTACK' ? e.damages.filter((d) => d.id === 'A1') : [],
+      )
+    const sans = coupsSurA1(build(null))
+    const avecLog = build('GUARDIAN')
+    const avec = coupsSurA1(avecLog)
+    expect(avec.length).toBeGreaterThan(0)
+    expect(avec.length).toBe(sans.length)
+    // Palier 6 : 61 % détournés, A1 n'en garde que 39 %.
+    expect(avec[0]?.final).toBe(sans[0]!.final - Math.round(sans[0]!.final * 0.61))
+    const garde = avecLog.find(
+      (e) => e.type === 'PASSIVE' && e.passive === 'GUARDIAN',
     )
-    const healsWithout = withoutVamp.log.filter(
-      (e) => e.type === 'HEAL' && e.unitId === 'A0',
-    )
-
-    expect(healsWith.length).toBeGreaterThan(0)
-    expect(healsWith.length).toBe(healsWithout.length)
-
-    for (let i = 0; i < healsWith.length; i++) {
-      const avecPassif = healsWith[i]
-      const sansPassif = healsWithout[i]
-      if (avecPassif?.type !== 'HEAL' || sansPassif?.type !== 'HEAL') {
-        throw new Error('structure de log inattendue')
-      }
-      expect(avecPassif.amount).toBe(sansPassif.amount * 2)
+    if (garde?.type !== 'PASSIVE') {
+      throw new Error('GUARDIAN non journalisé')
     }
+    expect(garde.payload.damage).toBe(
+      Math.round(Math.round(sans[0]!.final * 0.61) * 0.2),
+    )
   })
 
-  it('VAMPIRISM ne fait rien sans lifesteal — synergie stuff obligatoire', () => {
+  it('HUNT concentre les attaques de l équipe sur la cible marquée', () => {
     const r = simulateBattle({
-      seed: 'vamp0',
+      seed: 'hunt',
       teamA: [
-        makeUnit('A0', {
-          passiveKey: 'VAMPIRISM',
-          hp: 1000,
-          lifesteal: 0,
-          atk: 200,
-        }),
+        makeUnit('A0', { atk: 1, spd: 100, passiveKey: 'HUNT', palier: 6 }),
+        makeUnit('A1', { atk: 1, spd: 100 }),
       ],
-      teamB: [makeUnit('B0', { hp: 100000, atk: 300, spd: 300 })],
+      teamB: [
+        makeUnit('B0', { hp: 1_000_000, spd: 1 }),
+        makeUnit('B1', { hp: 1_000_000, spd: 1 }),
+        makeUnit('B2', { hp: 1_000_000, spd: 1 }),
+      ],
+      timeoutTurns: 40,
     })
-    expect(r.log.some((e) => e.type === 'HEAL')).toBe(false)
+    const marque = r.log.findIndex(
+      (e) => e.type === 'PASSIVE' && e.passive === 'HUNT' && e.payload.marked,
+    )
+    expect(marque).toBeGreaterThanOrEqual(0)
+    const premierCoup = r.log.find(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    if (premierCoup?.type !== 'ATTACK') {
+      throw new Error('aucun coup de A0')
+    }
+    const marquee = premierCoup.targetIds[0]
+    const suivants = r.log
+      .slice(marque + 1)
+      .flatMap((e) => (e.type === 'ATTACK' && e.attackerId === 'A1' ? e.targetIds : []))
+    // Sans marque, un tiers ; palier 6 : 70 % + 30 % × 1/3 ≈ 80 %.
+    const part = suivants.filter((id) => id === marquee).length / suivants.length
+    expect(part).toBeGreaterThan(0.6)
   })
 })
 

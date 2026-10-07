@@ -25,12 +25,12 @@ function clampPalierForPassiveDisplay(palier: number): number {
 }
 
 export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
-  VAMPIRISM: {
-    name: i18n.t('passives:VAMPIRISM.name'),
-    // La magnitude du vol de vie appartient désormais au stuff (lifesteal) :
-    // ce passif ne dépend plus du palier, il apporte un doublement
-    // conditionnel sous 50 % de PV.
-    describe: () => i18n.t('passives:VAMPIRISM.describe'),
+  TAUNT: {
+    name: i18n.t('passives:TAUNT.name'),
+    describe: (palier) => {
+      const p = clampPalierForPassiveDisplay(palier)
+      return i18n.t('passives:TAUNT.describe', { value: 20 + 5 * p })
+    },
   },
   AEGIS: {
     name: i18n.t('passives:AEGIS.name'),
@@ -182,6 +182,20 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:MOMENTUM.describe', { value: 20 + 7 * p })
+    },
+  },
+  GUARDIAN: {
+    name: i18n.t('passives:GUARDIAN.name'),
+    describe: (palier) => {
+      const p = clampPalierForPassiveDisplay(palier)
+      return i18n.t('passives:GUARDIAN.describe', { value: 25 + 6 * p })
+    },
+  },
+  HUNT: {
+    name: i18n.t('passives:HUNT.name'),
+    describe: (palier) => {
+      const p = clampPalierForPassiveDisplay(palier)
+      return i18n.t('passives:HUNT.describe', { value: 28 + 7 * p })
     },
   },
 }

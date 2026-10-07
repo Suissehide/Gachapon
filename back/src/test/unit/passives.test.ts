@@ -8,13 +8,18 @@ import {
 import { runWithLocale } from '../../main/infra/i18n/locale-context'
 
 describe('passives', () => {
-  describe('VAMPIRISM', () => {
-    // Tâche 9 : la magnitude (soin en % des dégâts) est cédée au lifesteal de
-    // stuff. Le passif ne porte plus qu'un facteur de doublement fixe,
-    // indépendant du palier.
-    it('facteur de doublement fixe, quel que soit le palier', () => {
-      expect(PASSIVES.VAMPIRISM.compute(1).valuePct).toBe(100)
-      expect(PASSIVES.VAMPIRISM.compute(6).valuePct).toBe(100)
+  describe('famille provocation / ciblage', () => {
+    it('TAUNT : 25% at P1, 50% at P6 (chance d attirer un coup)', () => {
+      expect(PASSIVES.TAUNT.compute(1).valuePct).toBe(25)
+      expect(PASSIVES.TAUNT.compute(6).valuePct).toBe(50)
+    })
+    it('GUARDIAN : 31% at P1, 61% at P6 (part détournée)', () => {
+      expect(PASSIVES.GUARDIAN.compute(1).valuePct).toBe(31)
+      expect(PASSIVES.GUARDIAN.compute(6).valuePct).toBe(61)
+    })
+    it('HUNT : 35% at P1, 70% at P6 (chance de viser la marque)', () => {
+      expect(PASSIVES.HUNT.compute(1).valuePct).toBe(35)
+      expect(PASSIVES.HUNT.compute(6).valuePct).toBe(70)
     })
   })
   describe('CRIT', () => {
@@ -122,8 +127,7 @@ describe('passives', () => {
   })
 
   describe('clamp', () => {
-    // VAMPIRISM ne dépend plus du palier depuis la tâche 9 (facteur fixe) ;
-    // AEGIS reste palier-dépendant et sert de témoin pour clampPalier().
+    // AEGIS sert de témoin pour clampPalier().
     it('clamps palier below 1 to 1', () => {
       expect(PASSIVES.AEGIS.compute(0).valuePct).toBe(11)
       expect(PASSIVES.AEGIS.compute(-3).valuePct).toBe(11)
@@ -137,7 +141,8 @@ describe('passives', () => {
   describe('rarityHint', () => {
     it('EPIC passives are tagged EPIC', () => {
       const epicKeys: PassiveKey[] = [
-        'VAMPIRISM',
+        'TAUNT',
+        'GUARDIAN',
         'AEGIS',
         'BANNER',
         'RIPOSTE',
@@ -154,6 +159,7 @@ describe('passives', () => {
       expect(PASSIVES.EXECUTION.rarityHint).toBe('LEGENDARY')
       expect(PASSIVES.BLESSING.rarityHint).toBe('LEGENDARY')
       expect(PASSIVES.MOMENTUM.rarityHint).toBe('LEGENDARY')
+      expect(PASSIVES.HUNT.rarityHint).toBe('LEGENDARY')
     })
   })
 
@@ -163,15 +169,19 @@ describe('passives', () => {
         expect(PASSIVES.AEGIS.describe(3)).toContain('17 %')
       })
     })
-    // Tâche 9 : CRIT et VAMPIRISM n'ont plus de magnitude
-    // palier-dépendante — leur describe() est un texte fixe.
-    it('CRIT et VAMPIRISM décrivent un comportement fixe, sans pourcentage de palier', () => {
+    // Tâche 9 : CRIT n'a plus de magnitude palier-dépendante — son
+    // describe() est un texte fixe.
+    it('CRIT décrit un comportement fixe, sans pourcentage de palier', () => {
       runWithLocale('FR', () => {
         expect(PASSIVES.CRIT.describe(1)).toBe(
           'Toutes les 2 attaques, inflige un coup critique garanti',
         )
-        expect(PASSIVES.VAMPIRISM.describe(1)).toBe(
-          'Sous 50 % de ses PV, son vol de vie est doublé',
+      })
+    })
+    it('BULWARK parle des PV max du porteur', () => {
+      runWithLocale('FR', () => {
+        expect(PASSIVES.BULWARK.describe(6)).toBe(
+          'Commence le combat avec un bouclier de 61 % de ses PV max',
         )
       })
     })
@@ -191,8 +201,8 @@ describe('passives', () => {
     })
     it('EN explicite sous runWithLocale', () => {
       runWithLocale('EN', () => {
-        expect(PASSIVES.VAMPIRISM.describe(1)).toBe(
-          'Below 50% HP, its lifesteal is doubled',
+        expect(PASSIVES.CRIT.describe(1)).toBe(
+          'Every 2 attacks, deals a guaranteed critical hit',
         )
       })
     })
@@ -200,7 +210,7 @@ describe('passives', () => {
 
   describe('getPassive()', () => {
     it('returns the definition for a known key', () => {
-      expect(getPassive('VAMPIRISM')).toBe(PASSIVES.VAMPIRISM)
+      expect(getPassive('TAUNT')).toBe(PASSIVES.TAUNT)
     })
     it('returns null for unknown / null / undefined', () => {
       expect(getPassive('UNKNOWN')).toBeNull()

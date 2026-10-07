@@ -3,7 +3,7 @@ import type { CardRarity } from '../../types/domain/gacha/gacha.types'
 import { PASSIVE_TEXT } from '../content/passives.definitions'
 
 export type PassiveKey =
-  | 'VAMPIRISM'
+  | 'TAUNT'
   | 'AEGIS'
   | 'BANNER'
   | 'RIPOSTE'
@@ -27,11 +27,14 @@ export type PassiveKey =
   | 'BURN'
   | 'POISON'
   | 'MOMENTUM'
+  // --- Famille provocation / ciblage ---
+  | 'GUARDIAN'
+  | 'HUNT'
 
 export interface PassiveEffect {
   /**
    * Numeric value of the passive at a given palier.
-   * - Percent-based passives (e.g. VAMPIRISM, AEGIS, BANNER, RIPOSTE, REBIRTH, EXECUTION)
+   * - Percent-based passives (e.g. AEGIS, BANNER, RIPOSTE, REBIRTH, EXECUTION)
    *   return percent (e.g. 15 for 15%).
    */
   valuePct: number
@@ -78,20 +81,19 @@ function localizedDescribe(key: PassiveKey, palier: number): string {
 }
 
 export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
-  VAMPIRISM: {
-    key: 'VAMPIRISM',
+  // Famille provocation / ciblage (remplace VAMPIRISM, vol de vie doublé).
+  TAUNT: {
+    key: 'TAUNT',
     rarityHint: 'EPIC',
     get label() {
-      return localizedLabel('VAMPIRISM')
+      return localizedLabel('TAUNT')
     },
-    // La magnitude du vol de vie appartient désormais au stuff (lifesteal).
-    // Le passif apporte ce qu'aucun équipement ne peut donner : un doublement
-    // conditionnel, sous 50 % de PV.
-    compute() {
-      return { valuePct: 100 } // bonus de lifesteal en pourcentage relatif
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 20 + 5 * p } // chance qu'une attaque ennemie le vise
     },
-    describe() {
-      return localizedDescribe('VAMPIRISM', 0)
+    describe(palier) {
+      return localizedDescribe('TAUNT', clampPalier(palier))
     },
   },
   AEGIS: {
@@ -417,6 +419,38 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     describe(palier) {
       return localizedDescribe('MOMENTUM', clampPalier(palier))
+    },
+  },
+
+  // -------------------------------------------------------------------------
+  // Famille provocation / ciblage
+  // -------------------------------------------------------------------------
+  GUARDIAN: {
+    key: 'GUARDIAN',
+    rarityHint: 'EPIC',
+    get label() {
+      return localizedLabel('GUARDIAN')
+    },
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 25 + 6 * p } // part des dégâts des alliés encaissée
+    },
+    describe(palier) {
+      return localizedDescribe('GUARDIAN', clampPalier(palier))
+    },
+  },
+  HUNT: {
+    key: 'HUNT',
+    rarityHint: 'LEGENDARY',
+    get label() {
+      return localizedLabel('HUNT')
+    },
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 28 + 7 * p } // chance qu'une attaque de l'équipe vise la cible marquée
+    },
+    describe(palier) {
+      return localizedDescribe('HUNT', clampPalier(palier))
     },
   },
 }
