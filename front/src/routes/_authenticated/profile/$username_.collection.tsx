@@ -33,6 +33,10 @@ import {
   useCards,
   useUserCollection,
 } from '../../../queries/useCollection.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../../queries/useEconomyConfig.ts'
 import { useUserProfile } from '../../../queries/useProfile.ts'
 import { type DisplayEntry, sortEntries } from '../collection.tsx'
 
@@ -46,6 +50,7 @@ function UserCollectionPage() {
   const { t } = useTranslation('collection')
   const { username } = Route.useParams()
   const { data: profile, isLoading: profileLoading } = useUserProfile(username)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
   const [group, setGroup] = useState<GroupMode>('rarity')
   const [rarity, setRarity] = useState<RarityFilter>('all')
@@ -116,6 +121,7 @@ function UserCollectionPage() {
           entries: sortEntries(
             filteredEntries.filter((e) => e.card.rarity === r),
             sort,
+            economy.card,
           ),
           stats: computeSectionStats(
             allCards.filter((c) => c.rarity === r),
@@ -131,6 +137,7 @@ function UserCollectionPage() {
         entries: sortEntries(
           filteredEntries.filter((e) => e.card.element === el),
           sort,
+          economy.card,
         ),
         stats: computeSectionStats(
           allCards.filter((c) => c.element === el),
@@ -153,14 +160,14 @@ function UserCollectionPage() {
       return {
         key: id,
         title: g?.name ?? '',
-        entries: sortEntries(g?.entries ?? [], sort),
+        entries: sortEntries(g?.entries ?? [], sort, economy.card),
         stats: computeSectionStats(
           allCards.filter((c) => c.set.id === id),
           userCards,
         ),
       }
     })
-  }, [group, filteredEntries, allCards, userCards, sort])
+  }, [group, filteredEntries, allCards, userCards, sort, economy.card])
 
   const ownedCount = userCards.length
   const totalCount = displayEntries.length

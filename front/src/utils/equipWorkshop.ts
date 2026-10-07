@@ -9,6 +9,7 @@ import {
   computePower,
   displayStatBases,
   displayStats,
+  type StatCurve,
   type StuffStatBonuses,
 } from './cardStats'
 
@@ -57,6 +58,7 @@ export type LabContext = {
   palier: number
   userCardId: string
   levelScale: number
+  curve: StatCurve
   setDefs: EquipmentSetDefinition[]
   baseline: StuffStatBonuses
 }
@@ -72,7 +74,14 @@ export function labTotals(
     ctx.levelScale,
     ctx.setDefs,
   )
-  const s = displayStats(ctx.card, ctx.level, ctx.variant, ctx.palier, bonuses)
+  const s = displayStats(
+    ctx.card,
+    ctx.level,
+    ctx.variant,
+    ctx.palier,
+    bonuses,
+    ctx.curve,
+  )
   const stuff = cardStuffStats(
     items,
     ctx.userCardId,
@@ -86,7 +95,13 @@ export function labTotals(
 
 /** Stats de la carte sans aucun équipement (colonne « Base »). */
 export function labBase(ctx: LabContext): LabTotals {
-  const b = displayStatBases(ctx.card, ctx.level, ctx.variant, ctx.palier)
+  const b = displayStatBases(
+    ctx.card,
+    ctx.level,
+    ctx.variant,
+    ctx.palier,
+    ctx.curve,
+  )
   const classic = { hp: b.pv, atk: b.atq, def: b.def, spd: b.vit }
   return { ...classic, ...ctx.baseline, power: computePower(classic) }
 }

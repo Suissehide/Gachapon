@@ -12,11 +12,15 @@ import {
 } from '../../constants/card.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import i18n from '../../i18n/index.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
 import type { WishlistResponse } from '../../queries/useWishlist.ts'
 import { useToggleWishlist, useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
-import type { StatBonuses } from '../../utils/cardStats.ts'
+import type { StatBonuses, StatCurve } from '../../utils/cardStats.ts'
 import { displayStats } from '../../utils/cardStats.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
@@ -108,13 +112,14 @@ function faceStats(
     variant: CardVariant
     palier: number
     bonuses: StatBonuses
+    curve: StatCurve
   } | null,
 ): CardStats | null {
   if (input === null) {
     return null
   }
-  const { card, level, variant, palier, bonuses } = input
-  return displayStats(card, level, variant, palier, bonuses)
+  const { card, level, variant, palier, bonuses, curve } = input
+  return displayStats(card, level, variant, palier, bonuses, curve)
 }
 
 export function CardViewModal({ entry, onClose, onRecycle }: Props) {
@@ -124,6 +129,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   const { mutate: toggleWishlist, isPending: settingWishlist } =
     useToggleWishlist()
   const bonuses = useCardEquipmentBonuses(entry?.userCard?.id ?? '')
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
   // Échap ferme, où que soit le focus. `defaultPrevented` : une modale Radix
   // ouverte par-dessus (elle écoute en capture et marque l'évènement) ferme
@@ -161,6 +167,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
           variant,
           palier: userCard.palier,
           bonuses,
+          curve: economy.card,
         }
       : null,
   )

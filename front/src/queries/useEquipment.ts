@@ -196,13 +196,20 @@ export function useCardsByPower() {
             economy.equip.levelScale,
             sets?.sets ?? [],
           ),
+          economy.card,
         ),
       ]),
     )
     return [...cards].sort(
       (a, b) => (power.get(b.id) ?? 0) - (power.get(a.id) ?? 0),
     )
-  }, [collection.data?.cards, data, sets, economy.equip.levelScale])
+  }, [
+    collection.data?.cards,
+    data,
+    sets,
+    economy.equip.levelScale,
+    economy.card,
+  ])
 }
 
 export function useSwapEquipment() {

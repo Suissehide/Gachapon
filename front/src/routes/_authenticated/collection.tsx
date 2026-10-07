@@ -52,6 +52,7 @@ import {
   cardPower,
   emptyStatBonuses,
   type StatBonuses,
+  type StatCurve,
 } from '../../utils/cardStats.ts'
 
 export type DisplayEntry = {
@@ -70,6 +71,7 @@ export type DisplayEntry = {
 // groupe sur le tri décroissant.
 function entryPower(
   e: DisplayEntry,
+  curve: StatCurve,
   bonusByCardId?: Map<string, StatBonuses>,
 ): number {
   const uc = e.userCard
@@ -77,7 +79,7 @@ function entryPower(
     return -1
   }
   const bonuses = bonusByCardId?.get(uc.id) ?? emptyStatBonuses()
-  return cardPower(e.card, uc.level, e.variant, uc.palier, bonuses)
+  return cardPower(e.card, uc.level, e.variant, uc.palier, bonuses, curve)
 }
 
 // Tri appliqué à l'intérieur de chaque groupe. `default` préserve l'ordre
@@ -86,6 +88,7 @@ function entryPower(
 export function sortEntries(
   entries: DisplayEntry[],
   sort: SortMode,
+  curve: StatCurve,
   bonusByCardId?: Map<string, StatBonuses>,
 ): DisplayEntry[] {
   if (sort === 'default') {
@@ -94,7 +97,9 @@ export function sortEntries(
   const sorted = [...entries]
   if (sort === 'power') {
     sorted.sort(
-      (a, b) => entryPower(b, bonusByCardId) - entryPower(a, bonusByCardId),
+      (a, b) =>
+        entryPower(b, curve, bonusByCardId) -
+        entryPower(a, curve, bonusByCardId),
     )
   } else if (sort === 'level') {
     sorted.sort((a, b) => (b.userCard?.level ?? 0) - (a.userCard?.level ?? 0))
@@ -265,6 +270,7 @@ function Collection() {
           entries: sortEntries(
             filteredEntries.filter((e) => e.card.rarity === r),
             sort,
+            economy.card,
             equipBonusByCardId,
           ),
           stats: computeSectionStats(
@@ -281,6 +287,7 @@ function Collection() {
         entries: sortEntries(
           filteredEntries.filter((e) => e.card.element === el),
           sort,
+          economy.card,
           equipBonusByCardId,
         ),
         stats: computeSectionStats(
@@ -305,14 +312,27 @@ function Collection() {
       return {
         key: id,
         title: group?.name ?? '',
-        entries: sortEntries(group?.entries ?? [], sort, equipBonusByCardId),
+        entries: sortEntries(
+          group?.entries ?? [],
+          sort,
+          economy.card,
+          equipBonusByCardId,
+        ),
         stats: computeSectionStats(
           allCards.filter((c) => c.set.id === id),
           userCards,
         ),
       }
     })
-  }, [group, filteredEntries, allCards, userCards, sort, equipBonusByCardId])
+  }, [
+    group,
+    filteredEntries,
+    allCards,
+    userCards,
+    sort,
+    economy.card,
+    equipBonusByCardId,
+  ])
 
   const handleDetail = (entry: DisplayEntry) => setDetailKey(entry.key)
 

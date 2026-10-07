@@ -124,8 +124,9 @@ export function TeamEditorPopup({
         uc.variant,
         uc.palier,
         equipBonusByCardId.get(uc.id) ?? emptyStatBonuses(),
+        economy.card,
       ),
-    [equipBonusByCardId],
+    [equipBonusByCardId, economy.card],
   )
 
   const roster = collection.data?.cards ?? []

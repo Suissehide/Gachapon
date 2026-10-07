@@ -5,8 +5,12 @@ import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
-import type { StatBonuses } from '../../utils/cardStats.ts'
+import type { StatBonuses, StatCurve } from '../../utils/cardStats.ts'
 import { computePower, displayStats } from '../../utils/cardStats.ts'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
@@ -79,6 +83,7 @@ function cardFaceStats(
     variant: CardVariant
     palier: number
     bonuses: StatBonuses
+    curve: StatCurve
   } | null,
 ): {
   stats: CardStats | null
@@ -87,8 +92,8 @@ function cardFaceStats(
   if (input === null) {
     return { stats: null, power: null }
   }
-  const { card, level, variant, palier, bonuses } = input
-  const stats = displayStats(card, level, variant, palier, bonuses)
+  const { card, level, variant, palier, bonuses, curve } = input
+  const stats = displayStats(card, level, variant, palier, bonuses, curve)
   return {
     stats,
     power: computePower({
@@ -118,9 +123,10 @@ export function CollectionCard({
   // Bonus d'équipement de cette carte (vides si non possédée ou si l'équipement
   // n'est pas le nôtre — ex. collection d'un autre joueur).
   const bonuses = useCardEquipmentBonuses(userCardId ?? '')
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const { stats, power } = cardFaceStats(
     isOwned && level && palier
-      ? { card, level, variant, palier, bonuses }
+      ? { card, level, variant, palier, bonuses, curve: economy.card }
       : null,
   )
 

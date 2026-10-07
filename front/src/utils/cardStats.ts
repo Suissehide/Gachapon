@@ -12,20 +12,32 @@ const VARIANT_MULT: Record<CardVariant, number> = {
   HOLOGRAPHIC: 1.3,
 }
 
-const STAT_GROWTH_PER_LEVEL = 0.06
-const ASCENSION_STAT_BONUS = 0.15
 // Référence de vitesse pour la puissance : une unité à SPD_REF a un multiplicateur
 // de vitesse neutre (×1). Au-dessus, elle agit plus souvent (ATB) → puissance
 // plus élevée ; en dessous, plus faible. Doit rester alignée avec le backend
 // (campaign-power.ts).
 const SPD_REF = 100
 
-export function statAtLevel(baseStat: number, level: number): number {
-  return baseStat * (1 + STAT_GROWTH_PER_LEVEL * (level - 1))
+/**
+ * Croissance des stats par niveau et par palier. Vient de `economy.card`
+ * (`GET /economy/config`) : le serveur en est la seule source, une copie
+ * codée ici dériverait au prochain rééquilibrage.
+ */
+export type StatCurve = Pick<
+  EconomyConfig['card'],
+  'statGrowthPerLevel' | 'ascensionStatBonus'
+>
+
+export function statAtLevel(
+  baseStat: number,
+  level: number,
+  curve: StatCurve,
+): number {
+  return baseStat * (1 + curve.statGrowthPerLevel * (level - 1))
 }
 
-export function palierMultiplier(palier: number): number {
-  return (1 + ASCENSION_STAT_BONUS) ** (palier - 1)
+export function palierMultiplier(palier: number, curve: StatCurve): number {
+  return (1 + curve.ascensionStatBonus) ** (palier - 1)
 }
 
 export function finalStat(
@@ -33,11 +45,12 @@ export function finalStat(
   level: number,
   variant: CardVariant,
   palier: number,
+  curve: StatCurve,
 ): number {
   return (
-    statAtLevel(baseStat, level) *
+    statAtLevel(baseStat, level, curve) *
     VARIANT_MULT[variant] *
-    palierMultiplier(palier)
+    palierMultiplier(palier, curve)
   )
 }
 
@@ -390,10 +403,6 @@ function withCardSetBonuses(
 }
 
 /**
- * Same as `finalStat` but folds in equipment flat + percent bonuses, matching
- * the backend's `(raw + flat) * (1 + pct/100)` order.
- */
-/**
  * Stats FINALES d'une carte, aux clés d'AFFICHAGE (pv/atq/def/vit),
  * équipement compris. Pendant de `displayStatBases`, qui donne la part hors
  * équipement : leur écart est l'apport du stuff.
@@ -412,16 +421,38 @@ export function displayStats(
   variant: CardVariant,
   palier: number,
   bonuses: StatBonuses,
+  curve: StatCurve,
 ): { pv: number; atq: number; def: number; vit: number } {
   return {
     pv: Math.round(
-      finalStatWithBonuses(card.baseHp, level, variant, palier, bonuses.hp),
+      finalStatWithBonuses(
+        card.baseHp,
+        level,
+        variant,
+        palier,
+        bonuses.hp,
+        curve,
+      ),
     ),
     atq: Math.round(
-      finalStatWithBonuses(card.baseAtk, level, variant, palier, bonuses.atk),
+      finalStatWithBonuses(
+        card.baseAtk,
+        level,
+        variant,
+        palier,
+        bonuses.atk,
+        curve,
+      ),
     ),
     def: Math.round(
-      finalStatWithBonuses(card.baseDef, level, variant, palier, bonuses.def),
+      finalStatWithBonuses(
+        card.baseDef,
+        level,
+        variant,
+        palier,
+        bonuses.def,
+        curve,
+      ),
     ),
     vit: Math.round(finalSpeed(card.baseSpd, bonuses.spd)),
   }
@@ -446,26 +477,29 @@ export function displayStatBases(
   level: number,
   variant: CardVariant,
   palier: number,
+  curve: StatCurve,
 ): { pv: number; atq: number; def: number; vit: number } {
   return {
-    pv: Math.round(finalStat(card.baseHp, level, variant, palier)),
-    atq: Math.round(finalStat(card.baseAtk, level, variant, palier)),
-    def: Math.round(finalStat(card.baseDef, level, variant, palier)),
+    pv: Math.round(finalStat(card.baseHp, level, variant, palier, curve)),
+    atq: Math.round(finalStat(card.baseAtk, level, variant, palier, curve)),
+    def: Math.round(finalStat(card.baseDef, level, variant, palier, curve)),
     vit: Math.round(card.baseSpd),
   }
 }
 
+/**
+ * Same as `finalStat` but folds in equipment flat + percent bonuses, matching
+ * the backend's `(raw + flat) * (1 + pct/100)` order.
+ */
 export function finalStatWithBonuses(
   baseStat: number,
   level: number,
   variant: CardVariant,
   palier: number,
   bonus: StatBonus,
+  curve: StatCurve,
 ): number {
-  const raw =
-    statAtLevel(baseStat, level) *
-    VARIANT_MULT[variant] *
-    palierMultiplier(palier)
+  const raw = finalStat(baseStat, level, variant, palier, curve)
   return (raw + bonus.flat) * (1 + bonus.pct / 100)
 }
 
@@ -483,16 +517,38 @@ export function cardPower(
   variant: CardVariant,
   palier: number,
   bonuses: StatBonuses,
+  curve: StatCurve,
 ): number {
   return computePower({
     hp: Math.round(
-      finalStatWithBonuses(card.baseHp, level, variant, palier, bonuses.hp),
+      finalStatWithBonuses(
+        card.baseHp,
+        level,
+        variant,
+        palier,
+        bonuses.hp,
+        curve,
+      ),
     ),
     atk: Math.round(
-      finalStatWithBonuses(card.baseAtk, level, variant, palier, bonuses.atk),
+      finalStatWithBonuses(
+        card.baseAtk,
+        level,
+        variant,
+        palier,
+        bonuses.atk,
+        curve,
+      ),
     ),
     def: Math.round(
-      finalStatWithBonuses(card.baseDef, level, variant, palier, bonuses.def),
+      finalStatWithBonuses(
+        card.baseDef,
+        level,
+        variant,
+        palier,
+        bonuses.def,
+        curve,
+      ),
     ),
     spd: Math.round(finalSpeed(card.baseSpd, bonuses.spd)),
   })

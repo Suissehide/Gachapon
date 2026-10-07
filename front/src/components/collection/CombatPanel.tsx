@@ -111,6 +111,7 @@ export function CombatPanel({
       variant,
       palier,
       classicBonuses.hp,
+      economy.card,
     ),
   )
   const atk = Math.round(
@@ -120,6 +121,7 @@ export function CombatPanel({
       variant,
       palier,
       classicBonuses.atk,
+      economy.card,
     ),
   )
   const def = Math.round(
@@ -129,6 +131,7 @@ export function CombatPanel({
       variant,
       palier,
       classicBonuses.def,
+      economy.card,
     ),
   )
   const spd = Math.round(finalSpeed(card.baseSpd, classicBonuses.spd))
@@ -139,7 +142,7 @@ export function CombatPanel({
   // joueur voit ce qu'il doit à son stuff et ce qu'il garde en le retirant.
   // La bascule est en CSS (`group-hover`) et non en état React : un `<div>`
   // porteur de onMouseEnter serait un élément statique rendu interactif.
-  const bases = displayStatBases(card, level, variant, palier)
+  const bases = displayStatBases(card, level, variant, palier, economy.card)
 
   const onLevelUp = async () => {
     setWorking(true)

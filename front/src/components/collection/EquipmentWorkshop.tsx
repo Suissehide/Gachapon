@@ -209,6 +209,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
     palier: userCard.palier,
     userCardId: ucId,
     levelScale: economy.equip.levelScale,
+    curve: economy.card,
     setDefs,
     baseline: {
       critRate: economy.combat.baseCritRate,
