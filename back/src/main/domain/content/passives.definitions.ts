@@ -19,6 +19,12 @@ export interface PassiveTextDefinition {
   describeEn: (palier: number) => string
 }
 
+/** Valeur à une décimale au plus, avec la virgule en français (soins, poison). */
+function pct(value: number, lang: 'fr' | 'en'): string {
+  const rounded = Math.round(value * 10) / 10
+  return lang === 'fr' ? String(rounded).replace('.', ',') : String(rounded)
+}
+
 export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   VAMPIRISM: {
     labelFr: 'Vampirisme',
@@ -29,14 +35,14 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   AEGIS: {
     labelFr: 'Égide',
     labelEn: 'Aegis',
-    describeFr: (p) => `${5 + 2 * p} % de chance d'ignorer une attaque`,
-    describeEn: (p) => `${5 + 2 * p}% chance to ignore an attack`,
+    describeFr: (p) => `${8 + 3 * p} % de chance d'ignorer une attaque`,
+    describeEn: (p) => `${8 + 3 * p}% chance to ignore an attack`,
   },
   BANNER: {
     labelFr: 'Bannière',
     labelEn: 'Banner',
-    describeFr: (p) => `+${6 + 3 * p} % d'ATQ à toute l'équipe`,
-    describeEn: (p) => `+${6 + 3 * p}% ATK to the whole team`,
+    describeFr: (p) => `+${2 + 2 * p} % d'ATQ à toute l'équipe`,
+    describeEn: (p) => `+${2 + 2 * p}% ATK to the whole team`,
   },
   RIPOSTE: {
     labelFr: 'Riposte',
@@ -53,8 +59,10 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   EXECUTION: {
     labelFr: 'Exécution',
     labelEn: 'Execution',
-    describeFr: (p) => `+${20 + 5 * p} % de dégâts sous 30 % de PV cible`,
-    describeEn: (p) => `+${20 + 5 * p}% damage against targets under 30% HP`,
+    describeFr: (p) =>
+      `Jusqu'à +${60 + 15 * p} % de dégâts selon les PV manquants de la cible`,
+    describeEn: (p) =>
+      `Up to +${60 + 15 * p}% damage based on the target's missing HP`,
   },
 
   // -------------------------------------------------------------------------
@@ -78,9 +86,9 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Fortification',
     labelEn: 'Fortification',
     describeFr: (p) =>
-      `Chaque coup encaissé lui donne +${4 + 2 * p} % de défense, cumulable 5 fois`,
+      `Chaque coup encaissé lui donne +${10 + 5 * p} % de défense, cumulable 5 fois`,
     describeEn: (p) =>
-      `Each hit taken grants +${4 + 2 * p}% DEF, stacking up to 5 times`,
+      `Each hit taken grants +${10 + 5 * p}% DEF, stacking up to 5 times`,
   },
   EMPOWER: {
     labelFr: 'Puissance',
@@ -94,21 +102,21 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   BULWARK: {
     labelFr: 'Bouclier',
     labelEn: 'Bulwark',
-    describeFr: (p) => `Absorbe un bouclier de ${12 + 3 * p} % des PV max`,
-    describeEn: (p) => `Absorbs a shield worth ${12 + 3 * p}% of max HP`,
+    describeFr: (p) => `Absorbe un bouclier de ${25 + 6 * p} % des PV max`,
+    describeEn: (p) => `Absorbs a shield worth ${25 + 6 * p}% of max HP`,
   },
 
   FURY: {
     labelFr: 'Furie',
     labelEn: 'Fury',
-    describeFr: (p) => `+${12 + 4 * p} % d'ATQ sous 50 % de PV`,
-    describeEn: (p) => `+${12 + 4 * p}% ATK below 50% HP`,
+    describeFr: (p) => `+${30 + 10 * p} % d'ATQ sous 50 % de PV`,
+    describeEn: (p) => `+${30 + 10 * p}% ATK below 50% HP`,
   },
   CRIT: {
     labelFr: 'Précision',
     labelEn: 'Precision',
-    describeFr: () => 'Toutes les 3 attaques, inflige un coup critique garanti',
-    describeEn: () => 'Every 3 attacks, deals a guaranteed critical hit',
+    describeFr: () => 'Toutes les 2 attaques, inflige un coup critique garanti',
+    describeEn: () => 'Every 2 attacks, deals a guaranteed critical hit',
   },
   PIERCE: {
     labelFr: 'Perce-armure',
@@ -120,8 +128,10 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   NEMESIS: {
     labelFr: 'Vengeance',
     labelEn: 'Vengeance',
-    describeFr: (p) => `+${6 + 2 * p} % d'ATQ par allié tombé`,
-    describeEn: (p) => `+${6 + 2 * p}% ATK per fallen ally`,
+    describeFr: (p) =>
+      `+${20 + 5 * p} % de dégâts contre les ennemis qui ont frappé un allié, doublé contre ceux qui en ont abattu un`,
+    describeEn: (p) =>
+      `+${20 + 5 * p}% damage against enemies that hit an ally, doubled against those that took one down`,
   },
 
   RAMPART: {
@@ -134,8 +144,10 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   REGEN: {
     labelFr: 'Régénération',
     labelEn: 'Regeneration',
-    describeFr: (p) => `Soigne ${4 + 2 * p} % des PV max en fin de tour`,
-    describeEn: (p) => `Heals ${4 + 2 * p}% of max HP at the end of the turn`,
+    describeFr: (p) =>
+      `Soigne ${pct((2 + p) / 2, 'fr')} % des PV max en fin de tour`,
+    describeEn: (p) =>
+      `Heals ${pct((2 + p) / 2, 'en')}% of max HP at the end of the turn`,
   },
 
   // -------------------------------------------------------------------------
@@ -145,34 +157,34 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Bénédiction',
     labelEn: 'Blessing',
     describeFr: (p) =>
-      `Soigne l'allié le plus faible de ${6 + 2 * p} % de ses PV max en fin de tour`,
+      `Soigne l'allié le plus faible de ${pct((3 + p) / 2, 'fr')} % de ses PV max en fin de tour`,
     describeEn: (p) =>
-      `Heals the weakest ally for ${6 + 2 * p}% of their max HP at the end of the turn`,
+      `Heals the weakest ally for ${pct((3 + p) / 2, 'en')}% of their max HP at the end of the turn`,
   },
   SANCTUARY: {
     labelFr: 'Sanctuaire',
     labelEn: 'Sanctuary',
     describeFr: (p) =>
-      `Soigne toute l'équipe de ${3 + p} % des PV max en fin de tour`,
+      `Soigne toute l'équipe de ${pct((3 + 2 * p) / 10, 'fr')} % des PV max en fin de tour`,
     describeEn: (p) =>
-      `Heals the whole team for ${3 + p}% of max HP at the end of the turn`,
+      `Heals the whole team for ${pct((3 + 2 * p) / 10, 'en')}% of max HP at the end of the turn`,
   },
 
   BURN: {
     labelFr: 'Brûlure',
     labelEn: 'Burn',
     describeFr: (p) =>
-      `Inflige une brûlure : ${15 + 5 * p} % de l'ATQ par tour pendant 2 tours`,
+      `Inflige une brûlure : ${4 + 2 * p} % de l'ATQ par tour pendant 2 tours`,
     describeEn: (p) =>
-      `Inflicts a burn: ${15 + 5 * p}% of ATK per turn for 2 turns`,
+      `Inflicts a burn: ${4 + 2 * p}% of ATK per turn for 2 turns`,
   },
   POISON: {
     labelFr: 'Poison',
     labelEn: 'Poison',
     describeFr: (p) =>
-      `Empoisonne la cible : ${4 + 2 * p} % de ses PV max par tour pendant 2 tours`,
+      `Empoisonne la cible : ${pct((2 + 3 * p) / 10, 'fr')} % de ses PV max par tour pendant 2 tours`,
     describeEn: (p) =>
-      `Poisons the target: ${4 + 2 * p}% of its max HP per turn for 2 turns`,
+      `Poisons the target: ${pct((2 + 3 * p) / 10, 'en')}% of its max HP per turn for 2 turns`,
   },
 
   BLOODLUST: {

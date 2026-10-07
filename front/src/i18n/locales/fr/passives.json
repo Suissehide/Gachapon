@@ -21,7 +21,7 @@
   },
   "EXECUTION": {
     "name": "Exécution",
-    "describe": "+{{value}} % de dégâts sous 30 % de PV cible."
+    "describe": "Jusqu'à +{{value}} % de dégâts selon les PV manquants de la cible."
   },
   "VIGOR": {
     "name": "Second souffle",
@@ -49,7 +49,7 @@
   },
   "CRIT": {
     "name": "Précision",
-    "describe": "Toutes les 3 attaques, inflige un coup critique garanti."
+    "describe": "Toutes les 2 attaques, inflige un coup critique garanti."
   },
   "PIERCE": {
     "name": "Perce-armure",
@@ -57,7 +57,7 @@
   },
   "NEMESIS": {
     "name": "Vengeance",
-    "describe": "+{{value}} % d'ATQ par allié tombé."
+    "describe": "+{{value}} % de dégâts contre les ennemis qui ont frappé un allié, doublé contre ceux qui en ont abattu un."
   },
   "RAMPART": {
     "name": "Rempart",

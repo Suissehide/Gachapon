@@ -20,9 +20,9 @@ describe('passives', () => {
   describe('CRIT', () => {
     // Tâche 9 : la magnitude (chance de critique) est cédée à critRate/critDmg.
     // Le passif ne porte plus que la cadence, fixe, indépendante du palier.
-    it('cadence fixe de 3 actions, quel que soit le palier', () => {
-      expect(PASSIVES.CRIT.compute(1).valuePct).toBe(3)
-      expect(PASSIVES.CRIT.compute(6).valuePct).toBe(3)
+    it('cadence fixe de 2 actions, quel que soit le palier', () => {
+      expect(PASSIVES.CRIT.compute(1).valuePct).toBe(2)
+      expect(PASSIVES.CRIT.compute(6).valuePct).toBe(2)
     })
   })
   describe('PIERCE', () => {
@@ -34,15 +34,15 @@ describe('passives', () => {
     })
   })
   describe('AEGIS', () => {
-    it('7% at P1, 17% at P6', () => {
-      expect(PASSIVES.AEGIS.compute(1).valuePct).toBe(7)
-      expect(PASSIVES.AEGIS.compute(6).valuePct).toBe(17)
+    it('11% at P1, 26% at P6', () => {
+      expect(PASSIVES.AEGIS.compute(1).valuePct).toBe(11)
+      expect(PASSIVES.AEGIS.compute(6).valuePct).toBe(26)
     })
   })
   describe('BANNER', () => {
-    it('9% at P1, 24% at P6', () => {
-      expect(PASSIVES.BANNER.compute(1).valuePct).toBe(9)
-      expect(PASSIVES.BANNER.compute(6).valuePct).toBe(24)
+    it('4% at P1, 14% at P6', () => {
+      expect(PASSIVES.BANNER.compute(1).valuePct).toBe(4)
+      expect(PASSIVES.BANNER.compute(6).valuePct).toBe(14)
     })
   })
   describe('RIPOSTE', () => {
@@ -58,9 +58,9 @@ describe('passives', () => {
     })
   })
   describe('EXECUTION', () => {
-    it('25% at P1, 50% at P6', () => {
-      expect(PASSIVES.EXECUTION.compute(1).valuePct).toBe(25)
-      expect(PASSIVES.EXECUTION.compute(6).valuePct).toBe(50)
+    it('75% at P1, 150% at P6 (bonus à 0 PV, au prorata des PV manquants)', () => {
+      expect(PASSIVES.EXECUTION.compute(1).valuePct).toBe(75)
+      expect(PASSIVES.EXECUTION.compute(6).valuePct).toBe(150)
     })
   })
 
@@ -74,15 +74,15 @@ describe('passives', () => {
     })
   })
   describe('HASTE', () => {
-    it('cadence fixe de 3 actions, quel que soit le palier', () => {
+    it('cadence fixe de 2 actions, quel que soit le palier', () => {
       expect(PASSIVES.HASTE.compute(1).valuePct).toBe(3)
       expect(PASSIVES.HASTE.compute(6).valuePct).toBe(3)
     })
   })
   describe('FORTIFY', () => {
-    it('6% at P1, 16% at P6 (DEF gagnée par charge)', () => {
-      expect(PASSIVES.FORTIFY.compute(1).valuePct).toBe(6)
-      expect(PASSIVES.FORTIFY.compute(6).valuePct).toBe(16)
+    it('15% at P1, 40% at P6 (DEF gagnée par charge)', () => {
+      expect(PASSIVES.FORTIFY.compute(1).valuePct).toBe(15)
+      expect(PASSIVES.FORTIFY.compute(6).valuePct).toBe(40)
     })
   })
   describe('EMPOWER', () => {
@@ -93,27 +93,27 @@ describe('passives', () => {
   })
 
   describe('BLESSING', () => {
-    it('8% at P1, 18% at P6', () => {
-      expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(8)
-      expect(PASSIVES.BLESSING.compute(6).valuePct).toBe(18)
+    it('2% at P1, 4.5% at P6', () => {
+      expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(2)
+      expect(PASSIVES.BLESSING.compute(6).valuePct).toBe(4.5)
     })
   })
   describe('SANCTUARY', () => {
-    it('4% at P1, 9% at P6', () => {
-      expect(PASSIVES.SANCTUARY.compute(1).valuePct).toBe(4)
-      expect(PASSIVES.SANCTUARY.compute(6).valuePct).toBe(9)
+    it('0.5% at P1, 1.5% at P6', () => {
+      expect(PASSIVES.SANCTUARY.compute(1).valuePct).toBe(0.5)
+      expect(PASSIVES.SANCTUARY.compute(6).valuePct).toBe(1.5)
     })
   })
   describe('BURN', () => {
-    it('20% at P1, 45% at P6', () => {
-      expect(PASSIVES.BURN.compute(1).valuePct).toBe(20)
-      expect(PASSIVES.BURN.compute(6).valuePct).toBe(45)
+    it('0.5% at P1, 2% at P6', () => {
+      expect(PASSIVES.BURN.compute(1).valuePct).toBe(6)
+      expect(PASSIVES.BURN.compute(6).valuePct).toBe(16)
     })
   })
   describe('POISON', () => {
     it('6% at P1, 16% at P6', () => {
-      expect(PASSIVES.POISON.compute(1).valuePct).toBe(6)
-      expect(PASSIVES.POISON.compute(6).valuePct).toBe(16)
+      expect(PASSIVES.POISON.compute(1).valuePct).toBe(0.5)
+      expect(PASSIVES.POISON.compute(6).valuePct).toBe(2)
     })
   })
   describe('BLOODLUST', () => {
@@ -127,12 +127,12 @@ describe('passives', () => {
     // VAMPIRISM ne dépend plus du palier depuis la tâche 9 (facteur fixe) ;
     // AEGIS reste palier-dépendant et sert de témoin pour clampPalier().
     it('clamps palier below 1 to 1', () => {
-      expect(PASSIVES.AEGIS.compute(0).valuePct).toBe(7)
-      expect(PASSIVES.AEGIS.compute(-3).valuePct).toBe(7)
+      expect(PASSIVES.AEGIS.compute(0).valuePct).toBe(11)
+      expect(PASSIVES.AEGIS.compute(-3).valuePct).toBe(11)
     })
     it('clamps palier above 6 to 6', () => {
-      expect(PASSIVES.AEGIS.compute(7).valuePct).toBe(17)
-      expect(PASSIVES.AEGIS.compute(100).valuePct).toBe(17)
+      expect(PASSIVES.AEGIS.compute(7).valuePct).toBe(26)
+      expect(PASSIVES.AEGIS.compute(100).valuePct).toBe(26)
     })
   })
 
@@ -162,7 +162,7 @@ describe('passives', () => {
   describe('describe()', () => {
     it('returns localized French strings with the palier value', () => {
       runWithLocale('FR', () => {
-        expect(PASSIVES.AEGIS.describe(3)).toContain('11 %')
+        expect(PASSIVES.AEGIS.describe(3)).toContain('17 %')
       })
     })
     // Tâche 9 : CRIT, PIERCE et VAMPIRISM n'ont plus de magnitude
@@ -170,7 +170,7 @@ describe('passives', () => {
     it('CRIT, PIERCE et VAMPIRISM décrivent un comportement fixe, sans pourcentage de palier', () => {
       runWithLocale('FR', () => {
         expect(PASSIVES.CRIT.describe(1)).toBe(
-          'Toutes les 3 attaques, inflige un coup critique garanti',
+          'Toutes les 2 attaques, inflige un coup critique garanti',
         )
         expect(PASSIVES.PIERCE.describe(1)).toBe(
           'Le premier coup porté à chaque cible ignore toute sa défense',
@@ -187,7 +187,7 @@ describe('passives', () => {
   describe('label et describe() par locale', () => {
     it('EN par défaut, hors de tout contexte de requête', () => {
       expect(PASSIVES.AEGIS.label).toBe('Aegis')
-      expect(PASSIVES.AEGIS.describe(3)).toContain('11%')
+      expect(PASSIVES.AEGIS.describe(3)).toContain('17%')
     })
     it('FR sous runWithLocale', () => {
       runWithLocale('FR', () => {

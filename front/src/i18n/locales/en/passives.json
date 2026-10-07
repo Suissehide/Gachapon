@@ -21,7 +21,7 @@
   },
   "EXECUTION": {
     "name": "Execution",
-    "describe": "+{{value}}% damage against targets under 30% HP."
+    "describe": "Up to +{{value}}% damage based on the target's missing HP."
   },
   "VIGOR": {
     "name": "Second Wind",
@@ -49,7 +49,7 @@
   },
   "CRIT": {
     "name": "Precision",
-    "describe": "Every 3 attacks, deals a guaranteed critical hit."
+    "describe": "Every 2 attacks, deals a guaranteed critical hit."
   },
   "PIERCE": {
     "name": "Armor Piercer",
@@ -57,7 +57,7 @@
   },
   "NEMESIS": {
     "name": "Vengeance",
-    "describe": "+{{value}}% ATK per fallen ally."
+    "describe": "+{{value}}% damage against enemies that hit an ally, doubled against those that took one down."
   },
   "RAMPART": {
     "name": "Rampart",

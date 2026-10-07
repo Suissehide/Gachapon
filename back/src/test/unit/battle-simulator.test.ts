@@ -225,7 +225,7 @@ describe('simulateBattle', () => {
   })
 
   // 8. AEGIS dodge rate
-  it('AEGIS at palier 6 dodges roughly 17% of attacks over many trials', () => {
+  it('AEGIS at palier 6 dodges roughly 26% of attacks over many trials', () => {
     let strikes = 0
     let dodges = 0
     for (let i = 0; i < 200; i++) {
@@ -256,9 +256,9 @@ describe('simulateBattle', () => {
     }
     expect(strikes).toBeGreaterThan(0)
     const dodgeRate = dodges / strikes
-    // Expected 17% with palier 6 — allow wide window 5–30%
-    expect(dodgeRate).toBeGreaterThan(0.05)
-    expect(dodgeRate).toBeLessThan(0.3)
+    // Expected 26% with palier 6 — allow wide window 15–40%
+    expect(dodgeRate).toBeGreaterThan(0.15)
+    expect(dodgeRate).toBeLessThan(0.4)
   })
 
   // 9. VAMPIRISM ne double le lifesteal que sous 50 % de PV (tâche 9 :
@@ -360,30 +360,9 @@ describe('simulateBattle', () => {
     expect(result.won).toBe('A')
   })
 
-  // 12. EXECUTION boosts damage on low-HP target
-  it('EXECUTION boosts damage when target is under 30% HP', () => {
-    const seed = 'execution-test'
-    // Baseline: BASIC attacker on a low-HP target — no passive
-    const baseline = simulateBattle({
-      teamA: [makeUnit('A0', { atk: 30, spd: 999 })],
-      teamB: [makeUnit('B0', { hp: 100, def: 0 })], // currentHp = 100 < 30% of 100? no — 100 is 100% of 100
-      seed,
-      timeoutTurns: 1,
-    })
-    // For EXECUTION to trigger we need currentHp < 30% maxHp.
-    // Trick: set maxHp = 1000 and immediately start currentHp at "low" — but the
-    // sim sets currentHp = hp at start. So we use a maxHp=1000 unit and a tiny
-    // hp=200 in a separate config. Simpler approach: use a multi-round battle
-    // and compare total damage between EXECUTION and non-EXECUTION attackers.
-    void baseline
-
-    const noExec = simulateBattle({
-      teamA: [makeUnit('A0', { hp: 100000, atk: 30, def: 1000, spd: 999 })],
-      teamB: [makeUnit('B0', { hp: 1000, atk: 1, def: 0, spd: 1 })],
-      seed,
-      timeoutTurns: 100,
-    })
-    const withExec = simulateBattle({
+  // 12. EXECUTION — bonus au prorata des PV manquants de la cible
+  it('EXECUTION grandit avec les PV manquants de la cible, rien sur une cible pleine', () => {
+    const r = simulateBattle({
       teamA: [
         makeUnit('A0', {
           hp: 100000,
@@ -395,15 +374,26 @@ describe('simulateBattle', () => {
         }),
       ],
       teamB: [makeUnit('B0', { hp: 1000, atk: 1, def: 0, spd: 1 })],
-      seed,
+      seed: 'execution-test',
       timeoutTurns: 100,
     })
-    expect(withExec.turns).toBeLessThanOrEqual(noExec.turns)
-    // At least one EXECUTION PASSIVE log should appear
-    const execLogs = withExec.log.filter(
+    const premierCoup = r.log.findIndex((e) => e.type === 'ATTACK')
+    const premierBonus = r.log.findIndex(
       (e) => e.type === 'PASSIVE' && e.passive === 'EXECUTION',
     )
-    expect(execLogs.length).toBeGreaterThan(0)
+    // Le premier coup frappe une cible à 100 % de PV : pas de bonus.
+    expect(premierBonus).toBeGreaterThan(premierCoup)
+
+    const bonus = r.log.flatMap((e) =>
+      e.type === 'PASSIVE' && e.passive === 'EXECUTION'
+        ? [e.payload.bonusPct as number]
+        : [],
+    )
+    expect(bonus.length).toBeGreaterThan(2)
+    for (let k = 1; k < bonus.length; k++) {
+      expect(bonus[k]).toBeGreaterThanOrEqual(bonus[k - 1] ?? 0)
+    }
+    expect(bonus.at(-1)).toBeLessThanOrEqual(150)
   })
 
   // 13. BANNER boosts whole team ATK
@@ -637,7 +627,7 @@ describe('simulateBattle', () => {
   // les stats ».
   // ATB: count crits per attack (not per battle), since a fast attacker fires multiple
   // attacks within a single timeoutTurns window.
-  it('CRIT force un critique toutes les 3 attaques, en moyenne sur de nombreuses parties', () => {
+  it('CRIT force un critique toutes les 2 attaques, en moyenne sur de nombreuses parties', () => {
     let crits = 0
     let attacks = 0
     for (let i = 0; i < 200; i++) {
@@ -661,12 +651,12 @@ describe('simulateBattle', () => {
         (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
       ).length
     }
-    // Cadence 1/3 ≈ 0.333 ; fenêtre large pour absorber l'effet de bord du
-    // découpage en parties courtes (le cycle de 3 ne tombe pas toujours pile
+    // Cadence 1/2 ; fenêtre large pour absorber l'effet de bord du
+    // découpage en parties courtes (le cycle de 2 ne tombe pas toujours pile
     // à la fin d'une partie).
     const rate = crits / Math.max(1, attacks)
-    expect(rate).toBeGreaterThan(0.2)
-    expect(rate).toBeLessThan(0.45)
+    expect(rate).toBeGreaterThan(0.35)
+    expect(rate).toBeLessThan(0.55)
   })
 
   // PIERCE — le cas particulier « le passif PIERCE ignore une part de la DEF »
@@ -677,33 +667,38 @@ describe('simulateBattle', () => {
   // armorPen. Voir le test dédié dans « passifs dynamiques — collision avec
   // les stats ».
 
-  // NEMESIS — gains ATK for each fallen ally
-  // ATB: A0 (spd=100) and A1 (spd=100) act at ATB cadence. B0 (spd=999) kills A1
-  // almost immediately; A0 then acts with NEMESIS bonus.
-  it('NEMESIS emits a PASSIVE log once an ally has fallen', () => {
-    const result = simulateBattle({
+  // NEMESIS — bonus de dégâts contre un ennemi qui a frappé l'équipe,
+  // doublé s'il y a abattu quelqu'un. B0 (spd=999) agit avant A0.
+  const nemesisLogs = (a1Hp: number) =>
+    simulateBattle({
       teamA: [
         makeUnit('A0', {
           hp: 100000,
           atk: 30,
-          def: 1000,
+          def: 0,
           spd: 100,
           passiveKey: 'NEMESIS',
           palier: 6,
         }),
-        makeUnit('A1', { hp: 1, atk: 1, def: 0, spd: 100 }),
+        makeUnit('A1', { hp: a1Hp, atk: 1, def: 0, spd: 100 }),
       ],
       teamB: [makeUnit('B0', { hp: 100000, atk: 500, def: 0, spd: 999 })],
       seed: 'nemesis-test',
       timeoutTurns: 3,
-    })
-    const nemesisLogs = result.log.filter(
-      (e) => e.type === 'PASSIVE' && e.passive === 'NEMESIS',
+    }).log.flatMap((e) =>
+      e.type === 'PASSIVE' && e.passive === 'NEMESIS' ? [e.payload] : [],
     )
-    expect(nemesisLogs.length).toBeGreaterThanOrEqual(1)
-    if (nemesisLogs[0]?.type === 'PASSIVE') {
-      expect(nemesisLogs[0].payload.fallenAllies).toBeGreaterThanOrEqual(1)
-    }
+
+  it('NEMESIS frappe plus fort un ennemi qui a touché son équipe', () => {
+    const logs = nemesisLogs(100000)
+    expect(logs.length).toBeGreaterThanOrEqual(1)
+    expect(logs[0]).toEqual({ bonusPct: 50, mark: 1 })
+  })
+
+  it('NEMESIS double le bonus contre le tueur d\'un allié', () => {
+    const logs = nemesisLogs(1)
+    expect(logs.length).toBeGreaterThanOrEqual(1)
+    expect(logs.at(-1)).toEqual({ bonusPct: 100, mark: 2 })
   })
 
   // RAMPART — flat mitigation of incoming damage
@@ -1438,7 +1433,7 @@ describe('compteurs de BattleUnit', () => {
 })
 
 describe('passifs dynamiques — collision avec les stats', () => {
-  it('CRIT force un critique toutes les 3 actions', () => {
+  it('CRIT force un critique toutes les 2 actions', () => {
     const r = simulateBattle({
       seed: 'crit-cadence',
       teamA: [makeUnit('A0', { passiveKey: 'CRIT', critRate: 0, spd: 500 })],
@@ -1449,8 +1444,8 @@ describe('passifs dynamiques — collision avec les stats', () => {
         e.type === 'ATTACK' && e.attackerId === 'A0',
     )
     const crits = coups.filter((e) => e.damages.some((d) => d.crit))
-    // critRate 0 : les seuls critiques viennent du passif, un sur trois.
-    expect(crits.length).toBe(Math.floor(coups.length / 3))
+    // critRate 0 : les seuls critiques viennent du passif, un sur deux.
+    expect(crits.length).toBe(Math.floor(coups.length / 2))
   })
 
   it('PIERCE ignore toute la DEF au premier coup sur une cible, pas au second', () => {
@@ -1564,7 +1559,10 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
   // VIGOR empoisonné tôt, puis plus jamais attaqué directement, franchissait
   // silencieusement 50 % de PV via les ticks de POISON (applyDotsToUnit) —
   // pouvant même mourir — sans jamais bénéficier de son second souffle.
-  it('VIGOR se déclenche depuis un tick de poison, sans nouveau coup direct après l empoisonnement', () => {
+  // Fixture en BURN : même chemin (applyDotsToUnit), mais un tick indexé sur
+  // l'ATQ, assez gros pour franchir 50 % sans dépendre du tirage de dégâts
+  // (coup 405..495 sur 1000 PV, puis 2 ticks de 72).
+  it('VIGOR se déclenche depuis un tick de dégâts sur la durée, sans nouveau coup direct après l empoisonnement', () => {
     const r = simulateBattle({
       seed: 'vigor-poison',
       teamA: [
@@ -1578,10 +1576,11 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
       ],
       teamB: [
         makeUnit('B0', {
-          passiveKey: 'POISON',
+          passiveKey: 'BURN',
           hp: 500,
-          atk: 400,
+          atk: 450,
           def: 0,
+          critRate: 0,
           spd: 1,
           palier: 6,
         }),
@@ -1596,20 +1595,20 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
 
     // Un seul coup direct de B0 sur A0 avant le déclenchement de VIGOR :
     // celui qui a posé le poison. Le déclenchement lui-même ne vient donc
-    // pas d'un second coup direct, mais bien d'un tick de poison.
+    // pas d'un second coup direct, mais bien d'un tick de brûlure.
     const coupsDirectsAvant = r.log
       .slice(0, vigorIdx)
       .filter((e) => e.type === 'ATTACK' && e.attackerId === 'B0')
     expect(coupsDirectsAvant.length).toBe(1)
 
-    // La cause immédiate est bien un tick de poison : applyDotsToUnit pousse
-    // son entrée PASSIVE POISON juste avant d'appeler applyVigorSecondWind,
+    // La cause immédiate est bien un tick de brûlure : applyDotsToUnit pousse
+    // son entrée PASSIVE BURN juste avant d'appeler applyVigorSecondWind,
     // donc l'entrée juste avant VIGOR dans le log est ce tick, pas une
     // entrée ATTACK.
     const avantVigor = r.log[vigorIdx - 1]
     expect(avantVigor?.type).toBe('PASSIVE')
     if (avantVigor?.type === 'PASSIVE') {
-      expect(avantVigor.passive).toBe('POISON')
+      expect(avantVigor.passive).toBe('BURN')
     }
   })
 
@@ -1710,10 +1709,10 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
     // composition additive attendue par le texte du passif et par son
     // frère EMPOWER (`resolveEmpowerMult`). On mesure ici la magnitude.
     //
-    // Palier 6 : +16 % de DEF par charge (4 + 2*palier).
-    //   Additif attendu   : 5 charges -> ×1.8   (1 + 5*16/100)
-    //   Géométrique (bug) : 5 charges -> ×(1.16)^5 ≈ ×2.100
-    // Écart de 16,7 % entre les deux hypothèses — largement au-dessus du
+    // Palier 6 : +40 % de DEF par charge (10 + 5*palier).
+    //   Additif attendu   : 5 charges -> ×3     (1 + 5*40/100)
+    //   Géométrique (bug) : 5 charges -> ×(1.4)^5 ≈ ×5.378
+    // Écart net entre les deux hypothèses — largement au-dessus du
     // bruit de la variance de dégâts (±10 %, formule dans computeRawDamage),
     // qu'on efface encore par moyenne sur plusieurs coups à charge pleine.
     const palier = 6
@@ -1766,8 +1765,8 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
       pleineCharge.reduce((sum, d) => sum + d, 0) / pleineCharge.length
 
     const k = mitigationRef
-    const attenduAdditif = (atk * k) / (k + defBase * 1.8)
-    const attenduGeometrique = (atk * k) / (k + defBase * 1.16 ** 5)
+    const attenduAdditif = (atk * k) / (k + defBase * 3)
+    const attenduGeometrique = (atk * k) / (k + defBase * 1.4 ** 5)
 
     // Colle à l'hypothèse additive...
     expect(moyenne).toBeGreaterThan(attenduAdditif * 0.85)

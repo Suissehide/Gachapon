@@ -1,4 +1,5 @@
-import i18n from '../i18n/index.ts'
+import i18n, { currentLocale } from '../i18n/index.ts'
+import { formatPct } from '../libs/utils.ts'
 
 export type PassiveLabel = {
   name: string
@@ -35,14 +36,14 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:AEGIS.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:AEGIS.describe', { value: 5 + 2 * p })
+      return i18n.t('passives:AEGIS.describe', { value: 8 + 3 * p })
     },
   },
   BANNER: {
     name: i18n.t('passives:BANNER.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:BANNER.describe', { value: 6 + 3 * p })
+      return i18n.t('passives:BANNER.describe', { value: 2 + 2 * p })
     },
   },
   RIPOSTE: {
@@ -63,7 +64,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:EXECUTION.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:EXECUTION.describe', { value: 20 + 5 * p })
+      return i18n.t('passives:EXECUTION.describe', { value: 60 + 15 * p })
     },
   },
   VIGOR: {
@@ -82,7 +83,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:FORTIFY.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:FORTIFY.describe', { value: 4 + 2 * p })
+      return i18n.t('passives:FORTIFY.describe', { value: 10 + 5 * p })
     },
   },
   EMPOWER: {
@@ -96,14 +97,14 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:BULWARK.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:BULWARK.describe', { value: 12 + 3 * p })
+      return i18n.t('passives:BULWARK.describe', { value: 25 + 6 * p })
     },
   },
   FURY: {
     name: i18n.t('passives:FURY.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:FURY.describe', { value: 12 + 4 * p })
+      return i18n.t('passives:FURY.describe', { value: 30 + 10 * p })
     },
   },
   CRIT: {
@@ -121,7 +122,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:NEMESIS.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:NEMESIS.describe', { value: 6 + 2 * p })
+      return i18n.t('passives:NEMESIS.describe', { value: 20 + 5 * p })
     },
   },
   RAMPART: {
@@ -135,35 +136,43 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:REGEN.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:REGEN.describe', { value: 4 + 2 * p })
+      return i18n.t('passives:REGEN.describe', {
+        value: formatPct((2 + p) / 2, currentLocale()),
+      })
     },
   },
   BLESSING: {
     name: i18n.t('passives:BLESSING.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:BLESSING.describe', { value: 6 + 2 * p })
+      return i18n.t('passives:BLESSING.describe', {
+        value: formatPct((3 + p) / 2, currentLocale()),
+      })
     },
   },
   SANCTUARY: {
     name: i18n.t('passives:SANCTUARY.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:SANCTUARY.describe', { value: 3 + p })
+      return i18n.t('passives:SANCTUARY.describe', {
+        value: formatPct((3 + 2 * p) / 10, currentLocale()),
+      })
     },
   },
   BURN: {
     name: i18n.t('passives:BURN.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:BURN.describe', { value: 15 + 5 * p })
+      return i18n.t('passives:BURN.describe', { value: 4 + 2 * p })
     },
   },
   POISON: {
     name: i18n.t('passives:POISON.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:POISON.describe', { value: 4 + 2 * p })
+      return i18n.t('passives:POISON.describe', {
+        value: formatPct((2 + 3 * p) / 10, currentLocale()),
+      })
     },
   },
   BLOODLUST: {

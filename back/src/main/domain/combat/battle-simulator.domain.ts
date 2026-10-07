@@ -225,6 +225,8 @@ interface BattleUnit {
   hitsTaken: number
   /** Charges d'empilement par clé de passif. */
   stacks: Record<string, number>
+  /** Marque de NEMESIS : 1 = a frappé un ennemi, 2 = en a abattu un. */
+  vengeanceMark: 0 | 1 | 2
 }
 
 function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
@@ -269,6 +271,7 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     attackCount: 0,
     hitsTaken: 0,
     stacks: {},
+    vengeanceMark: 0,
   }
 }
 
@@ -405,8 +408,6 @@ interface StrikeContext {
   prng: () => number
   log: LogEntry[]
   patternMultiplier: number
-  /** Multiplicateur d'ATQ propre à l'action (ex. NEMESIS selon les alliés tombés). */
-  attackerAtkMult: number
   /** Multiplicateurs de la roue élémentaire (avantage / désavantage). */
   elementMults: ElementMults
 }
@@ -441,17 +442,31 @@ function applyPassiveDamageModifiers(
     })
   }
 
-  // EXECUTION (attacker) — bonus de dégâts quand la cible est sous 30 % de PV.
-  if (
-    attacker.passiveKey === 'EXECUTION' &&
-    target.currentHp < target.maxHp * 0.3
-  ) {
-    out *= 1 + attacker.passiveValuePct / 100
+  // EXECUTION (attacker) — bonus proportionnel aux PV manquants de la cible :
+  // plein à 0 PV, moitié à 50 %. Pas de seuil : un bonus réservé aux cibles
+  // presque mortes tombait sur des coups qui tuaient déjà.
+  if (attacker.passiveKey === 'EXECUTION' && target.currentHp < target.maxHp) {
+    const bonusPct =
+      attacker.passiveValuePct * (1 - target.currentHp / target.maxHp)
+    out *= 1 + bonusPct / 100
     log.push({
       type: 'PASSIVE',
       unitId: attacker.id,
       passive: 'EXECUTION',
-      payload: { bonusPct: attacker.passiveValuePct },
+      payload: { bonusPct: Math.round(bonusPct) },
+    })
+  }
+
+  // NEMESIS (attacker) — bonus contre une cible qui a frappé son équipe,
+  // doublé si elle y a abattu quelqu'un (marque posée par la cible elle-même).
+  if (attacker.passiveKey === 'NEMESIS' && target.vengeanceMark > 0) {
+    const bonusPct = attacker.passiveValuePct * target.vengeanceMark
+    out *= 1 + bonusPct / 100
+    log.push({
+      type: 'PASSIVE',
+      unitId: attacker.id,
+      passive: 'NEMESIS',
+      payload: { bonusPct, mark: target.vengeanceMark },
     })
   }
 
@@ -633,7 +648,7 @@ function applyVigorSecondWind(target: BattleUnit, log: LogEntry[]): void {
 }
 
 /**
- * EMPOWER — multiplicateur d'ATQ composé à `attackerAtkMult`, calculé à
+ * EMPOWER — multiplicateur d'ATQ composé à `effectiveAtk`, calculé à
  * partir des charges accumulées par `applyEmpowerStack` (runActorTurn).
  * Ne touche jamais `effectiveAtk` : voir le commentaire d'`applyEmpowerStack`.
  */
@@ -653,7 +668,6 @@ function resolveAttackOnTarget(
   prng: () => number,
   log: LogEntry[],
   patternMultiplier: number,
-  attackerAtkMult: number,
   elementMults: ElementMults,
 ): DamageEntry {
   // AEGIS roll
@@ -675,7 +689,7 @@ function resolveAttackOnTarget(
   const effectiveDef = resolveEffectiveDef(attacker, target, log)
 
   let raw = computeRawDamage(
-    attacker.effectiveAtk * attackerAtkMult * resolveEmpowerMult(attacker),
+    attacker.effectiveAtk * resolveEmpowerMult(attacker),
     effectiveDef,
     target.mitigationRef,
     prng,
@@ -721,6 +735,7 @@ function resolveAttackOnTarget(
   // s'il reste des dégâts réels. Support des empilements défensifs (FORTIFY).
   if (final > 0) {
     target.hitsTaken += 1
+    attacker.vengeanceMark = Math.max(attacker.vengeanceMark, 1) as 1 | 2
   }
   applyFortifyStack(target, final, log)
   applyVigorSecondWind(target, log)
@@ -866,24 +881,22 @@ function processRiposteOnSurvivors(
   }
 }
 
-function processDeaths(targets: BattleUnit[], log: LogEntry[]): void {
+function processDeaths(
+  attacker: BattleUnit,
+  targets: BattleUnit[],
+  log: LogEntry[],
+): void {
   for (const target of targets) {
     if (target.alive && target.currentHp <= 0) {
+      // Marque de sang (NEMESIS) : le coup était fatal, même si REBIRTH relève la cible.
+      attacker.vengeanceMark = 2
       finalizeDeath(target, log)
     }
   }
 }
 
 function performStrike(ctx: StrikeContext): void {
-  const {
-    attacker,
-    targets,
-    prng,
-    log,
-    patternMultiplier,
-    attackerAtkMult,
-    elementMults,
-  } = ctx
+  const { attacker, targets, prng, log, patternMultiplier, elementMults } = ctx
   const damages: DamageEntry[] = []
   const targetIds = targets.map((t) => t.id)
 
@@ -894,7 +907,6 @@ function performStrike(ctx: StrikeContext): void {
       prng,
       log,
       patternMultiplier,
-      attackerAtkMult,
       elementMults,
     )
     damages.push(entry)
@@ -903,7 +915,7 @@ function performStrike(ctx: StrikeContext): void {
   log.push({ type: 'ATTACK', attackerId: attacker.id, targetIds, damages })
 
   processRiposteOnSurvivors(attacker, targets, damages, log)
-  processDeaths(targets, log)
+  processDeaths(attacker, targets, log)
   applyBloodlust(attacker, targets, log)
 }
 
@@ -942,30 +954,6 @@ function applyBloodlust(
 // Per-turn dispatch (one unit's action — may be multiple strikes for MONO_DOUBLE)
 // ---------------------------------------------------------------------------
 
-function computeAttackerAtkMult(
-  attacker: BattleUnit,
-  units: BattleUnit[],
-  log: LogEntry[],
-): number {
-  // NEMESIS — gagne de l'ATQ pour chaque allié tombé au combat.
-  if (attacker.passiveKey === 'NEMESIS') {
-    const fallenAllies = units.filter(
-      (u) => u.side === attacker.side && u.id !== attacker.id && !u.alive,
-    ).length
-    if (fallenAllies > 0) {
-      const bonusPct = attacker.passiveValuePct * fallenAllies
-      log.push({
-        type: 'PASSIVE',
-        unitId: attacker.id,
-        passive: 'NEMESIS',
-        payload: { bonusPct, fallenAllies },
-      })
-      return 1 + bonusPct / 100
-    }
-  }
-  return 1
-}
-
 function performUnitAction(
   attacker: BattleUnit,
   units: BattleUnit[],
@@ -978,7 +966,6 @@ function performUnitAction(
   }
   const pattern = attacker.attackPattern
   const patternMultiplier = patternDamageMultiplier(pattern)
-  const attackerAtkMult = computeAttackerAtkMult(attacker, units, log)
   const strikes = pattern === 'MONO_DOUBLE' ? 2 : 1
   for (let s = 0; s < strikes; s++) {
     if (!attacker.alive) {
@@ -998,7 +985,6 @@ function performUnitAction(
       prng,
       log,
       patternMultiplier,
-      attackerAtkMult,
       elementMults,
     })
   }
