@@ -113,10 +113,12 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     // ce passif ne dépend plus du palier, il apporte la certitude.
     describe: () => i18n.t('passives:CRIT.describe'),
   },
-  PIERCE: {
-    name: i18n.t('passives:PIERCE.name'),
-    // Ne dépend plus du palier : le premier coup ignore toute la défense.
-    describe: () => i18n.t('passives:PIERCE.describe'),
+  HAMPER: {
+    name: i18n.t('passives:HAMPER.name'),
+    describe: (palier) => {
+      const p = clampPalierForPassiveDisplay(palier)
+      return i18n.t('passives:HAMPER.describe', { value: 25 + 8 * p })
+    },
   },
   NEMESIS: {
     name: i18n.t('passives:NEMESIS.name'),
@@ -175,11 +177,11 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
       })
     },
   },
-  BLOODLUST: {
-    name: i18n.t('passives:BLOODLUST.name'),
+  MOMENTUM: {
+    name: i18n.t('passives:MOMENTUM.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:BLOODLUST.describe', { value: 15 + 5 * p })
+      return i18n.t('passives:MOMENTUM.describe', { value: 20 + 7 * p })
     },
   },
 }

@@ -659,14 +659,6 @@ describe('simulateBattle', () => {
     expect(rate).toBeLessThan(0.55)
   })
 
-  // PIERCE — le cas particulier « le passif PIERCE ignore une part de la DEF »
-  // a été retiré de resolveAttackOnTarget (tâche 6) : cette réduction de DEF
-  // est désormais portée par la stat armorPen, pas par le passif lui-même.
-  // Tâche 9 : PIERCE a récupéré un effet dynamique — le premier coup porté à
-  // chaque cible ignore toute sa défense, les suivants retombent sur
-  // armorPen. Voir le test dédié dans « passifs dynamiques — collision avec
-  // les stats ».
-
   // NEMESIS — bonus de dégâts contre un ennemi qui a frappé l'équipe,
   // doublé s'il y a abattu quelqu'un. B0 (spd=999) agit avant A0.
   const nemesisLogs = (a1Hp: number) =>
@@ -972,29 +964,6 @@ describe('simulateBattle', () => {
       expect(entries[0]?.payload.healed).toBeGreaterThan(0)
     })
 
-    it('BLOODLUST soigne l’attaquant blessé qui élimine un ennemi', () => {
-      const result = simulateBattle({
-        teamA: [
-          makeUnit('A0', {
-            hp: 1000,
-            atk: 1000,
-            def: 0,
-            spd: 999,
-            passiveKey: 'BLOODLUST',
-          }),
-        ],
-        teamB: [
-          makeUnit('B0', { hp: 100000, atk: 300, def: 0, spd: 1000 }),
-          makeUnit('B1', { hp: 1, atk: 1, def: 0, spd: 1 }),
-        ],
-        seed: 'bloodlust-test',
-        timeoutTurns: 1,
-      })
-      const entries = passiveEntries(result.log, 'BLOODLUST')
-      expect(entries.length).toBeGreaterThan(0)
-      expect(entries[0]?.payload.kills).toBe(1)
-      expect(entries[0]?.payload.healed).toBeGreaterThan(0)
-    })
   })
 
   // ------------------------------------------------------------------------
@@ -1448,21 +1417,45 @@ describe('passifs dynamiques — collision avec les stats', () => {
     expect(crits.length).toBe(Math.floor(coups.length / 2))
   })
 
-  it('PIERCE ignore toute la DEF au premier coup sur une cible, pas au second', () => {
-    const r = simulateBattle({
-      seed: 'pierce',
-      teamA: [
-        makeUnit('A0', { passiveKey: 'PIERCE', atk: 100, critRate: 0, spd: 500 }),
-      ],
-      teamB: [makeUnit('B0', { hp: 200000, def: 500, atk: 1 })],
-    })
-    const degats = r.log
-      .filter(
-        (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
-          e.type === 'ATTACK' && e.attackerId === 'A0',
-      )
-      .flatMap((e) => e.damages.map((d) => d.final))
-    expect(degats[0]).toBeGreaterThan(degats[1]! * 2)
+  // Famille jauge / vitesse
+  const actionsDe = (log: LogEntry[], id: string) =>
+    log.filter((e) => e.type === 'ATTACK' && e.attackerId === id).length
+
+  it('HAMPER repousse la jauge de la cible : elle agit moins souvent', () => {
+    const combat = (passiveKey: string | null) =>
+      simulateBattle({
+        seed: 'hamper',
+        teamA: [
+          makeUnit('A0', { hp: 1_000_000, atk: 1, spd: 100, passiveKey, palier: 6 }),
+        ],
+        teamB: [makeUnit('B0', { hp: 1_000_000, atk: 1, spd: 100 })],
+        timeoutTurns: 30,
+      }).log
+    const sans = actionsDe(combat(null), 'B0')
+    const avec = combat('HAMPER')
+    expect(actionsDe(avec, 'B0')).toBeLessThan(sans * 0.75)
+    expect(
+      avec.some((e) => e.type === 'PASSIVE' && e.passive === 'HAMPER'),
+    ).toBe(true)
+  })
+
+  it('MOMENTUM fait avancer la jauge d un allié : il agit plus souvent', () => {
+    const combat = (passiveKey: string | null) =>
+      simulateBattle({
+        seed: 'momentum',
+        teamA: [
+          makeUnit('A0', { hp: 1_000_000, atk: 1, spd: 100, passiveKey, palier: 6 }),
+          makeUnit('A1', { hp: 1_000_000, atk: 1, spd: 100 }),
+        ],
+        teamB: [makeUnit('B0', { hp: 1_000_000, atk: 1, spd: 100 })],
+        timeoutTurns: 30,
+      }).log
+    const sans = actionsDe(combat(null), 'A1')
+    const avec = combat('MOMENTUM')
+    expect(actionsDe(avec, 'A1')).toBeGreaterThan(sans * 1.3)
+    expect(
+      avec.some((e) => e.type === 'PASSIVE' && e.passive === 'MOMENTUM'),
+    ).toBe(true)
   })
 
   it('VAMPIRISM double le vol de vie sous 50 % de PV', () => {

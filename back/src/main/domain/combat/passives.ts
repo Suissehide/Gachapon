@@ -17,16 +17,16 @@ export type PassiveKey =
   | 'BULWARK'
   | 'FURY'
   | 'CRIT'
-  | 'PIERCE'
+  | 'HAMPER'
   | 'NEMESIS'
   | 'RAMPART'
   | 'REGEN'
-  // --- Passifs de famille (soin d'allié, dégâts sur la durée, soin sur élimination) ---
+  // --- Passifs de famille (soin d'allié, dégâts sur la durée, jauge d'allié) ---
   | 'BLESSING'
   | 'SANCTUARY'
   | 'BURN'
   | 'POISON'
-  | 'BLOODLUST'
+  | 'MOMENTUM'
 
 export interface PassiveEffect {
   /**
@@ -277,17 +277,19 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
       return localizedDescribe('CRIT', 0)
     },
   },
-  PIERCE: {
-    key: 'PIERCE',
+  // Famille jauge / vitesse (remplace PIERCE, « premier coup sans DEF »).
+  HAMPER: {
+    key: 'HAMPER',
     rarityHint: 'EPIC',
     get label() {
-      return localizedLabel('PIERCE')
+      return localizedLabel('HAMPER')
     },
-    compute() {
-      return { valuePct: 100 } // part de DEF ignorée au premier coup
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 25 + 8 * p } // part du seuil d'action retirée à la cible
     },
-    describe() {
-      return localizedDescribe('PIERCE', 0)
+    describe(palier) {
+      return localizedDescribe('HAMPER', clampPalier(palier))
     },
   },
   NEMESIS: {
@@ -338,7 +340,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   },
 
   // -------------------------------------------------------------------------
-  // Passifs de famille — soin d'allié, dégâts sur la durée, soin sur élimination
+  // Passifs de famille — soin d'allié, dégâts sur la durée, jauge d'allié
   // -------------------------------------------------------------------------
 
   // Passifs de soin d'allié (appliqués en fin de tour)
@@ -402,18 +404,19 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   },
 
   // Passif de soin sur élimination (appliqué après un coup fatal)
-  BLOODLUST: {
-    key: 'BLOODLUST',
+  // Famille jauge / vitesse (remplace BLOODLUST, soin sur élimination).
+  MOMENTUM: {
+    key: 'MOMENTUM',
     rarityHint: 'LEGENDARY',
     get label() {
-      return localizedLabel('BLOODLUST')
+      return localizedLabel('MOMENTUM')
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 15 + 5 * p }
+      return { valuePct: 20 + 7 * p } // part du seuil d'action donnée à l'allié
     },
     describe(palier) {
-      return localizedDescribe('BLOODLUST', clampPalier(palier))
+      return localizedDescribe('MOMENTUM', clampPalier(palier))
     },
   },
 }

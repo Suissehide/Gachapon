@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Aligne la colonne Passif du classeur sur les libellés de passives.ts.
 
-Le format de la colonne est `Libellé français (CLÉ)`. Seul le libellé change,
-la clé fait foi et sert d'appariement.
+Le format de la colonne est `Libellé français (CLÉ)`. La clé sert
+d'appariement ; une clé listée dans CLES_RENOMMEES est remplacée par la
+nouvelle avant de chercher son libellé.
 
 Usage : python3 back/scripts/relabel-passives.py [--apply]
 """
@@ -18,12 +19,19 @@ COPIE = XLSX.with_name('tcg_kit.relabeled.xlsx')
 
 NOUVEAUX_LIBELLES = {
     'CRIT': 'Précision',
-    'PIERCE': 'Perce-armure',
+    'HAMPER': 'Entrave',
+    'MOMENTUM': 'Élan',
     'VAMPIRISM': 'Vampirisme',
     'VIGOR': 'Second souffle',
     'HASTE': 'Célérité',
     'FORTIFY': 'Fortification',
     'EMPOWER': 'Puissance',
+}
+
+# 2026-10-07 : famille jauge / vitesse (migration 20261007120100).
+CLES_RENOMMEES = {
+    'PIERCE': 'HAMPER',
+    'BLOODLUST': 'MOMENTUM',
 }
 
 apply = '--apply' in sys.argv
@@ -49,9 +57,10 @@ for ligne in range(4, ws.max_row + 1):
     if not correspondance:
         print(f'  ligne {ligne} : format inattendu -> {valeur!r}')
         continue
-    cle = correspondance.group(2)
-    if cle in NOUVEAUX_LIBELLES:
-        nouveau = f'{NOUVEAUX_LIBELLES[cle]} ({cle})'
+    cle = CLES_RENOMMEES.get(correspondance.group(2), correspondance.group(2))
+    libelle = NOUVEAUX_LIBELLES.get(cle, correspondance.group(1).strip())
+    if cle in NOUVEAUX_LIBELLES or cle != correspondance.group(2):
+        nouveau = f'{libelle} ({cle})'
         if nouveau != valeur:
             cellule.value = nouveau
             modifiees += 1

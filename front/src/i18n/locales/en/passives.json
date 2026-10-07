@@ -51,9 +51,9 @@
     "name": "Precision",
     "describe": "Every 2 attacks, deals a guaranteed critical hit."
   },
-  "PIERCE": {
-    "name": "Armor Piercer",
-    "describe": "The first hit on each target ignores all of its defense."
+  "HAMPER": {
+    "name": "Shackle",
+    "describe": "Each hit pushes the target's action gauge back by {{value}}%."
   },
   "NEMESIS": {
     "name": "Vengeance",
@@ -83,8 +83,8 @@
     "name": "Poison",
     "describe": "Poisons the target: {{value}}% of its max HP per turn for 2 turns."
   },
-  "BLOODLUST": {
-    "name": "Bloodlust",
-    "describe": "Heals for {{value}}% of max HP when finishing off an enemy."
+  "MOMENTUM": {
+    "name": "Momentum",
+    "describe": "After each action, advances the most delayed ally's action gauge by {{value}}%."
   }
 }

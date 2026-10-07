@@ -118,12 +118,13 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     describeFr: () => 'Toutes les 2 attaques, inflige un coup critique garanti',
     describeEn: () => 'Every 2 attacks, deals a guaranteed critical hit',
   },
-  PIERCE: {
-    labelFr: 'Perce-armure',
-    labelEn: 'Armor Piercer',
-    describeFr: () =>
-      'Le premier coup porté à chaque cible ignore toute sa défense',
-    describeEn: () => 'The first hit on each target ignores all of its defense',
+  HAMPER: {
+    labelFr: 'Entrave',
+    labelEn: 'Shackle',
+    describeFr: (p) =>
+      `Chaque coup repousse de ${25 + 8 * p} % la jauge d'action de la cible`,
+    describeEn: (p) =>
+      `Each hit pushes the target's action gauge back by ${25 + 8 * p}%`,
   },
   NEMESIS: {
     labelFr: 'Vengeance',
@@ -187,12 +188,12 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
       `Poisons the target: ${pct((2 + 3 * p) / 10, 'en')}% of its max HP per turn for 2 turns`,
   },
 
-  BLOODLUST: {
-    labelFr: 'Soif de sang',
-    labelEn: 'Bloodlust',
+  MOMENTUM: {
+    labelFr: 'Élan',
+    labelEn: 'Momentum',
     describeFr: (p) =>
-      `Se soigne de ${15 + 5 * p} % des PV max en éliminant un ennemi`,
+      `Après chaque action, fait avancer de ${20 + 7 * p} % la jauge de l'allié le plus en retard`,
     describeEn: (p) =>
-      `Heals for ${15 + 5 * p}% of max HP when finishing off an enemy`,
+      `After each action, advances the most delayed ally's action gauge by ${20 + 7 * p}%`,
   },
 }

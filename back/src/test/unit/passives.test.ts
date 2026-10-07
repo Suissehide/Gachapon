@@ -25,12 +25,10 @@ describe('passives', () => {
       expect(PASSIVES.CRIT.compute(6).valuePct).toBe(2)
     })
   })
-  describe('PIERCE', () => {
-    // Tâche 9 : la magnitude (% de DEF ignorée) est cédée à armorPen.
-    // Le passif ignore 100 % de la DEF, mais seulement au premier coup.
-    it("part de DEF ignorée fixe à 100 %, quel que soit le palier", () => {
-      expect(PASSIVES.PIERCE.compute(1).valuePct).toBe(100)
-      expect(PASSIVES.PIERCE.compute(6).valuePct).toBe(100)
+  describe('HAMPER', () => {
+    it('33% at P1, 73% at P6 (part du seuil d action retirée)', () => {
+      expect(PASSIVES.HAMPER.compute(1).valuePct).toBe(33)
+      expect(PASSIVES.HAMPER.compute(6).valuePct).toBe(73)
     })
   })
   describe('AEGIS', () => {
@@ -116,10 +114,10 @@ describe('passives', () => {
       expect(PASSIVES.POISON.compute(6).valuePct).toBe(2)
     })
   })
-  describe('BLOODLUST', () => {
-    it('20% at P1, 45% at P6', () => {
-      expect(PASSIVES.BLOODLUST.compute(1).valuePct).toBe(20)
-      expect(PASSIVES.BLOODLUST.compute(6).valuePct).toBe(45)
+  describe('MOMENTUM', () => {
+    it('27% at P1, 62% at P6 (part du seuil d action donnée)', () => {
+      expect(PASSIVES.MOMENTUM.compute(1).valuePct).toBe(27)
+      expect(PASSIVES.MOMENTUM.compute(6).valuePct).toBe(62)
     })
   })
 
@@ -155,7 +153,7 @@ describe('passives', () => {
       expect(PASSIVES.REBIRTH.rarityHint).toBe('LEGENDARY')
       expect(PASSIVES.EXECUTION.rarityHint).toBe('LEGENDARY')
       expect(PASSIVES.BLESSING.rarityHint).toBe('LEGENDARY')
-      expect(PASSIVES.BLOODLUST.rarityHint).toBe('LEGENDARY')
+      expect(PASSIVES.MOMENTUM.rarityHint).toBe('LEGENDARY')
     })
   })
 
@@ -165,15 +163,12 @@ describe('passives', () => {
         expect(PASSIVES.AEGIS.describe(3)).toContain('17 %')
       })
     })
-    // Tâche 9 : CRIT, PIERCE et VAMPIRISM n'ont plus de magnitude
+    // Tâche 9 : CRIT et VAMPIRISM n'ont plus de magnitude
     // palier-dépendante — leur describe() est un texte fixe.
-    it('CRIT, PIERCE et VAMPIRISM décrivent un comportement fixe, sans pourcentage de palier', () => {
+    it('CRIT et VAMPIRISM décrivent un comportement fixe, sans pourcentage de palier', () => {
       runWithLocale('FR', () => {
         expect(PASSIVES.CRIT.describe(1)).toBe(
           'Toutes les 2 attaques, inflige un coup critique garanti',
-        )
-        expect(PASSIVES.PIERCE.describe(1)).toBe(
-          'Le premier coup porté à chaque cible ignore toute sa défense',
         )
         expect(PASSIVES.VAMPIRISM.describe(1)).toBe(
           'Sous 50 % de ses PV, son vol de vie est doublé',

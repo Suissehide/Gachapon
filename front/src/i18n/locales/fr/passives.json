@@ -51,9 +51,9 @@
     "name": "Précision",
     "describe": "Toutes les 2 attaques, inflige un coup critique garanti."
   },
-  "PIERCE": {
-    "name": "Perce-armure",
-    "describe": "Le premier coup porté à chaque cible ignore toute sa défense."
+  "HAMPER": {
+    "name": "Entrave",
+    "describe": "Chaque coup repousse de {{value}} % la jauge d'action de la cible."
   },
   "NEMESIS": {
     "name": "Vengeance",
@@ -83,8 +83,8 @@
     "name": "Poison",
     "describe": "Empoisonne la cible : {{value}} % de ses PV max par tour pendant 2 tours."
   },
-  "BLOODLUST": {
-    "name": "Soif de sang",
-    "describe": "Se soigne de {{value}} % des PV max en éliminant un ennemi."
+  "MOMENTUM": {
+    "name": "Élan",
+    "describe": "Après chaque action, fait avancer de {{value}} % la jauge de l'allié le plus en retard."
   }
 }

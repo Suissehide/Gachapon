@@ -46,7 +46,7 @@ const PASSIVE_KEYS = [
   'BULWARK',
   'FURY',
   'CRIT',
-  'PIERCE',
+  'HAMPER',
   'NEMESIS',
   'RAMPART',
   'REGEN',
@@ -54,7 +54,7 @@ const PASSIVE_KEYS = [
   'SANCTUARY',
   'BURN',
   'POISON',
-  'BLOODLUST',
+  'MOMENTUM',
 ] as const
 
 const DEFAULT_TEAM_A: SimulatorUnit[] = [

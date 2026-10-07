@@ -153,7 +153,8 @@ function advanceToNextActor(
   }
   let dt = Number.POSITIVE_INFINITY
   for (const u of alive) {
-    const t = (ACTION_THRESHOLD - u.gauge) / u.spd
+    // Jauge au-delà du seuil (surplus de MOMENTUM) : prête tout de suite.
+    const t = Math.max(0, ACTION_THRESHOLD - u.gauge) / u.spd
     if (t < dt) {
       dt = t
     }
@@ -498,31 +499,9 @@ function resolveFortifyMult(target: BattleUnit): number {
   return 1 + (PASSIVES.FORTIFY.compute(target.palier).valuePct * charges) / 100
 }
 
-/**
- * PIERCE — le premier coup porté à chaque cible ignore toute sa DEF ; les
- * suivants retombent sur armorPen. N'est appelée qu'après le roll d'esquive
- * (AEGIS) : un coup esquivé n'est pas « porté » et ne consomme pas ce
- * premier coup.
- */
-function resolveEffectiveDef(
-  attacker: BattleUnit,
-  target: BattleUnit,
-  log: LogEntry[],
-): number {
-  const premierCoupPierce =
-    attacker.passiveKey === 'PIERCE' && !attacker.stacks[`pierce:${target.id}`]
-  if (!premierCoupPierce) {
-    const armorPenPct = Math.max(0, Math.min(100, attacker.armorPen))
-    return target.def * resolveFortifyMult(target) * (1 - armorPenPct / 100)
-  }
-  attacker.stacks[`pierce:${target.id}`] = 1
-  log.push({
-    type: 'PASSIVE',
-    unitId: attacker.id,
-    passive: 'PIERCE',
-    payload: {},
-  })
-  return 0
+function resolveEffectiveDef(attacker: BattleUnit, target: BattleUnit): number {
+  const armorPenPct = Math.max(0, Math.min(100, attacker.armorPen))
+  return target.def * resolveFortifyMult(target) * (1 - armorPenPct / 100)
 }
 
 /**
@@ -684,9 +663,7 @@ function resolveAttackOnTarget(
     }
   }
 
-  // armorPen (attaquant) — remplace l'ancien cas particulier du passif PIERCE ;
-  // PIERCE (tâche 9) y ajoute un premier coup à 0 DEF par cible.
-  const effectiveDef = resolveEffectiveDef(attacker, target, log)
+  const effectiveDef = resolveEffectiveDef(attacker, target)
 
   let raw = computeRawDamage(
     attacker.effectiveAtk * resolveEmpowerMult(attacker),
@@ -743,6 +720,7 @@ function resolveAttackOnTarget(
   // BURN / POISON (attacker) — applique un effet de dégâts sur la durée à la cible.
   if (final > 0) {
     applyDotOnHit(attacker, target, log)
+    applyHamper(attacker, target, log)
   }
 
   // lifesteal (attaquant) — soin sur les dégâts infligés, borné aux PV max.
@@ -916,37 +894,67 @@ function performStrike(ctx: StrikeContext): void {
 
   processRiposteOnSurvivors(attacker, targets, damages, log)
   processDeaths(attacker, targets, log)
-  applyBloodlust(attacker, targets, log)
 }
 
 /**
- * BLOODLUST — l'attaquant se soigne pour chaque ennemi éliminé par sa frappe.
- * Une cible « éliminée » est une cible ciblée par la frappe qui n'est plus en vie
- * après résolution (REBIRTH la garde en vie, donc ne déclenche pas le soin).
+ * HAMPER — un coup qui inflige des dégâts repousse la jauge d'action de la
+ * cible d'une part du seuil, sans descendre sous zéro.
  */
-function applyBloodlust(
+function applyHamper(
   attacker: BattleUnit,
-  targets: BattleUnit[],
+  target: BattleUnit,
   log: LogEntry[],
 ): void {
-  if (attacker.passiveKey !== 'BLOODLUST' || !attacker.alive) {
+  if (attacker.passiveKey !== 'HAMPER' || !target.alive) {
     return
   }
-  const kills = targets.filter((t) => !t.alive).length
-  if (kills <= 0) {
+  const pushed = Math.min(
+    target.gauge,
+    (ACTION_THRESHOLD * attacker.passiveValuePct) / 100,
+  )
+  if (pushed <= 0) {
     return
   }
-  const perKill = Math.round((attacker.maxHp * attacker.passiveValuePct) / 100)
-  const healed = Math.min(perKill * kills, attacker.maxHp - attacker.currentHp)
-  if (healed <= 0) {
-    return
-  }
-  attacker.currentHp += healed
+  target.gauge -= pushed
   log.push({
     type: 'PASSIVE',
     unitId: attacker.id,
-    passive: 'BLOODLUST',
-    payload: { healed, kills },
+    passive: 'HAMPER',
+    payload: { pushedPct: attacker.passiveValuePct },
+  })
+}
+
+/**
+ * MOMENTUM — après l'action du porteur, l'allié vivant (hors porteur) dont la
+ * jauge est la plus basse avance d'une part du seuil. Le journal ne nomme pas
+ * l'allié : les payloads sont numériques.
+ */
+function applyMomentum(
+  actor: BattleUnit,
+  units: BattleUnit[],
+  log: LogEntry[],
+): void {
+  if (actor.passiveKey !== 'MOMENTUM') {
+    return
+  }
+  const allies = units.filter(
+    (u) => u.side === actor.side && u.alive && u.id !== actor.id,
+  )
+  const target = allies.reduce<BattleUnit | null>(
+    (lowest, u) => (lowest === null || u.gauge < lowest.gauge ? u : lowest),
+    null,
+  )
+  if (!target) {
+    return
+  }
+  // Pas de plafond : le surplus au-delà du seuil reste acquis, puisque
+  // advanceToNextActor retire le seuil après l'action au lieu de remettre à 0.
+  target.gauge += (ACTION_THRESHOLD * actor.passiveValuePct) / 100
+  log.push({
+    type: 'PASSIVE',
+    unitId: actor.id,
+    passive: 'MOMENTUM',
+    payload: { advancedPct: actor.passiveValuePct },
   })
 }
 
@@ -1154,7 +1162,8 @@ function applySanctuaryFromUnit(
 function computeNextDt(alive: BattleUnit[]): number {
   let dt = Number.POSITIVE_INFINITY
   for (const u of alive) {
-    const t = (ACTION_THRESHOLD - u.gauge) / u.spd
+    // Jauge au-delà du seuil (surplus de MOMENTUM) : prête tout de suite.
+    const t = Math.max(0, ACTION_THRESHOLD - u.gauge) / u.spd
     if (t < dt) {
       dt = t
     }
@@ -1200,7 +1209,7 @@ function applyHasteBonusTurn(actor: BattleUnit, log: LogEntry[]): void {
   }
   const cadence = PASSIVES.HASTE.compute(actor.palier).valuePct
   if (actor.attackCount % cadence === 0) {
-    actor.gauge = ACTION_THRESHOLD
+    actor.gauge = Math.max(actor.gauge, ACTION_THRESHOLD)
     log.push({
       type: 'PASSIVE',
       unitId: actor.id,
@@ -1226,6 +1235,7 @@ function runActorTurn(
     actor.attackCount += 1
     applyEmpowerStack(actor, log)
     applyHasteBonusTurn(actor, log)
+    applyMomentum(actor, units, log)
   }
   if (actor.alive) {
     applyRegenToUnit(actor, log)

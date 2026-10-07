@@ -481,7 +481,7 @@ export const CARDS = [
     baseDef: 11,
     baseSpd: 96,
     element: 'FIRE',
-    passiveKey: 'PIERCE',
+    passiveKey: 'HAMPER',
   }, // Mage
   {
     id: 'HUM-036',
