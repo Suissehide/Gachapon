@@ -10,6 +10,19 @@
     "fixed": "Fixed"
   },
   "releases": {
+    "v3_6": {
+      "title": "Passive Overhaul",
+      "date": "October 2026",
+      "summary": "Eight new passives built around the action gauge, targeting and control, and combat rebalanced from the ground up.",
+      "entries": {
+        "e1": "Eight new passives: Shackle and Momentum play with the action gauge, Taunt, Bodyguard and Hunter's Mark change who takes the hits, and Stun, Weaken and Sunder cripple the enemy. They replace Vampirism, Armor Piercer and Bloodlust.",
+        "e2": "Passives are rescaled by rarity: Poison, Sanctuary and Blessing no longer dominate, and the weakest passives get a boost. Vengeance marks the enemy that strikes your team, and Execution hits harder the more HP the target is missing.",
+        "e3": "Base stats now depend on the card's role (tanks really soak, mages hit hard), equipment % bonuses are doubled, and campaign difficulty ramps up without a sudden jump between chapters.",
+        "e4": "During a pull, the guarantee and boosts are shown and progress as each card is flipped.",
+        "e5": "In the equipment workshop, each row has its own Equip / Replace / Unequip button, a filter hides pieces worn by other cards, and every piece shows its set. Alchemy gets a comic-book transmutation animation.",
+        "e6": "Removing a member or leaving a team works again; power now includes set bonuses on every screen, as does team strength on the leaderboard; the replay no longer misses damage reflected by Riposte."
+      }
+    },
     "v3_5": {
       "title": "Orders and Alchemy",
       "date": "October 2026",

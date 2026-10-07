@@ -10,6 +10,19 @@
     "fixed": "Corrigé"
   },
   "releases": {
+    "v3_6": {
+      "title": "Refonte des passifs",
+      "date": "Octobre 2026",
+      "summary": "Huit nouveaux passifs qui jouent sur la jauge, le ciblage et le contrôle, et des combats rééquilibrés de fond en comble.",
+      "entries": {
+        "e1": "Huit nouveaux passifs : Entrave et Élan jouent sur la jauge d’action, Provocation, Garde du corps et Marque du chasseur changent qui prend les coups, et Étourdissement, Affaiblissement et Brise-armure affaiblissent l’ennemi. Ils remplacent Vampirisme, Perce-armure et Soif de sang.",
+        "e2": "Les passifs sont recadrés par rareté : Poison, Sanctuaire et Bénédiction ne dominent plus, les passifs les plus faibles remontent. Vengeance marque l’ennemi qui frappe ton équipe, et Exécution frappe plus fort selon les PV manquants de la cible.",
+        "e3": "Les stats de base dépendent du rôle de la carte (un tank encaisse vraiment, un mage frappe fort), les bonus en % de l’équipement sont doublés, et la difficulté de la campagne monte sans marche brutale d’un chapitre à l’autre.",
+        "e4": "Pendant un tirage, la garantie et les boosts s’affichent et avancent au rythme des cartes retournées.",
+        "e5": "Dans l’atelier d’équipement, chaque ligne a son bouton Équiper / Remplacer / Déséquiper, un filtre masque les pièces portées ailleurs et chaque pièce affiche son set. L’Alchimie gagne une animation de transmutation façon BD.",
+        "e6": "Retirer un membre ou quitter l’équipe fonctionne de nouveau ; la puissance tient compte des bonus de set sur tous les écrans, comme la force d’équipe du classement ; le replay n’oublie plus les dégâts renvoyés par Riposte."
+      }
+    },
     "v3_5": {
       "title": "Commandes et Alchimie",
       "date": "Octobre 2026",
