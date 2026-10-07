@@ -315,7 +315,7 @@ function campaign(): void {
 // multiplicateur des ennemis tels qu'ils sont seedés qui amène le joueur de
 // référence (`campaignProfile`) à sa cible. Nouvelle ancre = PV visés × ce
 // multiplicateur ; nouvelle compensation de boss = l'ancienne × le sien.
-// Le chapitre 1 est un tutoriel : il vise SIM_TUTORIAL (défaut 0.92).
+// Le chapitre 1 est un tutoriel : il vise SIM_TUTORIAL (défaut 0.95).
 function fitMult(chapter: number, index: number, target: number): number {
   let lo = 0.1
   let hi = 10
@@ -337,7 +337,7 @@ function fitMult(chapter: number, index: number, target: number): number {
 }
 
 function campaignFit(): void {
-  const tutorial = Number(process.env.SIM_TUTORIAL ?? 0.92)
+  const tutorial = Number(process.env.SIM_TUTORIAL ?? 0.95)
   console.log(`# Fit campagne — ${RUNS} runs, tutoriel à ${tutorial}`)
   // SIM_STAGES=all (ou une liste d'étages globaux) fitte d'autres étages que
   // les ancres actuelles — pour en choisir de nouvelles.

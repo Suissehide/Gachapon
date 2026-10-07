@@ -474,8 +474,14 @@ export function towerReferenceWinRate(floor: number, runs = 80): number {
  * n'avaient simplement jamais été mesurées contre un joueur réellement
  * équipé, `GEAR_PROFILES` de `balance-sim.ts` ignorant le bloc crit /
  * pénétration.
+ *
+ * Abaissées à 83 / 65 % le 2026-10-07 avec la hausse des stats par
+ * archétype, puis remontées le 2026-10-08 : le joueur de référence porte
+ * 7 pièces toutes en % (doublés), les ennemis avaient donc monté de ×1,6 à
+ * ×1,8 quand les cartes ne montaient que de ×1,2 à ×1,34 — la campagne
+ * paraissait avoir grimpé bien plus vite que les cartes.
  */
-export const CAMPAIGN_TARGETS = { normal: 0.83, boss: 0.65 } as const
+export const CAMPAIGN_TARGETS = { normal: 0.88, boss: 0.7 } as const
 
 /**
  * Rareté des trois cartes du joueur à un étage de campagne.
@@ -559,10 +565,15 @@ export function campaignPieces(
   const ameliorees = Math.floor(
     ((index - 1) * suivant.length) / (STAGES_PER_CHAPTER - 1),
   )
-  return suivant.flatMap((piece, k) => {
+  const pieces = suivant.flatMap((piece, k) => {
     const porte = k < ameliorees ? piece : actuel[k]
     return porte ? [porte] : []
   })
+  // Au chapitre 1, le joueur n'a encore RIEN : la première pièce garantie
+  // tombe au premier passage de l'étage 3 (`lootTableNormal`), puis une par
+  // étage. Le supposer équipé dès 1-1 rendait l'étage 1-1 ingagnable pour un
+  // nouveau joueur (2 % de victoire, mesuré le 2026-10-08).
+  return chapter === 1 ? pieces.slice(0, Math.max(0, index - 2)) : pieces
 }
 
 /**

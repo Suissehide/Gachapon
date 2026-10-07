@@ -5,6 +5,7 @@ import {
 } from '../../main/domain/content/bestiary.definitions'
 import {
   CAMPAIGN_TARGETS,
+  campaignProfile,
   campaignWinRate,
 } from '../../../prisma/seed/balance-calibration'
 import {
@@ -21,17 +22,17 @@ import {
 } from '../../main/domain/content/campaign.definitions'
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
-  it('stage 1-1 : valeur ancre exacte (ancre 166 PV, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {124,24,14,89}, scale = 166 / 124 (première ancre de PV,
-    // refit du 2026-10-07 après la hausse des stats par archétype),
-    // NORMAL_FACTOR = 0,971.
-    // hp: 166×0.971 = 161.2 → 161 ; atk: 24×0.971×1.3387 = 31.2 → 31
-    // def: 14×0.971×1.3387 = 18.2 → 18 ; spd: 89 tel quel — la vitesse
+  it('stage 1-1 : valeur ancre exacte (ancre 134 PV, NORMAL_FACTOR=0.971)', () => {
+    // rb = COMMON {124,24,14,89}, scale = 134 / 124 (première ancre de PV,
+    // fittée le 2026-10-08 sur un joueur SANS équipement : la première pièce
+    // garantie tombe à l'étage 3), NORMAL_FACTOR = 0,971.
+    // hp: 134×0.971 = 130.1 → 130 ; atk: 24×0.971×1.0806 = 25.2 → 25
+    // def: 14×0.971×1.0806 = 14.7 → 15 ; spd: 89 tel quel — la vitesse
     // échappe au facteur ET à l'échelle, elle reste la base de rareté.
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 161,
-      baseAtk: 31,
-      baseDef: 18,
+      baseHp: 130,
+      baseAtk: 25,
+      baseDef: 15,
       baseSpd: 89,
     })
   })
@@ -66,7 +67,7 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', 
 
 describe('enemyScale — courbe à ancres, sans marche', () => {
   it("l'étage 1 est l'ancre : scale = PV de l'ancre / PV de base COMMON", () => {
-    expect(enemyScale(1)).toBeCloseTo(166 / RARITY_BASE.COMMON.hp, 10)
+    expect(enemyScale(1)).toBeCloseTo(134 / RARITY_BASE.COMMON.hp, 10)
   })
 
   it('aucune marche : PV des étages normaux, frontières de chapitre comprises', () => {
@@ -102,7 +103,7 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     expect(boss.baseSpd).toBe(RARITY_BASE.COMMON.spd)
     // Ancre exacte : base COMMON, BOSS_FACTOR = 0,92, et l'échelle du boss =
     // enemyScale(10) × bossGearCompensation(1). Pour ce boss-là, le second
-    // facteur le cale sur la cible du tutoriel (~92 %), au-dessus des 65 %
+    // facteur le cale sur la cible du tutoriel (~95 %), au-dessus des 70 %
     // des huit autres.
     const rb = RARITY_BASE.COMMON
     const echelle = enemyScale(10) * bossGearCompensation(1)
@@ -418,7 +419,12 @@ describe("compensation d'équipement — la campagne mesurée contre un joueur �
   })
 
   it('le chapitre 1 reste un tutoriel : on le gagne', () => {
-    for (const index of [1, 5, 9]) {
+    // 1-1 et 1-2 sont mesurés SANS équipement : un nouveau joueur n'a aucune
+    // pièce avant le premier passage de l'étage 3. Supposé équipé, 1-1 était
+    // tombé à 2 % pour lui (2026-10-08).
+    expect(campaignProfile(1, 1).pieces).toEqual([])
+    expect(campaignProfile(1, 2).pieces).toEqual([])
+    for (const index of [1, 2, 5, 9]) {
       expect(campaignWinRate({ chapter: 1, index, runs: 60 })).toBeGreaterThan(
         0.85,
       )

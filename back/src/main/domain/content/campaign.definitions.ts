@@ -90,14 +90,17 @@ const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 // Désormais le joueur de référence (`campaignProfile`, harnais
 // `balance-calibration.ts`) améliore ses cartes et ses pièces UNE à la fois au
 // fil des chapitres, et reste en épiques. Les ancres ci-dessous sont les PV
-// (avant NORMAL_FACTOR) d'un ennemi normal qui donnent ~83 % de victoire à ce
+// (avant NORMAL_FACTOR) d'un ennemi normal qui donnent ~88 % de victoire à ce
 // joueur. Entre deux ancres, interpolation GÉOMÉTRIQUE étage par étage. Les
 // stats suivent les PV : `enemyScale` = PV visés / PV de base de la rareté du
 // chapitre.
 //
 // Refittées le 2026-10-07 (soir), après la hausse des stats de base par
-// archétype et le doublement des % d'équipement : cibles abaissées de 5
-// points (88 → 83 %, boss 70 → 65 %), ennemis relevés de ×1,7 à ×1,9.
+// archétype et le doublement des % d'équipement, puis le 2026-10-08 : les
+// cibles, d'abord abaissées à 83 / 65 %, sont revenues à 88 / 70 % (la
+// campagne paraissait monter bien plus vite que les cartes). NB : 5 points
+// de victoire ne valent que ~2 % de stats ennemies, tant le combat 3v3 est
+// tranché.
 // UNE ANCRE PAR ÉTAGE normal désormais : avec des ancres aux étages 1/5/9
 // seulement, les étages 2 et 8 des chapitres 1-4 tombaient à 40-60 %, parce
 // que le joueur de référence change de carte aux étages 3, 6 et 9.
@@ -110,7 +113,10 @@ const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 // étage. Un CREUX de mesure (étage qui réclame moins que le précédent) est
 // d'abord relevé de 1 % au plus, pour ne pas abaisser tout ce qui le précède
 // — pas davantage : 3 % de stats valent ~11 points de victoire ici. Ce qui s'écarte de la mesure, et pourquoi :
-// - Chapitre 1 : tutoriel, calé sur ~92 % de victoire (boss compris).
+// - Chapitre 1 : tutoriel, calé sur ~95 % de victoire (boss compris), et
+//   1-1 / 1-2 mesurés sur un joueur SANS équipement (première pièce garantie
+//   à l'étage 3) ; le pas plafonné fait du reste du chapitre une rampe plus
+//   facile que la mesure.
 // - Chapitre 5 : ses étages n'alignent que deux familles (Feu/Eau/Feu), un
 //   contre-pick Eau y bat deux ennemis sur trois et la mesure réclamait ×1,8
 //   d'un coup après 4-9. Le plafond de pas en fait une rampe : plus facile
@@ -120,87 +126,87 @@ const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 //   la courbe y suit la croissance minimale, son début est plus facile que
 //   la cible.
 export const NORMAL_HP_ANCHORS: readonly (readonly [number, number])[] = [
-  [1, 166],
-  [2, 183],
-  [3, 220],
-  [4, 264],
-  [5, 295],
-  [6, 354],
-  [7, 424],
-  [8, 502],
-  [9, 571],
-  [11, 712],
-  [12, 730],
-  [13, 876],
-  [14, 925],
-  [15, 986],
-  [16, 1149],
-  [17, 1207],
-  [18, 1245],
-  [19, 1467],
-  [21, 1847],
-  [22, 1906],
-  [23, 2287],
-  [24, 2475],
-  [25, 2521],
-  [26, 3025],
-  [27, 3197],
-  [28, 3265],
-  [29, 3918],
-  [31, 5011],
-  [32, 5152],
-  [33, 5568],
-  [34, 6014],
-  [35, 6505],
-  [36, 6712],
-  [37, 6833],
-  [38, 7110],
-  [39, 7407],
-  [41, 9925],
-  [42, 11910],
-  [43, 14165],
-  [44, 14857],
-  [45, 15373],
-  [46, 15388],
-  [47, 15403],
-  [48, 15419],
-  [49, 15434],
-  [51, 15450],
-  [52, 15465],
-  [53, 15481],
-  [54, 15496],
-  [55, 15512],
-  [56, 15715],
-  [57, 15774],
-  [58, 16118],
-  [59, 16134],
-  [61, 21218],
-  [62, 21796],
-  [63, 22249],
-  [64, 23219],
-  [65, 24020],
-  [66, 24696],
-  [67, 25389],
-  [68, 26293],
-  [69, 27200],
-  [71, 27750],
-  [72, 27778],
-  [73, 28785],
-  [74, 29643],
-  [75, 29975],
-  [76, 30053],
-  [77, 30700],
-  [78, 31395],
-  [79, 32019],
-  [81, 32675],
-  [82, 32733],
-  [83, 32765],
-  [84, 32798],
-  [85, 32831],
-  [86, 32864],
-  [87, 32897],
-  [88, 32929],
-  [89, 32962],
+  [1, 134],
+  [2, 148],
+  [3, 178],
+  [4, 213],
+  [5, 256],
+  [6, 307],
+  [7, 368],
+  [8, 442],
+  [9, 530],
+  [11, 705],
+  [12, 718],
+  [13, 862],
+  [14, 908],
+  [15, 965],
+  [16, 1127],
+  [17, 1195],
+  [18, 1220],
+  [19, 1445],
+  [21, 1830],
+  [22, 1876],
+  [23, 2251],
+  [24, 2434],
+  [25, 2489],
+  [26, 2987],
+  [27, 3142],
+  [28, 3238],
+  [29, 3886],
+  [31, 4953],
+  [32, 5064],
+  [33, 5494],
+  [34, 5909],
+  [35, 6409],
+  [36, 6592],
+  [37, 6756],
+  [38, 6990],
+  [39, 7332],
+  [41, 9825],
+  [42, 11790],
+  [43, 13976],
+  [44, 14516],
+  [45, 14973],
+  [46, 14988],
+  [47, 15003],
+  [48, 15018],
+  [49, 15033],
+  [51, 15048],
+  [52, 15063],
+  [53, 15078],
+  [54, 15093],
+  [55, 15109],
+  [56, 15514],
+  [57, 15555],
+  [58, 15858],
+  [59, 15874],
+  [61, 20704],
+  [62, 21392],
+  [63, 21759],
+  [64, 22471],
+  [65, 23683],
+  [66, 24257],
+  [67, 24900],
+  [68, 25975],
+  [69, 26612],
+  [71, 27284],
+  [72, 27311],
+  [73, 27987],
+  [74, 29004],
+  [75, 29356],
+  [76, 29385],
+  [77, 30240],
+  [78, 30424],
+  [79, 31250],
+  [81, 31801],
+  [82, 31833],
+  [83, 31865],
+  [84, 31897],
+  [85, 31928],
+  [86, 31960],
+  [87, 31992],
+  [88, 32024],
+  [89, 32056],
 ]
 const GROWTH_AFTER_LAST_ANCHOR = 1.003
 
@@ -239,15 +245,15 @@ export function enemyScale(globalStageNumber: number): number {
  * Facteur propre à chaque BOSS, par-dessus la courbe des étages normaux.
  *
  * Les boss ne peuvent pas partager le facteur des étages normaux : leur cible
- * diffère (65 % contre 83 %) et leurs multiplicateurs propres (PV ×3.25,
+ * diffère (70 % contre 88 %) et leurs multiplicateurs propres (PV ×3.25,
  * AOE_3) ne tombent pas au même endroit selon le chapitre. Mesuré : avec le
  * seul facteur des étages normaux, les neuf boss s'étalent de 0 % à 100 % de
  * victoire ; avec celui-ci, ils tiennent leur cible (refit du 2026-10-07).
  */
-// Le boss 1-10 est fitté sur la cible du tutoriel (~92 %), comme le reste du
+// Le boss 1-10 est fitté sur la cible du tutoriel (~95 %), comme le reste du
 // chapitre 1.
 const BOSS_GEAR_COMPENSATION: readonly number[] = [
-  0.88, 1.2, 0.92, 1.09, 1.26, 0.9, 0.91, 1.23, 1.2,
+  0.9, 1.2, 0.92, 1.09, 1.29, 0.91, 0.93, 1.25, 1.23,
 ]
 
 export function bossGearCompensation(chapter: number): number {
