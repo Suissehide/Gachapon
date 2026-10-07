@@ -2,19 +2,26 @@ import { useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Zap } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import type { ShopItem } from '../../constants/shop.constant.ts'
 import { useShopItems } from '../../queries/useShop.ts'
 
-export function BoostCard() {
-  const { t } = useTranslation('gacha')
-  const navigate = useNavigate()
-  const { data } = useShopItems()
-
-  const activeBoosts = (data?.items ?? []).filter(
+export function activeBoostsOf(items: ShopItem[] | undefined) {
+  return (items ?? []).filter(
     (item) =>
       item.type === 'BOOST' &&
       item.activeBoost != null &&
       item.activeBoost.pullsRemaining > 0,
   )
+}
+
+// `boosts` remplace la liste serveur pendant un tirage (décompte au rythme
+// des cartes retournées).
+export function BoostCard({ boosts }: { boosts?: ShopItem[] }) {
+  const { t } = useTranslation('gacha')
+  const navigate = useNavigate()
+  const { data } = useShopItems()
+
+  const activeBoosts = boosts ?? activeBoostsOf(data?.items)
 
   if (activeBoosts.length === 0) {
     return null

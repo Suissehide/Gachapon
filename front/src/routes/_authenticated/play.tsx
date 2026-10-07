@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import {
   type CSSProperties,
+  type ReactNode,
   useCallback,
   useEffect,
   useRef,
@@ -28,10 +29,11 @@ import type { MachineStageHandle } from '../../components/machine/MachineStage'
 import { MachineStage } from '../../components/machine/MachineStage'
 import { RevealGrid } from '../../components/machine/reveal/RevealGrid'
 import { AchievementsCard } from '../../components/play/AchievementsCard.tsx'
-import { BoostCard } from '../../components/play/BoostCard.tsx'
+import { activeBoostsOf, BoostCard } from '../../components/play/BoostCard.tsx'
 import { LevelCard } from '../../components/play/LevelCard.tsx'
 import { PityCard } from '../../components/play/PityCard.tsx'
 import { PlayTutorialPopup } from '../../components/play/PlayTutorialPopup.tsx'
+import { PullHud } from '../../components/play/PullHud.tsx'
 import { QuestsCard } from '../../components/play/QuestsCard.tsx'
 import { RatesModal } from '../../components/play/RatesModal.tsx'
 import { RecentsPanel } from '../../components/play/RecentsPanel.tsx'
@@ -43,6 +45,8 @@ import { InfoButton } from '../../components/shared/InfoButton.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
+import type { TokenBalance } from '../../constants/gacha.constant.ts'
+import type { ShopItem } from '../../constants/shop.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
 import { useToast } from '../../hooks/useToast'
@@ -106,6 +110,32 @@ const AMBIENT_PARTICLES = [
 ]
 
 const SKIP_KEY = 'play.skipAnimations'
+
+// Garantie + boosts tels que le joueur les voyait au lancement du tirage.
+type PullSnapshot = { pity: number; threshold: number; boosts: ShopItem[] }
+
+// Avance l'instantané après `revealed` cartes vues : le compteur du dernier
+// tirage vu, et un tirage de moins par carte sur chaque boost actif
+// (consumeBoosts côté serveur).
+function advanceSnapshot(
+  snap: PullSnapshot,
+  result: PullBatchResult | null,
+  revealed: number,
+): PullSnapshot {
+  const last = revealed > 0 ? result?.pulls[revealed - 1] : undefined
+  return {
+    pity: last?.pityCurrent ?? snap.pity,
+    threshold: snap.threshold,
+    boosts: snap.boosts
+      .map((b) => ({
+        ...b,
+        activeBoost: {
+          pullsRemaining: (b.activeBoost?.pullsRemaining ?? 0) - revealed,
+        },
+      }))
+      .filter((b) => b.activeBoost.pullsRemaining > 0),
+  }
+}
 
 // Boutons flottants : son, revoir le tutoriel, sauter les animations
 function PlayFloatingControls({
@@ -189,6 +219,7 @@ function PullCycleOverlay({
   onPullAgain,
   onCardRevealed,
   onAllRevealed,
+  hud,
 }: {
   phase: Phase
   teaseTier: TeaseTier | null
@@ -200,6 +231,7 @@ function PullCycleOverlay({
   onPullAgain: (count: number) => void
   onCardRevealed: (index: number) => void
   onAllRevealed: () => void
+  hud: ReactNode
 }) {
   const { t } = useTranslation('gacha')
   // Flash au burst de la capsule — teinté à la couleur du palier teasé.
@@ -256,6 +288,8 @@ function PullCycleOverlay({
           }}
         />
       )}
+
+      {hud}
 
       {/* Mute — visible pendant tout le cycle de tirage */}
       <button
@@ -367,6 +401,25 @@ function Play() {
 
   const tokens = balance?.tokens ?? 0
 
+  // La réponse du tirage rafraîchit balance/shop tout de suite, donc la jauge
+  // de garantie et les boosts sauteraient à l'état final avant que la moindre
+  // carte soit vue. On fige un instantané au lancement et on l'avance au
+  // rythme des cartes retournées (préfixe contigu : tirage n° k = pulls[k-1]).
+  const [snapshot, setSnapshot] = useState<PullSnapshot | null>(null)
+  const revealedRef = useRef(new Set<number>())
+  const [revealedCount, setRevealedCount] = useState(0)
+  const takeSnapshot = useCallback(() => {
+    const bal = qc.getQueryData<TokenBalance>(['tokens', 'balance'])
+    const shop = qc.getQueryData<{ items: ShopItem[] }>(['shop'])
+    revealedRef.current = new Set()
+    setRevealedCount(0)
+    setSnapshot({
+      pity: bal?.pityCurrent ?? 0,
+      threshold: bal?.pityThreshold ?? 0,
+      boosts: activeBoostsOf(shop?.items),
+    })
+  }, [qc])
+
   // Keep tokens in a ref so startPull can guard on it without being recreated on every balance tick
   const tokensRef = useRef(tokens)
   const pullPendingRef = useRef(pullPending)
@@ -454,6 +507,12 @@ function Play() {
   // spoiler-y "Tirer une légendaire" only pops when its card is flipped.
   const handleCardRevealed = useCallback(
     (index: number) => {
+      revealedRef.current.add(index)
+      let n = 0
+      while (revealedRef.current.has(n)) {
+        n++
+      }
+      setRevealedCount(n)
       const unlocks = pendingResult.current?.pulls[index]?.unlockedAchievements
       if (unlocks?.length) {
         enqueueAchievementUnlock(unlocks)
@@ -520,6 +579,7 @@ function Play() {
         return
       }
       pullAbortedRef.current = false
+      takeSnapshot()
 
       // Geste utilisateur → déverrouille le contexte WebAudio
       capsuleAudio.unlock()
@@ -566,7 +626,7 @@ function Play() {
       }
       runCapsuleSequence()
     },
-    [pullBatchMutation, receivePullResult, runCapsuleSequence],
+    [pullBatchMutation, receivePullResult, runCapsuleSequence, takeSnapshot],
   )
 
   // From the reveal grid's bottom-bar "Nouveau tirage x1/x10": skip machine anim,
@@ -584,6 +644,7 @@ function Play() {
       pendingResult.current = null
       capsuleAudio.unlock()
       setTeaseTier(null)
+      takeSnapshot()
 
       // This replay is already on the black backdrop, so the machine anim is
       // never involved — the "skip animations" toggle has nothing to skip here.
@@ -600,7 +661,7 @@ function Play() {
       setResult(null)
       runCapsuleSequence()
     },
-    [pullBatchMutation, receivePullResult, runCapsuleSequence],
+    [pullBatchMutation, receivePullResult, runCapsuleSequence, takeSnapshot],
   )
 
   const showCapsule = phase === 'capsule'
@@ -615,6 +676,10 @@ function Play() {
   const showActions = phase === 'idle'
   const canPullX1 = tokens >= 1 && phase === 'idle' && !pullPending
   const canPullX10 = tokens >= 10 && phase === 'idle' && !pullPending
+
+  // Hors tirage (idle, y compris après une erreur) : données serveur en direct.
+  const live = phase !== 'idle' ? snapshot : null
+  const shown = live && advanceSnapshot(live, result, revealedCount)
 
   const [ratesOpen, setRatesOpen] = useState(false)
   const pullCost = economy.gacha.pullTokenCost
@@ -655,12 +720,12 @@ function Play() {
         {/* Cartes de stats */}
         <div className="order-2 grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:order-1 lg:flex lg:flex-col lg:gap-3.5">
           <TokenCard />
-          <PityCard />
+          <PityCard current={shown?.pity} />
           <StreakCard />
           <LevelCard />
           <QuestsCard />
           <AchievementsCard />
-          <BoostCard />
+          <BoostCard boosts={shown?.boosts} />
         </div>
 
         {/* Machine + actions */}
@@ -759,6 +824,15 @@ function Play() {
           onPullAgain={handlePullAgain}
           onCardRevealed={handleCardRevealed}
           onAllRevealed={handleAllRevealed}
+          hud={
+            shown && (
+              <PullHud
+                pity={shown.pity}
+                threshold={shown.threshold}
+                boosts={shown.boosts}
+              />
+            )
+          }
         />
       )}
 

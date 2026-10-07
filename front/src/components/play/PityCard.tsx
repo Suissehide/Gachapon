@@ -3,12 +3,7 @@ import { Trans, useTranslation } from 'react-i18next'
 
 import { useTokenBalance } from '../../queries/useGacha.ts'
 
-export function PityCard() {
-  const { t } = useTranslation('gacha')
-  const { data: balance } = useTokenBalance()
-
-  const current = balance?.pityCurrent ?? 0
-  const threshold = balance?.pityThreshold ?? 0
+export function pityProgress(current: number, threshold: number) {
   // Le moteur force le légendaire quand le compteur LU AVANT le tirage a déjà
   // atteint le seuil (`isPityForced = currentPity >= pityThreshold`, voir
   // `gacha.domain.ts`), et ce compteur avance d'un par tirage non légendaire :
@@ -18,6 +13,18 @@ export function PityCard() {
   // `P + N - 1 >= T` du calcul de cote des paris (`bet.domain.ts`).
   const remaining = Math.max(1, threshold - current + 1)
   const pct = threshold > 0 ? Math.min(100, (current / threshold) * 100) : 0
+  return { remaining, pct }
+}
+
+// `current` remplace le compteur serveur pendant un tirage : la jauge ne doit
+// avancer qu'au rythme des cartes retournées, pas dès la réponse réseau.
+export function PityCard({ current: override }: { current?: number }) {
+  const { t } = useTranslation('gacha')
+  const { data: balance } = useTokenBalance()
+
+  const current = override ?? balance?.pityCurrent ?? 0
+  const threshold = balance?.pityThreshold ?? 0
+  const { remaining, pct } = pityProgress(current, threshold)
 
   return (
     <div className="rounded-2xl border border-border bg-card px-4 py-3.5 shadow-sm">
