@@ -164,16 +164,18 @@ function aoe(): void {
 }
 
 // --- Campagne : les 9 chapitres face au même équipement réel ---------------
+// Rareté en bloc par chapitre, pour explorer ; la calibration, elle, passe
+// par `campaignProfile` (cartes remplacées une à une, épiques au plafond).
 const CAMPAIGN_RARITY: readonly (keyof typeof RARITY_BASE)[] = [
   'COMMON',
   'UNCOMMON',
   'RARE',
   'EPIC',
-  'LEGENDARY',
-  'LEGENDARY',
-  'LEGENDARY',
-  'LEGENDARY',
-  'LEGENDARY',
+  'EPIC',
+  'EPIC',
+  'EPIC',
+  'EPIC',
+  'EPIC',
 ]
 
 function campaignEnemies(chapter: number, index: number): SimulatorUnit[] {

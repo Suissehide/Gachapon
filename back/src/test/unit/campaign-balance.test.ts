@@ -8,7 +8,6 @@ import {
   campaignWinRate,
 } from '../../../prisma/seed/balance-calibration'
 import {
-  baseEnemyScale,
   BOSS_ELEMENT_BY_CHAPTER,
   bossEnemyTeam,
   bossGearCompensation,
@@ -48,7 +47,7 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', 
     // — un boss d'étage 80 y paraissait 23 fois plus fort qu'il ne l'est.
     // Elle est désormais figée des deux côtés, et seul l'équipement la bouge.
     expect(enemyPower(1, 9).baseSpd).toBe(enemyPower(1, 1).baseSpd)
-    expect(enemyPower(9, 9).baseSpd).toBe(RARITY_BASE.LEGENDARY.spd)
+    expect(enemyPower(9, 9).baseSpd).toBe(RARITY_BASE.EPIC.spd)
   })
 
   it('les PV sont STRICTEMENT croissants sur les 90 stages globaux', () => {
@@ -68,97 +67,31 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', 
   })
 })
 
-// Puissance joueur ATTENDUE à un étage donné : le niveau suit l'étage global
-// jusqu'au plafond 70, l'ascension se fait EN BLOC au changement de chapitre
-// et plafonne au palier 7. Volontairement redéclaré ici plutôt qu'importé :
-// c'est le modèle de référence de la spec, et le test doit échouer si la
-// production s'en écarte.
-const expectedPlayerScale = (chapter: number, index: number): number => {
-  const n = (chapter - 1) * 10 + index
-  return (1 + 0.06 * (Math.min(n, 70) - 1)) * 1.15 ** (Math.min(chapter, 7) - 1)
-}
-const gap = (chapter: number, index: number): number =>
-  enemyScale((chapter - 1) * 10 + index) / expectedPlayerScale(chapter, index)
-
-describe('enemyScale — courbe continue en deux phases', () => {
+describe('enemyScale — courbe à ancres, sans marche', () => {
   it("l'étage 1 est l'ancre : scale = 1", () => {
     expect(enemyScale(1)).toBeCloseTo(1, 10)
   })
 
-  it("le terme d'ascension sature à l'étage 70 (identique à 70, 80 et 90)", () => {
-    // Propriété de la courbe de BASE (niveau × ascension × durcissement) :
-    // depuis l'ajout de la compensation d'équipement, `enemyScale` n'est plus
-    // décomposable en ces deux seuls termes, on interroge donc
-    // `baseEnemyScale`.
-    const levelTerm = (n: number) =>
-      1 + 0.09 * (Math.min(n, 70) - 1) + 0.03 * Math.max(0, n - 70)
-    const ascension = (n: number) => baseEnemyScale(n) / levelTerm(n)
-    expect(ascension(80)).toBeCloseTo(ascension(70), 10)
-    expect(ascension(90)).toBeCloseTo(ascension(70), 10)
-  })
-
-  it("aucune marche À L'INTÉRIEUR d'un chapitre", () => {
-    // Ce que le test protège : la continuité vécue pendant qu'on déroule un
-    // chapitre. Il n'y a rien à franchir entre deux étages voisins du même
-    // chapitre — le joueur n'y gagne ni palier ni rareté.
+  it('aucune marche : PV des étages normaux, frontières de chapitre comprises', () => {
+    // Ce que le test protège (2026-10-07) : la courbe ne saute plus au
+    // changement de chapitre. Avant, 4-9 → 5-1 faisait ×3,6 en PV, et un
+    // joueur resté en épiques y passait de 88 % à 0 % de victoire.
     //
-    // Seuil 13 % et non 12 % : le maximum est le pas 1-1 → 1-2 (12,55 %), où
-    // l'étage d'ancre porte une compensation d'équipement forcée à 1,0 (règle
-    // du tutoriel) tandis que le 1-2 amorce déjà la rampe du chapitre. Ce
-    // premier pas cumule donc la croissance de base et le début de la
-    // compensation. En valeur absolue il reste minuscule : 98 PV → 110.
+    // Pas maximal par étage : 1,22, atteint dans la rampe du tutoriel
+    // (chapitre 1) — 98 PV à 1-1 → 118 à 1-2. Une frontière franchit DEUX
+    // étages (le boss est entre les deux) : ×1,35 au plus, soit ~1,16 par
+    // étage, le rythme d'un chapitre.
+    const hp = (n: number) =>
+      enemyPower(Math.ceil(n / 10), ((n - 1) % 10) + 1).baseHp
     for (let n = 2; n <= 90; n++) {
-      if (n % 10 === 1) {
-        continue // frontière de chapitre, voir le test suivant
+      if (n % 10 === 0) {
+        continue // boss
       }
-      const step = enemyScale(n) / enemyScale(n - 1)
-      expect(step).toBeGreaterThan(1)
-      expect(step).toBeLessThan(1.13)
+      const precedent = n % 10 === 1 ? n - 2 : n - 1
+      const pas = hp(n) / hp(precedent)
+      expect(pas).toBeGreaterThan(1)
+      expect(pas).toBeLessThan(n % 10 === 1 ? 1.35 : 1.22)
     }
-  })
-
-  it('les marches de frontière existent, et suivent celles du joueur', () => {
-    // Aux frontières de chapitre, le joueur monte EN BLOC : palier (×1,15) et,
-    // aux chapitres 2 à 5, rareté de carte (jusqu'à ×1,74 de COMMON à
-    // LEGENDARY). La compensation d'équipement suit ces marches plutôt que de
-    // les lisser — les lisser rendrait le début de chapitre trivial et sa fin
-    // infranchissable, ce que la mesure montrait (0 % de victoire aux étages
-    // 4-7 et 4-9 avec une rampe lissée).
-    //
-    // La plus haute est la frontière 4→5, où le joueur passe en légendaires.
-    const marche = (chapitre: number) =>
-      enemyScale((chapitre - 1) * 10 + 1) / enemyScale((chapitre - 1) * 10)
-    for (let chapitre = 2; chapitre <= 9; chapitre++) {
-      expect(marche(chapitre)).toBeGreaterThan(1)
-      expect(marche(chapitre)).toBeLessThan(2.2)
-    }
-    const plusHaute = Math.max(
-      ...[2, 3, 4, 5, 6, 7, 8, 9].map((c) => marche(c)),
-    )
-    expect(marche(5)).toBeCloseTo(plusHaute, 10)
-  })
-
-  it('le boss est le combat le plus dur de son chapitre, dans les 9 chapitres', () => {
-    for (let chapter = 1; chapter <= 9; chapter++) {
-      const bossGap = gap(chapter, 10)
-      for (let index = 1; index <= 9; index++) {
-        expect(gap(chapter, index)).toBeLessThan(bossGap)
-      }
-    }
-  })
-
-  it("l'écart avec un joueur SANS équipement se creuse sur la campagne", () => {
-    // Remplace « en phase 2 l'amplitude par chapitre est plus faible ».
-    // Cette propriété-là supposait qu'un joueur plafonné en niveau ne
-    // progresse plus ; or la phase 2 est précisément celle où il progresse
-    // par l'ÉQUIPEMENT, et la courbe en tient désormais compte.
-    //
-    // `gap` compare la courbe ennemie à un joueur modélisé par son seul
-    // niveau. Il doit donc se creuser : c'est la mesure de ce que la campagne
-    // suppose d'équipement, et un joueur qui n'en porte aucun décroche — par
-    // construction, pas par accident.
-    expect(gap(9, 9)).toBeGreaterThan(gap(5, 9))
-    expect(gap(5, 9)).toBeGreaterThan(gap(1, 9))
   })
 })
 
@@ -171,11 +104,9 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     // La vitesse ne suit plus l'échelle : elle vaut la base de rareté.
     expect(boss.baseSpd).toBe(RARITY_BASE.COMMON.spd)
     // Ancre exacte : COMMON {101,20,5,89}, BOSS_FACTOR = 0,92, et l'échelle
-    // du boss = enemyScale(10) × bossGearCompensation(1). Le second facteur
-    // est celui qui amène CE boss à sa cible de 70 % de victoire face au
-    // joueur équipé de référence — les neuf n'y arrivent pas avec le même
-    // nombre, leurs multiplicateurs propres (PV ×3.25, AOE_3) ne tombant pas
-    // au même endroit selon le chapitre.
+    // du boss = enemyScale(10) × bossGearCompensation(1). Pour ce boss-là, le
+    // second facteur le maintient à ses PV de tutoriel, sous la cible de
+    // 70 % des huit autres.
     const echelle = enemyScale(10) * bossGearCompensation(1)
     expect(boss).toMatchObject({
       baseHp: Math.round(101 * 3.25 * 0.92 * echelle),
@@ -435,11 +366,11 @@ describe('mitigation des ennemis', () => {
       const k = 100 * e.mitigationScale
       return 1 - k / (k + e.baseDef)
     }
-    // Chapitres 5 et 9 sont tous deux LEGENDARY (RARITY_BY_CHAPTER) : à
+    // Chapitres 5 et 9 sont tous deux EPIC (RARITY_BY_CHAPTER) : à
     // rareté égale, la réduction ne doit pas dériver avec l'étage global
-    // malgré la DEF ×15,8 du chapitre 9. NB : chapitre 1 (COMMON) n'est PAS
+    // malgré la DEF ×3 du chapitre 9. NB : chapitre 1 (COMMON) n'est PAS
     // comparable ici, sa DEF de base (5) n'est pas sur la même échelle que
-    // celle d'un LEGENDARY (29) — ce n'est pas le même monstre, la
+    // celle d'un EPIC (17) — ce n'est pas le même monstre, la
     // différence de réduction entre paliers de rareté est voulue.
     // Sans correction, le chapitre 9 dérivait jusqu'à 82 % de réduction.
     expect(reduction(9, 9)).toBeCloseTo(reduction(5, 5), 2)
@@ -469,7 +400,8 @@ describe("compensation d'équipement — la campagne mesurée contre un joueur �
   })
 
   it('chaque boss tient la sienne', () => {
-    for (let chapitre = 1; chapitre <= 9; chapitre++) {
+    // Le boss 1-10 est exclu : boss de tutoriel, volontairement gagné.
+    for (let chapitre = 2; chapitre <= 9; chapitre++) {
       const mesure = campaignWinRate({ chapter: chapitre, index: 10, runs: 60 })
       expect(mesure).toBeGreaterThanOrEqual(CAMPAIGN_TARGETS.boss - 0.18)
       expect(mesure).toBeLessThanOrEqual(CAMPAIGN_TARGETS.boss + 0.18)
@@ -496,11 +428,4 @@ describe("compensation d'équipement — la campagne mesurée contre un joueur �
     expect(bossLoot(9).firstClear.gold).toBe(42288)
   })
 
-  it('la compensation ne touche pas la courbe de base', () => {
-    // `baseEnemyScale` doit rester exactement ce qu'elle était : c'est elle
-    // qui porte la progression en NIVEAU du joueur, et la compensation
-    // d'équipement se pose par-dessus sans la réécrire.
-    expect(baseEnemyScale(1)).toBeCloseTo(1, 10)
-    expect(baseEnemyScale(10)).toBeCloseTo(2.0655612, 6)
-  })
 })

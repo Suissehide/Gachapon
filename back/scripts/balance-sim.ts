@@ -60,11 +60,13 @@ const RARITY_BY_CHAPTER: Record<number, string> = {
   2: 'UNCOMMON',
   3: 'RARE',
   4: 'EPIC',
-  5: 'LEGENDARY',
-  6: 'LEGENDARY',
-  7: 'LEGENDARY',
-  8: 'LEGENDARY',
-  9: 'LEGENDARY',
+  // Épiques jusqu'au bout depuis le 2026-10-07 : supposer des légendaires
+  // (0,20 % au tirage) au chapitre 5 y faisait un mur.
+  5: 'EPIC',
+  6: 'EPIC',
+  7: 'EPIC',
+  8: 'EPIC',
+  9: 'EPIC',
 }
 
 // Niveau joueur à un étage : suit l'étage global jusqu'au plafond de
@@ -523,7 +525,11 @@ const RAID_SEEDS = 200
 const RAID_TIMEOUT_TURNS = 10
 const RAID_PALIERS = [4, 5, 6, 7]
 type Counterpick = 'none' | 'one' | 'full'
-const COUNTERPICK_COUNT: Record<Counterpick, number> = { none: 0, one: 1, full: 3 }
+const COUNTERPICK_COUNT: Record<Counterpick, number> = {
+  none: 0,
+  one: 1,
+  full: 3,
+}
 
 function percentile(sorted: number[], p: number): number {
   const idx = Math.min(sorted.length - 1, Math.floor(p * sorted.length))

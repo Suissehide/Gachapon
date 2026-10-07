@@ -10,7 +10,6 @@
  * `quests/quest-definitions.ts` / `prisma/seed/quests.ts`.
  */
 
-import { MAX_PALIER } from '../card-leveling/card-leveling.domain'
 import type { Element } from '../combat/element'
 import {
   FAMILY_ELEMENTS,
@@ -60,11 +59,11 @@ const RARITY_BY_CHAPTER = [
   'UNCOMMON',
   'RARE',
   'EPIC',
-  'LEGENDARY',
-  'LEGENDARY',
-  'LEGENDARY',
-  'LEGENDARY',
-  'LEGENDARY',
+  'EPIC',
+  'EPIC',
+  'EPIC',
+  'EPIC',
+  'EPIC',
 ] as const
 
 // Ennemi normal = base joueur × NORMAL_FACTOR. Conservé à 0.971 lors de la
@@ -78,181 +77,106 @@ const RARITY_BY_CHAPTER = [
 const NORMAL_FACTOR = 0.971
 const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 
-// --- Courbe de difficulté : continue, en deux phases -----------------------
+// --- Courbe de difficulté : PV par ancres, sans marche ---------------------
 //
-// Phase 1 (étages 1-70) — le joueur progresse par le NIVEAU.
-//   L'ascension ennemie est continue sur l'étage global (plus de marche aux
-//   frontières de chapitre) et avance un peu plus vite que celle du joueur :
-//   0.105/étage contre 0.10, soit un palier tous les 9.5 étages au lieu de 10.
-//   Comme le joueur ascensionne EN BLOC au changement de chapitre, l'écart
-//   repart près de zéro à chaque chapitre puis monte jusqu'au boss — qui est
-//   donc le point haut de son chapitre, par construction.
+// Refonte du 2026-10-07. La courbe précédente (niveau × ascension ×
+// compensation d'équipement fittée par chapitre) suivait un joueur qui
+// changeait de cartes ET d'équipement EN BLOC à chaque frontière : les
+// ennemis y sautaient de ×1,9 à ×3,6 (4-9 → 5-1), et le chapitre 5 supposait
+// trois légendaires — un joueur resté en épiques y tombait de 88 % à 0 %.
 //
-// Phase 2 (étages 71-90) — le joueur est au plafond, il progresse par
-//   l'ÉQUIPEMENT. L'ascension ennemie est figée (elle sature à l'étage
-//   10 × MAX_PALIER) et le gain de niveau est divisé par deux : l'amplitude
-//   d'un chapitre tombe de ~14 à ~6 points.
-const ENEMY_STAT_GROWTH_PER_LEVEL = 0.09
-const ENEMY_GROWTH_LATE = 0.03
-const ENEMY_ASCENSION_BONUS = 0.15
-const ENEMY_ASCENSION_PER_STAGE = 0.105
-const PLAYER_CAP_STAGE = 10 * MAX_PALIER // 70
-
-/**
- * Durcissement de la campagne — montée puis plateau, jamais de redescente.
- *
- * Mesuré au simulateur avec le roster réel rapporté par le joueur (1 épique +
- * 2 rares niveau 10, trois pièces rares, un passif, un bonus de set à 3) :
- * chapitres 1 et 2 gagnés à 100 %, en 7 à 18 actions. Le début de campagne ne
- * demande rien.
- *
- * Le facteur ne touche PAS le chapitre 1, qui sert de tutoriel, monte jusqu'à
- * l'étage 20 puis reste au plafond. Une bosse qui redescendrait rendrait
- * l'étage 45 plus facile que le 25 — une campagne doit rester monotone, et un
- * test d'équilibrage le vérifie.
- *
- * Au-delà du chapitre 3, le modèle diverge de l'expérience réelle : il annonce
- * 0 % là où le joueur passe. L'équipement s'accumule en jouant, ce qu'un
- * roster figé ne capture pas. Ce facteur est donc calibré sur le DÉBUT, la
- * seule zone où mesure et partie concordent.
- */
-// 1,12 de durcissement × 1,15 de compensation du gel de la vitesse (le joueur
-// y gagne environ 15 % de vitesse relative). Les deux passent par la MONTÉE
-// progressive plutôt que par un facteur plat : appliquée dès l'étage 1, la
-// compensation rendait le tout premier combat INGAGNABLE avec trois communes
-// médiocres — 1 % de victoire contre 47 % avant. Un tutoriel doit rester
-// franchissable avec la pire main de départ.
-const ENEMY_DIFFICULTY_MAX = 1.12 * 1.15
-const DIFFICULTY_START_STAGE = 10
-const DIFFICULTY_PEAK_STAGE = 20
-
-function difficultyFactor(globalStageNumber: number): number {
-  const t =
-    (globalStageNumber - DIFFICULTY_START_STAGE) /
-    (DIFFICULTY_PEAK_STAGE - DIFFICULTY_START_STAGE)
-  return 1 + (ENEMY_DIFFICULTY_MAX - 1) * Math.max(0, Math.min(1, t))
-}
-
-/**
- * Courbe de base — niveau, ascension, durcissement de 2026-08-07. Elle ne
- * connaît que la progression en NIVEAU du joueur ; la compensation
- * d'équipement s'applique par-dessus (voir `enemyScale`).
- */
-export function baseEnemyScale(globalStageNumber: number): number {
-  const capped = Math.min(globalStageNumber, PLAYER_CAP_STAGE)
-  const overflow = Math.max(0, globalStageNumber - PLAYER_CAP_STAGE)
-  const level =
-    1 +
-    ENEMY_STAT_GROWTH_PER_LEVEL * (capped - 1) +
-    ENEMY_GROWTH_LATE * overflow
-  const ascension =
-    (1 + ENEMY_ASCENSION_BONUS) ** (ENEMY_ASCENSION_PER_STAGE * (capped - 1))
-  return level * ascension * difficultyFactor(globalStageNumber)
-}
-
-/**
- * Compensation d'ÉQUIPEMENT (2026-09-21) — ce que la courbe de base ignorait.
- *
- * `baseEnemyScale` ne suit que le niveau et le palier du joueur. Or celui-ci
- * s'équipe en jouant, et l'équipement pèse lourd : mesuré au simulateur avec
- * le vrai catalogue, la campagne ENTIÈRE — boss 9-10 compris — se gagnait à
- * 100 % avec sept pièces rares niveau 3. Le modèle qui avait servi à la
- * calibrer (`GEAR_PROFILES` de `balance-sim.ts`) réduit l'équipement à trois
- * pourcentages et ignore le bloc crit / pénétration, lequel ne dépend ni du
- * niveau ni du palier — d'où l'écart entre « le modèle annonce 0 % dès le
- * chapitre 3 » et « les joueurs passent ».
- *
- * Deux bornes par chapitre (étage 1 et étage 9), interpolées linéairement.
- * Pourquoi pas une formule lisse sur les 90 étages : le taux de victoire est
- * une fonction QUASI BINAIRE des stats — 23 % d'écart séparent 90 % et 10 %
- * de victoire — et la compensation requise n'est pas monotone d'un chapitre
- * à l'autre (le joueur gagne par paliers : 7e pièce, montée en rareté). La
- * meilleure rampe à deux paramètres qu'on ait trouvée ratait sa cible de
- * 61 points. Ces bornes sont donc MESURÉES chapitre par chapitre
- * (`scripts/tower-sim.ts`, harnais `balance-calibration.ts`) et
- * `campaign-balance.test.ts` les remesure à chaque exécution.
- *
- * Le chapitre 1 démarre à 1.0 : le tout premier combat reste exactement ce
- * qu'il était, comme le veut la règle du tutoriel (cf. `difficultyFactor`).
- */
-const GEAR_COMPENSATION_BY_CHAPTER: readonly (readonly [number, number])[] = [
-  [1.0, 1.14],
-  [1.73, 1.21],
-  [1.45, 1.28],
-  [1.28, 1.12],
-  [2.18, 1.95],
-  [1.94, 1.73],
-  [1.92, 1.71],
-  [1.91, 1.83],
-  [2.1, 1.99],
+// Désormais le joueur de référence (`campaignProfile`, harnais
+// `balance-calibration.ts`) améliore ses cartes et ses pièces UNE à la fois au
+// fil des chapitres, et reste en épiques. Les ancres ci-dessous sont les PV
+// (avant NORMAL_FACTOR) d'un ennemi normal qui donnent ~88 % de victoire à ce
+// joueur, mesurés aux étages 1, 5 et 9 de chaque chapitre ; entre deux
+// ancres, interpolation GÉOMÉTRIQUE étage par étage. Les stats suivent les
+// PV : `enemyScale` = PV visés / PV de base de la rareté du chapitre.
+//
+// Trois écarts assumés à la mesure :
+// - Le chapitre 1 reste un tutoriel : 1-1 inchangé (101 PV de base → 98 PV),
+//   le reste calé sur ~97 % de victoire plutôt que 88 %.
+// - Le chapitre 5 n'a pas d'ancre : ses étages n'alignent que deux familles
+//   (Feu/Eau/Feu), un contre-pick Eau y bat deux ennemis sur trois et la
+//   mesure y réclamait ×1,8 d'un coup. La courbe le traverse en pente
+//   régulière : il est plus facile pour qui contre-picke, sans mur.
+// - Le joueur stagne au chapitre 6 (pièces UNCOMMON n12 → RARE n6) puis
+//   bondit au 7 (palier 7) : la mesure réclamait ×1,33 entre 6-9 et 7-1, et
+//   creusait au milieu du 6 (9 454 → 9 145 → 9 559). On abaisse le début du 6
+//   (8 700) et celui du 7 (11 000 contre 12 698) — un étage plus facile que
+//   la cible ne fait pas de mur.
+// - Les mesures non croissantes (milieu du ch.6, ch.9) sont omises : la
+//   campagne reste strictement croissante, au moins +0,3 % par étage après la
+//   dernière ancre.
+const NORMAL_HP_ANCHORS: readonly (readonly [number, number])[] = [
+  [1, 101],
+  [5, 215],
+  [9, 400],
+  [11, 527],
+  [15, 718],
+  [19, 1073],
+  [21, 1352],
+  [25, 1777],
+  [29, 2707],
+  [31, 3216],
+  [35, 3874],
+  [39, 4416],
+  [51, 8700],
+  [59, 9600],
+  [61, 11000],
+  [65, 13958],
+  [69, 15723],
+  [71, 15979],
+  [75, 16601],
+  [79, 17912],
+  [81, 18368],
 ]
+const GROWTH_AFTER_LAST_ANCHOR = 1.003
 
-function rawGearCompensation(globalStageNumber: number): number {
+/** PV de base (avant NORMAL_FACTOR) visés à un étage global. */
+function targetHp(globalStageNumber: number): number {
+  const suivante = NORMAL_HP_ANCHORS.findIndex(
+    ([stage]) => stage >= globalStageNumber,
+  )
+  if (suivante === -1) {
+    const [stage, hp] = at(
+      NORMAL_HP_ANCHORS,
+      NORMAL_HP_ANCHORS.length - 1,
+      'Ancres de PV',
+    )
+    return hp * GROWTH_AFTER_LAST_ANCHOR ** (globalStageNumber - stage)
+  }
+  const [stageB, hpB] = at(NORMAL_HP_ANCHORS, suivante, 'Ancres de PV')
+  if (suivante === 0 || stageB === globalStageNumber) {
+    return hpB
+  }
+  const [stageA, hpA] = at(NORMAL_HP_ANCHORS, suivante - 1, 'Ancres de PV')
+  return hpA * (hpB / hpA) ** ((globalStageNumber - stageA) / (stageB - stageA))
+}
+
+/** Multiplicateur de stats ennemies à un étage global (1..90). */
+export function enemyScale(globalStageNumber: number): number {
   const chapter = Math.min(
     CHAPTER_COUNT,
     Math.max(1, Math.ceil(globalStageNumber / STAGES_PER_CHAPTER)),
   )
-  const bornes = GEAR_COMPENSATION_BY_CHAPTER[chapter - 1]
-  if (!bornes) {
-    return 1
-  }
-  const [debut, fin] = bornes
-  const index = globalStageNumber - (chapter - 1) * STAGES_PER_CHAPTER
-  // Interpolation sur les NEUF étages normaux : le boss (index 10) prolonge
-  // la borne de fin, il a son propre facteur (BOSS_GEAR_COMPENSATION).
-  const t = Math.max(0, Math.min(1, (index - 1) / 8))
-  return debut + (fin - debut) * t
+  const rarity = at(RARITY_BY_CHAPTER, chapter - 1, 'Rareté par chapitre')
+  return targetHp(globalStageNumber) / RARITY_BASE[rarity].hp
 }
 
 /**
- * Échelle finale par étage, RENDUE MONOTONE par maximum courant.
- *
- * La compensation décroît à l'intérieur d'un chapitre (le joueur y est figé
- * pendant que l'ennemi monte) puis remonte au chapitre suivant. En phase 2
- * (étages 71-90) la courbe de base ne gagne que 0,4 % par étage, moins vite
- * que la compensation ne descend : le produit y reculerait. Le maximum
- * courant l'en empêche — une campagne doit rester monotone, et un test le
- * vérifie. Seize étages sur quatre-vingt-dix sont relevés par cette
- * contrainte, d'au plus quelques points de taux de victoire.
- */
-const MONOTONIC_FLOOR_GROWTH = 1.001
-
-const ENEMY_SCALE_BY_STAGE: readonly number[] = (() => {
-  const total = CHAPTER_COUNT * STAGES_PER_CHAPTER
-  const echelles: number[] = [0]
-  let plancher = 0
-  for (let g = 1; g <= total; g++) {
-    // +0,1 % minimum d'un étage au suivant : un simple `Math.max` produirait
-    // un PLATEAU, deux étages consécutifs aux ennemis identiques — illisible
-    // pour le joueur, et refusé par le test de croissance stricte.
-    plancher = Math.max(
-      plancher * MONOTONIC_FLOOR_GROWTH,
-      baseEnemyScale(g) * rawGearCompensation(g),
-    )
-    echelles.push(plancher)
-  }
-  return echelles
-})()
-
-/** Multiplicateur de stats ennemies à un étage global (1..90). */
-export function enemyScale(globalStageNumber: number): number {
-  return (
-    ENEMY_SCALE_BY_STAGE[globalStageNumber] ??
-    baseEnemyScale(globalStageNumber) * rawGearCompensation(globalStageNumber)
-  )
-}
-
-/**
- * Facteur propre à chaque BOSS, par-dessus la compensation d'équipement.
+ * Facteur propre à chaque BOSS, par-dessus la courbe des étages normaux.
  *
  * Les boss ne peuvent pas partager le facteur des étages normaux : leur cible
  * diffère (70 % contre 88 %) et leurs multiplicateurs propres (PV ×3.25,
  * AOE_3) ne tombent pas au même endroit selon le chapitre. Mesuré : avec le
  * seul facteur des étages normaux, les neuf boss s'étalent de 0 % à 100 % de
- * victoire ; avec celui-ci, de 68 % à 72 %.
+ * victoire ; avec celui-ci, de 67 % à 74 % (refit du 2026-10-07).
  */
+// Le boss 1-10 garde ses PV de tutoriel (~645) : 0.47 le laisse bien
+// au-dessus de 70 %, comme le reste du chapitre 1.
 const BOSS_GEAR_COMPENSATION: readonly number[] = [
-  0.91, 1.14, 0.91, 1.01, 1.07, 1.03, 0.9, 1.21, 1.23,
+  0.47, 1.21, 0.93, 1.23, 1.4, 1, 0.94, 1.26, 1.21,
 ]
 
 export function bossGearCompensation(chapter: number): number {

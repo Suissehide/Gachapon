@@ -38,8 +38,10 @@ import { computeEquippedCardStats } from '../../src/main/domain/combat/equipped-
 import { buildEnemySimUnits } from '../../src/main/domain/combat/sim-units'
 import {
   bossEnemyTeam,
+  CHAPTER_COUNT,
   normalEnemyTeam,
   RARITY_BASE,
+  STAGES_PER_CHAPTER,
 } from '../../src/main/domain/content/campaign.definitions'
 import { buildEquipmentCatalog } from '../../src/main/domain/content/equipment.definitions'
 import {
@@ -185,10 +187,15 @@ export interface ReferenceProfile {
   level: number
   /**
    * Rareté des cartes. Défaut EPIC — le roster d'un joueur qui grimpe une
-   * tour. La campagne la fait varier par chapitre (RARITY_BY_CHAPTER), comme
-   * `balance-sim.ts`, pour rester comparable à lui.
+   * tour. La campagne passe par `cardRarities`.
    */
   cardRarity?: keyof typeof RARITY_BASE
+  /**
+   * Rareté carte par carte (3 entrées), prioritaire sur `cardRarity`. Sert à
+   * la campagne, où le joueur remplace ses cartes UNE à la fois plutôt qu'en
+   * bloc au changement de chapitre.
+   */
+  cardRarities?: readonly (keyof typeof RARITY_BASE)[]
   equipRarity: CardRarity
   /**
    * Rareté des TROIS premiers emplacements (arme, armure, anneau), ceux que
@@ -206,6 +213,12 @@ export interface ReferenceProfile {
   equipLevel: number
   /** Nombre de pièces portées, préfixe de REFERENCE_BUILD. */
   gearCount: number
+  /**
+   * Équipement pièce par pièce (préfixe de REFERENCE_BUILD), prioritaire sur
+   * `equipRarity` / `campaignSlotRarity` / `equipLevel` / `gearCount`. Sert à
+   * la campagne, où le joueur améliore ses pièces une à une.
+   */
+  pieces?: readonly { rarity: CardRarity; level: number }[]
   /** Taux de victoire visé pour ce profil. */
   target: number
 }
@@ -268,28 +281,34 @@ export function referenceTeam(
   profile: ReferenceProfile,
   opts: { element: string | null; seed: number },
 ): SimulatorUnit[] {
-  const base = RARITY_BASE[profile.cardRarity ?? 'EPIC']
   const palier = Math.min(7, Math.ceil(profile.level / 10))
   const rng = mulberry32(opts.seed)
-  const build = REFERENCE_BUILD.slice(
-    0,
-    profile.equipLevel === 0 ? 0 : profile.gearCount,
-  )
   // Les 3 premières entrées de REFERENCE_BUILD sont les emplacements que
   // droppe la campagne (cf. son commentaire) : elles prennent
   // `campaignSlotRarity` quand il est fourni.
-  const rarityOf = (index: number): CardRarity =>
-    index < 3
-      ? (profile.campaignSlotRarity ?? profile.equipRarity)
-      : profile.equipRarity
+  const worn =
+    profile.pieces ??
+    Array.from(
+      { length: profile.equipLevel === 0 ? 0 : profile.gearCount },
+      (_, i) => ({
+        rarity:
+          i < 3
+            ? (profile.campaignSlotRarity ?? profile.equipRarity)
+            : profile.equipRarity,
+        level: profile.equipLevel,
+      }),
+    )
+  const build = REFERENCE_BUILD.slice(0, worn.length)
   return [0, 1, 2].map((idx) => {
+    const base =
+      RARITY_BASE[profile.cardRarities?.[idx] ?? profile.cardRarity ?? 'EPIC']
     const pieces = build.map((b, i) => {
-      const rarity = rarityOf(i)
+      const { rarity, level } = worn[i] ?? { rarity: 'COMMON', level: 0 }
       const row = catalogPiece(b.slot, b.setKey, rarity, b.mainStat)
       return {
         bonuses: row.bonuses as Record<string, number>,
-        level: profile.equipLevel,
-        substats: substatsFor(rarity, profile.equipLevel, rng),
+        level,
+        substats: substatsFor(rarity, level, rng),
         baseBoost: 0,
         setKey: row.setKey as string,
       }
@@ -458,29 +477,35 @@ export function towerReferenceWinRate(floor: number, runs = 80): number {
  */
 export const CAMPAIGN_TARGETS = { normal: 0.88, boss: 0.7 } as const
 
-/** Rareté des cartes du joueur par chapitre — même table que balance-sim. */
-const CAMPAIGN_CARD_RARITY: readonly (keyof typeof RARITY_BASE)[] = [
-  'COMMON',
-  'UNCOMMON',
-  'RARE',
-  'EPIC',
-  'LEGENDARY',
-  'LEGENDARY',
-  'LEGENDARY',
-  'LEGENDARY',
-  'LEGENDARY',
-]
+/**
+ * Rareté des trois cartes du joueur à un étage de campagne.
+ *
+ * Le joueur remplace UNE carte à la fois, aux étages 3, 6 et 9 des chapitres
+ * 1 à 3 : il entre au chapitre 2 en UNCOMMON, au 3 en RARE, au 4 en EPIC, et
+ * y reste jusqu'au bout. Deux choix, mesurés le 2026-10-07 :
+ * - plus de montée EN BLOC au changement de chapitre — elle imposait aux
+ *   ennemis une marche de ×1,9 à ×2,4 à chaque frontière ;
+ * - plus de légendaires supposées au chapitre 5 (taux de tirage 0,20 %) :
+ *   avec elles, un joueur resté en épiques tombait de 88 % à 0 % de
+ *   victoire entre 4-9 et 5-1, et restait à 0 % jusqu'au bout. Au-delà du
+ *   chapitre 4, le joueur ne progresse plus que par niveau et équipement.
+ */
+const CAMPAIGN_CARD_STEPS = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC'] as const
 
-/**
- * Le joueur que l'étage `chapter-index` doit accueillir : niveau = étage
- * global (plafond 70), rareté de carte du chapitre, équipement du palier
- * `chapter` — LE MÊME que l'étage `chapter` de la tour.
- */
-/**
- * Le joueur que l'étage `chapter-index` doit accueillir : niveau = étage
- * global (plafond 70), rareté de carte du chapitre, équipement du palier
- * `chapter` — LE MÊME que l'étage `chapter` de la tour.
- */
+export function campaignCardRarities(
+  chapter: number,
+  index: number,
+): (keyof typeof RARITY_BASE)[] {
+  return [0, 1, 2].map((card) => {
+    const remplacee = chapter <= 3 && index >= 3 * (card + 1)
+    const step = Math.min(
+      CAMPAIGN_CARD_STEPS.length - 1,
+      chapter - 1 + (remplacee ? 1 : 0),
+    )
+    return CAMPAIGN_CARD_STEPS[step] ?? 'EPIC'
+  })
+}
+
 /**
  * Rareté des 3 emplacements que droppe la CAMPAGNE, pour un joueur qui ENTRE
  * dans le chapitre N — donc ce que le boss du chapitre N-1 lui a garanti
@@ -504,9 +529,45 @@ function campaignSlotRarityAt(chapter: number): CardRarity {
   return chapter <= 4 ? 'RARE' : 'EPIC'
 }
 
+/** L'équipement du palier `chapter`, pièce par pièce. */
+function tierPieces(chapter: number): { rarity: CardRarity; level: number }[] {
+  const tier = gearTier(chapter)
+  return Array.from({ length: tier.gearCount }, (_, i) => ({
+    rarity: i < 3 ? campaignSlotRarityAt(chapter) : tier.equipRarity,
+    level: tier.equipLevel,
+  }))
+}
+
+/**
+ * Équipement du joueur à l'étage `chapter-index` : il passe du palier
+ * `chapter` au palier `chapter + 1` UNE PIÈCE à la fois au fil du chapitre,
+ * et porte celui du chapitre suivant au moment d'affronter le boss. Sans ce
+ * lissage, le joueur changeait d'équipement en bloc à la frontière et les
+ * ennemis devaient y sauter de ×1,5 à ×1,8 (mesuré le 2026-10-07).
+ *
+ * Le chapitre 9 n'a pas de palier suivant dans la campagne : équipement fixe.
+ */
+export function campaignPieces(
+  chapter: number,
+  index: number,
+): { rarity: CardRarity; level: number }[] {
+  const actuel = tierPieces(chapter)
+  if (chapter >= CHAPTER_COUNT) {
+    return actuel
+  }
+  const suivant = tierPieces(chapter + 1)
+  const ameliorees = Math.floor(
+    ((index - 1) * suivant.length) / (STAGES_PER_CHAPTER - 1),
+  )
+  return suivant.flatMap((piece, k) => {
+    const porte = k < ameliorees ? piece : actuel[k]
+    return porte ? [porte] : []
+  })
+}
+
 /**
  * Le joueur que l'étage `chapter-index` doit accueillir : niveau = étage
- * global (plafond 70), rareté de carte du chapitre, et un équipement à DEUX
+ * global (plafond 70), cartes de `campaignCardRarities`, et un équipement à DEUX
  * sources — les 3 emplacements de campagne à la rareté que ses boss
  * garantissent, les autres au palier `chapter` de la tour.
  */
@@ -517,8 +578,9 @@ export function campaignProfile(
   const globalStage = (chapter - 1) * 10 + index
   return {
     level: Math.min(globalStage, 70),
-    cardRarity: CAMPAIGN_CARD_RARITY[chapter - 1] ?? 'LEGENDARY',
+    cardRarities: campaignCardRarities(chapter, index),
     ...gearTier(chapter),
+    pieces: campaignPieces(chapter, index),
     campaignSlotRarity: campaignSlotRarityAt(chapter),
     target: index === 10 ? CAMPAIGN_TARGETS.boss : CAMPAIGN_TARGETS.normal,
   }
