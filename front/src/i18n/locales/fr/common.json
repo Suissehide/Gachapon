@@ -110,5 +110,10 @@
     "previous": "Page précédente",
     "next": "Page suivante",
     "pageOf": "Page {{page}} / {{pageCount}}"
+  },
+  "newVersion": {
+    "title": "Nouvelle version disponible",
+    "message": "Rafraîchis la page pour profiter des dernières nouveautés.",
+    "action": "Rafraîchir"
   }
 }

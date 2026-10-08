@@ -110,5 +110,10 @@
     "previous": "Previous page",
     "next": "Next page",
     "pageOf": "Page {{page}} / {{pageCount}}"
+  },
+  "newVersion": {
+    "title": "New version available",
+    "message": "Refresh the page to get the latest updates.",
+    "action": "Refresh"
   }
 }

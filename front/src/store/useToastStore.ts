@@ -50,7 +50,7 @@ export const useToastStore = create<ToastState>()(
           ...toastData,
           id,
           open: true,
-          duration: TOAST_REMOVE_DELAY,
+          duration: toastData.duration ?? TOAST_REMOVE_DELAY,
           onOpenChange,
         }
 
