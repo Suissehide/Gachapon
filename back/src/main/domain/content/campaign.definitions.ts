@@ -363,20 +363,22 @@ const FIRST_CLEAR_DUST_BASE = 30
 // courbe actuelle, le farm quotidien redevient la colonne vertébrale.
 const FIRST_CLEAR_XP_BASE = 7
 
-// Prime de farm du boss par rapport à un stage normal de même position.
-// Alignée sur son surcoût de difficulté réel (+2 à +5 niveaux requis, fight
-// mono-cible) — l'ancien ×2.5 rendait le boss N-10 plus rentable que TOUS les
-// stages normaux du chapitre N+1 (boss 2-10 : 45 dust vs 23 pour un 3-7
-// pourtant plus dur), vidant la progression de son intérêt.
-const BOSS_FARM_PREMIUM = 1.25
+// Le farm du boss N-10 vaut celui de l'étage (N+1)-2 : un peu plus que les
+// étages qu'il clôt, moins que le reste du chapitre suivant, plus dur. Une
+// prime au-delà ferait du boss le meilleur farm de tout le chapitre N+1 et
+// viderait la progression de son intérêt.
+const BOSS_FARM_STAGE_LEAD = 2
 
 function globalStage(chapter: number, stageIndex: number): number {
   return (chapter - 1) * STAGES_PER_CHAPTER + stageIndex
 }
 
 export function difficultyMult(chapter: number, stageIndex: number): number {
-  const position = curvePosition(globalStage(chapter, stageIndex))
-  return (1 + CURVE_A * (position - 1)) ** CURVE_B
+  return lootMult(globalStage(chapter, stageIndex))
+}
+
+function lootMult(globalStageNumber: number): number {
+  return (1 + CURVE_A * (curvePosition(globalStageNumber) - 1)) ** CURVE_B
 }
 
 // Le bestiaire (familles, sprites, élément par famille) vit dans
@@ -585,9 +587,8 @@ function campaignProgress(chapter: number, stageIndex: number): number {
  * les poids se lisent directement comme des pourcentages.
  *
  * Les communes dominent au départ puis s'éteignent complètement ; les hautes
- * raretés n'apparaissent qu'en montant. Le boss reste légèrement au-dessus de
- * l'étage normal de fin de campagne (voir `bossLoot`), et sa chance de drop
- * est deux fois plus élevée.
+ * raretés n'apparaissent qu'en montant. Le boss farme comme deux étages plus
+ * loin (voir BOSS_FARM_STAGE_LEAD).
  */
 const FARM_WEIGHTS_START: Record<string, number> = { COMMON: 90, UNCOMMON: 10 }
 const FARM_WEIGHTS_END: Record<string, number> = {
@@ -669,12 +670,8 @@ const BOSS_LOOT_SHARE = (() => {
 
 export function lootTableNormal(chapter: number, stageIndex: number) {
   const d = difficultyMult(chapter, stageIndex)
-  const farmScale = d ** FARM_EXP
   const firstClearScale = d ** FIRST_CLEAR_EXP
-  const progress = campaignProgress(chapter, stageIndex)
-  const minRarity = firstClearFloorAt(progress)
-  const farmWeights = farmWeightsAt(progress)
-  const t = (stageIndex - 1) / 8
+  const minRarity = firstClearFloorAt(campaignProgress(chapter, stageIndex))
 
   const firstClear: {
     gold: number
@@ -704,14 +701,27 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
 
   return {
     firstClear,
-    farm: {
-      gold: Math.round(FARM_GOLD_BASE * farmScale),
-      dust: Math.round(FARM_DUST_BASE * farmScale),
-      xp: Math.round(FARM_XP_BASE * farmScale),
-      equipmentDropChance: 0.15 + 0.05 * t,
-      equipmentWeights: farmWeights,
-      cardChance: 0.005 + 0.005 * t,
-    },
+    farm: farmAt(globalStage(chapter, stageIndex)),
+  }
+}
+
+/**
+ * Butin de farm d'un étage global. Tout suit la position dans la campagne,
+ * chances de drop comprises : indexées sur l'étage du chapitre, elles
+ * retombaient à chaque début de chapitre et le N-9 lâchait plus
+ * d'équipement que les premiers étages du N+1.
+ */
+function farmAt(globalStageNumber: number) {
+  const farmScale = lootMult(globalStageNumber) ** FARM_EXP
+  // Le boss final farme au-delà du dernier étage : l'avancement plafonne.
+  const progress = Math.min(1, (globalStageNumber - 1) / (TOTAL_STAGES - 1))
+  return {
+    gold: Math.round(FARM_GOLD_BASE * farmScale),
+    dust: Math.round(FARM_DUST_BASE * farmScale),
+    xp: Math.round(FARM_XP_BASE * farmScale),
+    equipmentDropChance: Math.round((0.15 + 0.05 * progress) * 1e4) / 1e4,
+    equipmentWeights: farmWeightsAt(progress),
+    cardChance: Math.round((0.005 + 0.005 * progress) * 1e5) / 1e5,
   }
 }
 
@@ -723,10 +733,6 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
 // Carte ET équipement suivent la MÊME échelle : l'équipement était figé à
 // RARE pour les neuf boss, si bien que le boss final garantissait la même
 // pièce que le boss du chapitre 1.
-// Avance de butin du boss sur les étages normaux de son chapitre, exprimée
-// dans l'unité de `campaignProgress` : ~13 étages d'avance.
-const BOSS_LOOT_PROGRESS_BONUS = 0.15
-
 function bossFloor(chapter: number): string {
   const reference = Math.floor(bossReferenceChapter(chapter))
   return reference <= 3 ? 'RARE' : reference <= 8 ? 'EPIC' : 'LEGENDARY'
@@ -743,7 +749,6 @@ function bossGivesCard(chapter: number): boolean {
 
 export function bossLoot(chapter: number) {
   const m = 1.5 ** (bossReferenceChapter(chapter) - 1) * BOSS_LOOT_SHARE
-  const atBossStage = lootTableNormal(chapter, STAGES_PER_CHAPTER)
   return {
     firstClear: {
       // ÷3 (spec 2026-07-20) : l'or des boss finançait ~900 jetons en boutique
@@ -758,26 +763,9 @@ export function bossLoot(chapter: number) {
         ? { guaranteedCard: { minRarity: bossFloor(chapter) } }
         : {}),
     },
-    farm: {
-      gold: Math.round(atBossStage.farm.gold * BOSS_FARM_PREMIUM),
-      dust: Math.round(atBossStage.farm.dust * BOSS_FARM_PREMIUM),
-      xp: Math.round(atBossStage.farm.xp * BOSS_FARM_PREMIUM),
-      equipmentDropChance: 0.3,
-      // Même courbe que les étages normaux, prise un cran plus loin dans la
-      // campagne — plutôt qu'une table figée identique pour les neuf boss,
-      // qui faisait lâcher au boss du chapitre 1 le même butin qu'au boss
-      // final (40/40/18/2, soit 18 % d'épiques dès le premier chapitre).
-      // Le boss garde par ailleurs le double de chance de drop et sa prime
-      // d'or/poussière.
-      equipmentWeights: farmWeightsAt(
-        Math.min(
-          1,
-          campaignProgress(chapter, STAGES_PER_CHAPTER) +
-            BOSS_LOOT_PROGRESS_BONUS,
-        ),
-      ),
-      cardChance: 0.02,
-    },
+    farm: farmAt(
+      globalStage(chapter, STAGES_PER_CHAPTER) + BOSS_FARM_STAGE_LEAD,
+    ),
   }
 }
 

@@ -232,26 +232,48 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
   })
 })
 
-describe('bossLoot — prime de farm alignée sur la difficulté réelle', () => {
-  it('farm boss = farm du stage de même position ×1.25', () => {
-    for (const chapter of chapitres) {
-      const atBossStage = lootTableNormal(chapter, 10).farm
-      const boss = bossLoot(chapter).farm
-      expect(boss.gold).toBe(Math.round(atBossStage.gold * 1.25))
-      expect(boss.dust).toBe(Math.round(atBossStage.dust * 1.25))
-      expect(boss.xp).toBe(Math.round(atBossStage.xp * 1.25))
+describe('bossLoot — farm du boss calé sur le chapitre suivant', () => {
+  it('farm boss N-10 = farm de l’étage (N+1)-2', () => {
+    for (let chapter = 1; chapter < CHAPTER_COUNT; chapter++) {
+      expect(bossLoot(chapter).farm).toEqual(lootTableNormal(chapter + 1, 2).farm)
     }
   })
 
-  it('en début de campagne, le farm d’un boss est rattrapé au chapitre d’après', () => {
-    // Un ancien ×2,5 rendait le boss 2-10 plus rentable que TOUT le chapitre
-    // 3. En fin de campagne la courbe de butin s'aplatit et la prime ×1,25
-    // demande plus d'un chapitre pour être rattrapée : c'est voulu, le boss
-    // y est aussi le combat le plus dur.
-    for (let chapter = 1; chapter <= 3; chapter++) {
-      expect(lootTableNormal(chapter + 1, 9).farm.dust).toBeGreaterThanOrEqual(
-        bossLoot(chapter).farm.dust,
-      )
+  it('le boss ne farme pas mieux que les étages plus durs du chapitre suivant', () => {
+    // Ce qui rapporte, par combat : or, poussière, XP, et l'espérance de
+    // pièces épiques ou mieux.
+    const valeur = (farm: ReturnType<typeof bossLoot>['farm']) => {
+      const w = farm.equipmentWeights as Record<string, number>
+      return [
+        farm.gold,
+        farm.dust,
+        farm.xp,
+        farm.equipmentDropChance * ((w.EPIC ?? 0) + (w.LEGENDARY ?? 0)),
+        farm.cardChance,
+      ]
+    }
+    for (let chapter = 1; chapter < CHAPTER_COUNT; chapter++) {
+      const boss = valeur(bossLoot(chapter).farm)
+      const avant = valeur(lootTableNormal(chapter, 9).farm)
+      const apres = valeur(lootTableNormal(chapter + 1, 3).farm)
+      boss.forEach((v, k) => {
+        expect(v).toBeGreaterThanOrEqual(avant[k] ?? 0)
+        expect(v).toBeLessThanOrEqual(apres[k] ?? 0)
+      })
+    }
+  })
+
+  it('les chances de drop ne retombent jamais d’un étage au suivant', () => {
+    let drop = 0
+    let card = 0
+    for (const c of chapitres) {
+      for (const i of etagesNormaux) {
+        const farm = lootTableNormal(c, i).farm
+        expect(farm.equipmentDropChance).toBeGreaterThanOrEqual(drop)
+        expect(farm.cardChance).toBeGreaterThanOrEqual(card)
+        drop = farm.equipmentDropChance
+        card = farm.cardChance
+      }
     }
   })
 
