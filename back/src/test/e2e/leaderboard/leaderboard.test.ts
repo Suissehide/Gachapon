@@ -140,6 +140,11 @@ describe('Leaderboard routes', () => {
       })
       expect(e.palier).toBeGreaterThanOrEqual(0)
       expect(e.palier).toBeLessThanOrEqual(e.maxPalier)
+      if (e.palier === 0) {
+        expect(e.stage).toBeNull()
+      } else {
+        expect(e.stage).toMatch(/^\d+-\d+$/)
+      }
     }
   })
 

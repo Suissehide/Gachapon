@@ -28,6 +28,8 @@ export type CombatEntry = {
   rank: number
   user: LeaderboardUserMini
   palier: number
+  /** Dernier étage franchi, « 6-7 » ; null sans progression. */
+  stage: string | null
   maxPalier: number
   combatPower: number
 }

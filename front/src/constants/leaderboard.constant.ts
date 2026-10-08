@@ -26,6 +26,7 @@ export type CombatEntry = {
   rank: number
   user: LeaderboardUserMini
   palier: number
+  stage: string | null
   maxPalier: number
   combatPower: number
 }
@@ -40,6 +41,14 @@ export type LeaderboardResponse<E> = {
   pageSize: number
   /** Set only by the teams endpoint. */
   currentUserTeamId?: string | null
+}
+
+/** « 6-7 · 57/150 » : l'étage parle au joueur, le compte situe sur la campagne. */
+export function formatCampaignProgress(
+  entry: Pick<CombatEntry, 'stage' | 'palier' | 'maxPalier'>,
+): string {
+  const count = `${entry.palier}/${entry.maxPalier}`
+  return entry.stage ? `${entry.stage} · ${count}` : count
 }
 
 export const LEADERBOARD_ROUTES = {

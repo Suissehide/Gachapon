@@ -2,10 +2,11 @@ import { Link } from '@tanstack/react-router'
 import { Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import type {
-  CollectorEntry,
-  CombatEntry,
-  TeamEntry,
+import {
+  type CollectorEntry,
+  type CombatEntry,
+  formatCampaignProgress,
+  type TeamEntry,
 } from '../../constants/leaderboard.constant'
 import { currentLocale } from '../../i18n/index.ts'
 import { cn, formatNumber } from '../../libs/utils'
@@ -76,7 +77,7 @@ export function LeaderRow(props: Props) {
               entry.maxPalier > 0 ? (entry.palier / entry.maxPalier) * 100 : 0
             }
             label={t('leaderRow.tierReachedLabel')}
-            displayValue={`${entry.palier} / ${entry.maxPalier}`}
+            displayValue={formatCampaignProgress(entry)}
           />
         ) : (
           <div className="grid grid-cols-2 gap-[18px]">

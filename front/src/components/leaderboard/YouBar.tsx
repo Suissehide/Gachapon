@@ -1,10 +1,11 @@
 import { ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import type {
-  CollectorEntry,
-  CombatEntry,
-  TeamEntry,
+import {
+  type CollectorEntry,
+  type CombatEntry,
+  formatCampaignProgress,
+  type TeamEntry,
 } from '../../constants/leaderboard.constant'
 import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber, ordinal } from '../../libs/utils.ts'
@@ -105,7 +106,7 @@ export function YouBar(props: Props) {
       : [
           {
             lab: t('youBar.tierLabel'),
-            val: `${entry.palier} / ${entry.maxPalier}`,
+            val: formatCampaignProgress(entry),
           },
           { lab: t('youBar.powerLabel'), val: fmt(entry.combatPower) },
         ]

@@ -35,6 +35,7 @@ const combatEntrySchema = z.object({
   rank: z.number().int(),
   user: leaderboardUserSchema,
   palier: z.number().int(),
+  stage: z.string().nullable(),
   maxPalier: z.number().int(),
   combatPower: z.number(),
 })

@@ -362,10 +362,15 @@ export class LeaderboardDomain implements ILeaderboardDomain {
     const setDefs = setBonusesFromConfig(baseStatsCfg)
 
     const scored = candidateIds.map((userId) => {
+      const progress = progressMap.get(userId) ?? null
       const palier = this.#leaderboardRepository.computePalierForProgress(
-        progressMap.get(userId) ?? null,
+        progress,
         stagesOrdered,
       )
+      const stage =
+        progress && palier > 0
+          ? `${progress.highestChapter}-${progress.highestIndex}`
+          : null
       const cards = combatCardsMap.get(userId) ?? []
       const combatPower = cards.reduce((sum, c) => {
         // Bonus de set — comptés sur les pièces portées par CETTE carte.
@@ -393,7 +398,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
           })
         )
       }, 0)
-      return { userId, palier, combatPower }
+      return { userId, palier, stage, combatPower }
     })
 
     scored.sort((a, b) => {
@@ -404,7 +409,12 @@ export class LeaderboardDomain implements ILeaderboardDomain {
     })
 
     const toEntry = (
-      s: { userId: string; palier: number; combatPower: number },
+      s: {
+        userId: string
+        palier: number
+        stage: string | null
+        combatPower: number
+      },
       rank: number,
     ): CombatEntry => {
       const u = userMap.get(s.userId)
@@ -417,6 +427,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
           avatar: u?.avatar ?? null,
         },
         palier: s.palier,
+        stage: s.stage,
         maxPalier,
         combatPower: Math.round(s.combatPower),
       }
