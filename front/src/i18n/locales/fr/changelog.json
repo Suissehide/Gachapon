@@ -10,6 +10,16 @@
     "fixed": "Corrigé"
   },
   "releases": {
+    "v3_7": {
+      "title": "La campagne s’agrandit",
+      "date": "Octobre 2026",
+      "summary": "Quinze chapitres au lieu de neuf, une difficulté qui monte plus en douceur et un farm de boss remis d’aplomb.",
+      "entries": {
+        "e1": "La campagne passe à quinze chapitres : Marais, Désert, Ruines, Cimes, Tempête et Citadelle arrivent avant la Faille, qui devient le chapitre 15, chacun avec son boss et de nouveaux succès. Ta progression est conservée, sur une courbe plus douce, et le butin des premiers passages est réparti sur les 150 étapes.",
+        "e2": "Les premiers étages se gagnent sans équipement et les ennemis de campagne sont un peu moins coriaces. Farmer un boss rapporte autant que l’étape qui suit son chapitre, et les chances de butin suivent ton avancée dans la campagne au lieu de retomber à chaque début de chapitre.",
+        "e3": "Le classement de combat affiche l’étape atteinte (ex. 6-7) à côté du nombre d’étapes, et la puissance d’une carte dans la collection correspond enfin à celle du combat."
+      }
+    },
     "v3_6": {
       "title": "Refonte des passifs",
       "date": "Octobre 2026",

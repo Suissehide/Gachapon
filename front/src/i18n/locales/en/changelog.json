@@ -10,6 +10,16 @@
     "fixed": "Fixed"
   },
   "releases": {
+    "v3_7": {
+      "title": "The Campaign Grows",
+      "date": "October 2026",
+      "summary": "Fifteen chapters instead of nine, a gentler difficulty ramp and boss farming put back in line.",
+      "entries": {
+        "e1": "The campaign now has fifteen chapters: Marsh, Desert, Ruins, Peaks, Storm and Citadel come before the Rift, which becomes chapter 15, each with its own boss and new achievements. Your progress is kept on a gentler curve, and first-clear loot is spread across all 150 stages.",
+        "e2": "The first stages can be won without equipment, and campaign enemies are a little less tough. Farming a boss pays as much as the stage right after its chapter, and loot chances follow your progress through the campaign instead of dropping at the start of each chapter.",
+        "e3": "The combat leaderboard shows the stage reached (e.g. 6-7) next to the stage count, and a card's power in the collection finally matches its power in combat."
+      }
+    },
     "v3_6": {
       "title": "Passive Overhaul",
       "date": "October 2026",
