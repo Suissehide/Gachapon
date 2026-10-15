@@ -284,17 +284,14 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // `loot` est un POURCENTAGE, pas des minutes : il divise l'intervalle de
   // regeneration (`effectiveRegenInterval`, economy.domain.ts).
   //
-  // Passe de 0,25 a 1 par rang, soit +10 % au plafond au lieu de +2,5 %.
-  // L'ancienne valeur ne se sentait tout simplement pas : l'intervalle de
-  // base est de 60 minutes, donc 24 jetons par jour, et +2,5 % en ajoutait
-  // 0,6 — quatre par semaine. A +10 % le membre gagne 2,4 jetons par jour,
-  // dix-sept sur la semaine.
-  //
-  // L'ordre de grandeur reste sous celui du bonus de raid (+1 attaque sur 2,
-  // donc +50 %) et au-dessus de `xp` (+4 %) et `forge` (-5 %). C'est voulu :
-  // `loot` touche la boucle centrale du jeu, c'est le bonus que chaque membre
-  // ressent tous les jours.
-  'teamPerk.loot.perRank': 1,
+  // Au plafond : loot +40 %, xp +30 %, forge -30 %. Dix rangs coutent dix
+  // niveaux d'equipe, des semaines de jeu collectif : l'effet doit depasser
+  // celui d'une branche de competences pleine (REGEN, COMBAT_XP_BONUS +17 %,
+  // EQUIP_UPGRADE_DISCOUNT -15 %), sinon le choix de l'equipe ne se sent pas.
+  // A +40 %, un membre gagne ~9,6 jetons de regeneration par jour, peu face
+  // aux ~55-75 tirages quotidiens vises. `forge` s'additionne a la competence
+  // Forgeron : -45 % au pire, le prix reste positif.
+  'teamPerk.loot.perRank': 4,
   'teamPerk.loot.unlockLevel': 1,
   'teamPerk.loot.maxRank': 10,
   // `raid.maxRank` a ete ramene de 5 a 2. A 5, le bonus donnait +2 attaques
@@ -313,10 +310,10 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // entier, qui ne se decoupe pas en paliers plus fins. Le plafond a 2 vient
   // de l'equilibrage du raid (voir plus haut), pas de la taille de l'arbre.
   'teamPerk.raid.maxRank': 2,
-  'teamPerk.xp.perRank': 0.4,
+  'teamPerk.xp.perRank': 3,
   'teamPerk.xp.unlockLevel': 1,
   'teamPerk.xp.maxRank': 10,
-  'teamPerk.forge.perRank': 0.5,
+  'teamPerk.forge.perRank': 3,
   'teamPerk.forge.unlockLevel': 1,
   'teamPerk.forge.maxRank': 10,
   'team.maxMembers': 35,
