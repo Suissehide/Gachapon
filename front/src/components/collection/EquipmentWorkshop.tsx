@@ -979,7 +979,7 @@ function SetFilter({
           <Button
             key={def.key}
             variant="outline"
-            disabled={n === 0}
+            disabled={n === 0 && !on}
             aria-pressed={on}
             title={`${def.pieces} pc · ${def.bonus.label}`}
             onClick={() =>
