@@ -5,6 +5,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 
 import { cn } from '../../libs/utils.ts'
+import { buttonVariants } from './button.tsx'
 
 const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   return createPortal(
@@ -28,37 +29,21 @@ const ToastViewport = React.forwardRef<
 ))
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
-const toastVariants = cva(
-  'relative group flex w-full items-center justify-between space-x-3 overflow-hidden bg-card rounded-md p-4 pr-6 mt-4 shadow-xl transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
-  {
-    variants: {
-      variant: {
-        default: 'default',
-        destructive:
-          'destructive bg-[linear-gradient(to_right,_rgba(239,68,68,0.3)_1%,_transparent_40%,_transparent_100%)]',
-        warning:
-          'warning bg-[linear-gradient(to_right,_rgba(234,179,8,0.3)_1%,_transparent_40%,_transparent_100%)]',
-        info: 'info bg-[linear-gradient(to_right,_rgba(59,130,246,0.3)_1%,_transparent_40%,_transparent_100%)]',
-        success:
-          'success bg-[linear-gradient(to_right,_rgba(16,185,129,0.3)_1%,_transparent_40%,_transparent_100%)]',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  },
-)
+const toastClassName =
+  'group relative mt-3 flex w-full items-start gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3.5 pr-11 text-text shadow-[var(--shadow-toast)] transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full'
 
+// La sévérité ne se lit que sur la tuile : la surface reste celle d'une
+// carte du site, quelle que soit la variante.
 const toastIconVariants = cva(
-  'relative flex justify-center items-center z-1 bg-background/40 rounded-full p-[7px] text-card before:-z-1 before:absolute before:bg-gray-700 before:p-2.5 before:rounded-full',
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
   {
     variants: {
       variant: {
-        default: '',
-        destructive: 'before:bg-red-500',
-        warning: 'before:bg-yellow-500',
-        info: 'before:bg-blue-500',
-        success: 'before:bg-green-500',
+        default: 'bg-primary/15 text-primary-dark',
+        destructive: 'bg-destructive/12 text-danger-ink',
+        warning: 'bg-warning/15 text-warning',
+        info: 'bg-info/12 text-info',
+        success: 'bg-success/12 text-success-ink',
       },
     },
     defaultVariants: {
@@ -69,13 +54,12 @@ const toastIconVariants = cva(
 
 const Toast = React.forwardRef<
   React.ComponentRef<typeof ToastPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants>
->(({ className, variant, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root>
+>(({ className, ...props }, ref) => {
   return (
     <ToastPrimitives.Root
       ref={ref}
-      className={cn(toastVariants({ variant }), className)}
+      className={cn(toastClassName, className)}
       {...props}
     />
   )
@@ -100,7 +84,8 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      'inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors hover:bg-secondary focus:outline-none focus:ring-1 focus:ring-ring disabled:pointer-events-none disabled:opacity-50',
+      buttonVariants({ size: 'sm' }),
+      'shrink-0 self-center rounded-full px-3.5',
       className,
     )}
     {...props}
@@ -115,7 +100,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      'cursor-pointer rounded-md p-1 text-gray-400 opacity-0 transition-opacity hover:text-gray-700 focus:opacity-100 focus:outline-none group-hover:opacity-100',
+      'absolute top-2.5 right-2.5 cursor-pointer rounded-lg p-1 text-text-light transition-colors hover:bg-muted hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       className,
     )}
     toast-close=""
@@ -132,7 +117,10 @@ const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn('text-sm font-semibold [&+div]:text-xs', className)}
+    className={cn(
+      'font-display text-sm leading-snug font-bold tracking-tight',
+      className,
+    )}
     {...props}
   />
 ))
@@ -144,7 +132,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn('text-sm text-muted-foreground mt-0.5', className)}
+    className={cn('mt-0.5 text-[13px] leading-snug text-text-light', className)}
     {...props}
   />
 ))

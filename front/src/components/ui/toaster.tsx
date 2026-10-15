@@ -1,4 +1,4 @@
-import { Check, Shrimp, X } from 'lucide-react'
+import { Check, Info, Shrimp, TriangleAlert, X } from 'lucide-react'
 
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useToast } from '../../hooks/useToast.ts'
@@ -33,34 +33,26 @@ export function Toaster() {
   function getIconFromSeverity(severity?: string) {
     switch (severity) {
       case TOAST_SEVERITY.SUCCESS:
-        return <Check strokeWidth={2.5} className="w-3 h-3" />
+        return <Check strokeWidth={2.5} className="h-4 w-4" />
       case TOAST_SEVERITY.ERROR:
-        return <X strokeWidth={2.5} className="w-3 h-3" />
+        return <X strokeWidth={2.5} className="h-4 w-4" />
       case TOAST_SEVERITY.WARNING:
-        return (
-          <span className="font-bold text-sm flex justify-center items-center w-3 h-3">
-            !
-          </span>
-        )
+        return <TriangleAlert strokeWidth={2.25} className="h-4 w-4" />
       case TOAST_SEVERITY.INFO:
-        return (
-          <span className="font-bold text-sm flex justify-center items-center w-3 h-3">
-            i
-          </span>
-        )
+        return <Info strokeWidth={2.25} className="h-4 w-4" />
       default:
-        return <Shrimp strokeWidth={2.5} className="w-3 h-3" />
+        return <Shrimp strokeWidth={2.25} className="h-4 w-4" />
     }
   }
 
   return (
     <ToastProvider>
       {toasts.map(({ id, title, message, severity, action, ...props }) => (
-        <Toast key={id} {...props} variant={getVariantFromSeverity(severity)}>
+        <Toast key={id} {...props}>
           <ToastIcon variant={getVariantFromSeverity(severity)}>
             {getIconFromSeverity(severity)}
           </ToastIcon>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1 self-center">
             {title && <ToastTitle>{title}</ToastTitle>}
             {message && <ToastDescription>{message}</ToastDescription>}
           </div>

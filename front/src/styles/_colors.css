@@ -165,6 +165,11 @@
   --shadow-card:
     0 2px 0 rgba(27, 23, 38, 0.04), 0 12px 30px -12px rgba(27, 23, 38, 0.08);
 
+  /* Ombre d'un toast : celle d'une carte, plus portée parce qu'il flotte
+     au-dessus de la page. */
+  --shadow-toast:
+    0 2px 0 rgba(27, 23, 38, 0.04), 0 18px 40px -14px rgba(27, 23, 38, 0.28);
+
   /* Ombre intérieure du portrait client (commandes) — finition « Arcade
      clair » : léger creux pour distinguer le cadre de l'illustration, sans
      assombrir l'image elle-même. */
