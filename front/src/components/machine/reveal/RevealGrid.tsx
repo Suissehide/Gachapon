@@ -218,9 +218,11 @@ export function RevealGrid({
       .filter(({ i }) => !flipped.has(i))
       .sort((a, b) => a.rank - b.rank)
     // "Tout révéler" flips 10 cards in cascade — suppress the fullscreen
-    // rarity effect so we don't spam 10 flashes back-to-back.
+    // rarity effect so we don't spam 10 flashes back-to-back. A lone card
+    // keeps its effect: there is nothing to spam.
+    const suppressEffect = remaining.length > 1
     remaining.forEach(({ i }, order) => {
-      setTimeout(() => flipCard(i, true), order * 150)
+      setTimeout(() => flipCard(i, suppressEffect), order * 150)
     })
   }
 
