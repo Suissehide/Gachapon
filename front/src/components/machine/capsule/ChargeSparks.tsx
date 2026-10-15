@@ -2,7 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
-import type { CapsuleAnim } from './capsuleConfig'
+import type { CapsuleAnim, CapsuleTierConfig } from './capsuleConfig'
 
 // Étincelles de charge : des points lumineux naissent sur une coquille autour
 // de la capsule et convergent vers elle pendant la vibration — l'énergie est
@@ -39,6 +39,10 @@ function makeSprite(): THREE.Texture | null {
   return tex
 }
 
+function twinkleScale(twinkle: boolean, t: number): number {
+  return twinkle ? 0.6 + 0.8 * Math.abs(Math.sin(t * 9)) : 1
+}
+
 function spawnRadius(): number {
   return 2.3 + Math.random() * 1.3
 }
@@ -47,11 +51,11 @@ type Props = {
   anim: CapsuleAnim
   // Couleur mutable partagée avec la scène (lerpée vers le palier teasé)
   color: THREE.Color
-  // Part des particules actives (0..1, dépend du palier)
-  getRatio: () => number
+  // Palier courant : part des particules actives et scintillement
+  getConfig: () => CapsuleTierConfig
 }
 
-export function ChargeSparks({ anim, color, getRatio }: Props) {
+export function ChargeSparks({ anim, color, getConfig }: Props) {
   const pointsRef = useRef<THREE.Points>(null)
   const matRef = useRef<THREE.PointsMaterial>(null)
 
@@ -93,7 +97,8 @@ export function ChargeSparks({ anim, color, getRatio }: Props) {
       return
     }
 
-    const activeCount = Math.floor(COUNT * getRatio())
+    const cfg = getConfig()
+    const activeCount = Math.floor(COUNT * cfg.sparkRatio)
     const t = state.clock.elapsedTime
     for (let i = 0; i < COUNT; i++) {
       if (i >= activeCount) {
@@ -118,7 +123,7 @@ export function ChargeSparks({ anim, color, getRatio }: Props) {
 
     mat.color.copy(color)
     mat.opacity = Math.min(1, c * 2.2) * (1 - anim.inhale * 0.4)
-    mat.size = 0.06 + c * 0.05
+    mat.size = (0.06 + c * 0.05) * twinkleScale(cfg.twinkle, t)
   })
 
   return (

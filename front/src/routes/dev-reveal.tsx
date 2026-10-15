@@ -4,8 +4,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { CapsuleStage } from '../components/machine/capsule/CapsuleStage.tsx'
+import { computeTeaseTier } from '../components/machine/capsule/capsuleConfig.ts'
 import { RevealGrid } from '../components/machine/reveal/RevealGrid.tsx'
-import type { PullBatchEntry } from '../queries/useGacha.ts'
+import type { PullBatchEntry, PullBatchResult } from '../queries/useGacha.ts'
 
 export const Route = createFileRoute('/dev-reveal')({
   component: DevReveal,
@@ -54,10 +56,11 @@ function DevReveal() {
   const [preview, setPreview] = useState<{
     results: PullBatchEntry[]
     seq: number
+    opened: boolean
   } | null>(null)
 
   const show = (results: PullBatchEntry[]) =>
-    setPreview((p) => ({ results, seq: (p?.seq ?? 0) + 1 }))
+    setPreview((p) => ({ results, seq: (p?.seq ?? 0) + 1, opened: false }))
 
   return (
     <div
@@ -117,7 +120,19 @@ function DevReveal() {
         </button>
       </div>
 
-      {preview && (
+      {preview && !preview.opened && (
+        <div style={{ position: 'fixed', inset: 0, background: '#000' }}>
+          <CapsuleStage
+            key={preview.seq}
+            teaseTier={computeTeaseTier({
+              pulls: preview.results,
+            } as PullBatchResult)}
+            onBurst={() => setPreview((p) => p && { ...p, opened: true })}
+          />
+        </div>
+      )}
+
+      {preview?.opened && (
         <RevealGrid
           key={preview.seq}
           results={preview.results}

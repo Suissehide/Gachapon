@@ -102,20 +102,23 @@ function spawnInkBlots(
   }
 }
 
-const SPARKLE_COUNT = 110
+const SPARKLE_COUNT = 45
+const SPARKLE_WAVES_MS = [0, 220, 460]
 
+// Les étoiles naissent déjà dispersées autour de la carte (disque uniforme)
+// au lieu d'être éjectées du centre : un scintillement, pas une explosion.
 function spawnStarSparkles(s: EffectState, cx: number, cy: number): void {
   const colors = PARTICLE_COLORS.brilliant
+  const radius = Math.min(window.innerWidth, window.innerHeight) * 0.42
   for (let i = 0; i < SPARKLE_COUNT; i++) {
     const angle = Math.random() * Math.PI * 2
-    const speed = Math.random() * 10 + 3
+    const dist = Math.sqrt(Math.random()) * radius
     s.sparkles.push({
-      x: cx,
-      y: cy,
-      // Éjection radiale avec biais vers le haut → pluie qui retombe
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - 4,
-      size: Math.random() * 12 + 6,
+      x: cx + Math.cos(angle) * dist,
+      y: cy + Math.sin(angle) * dist,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: -(Math.random() * 0.6 + 0.2),
+      size: Math.random() * 14 + 6,
       col: colors[Math.floor(Math.random() * colors.length)],
       life: 1,
       t: Math.floor(Math.random() * 60),
@@ -543,10 +546,12 @@ export function useRevealEffect(
     }
 
     if (config.starSparkles) {
-      addTimer(() => {
-        spawnStarSparkles(s, s.cx, s.cy)
-        ensureRAF()
-      }, FLASH_DONE)
+      for (const delay of SPARKLE_WAVES_MS) {
+        addTimer(() => {
+          spawnStarSparkles(s, s.cx, s.cy)
+          ensureRAF()
+        }, FLASH_DONE + delay)
+      }
     }
 
     if (config.prismRays) {

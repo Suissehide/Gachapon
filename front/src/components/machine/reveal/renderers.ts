@@ -379,8 +379,7 @@ export function drawTearBands(
 
 // ── Star sparkles (étoiles 4 branches dorées — signature BRILLIANT) ───────────
 
-const SPARKLE_GRAVITY = 0.18
-const SPARKLE_DECAY = 0.011
+const SPARKLE_DECAY = 0.009
 const SPARKLE_DRAG = 0.98
 
 export function drawStarSparkles(
@@ -393,7 +392,6 @@ export function drawStarSparkles(
     }
     sp.x += sp.vx
     sp.y += sp.vy
-    sp.vy += SPARKLE_GRAVITY
     sp.vx *= SPARKLE_DRAG
     sp.t++
     sp.life -= SPARKLE_DECAY
@@ -403,7 +401,7 @@ export function drawStarSparkles(
       continue
     }
 
-    // Twinkle : la taille oscille — l'étoile « scintille » en retombant
+    // Twinkle : la taille oscille — l'étoile « scintille » en dérivant
     const twinkle = 0.55 + 0.45 * Math.sin(sp.t * 0.35 + sp.size)
     const r = sp.size * twinkle
 

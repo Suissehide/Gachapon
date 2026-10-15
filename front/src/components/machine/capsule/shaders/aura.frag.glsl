@@ -7,6 +7,8 @@ uniform float uIntensity;
 uniform float uRays;
 uniform float uHueCycle;
 uniform float uContract;
+// Anneau masqué tant que la couleur du palier n'est pas révélée (0..1)
+uniform float uRing;
 
 varying vec2 vUv;
 
@@ -27,7 +29,7 @@ void main() {
 
   // Anneau discret qui se resserre avec l'inhale
   float ringR = 0.62 - uContract * 0.35;
-  float ring = smoothstep(0.16, 0.0, abs(r - ringR)) * 0.3;
+  float ring = smoothstep(0.16, 0.0, abs(r - ringR)) * 0.3 * uRing;
 
   // Rayons rotatifs (hauts paliers)
   float rays = pow(abs(sin(ang * 7.0 + uTime * 0.9)), 10.0)

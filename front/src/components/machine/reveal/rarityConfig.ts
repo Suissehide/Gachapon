@@ -70,7 +70,8 @@ export interface EffectConfig {
 //   EPIC       → glitch : aberration chromatique + tear bands
 //   LEGENDARY  → splash page : halftone + encre + tri-flash (SANS speed lines
 //                ni chromatique, qui appartiennent à RARE/EPIC)
-//   BRILLIANT  → ruée vers l'or : star sparkles 4 branches dorées
+//   BRILLIANT  → scintillement : étoiles dorées qui s'allument sur place,
+//                sans onde ni gerbe
 //   HOLOGRAPHIC→ prisme : rayons arc-en-ciel rotatifs + particules hue-shift
 export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
   COMMON: {
@@ -251,19 +252,15 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
     // Intensité ≈ EPIC (décision de spec).
     shake: 10,
     shakeDuration: 450,
-    flashColor: 'rgba(253,230,138,0.95)',
+    flashColor: 'rgba(255,251,235,0.95)',
     triFlash: false,
     scanlineColor: null,
 
-    // Signature « ruée vers l'or » : flash doré chaud, pluie d'étoiles
-    // scintillantes 4 branches, anneaux dorés épais. Aucun élément d'une
-    // autre signature (pas de speed lines, encre, halftone, chromatique).
-    waves: [
-      { col: 'rgb(180,83,9)', w: 7, spd: 9, delay: 0, ghost: false },
-      { col: 'rgb(245,158,11)', w: 5, spd: 7.5, delay: 90, ghost: false },
-      { col: 'rgb(253,230,138)', w: 3.5, spd: 6, delay: 200, ghost: false },
-      { col: 'rgb(255,236,179)', w: 2, spd: 5, delay: 330, ghost: false },
-    ],
+    // Signature « scintillement » : AUCUNE onde ni explosion (anneaux et
+    // gerbe qui retombe appartiennent à LEGENDARY) — des étoiles 4 branches
+    // s'allument sur place autour de la carte, par vagues, et dérivent vers
+    // le haut. Flash blanc champagne, pas ambre.
+    waves: [],
     particleSet: 'none',
     particleHueShift: false,
     inkBlots: false,

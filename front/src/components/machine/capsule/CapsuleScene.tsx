@@ -213,6 +213,7 @@ export function CapsuleScene({
       uRays: { value: 0 },
       uHueCycle: { value: 0 },
       uContract: { value: 0 },
+      uRing: { value: 0 },
     }),
     [curColor, curOuter],
   )
@@ -239,10 +240,7 @@ export function CapsuleScene({
   const notifiedRef = useRef(false)
   const stingFiredRef = useRef(false)
 
-  const getSparkRatio = useMemo(
-    () => () => tierConfig(tierRef.current).sparkRatio,
-    [],
-  )
+  const getSparkConfig = useMemo(() => () => tierConfig(tierRef.current), [])
 
   useEffect(() => {
     const durScale = () =>
@@ -431,6 +429,7 @@ export function CapsuleScene({
     auraUniforms.uRays.value = cfg.rays * (0.3 + 0.7 * c) * rawReveal
     auraUniforms.uHueCycle.value = cfg.hueCycle && rawReveal > 0.5 ? 1 : 0
     auraUniforms.uContract.value = anim.inhale
+    auraUniforms.uRing.value = rawReveal
     groundUniforms.uTime.value = t
     groundUniforms.uIntensity.value = c * 0.9 + split * 1.4
 
@@ -482,7 +481,7 @@ export function CapsuleScene({
         opacity={0.3}
       />
 
-      <ChargeSparks anim={anim} color={curColor} getRatio={getSparkRatio} />
+      <ChargeSparks anim={anim} color={curColor} getConfig={getSparkConfig} />
 
       {/* Lumière interne teintée rareté — éclaire la scène à la charge */}
       <pointLight

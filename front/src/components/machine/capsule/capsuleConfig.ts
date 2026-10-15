@@ -59,6 +59,8 @@ export interface CapsuleTierConfig {
   bloom: number
   // Part des étincelles de charge actives (0..1)
   sparkRatio: number
+  // Étincelles qui scintillent (taille pulsée) au lieu d'un flux continu
+  twinkle: boolean
 }
 
 // Capsule neutre : résultat réseau pas encore arrivé. Blanc froid discret —
@@ -77,6 +79,7 @@ export const NEUTRAL_TIER: CapsuleTierConfig = {
   hueCycle: false,
   bloom: 0.8,
   sparkRatio: 0.2,
+  twinkle: false,
 }
 
 export const CAPSULE_TIERS: readonly CapsuleTierConfig[] = [
@@ -94,6 +97,7 @@ export const CAPSULE_TIERS: readonly CapsuleTierConfig[] = [
     hueCycle: false,
     bloom: 0.7,
     sparkRatio: 0.15,
+    twinkle: false,
   },
   {
     label: 'uncommon',
@@ -109,6 +113,7 @@ export const CAPSULE_TIERS: readonly CapsuleTierConfig[] = [
     hueCycle: false,
     bloom: 1,
     sparkRatio: 0.3,
+    twinkle: false,
   },
   {
     label: 'rare',
@@ -124,6 +129,7 @@ export const CAPSULE_TIERS: readonly CapsuleTierConfig[] = [
     hueCycle: false,
     bloom: 1.3,
     sparkRatio: 0.45,
+    twinkle: false,
   },
   {
     label: 'epic',
@@ -139,21 +145,25 @@ export const CAPSULE_TIERS: readonly CapsuleTierConfig[] = [
     hueCycle: false,
     bloom: 1.7,
     sparkRatio: 0.65,
+    twinkle: false,
   },
   {
+    // Blanc champagne sans rayons : les rayons ambre appartiennent à
+    // LEGENDARY, la brillante se reconnaît à son scintillement.
     label: 'brilliant',
-    color: '#ffd25e',
-    colorOuter: '#8a4a06',
-    shell: '#ffedbe',
-    flash: '#ffe9a8',
+    color: '#fff3d1',
+    colorOuter: '#a8781c',
+    shell: '#fffaf0',
+    flash: '#fffbeb',
     chargeDuration: 1.5,
     inhaleDuration: 0.36,
     vibrateAmp: 0.075,
     aura: 1.35,
-    rays: 0.75,
+    rays: 0,
     hueCycle: false,
     bloom: 1.9,
     sparkRatio: 0.75,
+    twinkle: true,
   },
   {
     label: 'legendary',
@@ -169,6 +179,7 @@ export const CAPSULE_TIERS: readonly CapsuleTierConfig[] = [
     hueCycle: false,
     bloom: 2.3,
     sparkRatio: 0.9,
+    twinkle: false,
   },
   {
     label: 'holographic',
@@ -184,6 +195,7 @@ export const CAPSULE_TIERS: readonly CapsuleTierConfig[] = [
     hueCycle: true,
     bloom: 2.6,
     sparkRatio: 1,
+    twinkle: false,
   },
 ]
 
