@@ -6,7 +6,11 @@ import {
 } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { type BattleResult, CampaignApi } from '../api/campaign.api.ts'
+import {
+  type BattleResult,
+  CampaignApi,
+  type WandererBattleResult,
+} from '../api/campaign.api.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
 const CAMPAIGN_KEY = ['campaign']
@@ -223,16 +227,70 @@ export function useAttackStage(stageId: string, enabled: boolean) {
 }
 
 /**
+ * Victoire contre le monstre errant, gardée en `sessionStorage` jusqu'à
+ * « Récupérer » : le lot est crédité dès le POST, et une page rechargée
+ * pendant le combat relancerait un POST qui répond 404 (monstre déjà battu),
+ * sans jamais révéler le butin. Une défaite ne coûte rien et n'est pas gardée.
+ */
+const WANDERER_REPLAY_KEY = 'wanderer-battle-won'
+// Un rechargement rejoue tout de suite ; au-delà, la copie est périmée.
+const WANDERER_REPLAY_TTL_MS = 10 * 60_000
+
+function readWandererReplay(): WandererBattleResult | undefined {
+  try {
+    const raw = sessionStorage.getItem(WANDERER_REPLAY_KEY)
+    if (!raw) {
+      return undefined
+    }
+    const { savedAt, result } = JSON.parse(raw) as {
+      savedAt: number
+      result: WandererBattleResult
+    }
+    return Date.now() - savedAt < WANDERER_REPLAY_TTL_MS ? result : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function writeWandererReplay(result: WandererBattleResult): void {
+  try {
+    sessionStorage.setItem(
+      WANDERER_REPLAY_KEY,
+      JSON.stringify({ savedAt: Date.now(), result }),
+    )
+  } catch {
+    // sessionStorage plein ou bloqué : pas de rejeu après rechargement.
+  }
+}
+
+/** À appeler une fois le butin récupéré. */
+export function clearWandererReplay(): void {
+  try {
+    sessionStorage.removeItem(WANDERER_REPLAY_KEY)
+  } catch {
+    // sessionStorage bloqué : rien à effacer.
+  }
+}
+
+/**
  * Combat contre le monstre errant. Mêmes réglages que `useAttackStage` (une
  * seule requête sous le double montage de StrictMode, jamais relancée par le
- * focus), mais sans copie en `sessionStorage` : le combat est gratuit, une
- * page rechargée en relance simplement un nouveau. `attempt` fait partie de
- * la clé, si bien que « Réessayer » l'incrémente pour tirer un nouveau combat.
+ * focus). `attempt` fait partie de la clé, si bien que « Réessayer »
+ * l'incrémente pour tirer un nouveau combat. La première tentative reprend
+ * une victoire pas encore récupérée (voir `WANDERER_REPLAY_KEY`) au lieu de
+ * relancer un combat.
  */
 export function useFightWanderer(attempt: number, enabled: boolean) {
   return useQuery({
     queryKey: ['battle', 'wanderer', attempt],
-    queryFn: CampaignApi.fightWanderer,
+    queryFn: async () => {
+      const result = await CampaignApi.fightWanderer()
+      if (result.won) {
+        writeWandererReplay(result)
+      }
+      return result
+    },
+    initialData: () => (attempt === 0 ? readWandererReplay() : undefined),
     enabled,
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 1000,

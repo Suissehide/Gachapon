@@ -45,6 +45,7 @@ import i18n, { currentLocale } from '../../i18n/index.ts'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import {
+  clearWandererReplay,
   useAttackStage,
   useCampaign,
   useFightWanderer,
@@ -350,7 +351,10 @@ function WandererBattlePage() {
     setAttempt((a) => a + 1)
   }
 
+  // « Récupérer », la défaite et l'erreur passent par ici : une
+  // victoire gardée pour un rechargement n'a plus lieu d'être rejouée.
   const handleBack = () => {
+    clearWandererReplay()
     navigate({ to: '/campaign' })
   }
 

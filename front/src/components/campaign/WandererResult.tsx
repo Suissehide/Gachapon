@@ -42,8 +42,7 @@ const CTA =
 /**
  * Fin de combat contre le monstre errant : défaite, puis coffre et butin en
  * cas de victoire. Le lot est déjà crédité par le serveur à la victoire ; le
- * coffre et le butin ne font que le révéler. Fermer la fenêtre ramène à la
- * campagne.
+ * coffre et le butin ne font que le révéler.
  */
 export function WandererResult({
   result,
@@ -149,8 +148,17 @@ export function WandererResult({
     <Popup
       open
       onOpenChange={(open) => {
-        if (!open) {
+        if (open) {
+          return
+        }
+        // Après une victoire, fermer ne saute jamais la révélation : depuis
+        // le coffre, on l'ouvre ; depuis le butin, c'est « Récupérer ».
+        if (!loot) {
           onBack()
+        } else if (opened) {
+          claim()
+        } else {
+          setOpened(true)
         }
       }}
     >
