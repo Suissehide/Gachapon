@@ -36,6 +36,7 @@ import streakEn from './locales/en/streak.json'
 import teamEn from './locales/en/team.json'
 import teamPerksEn from './locales/en/teamPerks.json'
 import wagersEn from './locales/en/wagers.json'
+import wandererEn from './locales/en/wanderer.json'
 import wishlistEn from './locales/en/wishlist.json'
 import aboutFr from './locales/fr/about.json'
 import achievementsFr from './locales/fr/achievements.json'
@@ -72,6 +73,7 @@ import streakFr from './locales/fr/streak.json'
 import teamFr from './locales/fr/team.json'
 import teamPerksFr from './locales/fr/teamPerks.json'
 import wagersFr from './locales/fr/wagers.json'
+import wandererFr from './locales/fr/wanderer.json'
 import wishlistFr from './locales/fr/wishlist.json'
 
 /** Langues supportées, dans l'ordre d'affichage voulu pour un futur sélecteur. */
@@ -385,6 +387,7 @@ void i18next.use(initReactI18next).init({
       settings: settingsFr,
       orders: ordersFr,
       alchemy: alchemyFr,
+      wanderer: wandererFr,
     },
     en: {
       about: aboutEn,
@@ -423,6 +426,7 @@ void i18next.use(initReactI18next).init({
       settings: settingsEn,
       orders: ordersEn,
       alchemy: alchemyEn,
+      wanderer: wandererEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -464,6 +468,7 @@ void i18next.use(initReactI18next).init({
     'settings',
     'orders',
     'alchemy',
+    'wanderer',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les

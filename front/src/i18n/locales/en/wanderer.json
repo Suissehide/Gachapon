@@ -1,0 +1,44 @@
+{
+  "eyebrowStage": "Wandering monster · Stage {{stage}}",
+  "levelCard": {
+    "eyebrow": "Wandering monster",
+    "free": "Free",
+    "surpriseLoot": "Surprise loot",
+    "fight": "Challenge",
+    "ariaLabel": "Wandering monster on stage {{stage}}"
+  },
+  "pre": {
+    "cost": "Cost",
+    "free": "Free",
+    "power": "Power",
+    "loot": "Loot",
+    "surprise": "Surprise",
+    "fight": "Fight",
+    "fighting": "Fighting…",
+    "note": "Leaves in {{time}}. Unlimited attempts."
+  },
+  "lose": {
+    "eyebrow": "Defeat",
+    "title": "{{name}} holds its ground",
+    "body": "It's still on stage {{stage}} for {{time}}. Strengthen your team or try again right away.",
+    "retry": "Retry · free",
+    "later": "Later"
+  },
+  "victory": {
+    "eyebrow": "Victory",
+    "title": "{{name}} dropped some loot",
+    "open": "Open the loot"
+  },
+  "loot": {
+    "eyebrow": "Surprise loot",
+    "title": "You get",
+    "claim": "Claim",
+    "gold": "gold",
+    "dust": "dust",
+    "tokens": "tokens",
+    "card": "card"
+  },
+  "toast": {
+    "claimed": "Loot claimed"
+  }
+}

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { DailyShopApi } from '../../api/dailyShop.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
+import { useWanderer } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useTokenBalance } from '../../queries/useGacha.ts'
 import { useOrders } from '../../queries/useOrders.ts'
@@ -91,6 +92,7 @@ export function Navbar() {
       ? orders.slots.filter((s) => s.order?.deliverable).length
       : 0
   const shopIsNew = useDailyShopIsNew(Boolean(user))
+  const hasWanderer = useWanderer().data.wanderer !== null
 
   // Source unique de la navigation : barre desktop (déroulants) et menu
   // mobile (sections) lisent tous deux ce tableau.
@@ -115,7 +117,13 @@ export function Navbar() {
       id: 'combat',
       label: t('layout:appNav.groups.combat'),
       items: [
-        { to: '/campaign', label: t('combat:teamLabel.campaign') },
+        {
+          to: '/campaign',
+          label: t('combat:teamLabel.campaign'),
+          badge: hasWanderer ? 1 : 0,
+          badgeTone: 'gain',
+          badgeDot: true,
+        },
         { to: '/tower', label: t('layout:appNav.tower') },
       ],
     },

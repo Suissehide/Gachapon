@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { type BattleResult, CampaignApi } from '../api/campaign.api.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
@@ -16,6 +16,46 @@ export function useCampaign() {
     queryKey: CAMPAIGN_KEY,
     queryFn: CampaignApi.get,
   })
+}
+
+/**
+ * Le monstre errant du jour, ou `null` quand il n'y en a pas (ou plus).
+ * L'apparition suit une fenêtre de ~3h décidée côté serveur — un refetch
+ * toutes les 5 min suffit à la détecter, mais pas à faire disparaître la
+ * case à l'exacte seconde d'expiration : le tic d'une seconde ci-dessous
+ * force un nouveau rendu pour que le filtre côté client (`Date.now() >=
+ * expiresAt`) s'applique sans attendre le prochain refetch ni un
+ * rechargement de page.
+ */
+export function useWanderer() {
+  const enabled = useAuthStore((s) => Boolean(s.user))
+  const query = useQuery({
+    queryKey: ['campaign', 'wanderer'],
+    queryFn: CampaignApi.wanderer,
+    refetchInterval: 5 * 60_000,
+    enabled,
+  })
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 1000)
+    return () => window.clearInterval(id)
+  }, [])
+  const raw = query.data?.wanderer ?? null
+  const wanderer =
+    raw && Date.now() < new Date(raw.expiresAt).getTime() ? raw : null
+  return { ...query, data: { wanderer } }
+}
+
+/** `h h mm` au-delà d'une heure, sinon `m:ss` (maquette). */
+export function formatWandererCountdown(msLeft: number): string {
+  const totalSeconds = Math.max(0, Math.round(msLeft / 1000))
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = totalSeconds % 60
+  if (h > 0) {
+    return `${h} h ${String(m).padStart(2, '0')}`
+  }
+  return `${m}:${String(s).padStart(2, '0')}`
 }
 
 /**

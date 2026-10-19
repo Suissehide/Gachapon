@@ -18,6 +18,7 @@ import {
 import { Dialog } from 'radix-ui'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { z } from 'zod/v4'
 
 import type { BattleResult } from '../../api/campaign.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
@@ -66,8 +67,16 @@ function chapterTitle(n: number): string {
     : i18n.t('combat:campaign.chapterFallback', { n })
 }
 
+// `wanderer: true` marque une entrée depuis la fenêtre du monstre errant —
+// la tâche 5 y branche le mode gratuit/sans récompenses de farm ; ici,
+// seulement le schéma, sans changer le comportement de cette page.
+const battleSearchSchema = z.object({
+  wanderer: z.boolean().optional(),
+})
+
 export const Route = createFileRoute('/_authenticated/battle/$stageId')({
   component: BattlePage,
+  validateSearch: battleSearchSchema,
 })
 
 function BattlePage() {

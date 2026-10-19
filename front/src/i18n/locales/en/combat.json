@@ -11,7 +11,8 @@
     "battle": "Error during the battle",
     "campaign": {
       "load": "Error loading the campaign",
-      "sweep": "Error during the sweep"
+      "sweep": "Error during the sweep",
+      "wanderer": "Error loading the wandering monster"
     },
     "tower": {
       "loadTowers": "Error loading the towers",

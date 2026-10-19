@@ -11,7 +11,8 @@
     "battle": "Erreur lors du combat",
     "campaign": {
       "load": "Erreur lors du chargement de la campagne",
-      "sweep": "Erreur lors du sweep"
+      "sweep": "Erreur lors du sweep",
+      "wanderer": "Erreur lors du chargement du monstre errant"
     },
     "tower": {
       "loadTowers": "Erreur lors du chargement des tours",

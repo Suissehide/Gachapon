@@ -36,6 +36,8 @@ import {
 import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
 import { FarmResultPopup } from '../../components/battle/resultKit.tsx'
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
+import { WandererLevelCard } from '../../components/campaign/WandererLevelCard.tsx'
+import { WandererModal } from '../../components/campaign/WandererModal.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { InfoButton } from '../../components/shared/InfoButton.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
@@ -49,7 +51,11 @@ import {
 import { useLevelUpCelebration } from '../../hooks/useLevelUpCelebration.ts'
 import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatPct } from '../../libs/utils.ts'
-import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
+import {
+  useCampaign,
+  useSweepStage,
+  useWanderer,
+} from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 
@@ -113,12 +119,14 @@ function CampaignPage() {
   const points = useCombatPoints()
   const sweep = useSweepStage()
   const celebrateLevelUp = useLevelUpCelebration()
+  const wanderer = useWanderer().data.wanderer
 
   const [activeChapter, setActiveChapter] = useState<number | null>(null)
   const [prep, setPrep] = useState<CampaignStage | null>(null)
   const [sweepResult, setSweepResult] = useState<SweepResult | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
   const [elementsOpen, setElementsOpen] = useState(false)
+  const [wandererOpen, setWandererOpen] = useState(false)
   // When the team editor is opened from the prep modal we remember which stage
   // to return to, so closing the editor (Valider/Annuler) reopens the prep
   // modal instead of dropping the player back on the bare campaign.
@@ -246,6 +254,7 @@ function CampaignPage() {
             chapters={data.chapters}
             currentChapter={frontierChapter(data)}
             activeChapter={activeChapter}
+            wandererChapter={wanderer?.chapter ?? null}
             onPick={setActiveChapter}
           />
         </div>
@@ -254,14 +263,22 @@ function CampaignPage() {
         {chapter && (
           <div className="mt-5 rounded-3xl border border-[rgba(27,23,38,0.06)] bg-white p-5 shadow-[0_2px_0_rgba(27,23,38,0.03),0_20px_44px_-26px_rgba(27,23,38,0.16)] sm:p-7">
             <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 md:grid-cols-3">
-              {chapter.stages.map((stage) => (
-                <LevelCard
-                  key={stage.id}
-                  stage={stage}
-                  onOpen={() => setPrep(stage)}
-                  battleCost={battleCost}
-                />
-              ))}
+              {chapter.stages.map((stage) =>
+                wanderer?.stageId === stage.id ? (
+                  <WandererLevelCard
+                    key={stage.id}
+                    wanderer={wanderer}
+                    onOpen={() => setWandererOpen(true)}
+                  />
+                ) : (
+                  <LevelCard
+                    key={stage.id}
+                    stage={stage}
+                    onOpen={() => setPrep(stage)}
+                    battleCost={battleCost}
+                  />
+                ),
+              )}
             </div>
           </div>
         )}
@@ -269,6 +286,14 @@ function CampaignPage() {
 
       {/* Élements & priorité de ciblage */}
       <ElementGuidePopup open={elementsOpen} onOpenChange={setElementsOpen} />
+
+      {/* Monstre errant — phase avant-combat ; le combat et le butin vivent
+          sur l'écran de combat (search: { wanderer: true }). */}
+      <WandererModal
+        wanderer={wanderer}
+        open={wandererOpen}
+        onOpenChange={setWandererOpen}
+      />
 
       {/* Persistent team dock */}
       <TeamDock
@@ -353,11 +378,13 @@ function ChapterStrip({
   chapters,
   currentChapter,
   activeChapter,
+  wandererChapter,
   onPick,
 }: {
   chapters: CampaignChapter[]
   currentChapter: number | null
   activeChapter: number
+  wandererChapter: number | null
   onPick: (n: number) => void
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -433,6 +460,7 @@ function ChapterStrip({
             chapter={ch}
             active={ch.chapter === activeChapter}
             isCurrent={ch.chapter === currentChapter}
+            hasWanderer={ch.chapter === wandererChapter}
             onClick={() => onPick(ch.chapter)}
           />
         ))}
@@ -483,11 +511,13 @@ function ChapterTab({
   chapter,
   active,
   isCurrent,
+  hasWanderer,
   onClick,
 }: {
   chapter: CampaignChapter
   active: boolean
   isCurrent: boolean
+  hasWanderer: boolean
   onClick: () => void
 }) {
   const { t } = useTranslation('combat')
@@ -540,6 +570,12 @@ function ChapterTab({
       {isLocked && <Lock className="h-3.5 w-3.5 shrink-0 text-text-light/50" />}
       {isCurrent && !isLocked && (
         <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-[3px] ring-emerald-500/25" />
+      )}
+      {/* Point du monstre errant — jamais sur l'onglet déjà actif, que le
+          joueur a sous les yeux. Coin opposé au point « Actuel » pour ne
+          jamais les superposer. */}
+      {hasWanderer && !active && (
+        <span className="absolute left-3 top-3 h-2.5 w-2.5 rounded-full bg-currency-energy ring-[3px] ring-card" />
       )}
     </button>
   )

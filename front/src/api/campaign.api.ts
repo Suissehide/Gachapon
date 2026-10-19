@@ -82,6 +82,28 @@ export type BattleResult = {
   teamB: SimulatorUnit[]
 }
 
+export type WandererView = {
+  stageId: string
+  chapter: number
+  index: number
+  stageLabel: string
+  expiresAt: string
+  name: string
+  imageUrl: string | null
+  element: string | null
+  recommendedPower: number
+}
+
+export type WandererLootView =
+  | { kind: 'GOLD' | 'DUST' | 'TOKENS'; amount: number }
+  | { kind: 'CARD'; amount: 1; card: CardDrop }
+
+/** Même forme que `BattleResult`, sans `rewards` (le monstre errant ne donne
+    pas le butin de farm) et avec le lot surprise tiré à la victoire. */
+export type WandererBattleResult = Omit<BattleResult, 'rewards'> & {
+  loot: WandererLootView | null
+}
+
 export type SweepResult = {
   runs: number
   totalGold: number
@@ -109,6 +131,24 @@ export const CampaignApi = {
       `${apiUrl}/campaign/stages/${stageId}/battle`,
       { method: 'POST' },
     )
+    if (!res.ok) {
+      handleHttpError(res, {}, i18n.t('combat:apiTitles.battle'))
+    }
+    return res.json()
+  },
+
+  wanderer: async (): Promise<{ wanderer: WandererView | null }> => {
+    const res = await fetchWithAuth(`${apiUrl}/campaign/wanderer`)
+    if (!res.ok) {
+      handleHttpError(res, {}, i18n.t('combat:apiTitles.campaign.wanderer'))
+    }
+    return res.json()
+  },
+
+  fightWanderer: async (): Promise<WandererBattleResult> => {
+    const res = await fetchWithAuth(`${apiUrl}/campaign/wanderer/battle`, {
+      method: 'POST',
+    })
     if (!res.ok) {
       handleHttpError(res, {}, i18n.t('combat:apiTitles.battle'))
     }
