@@ -222,6 +222,27 @@ export function useAttackStage(stageId: string, enabled: boolean) {
   return query
 }
 
+/**
+ * Combat contre le monstre errant. Mêmes réglages que `useAttackStage` (une
+ * seule requête sous le double montage de StrictMode, jamais relancée par le
+ * focus), mais sans copie en `sessionStorage` : le combat est gratuit, une
+ * page rechargée en relance simplement un nouveau. `attempt` fait partie de
+ * la clé, si bien que « Réessayer » l'incrémente pour tirer un nouveau combat.
+ */
+export function useFightWanderer(attempt: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ['battle', 'wanderer', attempt],
+    queryFn: CampaignApi.fightWanderer,
+    enabled,
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+  })
+}
+
 export function useSweepStage() {
   const qc = useQueryClient()
   return useMutation({

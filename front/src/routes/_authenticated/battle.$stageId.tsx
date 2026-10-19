@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   AlertTriangle,
@@ -16,11 +17,11 @@ import {
   Zap,
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod/v4'
 
-import type { BattleResult } from '../../api/campaign.api.ts'
+import type { BattleResult, WandererView } from '../../api/campaign.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
   CardDropReward,
@@ -32,6 +33,7 @@ import {
   ResultPanel,
   RewardTile,
 } from '../../components/battle/resultKit.tsx'
+import { WandererResult } from '../../components/campaign/WandererResult.tsx'
 import { EquipmentDropReward } from '../../components/equipment/EquipmentDropCard.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
@@ -42,7 +44,12 @@ import { useLevelUpCelebration } from '../../hooks/useLevelUpCelebration.ts'
 import i18n, { currentLocale } from '../../i18n/index.ts'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { formatNumber } from '../../libs/utils.ts'
-import { useAttackStage, useCampaign } from '../../queries/useCampaign.ts'
+import {
+  useAttackStage,
+  useCampaign,
+  useFightWanderer,
+  useWanderer,
+} from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 import {
@@ -67,9 +74,8 @@ function chapterTitle(n: number): string {
     : i18n.t('combat:campaign.chapterFallback', { n })
 }
 
-// `wanderer: true` marque une entrée depuis la fenêtre du monstre errant —
-// la tâche 5 y branche le mode gratuit/sans récompenses de farm ; ici,
-// seulement le schéma, sans changer le comportement de cette page.
+// `wanderer: true` marque une entrée depuis la fenêtre du monstre errant :
+// combat gratuit contre le monstre du jour, rendu par `WandererBattlePage`.
 const battleSearchSchema = z.object({
   wanderer: z.boolean().optional(),
 })
@@ -80,6 +86,11 @@ export const Route = createFileRoute('/_authenticated/battle/$stageId')({
 })
 
 function BattlePage() {
+  const { wanderer } = Route.useSearch()
+  return wanderer ? <WandererBattlePage /> : <StageBattlePage />
+}
+
+function StageBattlePage() {
   const { t } = useTranslation(['combat', 'errors'])
   const { stageId } = Route.useParams()
   const team = useCombatTeam(CAMPAIGN_TEAM_KEY)
@@ -274,6 +285,159 @@ function BattlePage() {
           onReplay={handleReplay}
           onBack={handleBackToCampaign}
           onNextFloor={handleNextFloor}
+        />
+      )}
+    </PageShell>
+  )
+}
+
+/**
+ * Combat contre le monstre errant. Page à part plutôt qu'un mode de
+ * `StageBattlePage` : ni coût d'énergie, ni récompenses de farm, ni replay
+ * depuis `sessionStorage`, et une fin de combat propre (`WandererResult`).
+ */
+function WandererBattlePage() {
+  const { t } = useTranslation(['combat', 'errors'])
+  const navigate = useNavigate()
+  const qc = useQueryClient()
+  const team = useCombatTeam(CAMPAIGN_TEAM_KEY)
+  const live = useWanderer().data.wanderer
+  // Instantané du monstre : après la victoire, son invalidation le fait
+  // disparaître, alors que le coffre a encore besoin de son nom.
+  const [wanderer, setWanderer] = useState<WandererView | null>(null)
+  useEffect(() => {
+    if (live) {
+      setWanderer(live)
+    }
+  }, [live])
+
+  const [attempt, setAttempt] = useState(0)
+  const [sceneDone, setSceneDone] = useState(false)
+  const [showResult, setShowResult] = useState(false)
+  const [round, setRound] = useState({ current: 1, total: 1 })
+  const teamReady = !team.isLoading && (team.data?.team.length ?? 0) >= 1
+  const fight = useFightWanderer(attempt, teamReady)
+  const result = fight.data ?? null
+  // Stable : `useWanderer` rafraîchit la page chaque seconde, et la scène
+  // relance son minuteur à chaque nouvelle identité de `onComplete`.
+  const handleSceneDone = useCallback(() => setSceneDone(true), [])
+
+  useEffect(() => {
+    if (sceneDone && result) {
+      const t = setTimeout(() => setShowResult(true), 300)
+      return () => clearTimeout(t)
+    }
+  }, [sceneDone, result])
+
+  // Le lot est crédité dès la victoire : on rafraîchit les soldes à
+  // l'ouverture du résultat, pas plus tôt, pour ne rien dévoiler pendant
+  // le combat.
+  const won = showResult && Boolean(result?.won)
+  useEffect(() => {
+    if (!won) {
+      return
+    }
+    qc.invalidateQueries({ queryKey: ['campaign', 'wanderer'] })
+    qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+    qc.invalidateQueries({ queryKey: ['collection'] })
+    void useAuthStore.getState().fetchMe()
+  }, [won, qc])
+
+  const handleRetry = () => {
+    setShowResult(false)
+    setSceneDone(false)
+    setRound({ current: 1, total: 1 })
+    setAttempt((a) => a + 1)
+  }
+
+  const handleBack = () => {
+    navigate({ to: '/campaign' })
+  }
+
+  return (
+    <PageShell>
+      <div className="flex items-center justify-between">
+        <Link
+          to="/campaign"
+          className="inline-flex items-center gap-1.5 font-display text-base font-bold text-text-light/60 transition-colors hover:text-text"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t('combat:teamLabel.campaign')}
+        </Link>
+        {result && (
+          <div className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-1.5 font-mono text-[12px] font-bold uppercase tracking-widest text-amber-700">
+            {t('combat:battle.actionCounter', { count: round.current })}
+          </div>
+        )}
+      </div>
+
+      {team.isLoading && (
+        <ArcadeCard className="text-center">
+          <p className="text-text-light">{t('combat:battle.loading')}</p>
+        </ArcadeCard>
+      )}
+
+      {!team.isLoading && !teamReady && <NoTeamNotice />}
+
+      {teamReady && fight.isFetching && !result && (
+        <ArcadeCard className="py-12 text-center">
+          <p className="font-display text-lg text-text">
+            {t('combat:battle.inProgress')}
+          </p>
+          <p className="mt-1 text-sm text-text-light">
+            {t('combat:battle.clashing')}
+          </p>
+        </ArcadeCard>
+      )}
+
+      {/* `key` remonte la scène à chaque tentative, depuis le premier coup. */}
+      {teamReady && result && !fight.isError && (
+        <BattleScene
+          key={attempt}
+          teamA={result.teamA}
+          teamB={result.teamB}
+          log={result.log}
+          onComplete={handleSceneDone}
+          onRoundChange={(current, total) => setRound({ current, total })}
+        />
+      )}
+
+      {/* Monstre reparti ou déjà battu : le serveur répond 404. */}
+      <Popup
+        open={teamReady && fight.isError}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleBack()
+          }
+        }}
+      >
+        <PopupContent size="default" className="p-8 text-center">
+          <Dialog.Title className="sr-only">
+            {t('errors:generic.fallbackTitle')}
+          </Dialog.Title>
+          <AlertTriangle className="mx-auto mb-3 h-10 w-10 text-rose-500" />
+          <p className="font-display text-lg font-bold text-rose-500">
+            {isApiError(fight.error)
+              ? fight.error.title
+              : t('errors:generic.fallbackTitle')}
+          </p>
+          <p className="mt-1.5 text-sm text-text-light">
+            {isApiError(fight.error)
+              ? fight.error.message
+              : String(fight.error)}
+          </p>
+          <Button onClick={handleBack} className="mt-5">
+            {t('combat:battle.backToCampaign')}
+          </Button>
+        </PopupContent>
+      </Popup>
+
+      {result && showResult && !fight.isError && (
+        <WandererResult
+          result={result}
+          wanderer={wanderer}
+          onRetry={handleRetry}
+          onBack={handleBack}
         />
       )}
     </PageShell>
