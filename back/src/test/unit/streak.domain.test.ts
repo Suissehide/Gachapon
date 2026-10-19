@@ -65,11 +65,16 @@ describe('StreakDomain.updateStreak', () => {
     listForUser: jest.fn<(...args: any[]) => Promise<any[]>>(),
     listFamilies: jest.fn<(...args: any[]) => Promise<any[]>>(),
   }
+  const mockReturnBonusDomain = {
+    grantInTx: jest.fn<(...args: any[]) => Promise<void>>(),
+    findPending: jest.fn<(...args: any[]) => Promise<any>>(),
+  }
   const domain = new StreakDomain({
     userRepository: mockUserRepo as any,
     streakMilestoneRepository: mockMilestoneRepo as any,
     userRewardRepository: mockUserRewardRepo as any,
     achievementsDomain: mockAchievementsDomain as any,
+    returnBonusDomain: mockReturnBonusDomain as any,
   })
   const fakeTx = {} as any
 

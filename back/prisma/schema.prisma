@@ -261,6 +261,7 @@ model User {
   betEntries          BetEntry[]
   weeklies            TeamMemberWeekly[]
   customerOrders      CustomerOrder[]
+  returnChest         ReturnChest?
 
   @@index([role, lastLoginAt])
 }
@@ -1121,4 +1122,16 @@ model CustomerOrder {
 
   @@index([userId, slot, createdAt])
   @@index([userId, closedAt])
+}
+
+/// Coffre « Bon retour » en attente : au plus un par joueur, montants figés
+/// à la création (spec 2026-10-19-bonus-de-retour).
+model ReturnChest {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  days       Int
+  cappedDays Int
+  tokens     Int
+  energy     Int
+  createdAt  DateTime @default(now())
 }

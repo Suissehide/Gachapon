@@ -39,6 +39,7 @@ import type { IOrdersDomain } from '../domain/orders/orders.domain.interface'
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
 import type { IRecruitmentDomain } from '../domain/recruitment/recruitment.domain.interface'
+import type { IReturnBonusDomain } from '../domain/return-bonus/return-bonus.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
 import type {
@@ -156,6 +157,7 @@ export interface IocContainer {
   readonly shopDomain: IShopDomain
   readonly dailyShopDomain: IDailyShopDomain
   readonly ordersDomain: IOrdersDomain
+  readonly returnBonusDomain: IReturnBonusDomain
   readonly alchemyDomain: IAlchemyDomain
   readonly skillTreeDomain: ISkillTreeDomain
   readonly skillInvestDomain: ISkillInvestDomain

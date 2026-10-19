@@ -31,6 +31,15 @@ export const userResponseSchema = z.object({
   createdAt: z.date(),
   skillPoints: z.number().int().nonnegative(),
   pendingRewardsCount: z.number().int().nonnegative(),
+  returnChest: z
+    .object({
+      days: z.number().int(),
+      cappedDays: z.number().int(),
+      tokens: z.number().int(),
+      energy: z.number().int(),
+    })
+    .nullable()
+    .default(null),
   unlockedAchievements: z.array(unlockedAchievementSchema).default([]),
 })
 

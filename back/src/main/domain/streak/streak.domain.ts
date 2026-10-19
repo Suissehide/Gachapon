@@ -71,23 +71,27 @@ export class StreakDomain {
   readonly #streakMilestoneRepository: IocContainer['streakMilestoneRepository']
   readonly #userRewardRepository: IocContainer['userRewardRepository']
   readonly #achievementsDomain: AchievementsDomainInterface
+  readonly #returnBonusDomain: IocContainer['returnBonusDomain']
 
   constructor({
     userRepository,
     streakMilestoneRepository,
     userRewardRepository,
     achievementsDomain,
+    returnBonusDomain,
   }: Pick<
     IocContainer,
     | 'userRepository'
     | 'streakMilestoneRepository'
     | 'userRewardRepository'
     | 'achievementsDomain'
+    | 'returnBonusDomain'
   >) {
     this.#userRepository = userRepository
     this.#streakMilestoneRepository = streakMilestoneRepository
     this.#userRewardRepository = userRewardRepository
     this.#achievementsDomain = achievementsDomain
+    this.#returnBonusDomain = returnBonusDomain
   }
 
   /** Call this inside an existing transaction after successful auth. */
@@ -105,6 +109,15 @@ export class StreakDomain {
 
     if (shouldSkip) {
       return []
+    }
+
+    // Avant la réécriture de lastLoginAt : c'est lui qui mesure l'absence.
+    if (user.lastLoginAt !== null) {
+      await this.#returnBonusDomain.grantInTx(
+        tx,
+        userId,
+        utcDayGap(user.lastLoginAt, new Date()),
+      )
     }
 
     await this.#userRepository.updateStreakInTx(tx, userId, {

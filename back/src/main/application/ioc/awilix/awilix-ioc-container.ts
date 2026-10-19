@@ -26,6 +26,7 @@ import { ProfileDomain } from '../../../domain/profile/profile.domain'
 import { QuestsDomain } from '../../../domain/quests/quests.domain'
 import { RaidDomain } from '../../../domain/raid/raid.domain'
 import { RecruitmentDomain } from '../../../domain/recruitment/recruitment.domain'
+import { ReturnBonusDomain } from '../../../domain/return-bonus/return-bonus.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { ShopDomain } from '../../../domain/shop/shop.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
@@ -207,6 +208,7 @@ class AwilixIocContainer {
     this.#reg('shopDomain', asClass(ShopDomain).singleton())
     this.#reg('dailyShopDomain', asClass(DailyShopDomain).singleton())
     this.#reg('ordersDomain', asClass(OrdersDomain).singleton())
+    this.#reg('returnBonusDomain', asClass(ReturnBonusDomain).singleton())
     this.#reg('alchemyDomain', asClass(AlchemyDomain).singleton())
     this.#reg('skillTreeDomain', asClass(SkillTreeDomain).singleton())
     this.#reg('skillInvestDomain', asClass(SkillInvestDomain).singleton())

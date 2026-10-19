@@ -7,8 +7,13 @@ import { userResponseSchema } from '../../schemas/auth.schemas'
 import { sanitizeUser } from './helpers'
 
 export const meRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { userDomain, userRewardRepository, streakDomain, postgresOrm } =
-    fastify.iocContainer
+  const {
+    userDomain,
+    userRewardRepository,
+    streakDomain,
+    returnBonusDomain,
+    postgresOrm,
+  } = fastify.iocContainer
 
   fastify.get(
     '/',
@@ -38,9 +43,11 @@ export const meRouter: FastifyPluginCallbackZod = (fastify) => {
       const pendingRewardsCount = await userRewardRepository.countPendingByUser(
         user.id,
       )
+      const returnChest = await returnBonusDomain.findPending(user.id)
       return {
         ...sanitizeUser(user),
         pendingRewardsCount,
+        returnChest,
         unlockedAchievements,
       }
     },
