@@ -72,6 +72,7 @@ export class StreakDomain {
   readonly #userRewardRepository: IocContainer['userRewardRepository']
   readonly #achievementsDomain: AchievementsDomainInterface
   readonly #returnBonusDomain: IocContainer['returnBonusDomain']
+  readonly #wanderingMonsterDomain: IocContainer['wanderingMonsterDomain']
 
   constructor({
     userRepository,
@@ -79,6 +80,7 @@ export class StreakDomain {
     userRewardRepository,
     achievementsDomain,
     returnBonusDomain,
+    wanderingMonsterDomain,
   }: Pick<
     IocContainer,
     | 'userRepository'
@@ -86,12 +88,14 @@ export class StreakDomain {
     | 'userRewardRepository'
     | 'achievementsDomain'
     | 'returnBonusDomain'
+    | 'wanderingMonsterDomain'
   >) {
     this.#userRepository = userRepository
     this.#streakMilestoneRepository = streakMilestoneRepository
     this.#userRewardRepository = userRewardRepository
     this.#achievementsDomain = achievementsDomain
     this.#returnBonusDomain = returnBonusDomain
+    this.#wanderingMonsterDomain = wanderingMonsterDomain
   }
 
   /** Call this inside an existing transaction after successful auth. */
@@ -110,6 +114,11 @@ export class StreakDomain {
     if (shouldSkip) {
       return []
     }
+
+    // Première ouverture du jour, y compris pour un compte neuf (lastLoginAt
+    // null) : c'est ce point d'accroche qui garantit une seule planification
+    // par jour, sans que le front puisse « relancer » le tirage.
+    await this.#wanderingMonsterDomain.scheduleInTx(tx, userId, new Date())
 
     // Avant la réécriture de lastLoginAt : c'est lui qui mesure l'absence.
     if (user.lastLoginAt !== null) {

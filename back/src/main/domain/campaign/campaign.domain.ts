@@ -97,8 +97,11 @@ const enemySpecSchema = z.object({
   armorPen: z.number().optional(),
   lifesteal: z.number().optional(),
 })
-const enemyTeamSchema = z.array(enemySpecSchema)
-type EnemySpec = z.infer<typeof enemySpecSchema>
+// Exportés pour wandering-monster.domain.ts : même schéma de parsing du Json
+// `enemyTeam`, pour que la vue du monstre errant lise l'ennemi de tête
+// exactement comme getCampaign le fait pour la case d'étage.
+export const enemyTeamSchema = z.array(enemySpecSchema)
+export type EnemySpec = z.infer<typeof enemySpecSchema>
 
 interface FirstClearLoot {
   gold: number

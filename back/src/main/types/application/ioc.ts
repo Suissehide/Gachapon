@@ -31,6 +31,7 @@ import type { IAlchemyDomain } from '../domain/alchemy/alchemy.domain.interface'
 import type { AuthDomainInterface } from '../domain/auth/auth.domain.interface'
 import type { GuestDomainInterface } from '../domain/auth/guest.domain.interface'
 import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface'
+import type { IWanderingMonsterDomain } from '../domain/campaign/wandering-monster.domain.interface'
 import type { ICollectionDomain } from '../domain/collection/collection.domain.interface'
 import type { IDailyShopDomain } from '../domain/daily-shop/daily-shop.domain.interface'
 import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interface'
@@ -118,6 +119,7 @@ export interface IocContainer {
   readonly combatDebugDomain: CombatDebugDomain
   readonly combatPointsTx: CombatPointsTx
   readonly campaignDomain: CampaignDomain
+  readonly wanderingMonsterDomain: IWanderingMonsterDomain
   readonly equipmentDomain: EquipmentDomain
   readonly towerRepository: ITowerRepository
   readonly towerDomain: TowerDomain

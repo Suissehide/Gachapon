@@ -69,12 +69,17 @@ describe('StreakDomain.updateStreak', () => {
     grantInTx: jest.fn<(...args: any[]) => Promise<void>>(),
     findPending: jest.fn<(...args: any[]) => Promise<any>>(),
   }
+  const mockWanderingMonsterDomain = {
+    scheduleInTx: jest.fn<(...args: any[]) => Promise<void>>(),
+    findActive: jest.fn<(...args: any[]) => Promise<any>>(),
+  }
   const domain = new StreakDomain({
     userRepository: mockUserRepo as any,
     streakMilestoneRepository: mockMilestoneRepo as any,
     userRewardRepository: mockUserRewardRepo as any,
     achievementsDomain: mockAchievementsDomain as any,
     returnBonusDomain: mockReturnBonusDomain as any,
+    wanderingMonsterDomain: mockWanderingMonsterDomain as any,
   })
   const fakeTx = {} as any
 
@@ -84,6 +89,7 @@ describe('StreakDomain.updateStreak', () => {
     mockUserRewardRepo.upsertInTx.mockResolvedValue(undefined)
     mockUserRewardRepo.deleteLegacyDefaultStreakRewardInTx.mockResolvedValue(undefined)
     mockAchievementsDomain.track.mockResolvedValue([])
+    mockWanderingMonsterDomain.scheduleInTx.mockResolvedValue(undefined)
   })
 
   it('grants exact milestone reward when day matches a milestone', async () => {
@@ -100,6 +106,8 @@ describe('StreakDomain.updateStreak', () => {
     expect(mockUserRewardRepo.upsertInTx).toHaveBeenCalledWith(fakeTx, expect.objectContaining({
       rewardId: 'rw-1', source: 'STREAK', sourceId: 'ms-1',
     }))
+    // Compte neuf (lastLoginAt null) : planifié quand même.
+    expect(mockWanderingMonsterDomain.scheduleInTx).toHaveBeenCalledWith(fakeTx, 'user-1', expect.any(Date))
   })
 
   it('grants default reward when day has no milestone', async () => {
@@ -130,5 +138,6 @@ describe('StreakDomain.updateStreak', () => {
 
     expect(mockMilestoneRepo.findExactMilestoneForDay).not.toHaveBeenCalled()
     expect(mockUserRewardRepo.upsertInTx).not.toHaveBeenCalled()
+    expect(mockWanderingMonsterDomain.scheduleInTx).not.toHaveBeenCalled()
   })
 })

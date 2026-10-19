@@ -262,6 +262,7 @@ model User {
   weeklies            TeamMemberWeekly[]
   customerOrders      CustomerOrder[]
   returnChest         ReturnChest?
+  wanderingMonsters   WanderingMonster[]
 
   @@index([role, lastLoginAt])
 }
@@ -842,7 +843,28 @@ model CampaignStage {
   lootTable Json
   order     Int
 
+  wanderingMonsters WanderingMonster[]
+
   @@unique([chapter, index])
+}
+
+/// Apparition quotidienne du monstre errant (une par jour UTC et par joueur).
+/// `day` = jour UTC de la planification, `YYYY-MM-DD` ; `stageId` est un étage
+/// déjà battu du chapitre le plus avancé du joueur à l'instant du tirage.
+model WanderingMonster {
+  id         String        @id @default(uuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day        String
+  stageId    String
+  stage      CampaignStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  appearsAt  DateTime
+  expiresAt  DateTime
+  defeatedAt DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@unique([userId, day])
+  @@index([userId, expiresAt])
 }
 
 model UserCampaignProgress {

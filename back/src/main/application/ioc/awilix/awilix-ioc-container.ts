@@ -9,6 +9,7 @@ import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { GuestDomain } from '../../../domain/auth/guest.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
 import { CampaignDomain } from '../../../domain/campaign/campaign.domain'
+import { WanderingMonsterDomain } from '../../../domain/campaign/wandering-monster.domain'
 import { CardAscensionTx } from '../../../domain/card-ascension/card-ascension.tx'
 import { CardDustConversionDomain } from '../../../domain/card-dust-conversion/card-dust-conversion.domain'
 import { CardLevelingTx } from '../../../domain/card-leveling/card-leveling.tx'
@@ -147,6 +148,10 @@ class AwilixIocContainer {
     this.#reg('combatDebugDomain', asClass(CombatDebugDomain).singleton())
     this.#reg('combatPointsTx', asClass(CombatPointsTx).singleton())
     this.#reg('campaignDomain', asClass(CampaignDomain).singleton())
+    this.#reg(
+      'wanderingMonsterDomain',
+      asClass(WanderingMonsterDomain).singleton(),
+    )
     this.#reg('equipmentDomain', asClass(EquipmentDomain).singleton())
     this.#reg('towerRepository', asClass(TowerRepository).singleton())
     this.#reg('towerDomain', asClass(TowerDomain).singleton())
