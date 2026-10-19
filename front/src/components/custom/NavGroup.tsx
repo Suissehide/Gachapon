@@ -32,6 +32,9 @@ export type NavItem = {
   badge?: number
   /** Défaut `alert` si `badge` est posé sans préciser de teinte. */
   badgeTone?: BadgeTone
+  /** Affiche un point plutôt que le compteur : le badge signale une
+      nouveauté, pas une quantité. */
+  badgeDot?: boolean
   locked?: boolean
 }
 
@@ -139,14 +142,24 @@ export function NavGroup({
                 {item.label}
                 {item.locked && <Lock className="h-3 w-3 text-text-light" />}
               </span>
-              <NotificationBadge
-                shape="pill"
-                tone={item.badgeTone ?? 'alert'}
-                count={item.badge ?? 0}
-                ariaLabel={t('notifications:pendingAriaLabel', {
-                  count: item.badge ?? 0,
-                })}
-              />
+              {item.badgeDot ? (
+                (item.badge ?? 0) > 0 && (
+                  <NotificationBadge
+                    shape="dot"
+                    tone={item.badgeTone ?? 'alert'}
+                    ariaLabel={t('notifications:newAriaLabel')}
+                  />
+                )
+              ) : (
+                <NotificationBadge
+                  shape="pill"
+                  tone={item.badgeTone ?? 'alert'}
+                  count={item.badge ?? 0}
+                  ariaLabel={t('notifications:pendingAriaLabel', {
+                    count: item.badge ?? 0,
+                  })}
+                />
+              )}
             </Link>
           </DropdownMenuCustomItem>
         ))}

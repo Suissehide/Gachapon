@@ -4,6 +4,7 @@
   "panelTitle": "Notifications",
   "empty": "No notifications",
   "pendingAriaLabel": "{{count}} pending",
+  "newAriaLabel": "New",
   "respond": {
     "acceptAriaLabel": "Accept",
     "declineAriaLabel": "Decline"

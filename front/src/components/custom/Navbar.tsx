@@ -1,8 +1,10 @@
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { ArrowRight, Coins, LogOut, Sparkles, Ticket, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { DailyShopApi } from '../../api/dailyShop.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -23,7 +25,51 @@ import {
   MobileNavLink,
   useMobileMenu,
 } from './MobileMenu.tsx'
-import { NavGroup, type NavGroupDef, type NavItem } from './NavGroup.tsx'
+import {
+  isUnder,
+  NavGroup,
+  type NavGroupDef,
+  type NavItem,
+} from './NavGroup.tsx'
+
+const SHOP_SEEN_KEY = 'dailyShopSeen'
+
+function readShopSeen() {
+  try {
+    return localStorage.getItem(SHOP_SEEN_KEY)
+  } catch {
+    return null
+  }
+}
+
+function writeShopSeen(date: string) {
+  try {
+    localStorage.setItem(SHOP_SEEN_KEY, date)
+  } catch {
+    // Stockage indisponible : la pastille restera simplement allumée.
+  }
+}
+
+/** Pastille de la boutique : allumée quand la rotation horaire de la
+    boutique du jour n'a pas encore été vue. Pas de `useDailyShop` ici, qui
+    branche le loader global sur chaque page. */
+function useDailyShopIsNew(enabled: boolean) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const { data } = useQuery({
+    queryKey: ['daily-shop'],
+    queryFn: () => DailyShopApi.get(),
+    refetchInterval: () => 3_600_000 - (Date.now() % 3_600_000) + 1000,
+    enabled,
+  })
+  if (!data) {
+    return false
+  }
+  if (isUnder(pathname, '/shop')) {
+    writeShopSeen(data.date)
+    return false
+  }
+  return readShopSeen() !== data.date
+}
 
 // `flex items-center` : un <button> (trigger de dropdown) centre son contenu
 // différemment d'un <a> en flux bloc normal côté Chrome — sans ça, les
@@ -44,6 +90,7 @@ export function Navbar() {
     orders && orders.deliveriesLeft > 0
       ? orders.slots.filter((s) => s.order?.deliverable).length
       : 0
+  const shopIsNew = useDailyShopIsNew(Boolean(user))
 
   // Source unique de la navigation : barre desktop (déroulants) et menu
   // mobile (sections) lisent tous deux ce tableau.
@@ -76,7 +123,13 @@ export function Navbar() {
       id: 'commerce',
       label: t('layout:appNav.groups.commerce'),
       items: [
-        { to: '/shop', label: t('layout:admin.nav.shop') },
+        {
+          to: '/shop',
+          label: t('layout:admin.nav.shop'),
+          badge: shopIsNew ? 1 : 0,
+          badgeTone: 'gain',
+          badgeDot: true,
+        },
         {
           to: '/orders',
           label: t('layout:appNav.orders'),
@@ -265,6 +318,7 @@ export function Navbar() {
               onClick={closeMenu}
               badgeCount={entry.item.badge}
               badgeTone={entry.item.badgeTone}
+              badgeDot={entry.item.badgeDot}
               locked={entry.item.locked}
             />
           ),

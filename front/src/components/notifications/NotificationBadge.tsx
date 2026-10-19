@@ -36,9 +36,10 @@ const COUNT_CAP = 9
 type Props = VariantProps<typeof badgeVariants> & {
   /** Ignoré par `dot` (jamais de chiffre) ; masque pill/anchored si <= 0. */
   count?: number
-  /** Accessible uniquement sur `pill` (role="img") — `dot`/`anchored` restent
-      `aria-hidden` : leur information vit dans le `aria-label` du conteneur
-      (trigger de groupe, bouton cloche/cadeau). */
+  /** Rend la pastille accessible (role="img") sur `pill`, et sur `dot` quand
+      il est fourni. Sinon `dot`/`anchored` restent `aria-hidden` : leur
+      information vit dans le `aria-label` du conteneur (trigger de groupe,
+      bouton cloche/cadeau). */
   ariaLabel?: string
   className?: string
 }
@@ -53,12 +54,12 @@ export function NotificationBadge({
   if (shape !== 'dot' && count <= 0) {
     return null
   }
-  const isPill = shape === 'pill'
+  const labelled = shape === 'pill' || (shape === 'dot' && ariaLabel)
   return (
     <span
       role="img"
-      aria-hidden={isPill ? undefined : true}
-      aria-label={isPill ? ariaLabel : undefined}
+      aria-hidden={labelled ? undefined : true}
+      aria-label={labelled ? ariaLabel : undefined}
       className={cn(badgeVariants({ shape, tone }), className)}
     >
       {shape === 'dot' ? null : count > COUNT_CAP ? `${COUNT_CAP}+` : count}

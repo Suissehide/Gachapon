@@ -124,6 +124,7 @@ export function MobileNavLink({
   onClick,
   badgeCount,
   badgeTone,
+  badgeDot,
   locked,
 }: {
   to: string
@@ -133,6 +134,7 @@ export function MobileNavLink({
   onClick: () => void
   badgeCount?: number
   badgeTone?: BadgeTone
+  badgeDot?: boolean
   locked?: boolean
 }) {
   const { t } = useTranslation('notifications')
@@ -155,12 +157,23 @@ export function MobileNavLink({
           {locked && <Lock className="h-3 w-3 text-text-light" />}
         </span>
       </span>
-      <NotificationBadge
-        shape="pill"
-        tone={badgeTone ?? 'alert'}
-        count={badgeCount ?? 0}
-        ariaLabel={t('pendingAriaLabel', { count: badgeCount ?? 0 })}
-      />
+      {badgeDot ? (
+        (badgeCount ?? 0) > 0 && (
+          <NotificationBadge
+            shape="dot"
+            tone={badgeTone ?? 'alert'}
+            ariaLabel={t('newAriaLabel')}
+            className="h-3 w-3"
+          />
+        )
+      ) : (
+        <NotificationBadge
+          shape="pill"
+          tone={badgeTone ?? 'alert'}
+          count={badgeCount ?? 0}
+          ariaLabel={t('pendingAriaLabel', { count: badgeCount ?? 0 })}
+        />
+      )}
     </Link>
   )
 }
