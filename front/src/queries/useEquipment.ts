@@ -243,6 +243,7 @@ export function useUpgradeItem() {
       // ET l'agrégat (['combat','teams']) que le hub des tours consommera.
       qc.invalidateQueries({ queryKey: ['combat'] })
       invalidateBattleCache(qc)
+      qc.invalidateQueries({ queryKey: ['quests'] })
       // L'or affiché dans la navbar vient de fetchMe.
       void useAuthStore.getState().fetchMe()
     },
@@ -257,6 +258,7 @@ export function useSalvageItems() {
       EquipmentApi.salvage(userEquipmentIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
+      qc.invalidateQueries({ queryKey: ['quests'] })
       void useAuthStore.getState().fetchMe()
     },
     onError: (error) => {
