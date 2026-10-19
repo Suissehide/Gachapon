@@ -61,6 +61,7 @@ export class OrdersDomain implements IOrdersDomain {
   readonly #skillTreeRepository: IocContainer['skillTreeRepository']
   readonly #teamProgressionDomain: IocContainer['teamProgressionDomain']
   readonly #duelDomain: IDuelDomain
+  readonly #achievementsDomain: IocContainer['achievementsDomain']
 
   constructor({
     postgresOrm,
@@ -68,12 +69,14 @@ export class OrdersDomain implements IOrdersDomain {
     skillTreeRepository,
     teamProgressionDomain,
     duelDomain,
+    achievementsDomain,
   }: Omit<IocContainer, 'duelDomain'> & { duelDomain: IDuelDomain }) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#skillTreeRepository = skillTreeRepository
     this.#teamProgressionDomain = teamProgressionDomain
     this.#duelDomain = duelDomain
+    this.#achievementsDomain = achievementsDomain
   }
 
   async list(userId: string): Promise<OrdersBoard> {
@@ -520,6 +523,9 @@ export class OrdersDomain implements IOrdersDomain {
             throw Boom.conflict(errorMessage('wagers.cardEngagedInActiveDuel'))
           }
           await this.#applyDelivery(tx, userId, order, picks)
+          await this.#achievementsDomain.track(tx, userId, {
+            kind: 'ORDER_DELIVERED',
+          })
           return {
             reward: {
               dust: order.rewardDust,

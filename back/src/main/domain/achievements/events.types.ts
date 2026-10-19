@@ -48,6 +48,10 @@ export type AchievementEvent =
   | { kind: 'EQUIPMENT_UPGRADED'; amount: number }
   /** `amount` = nombre de pièces détruites en un seul recyclage. */
   | { kind: 'EQUIPMENT_SALVAGED'; amount: number }
+  /** Une commande client livrée. */
+  | { kind: 'ORDER_DELIVERED' }
+  /** Une transmutation d'alchimie réussie. */
+  | { kind: 'ALCHEMY_TRANSMUTED' }
 
 export type AchievementEventKind = AchievementEvent['kind']
 

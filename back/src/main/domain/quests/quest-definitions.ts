@@ -172,7 +172,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   // -------------------------------------------------------------------------
   // Hebdomadaires — 3 tirées au sort chaque semaine parmi ce pool
   // (pickWeeklyQuests, déterministe sur le lundi UTC). La taille du pool est
-  // le seul levier de variété : 11 quêtes = 165 combinaisons hebdo.
+  // le seul levier de variété : 13 quêtes = 286 combinaisons hebdo.
   // -------------------------------------------------------------------------
   {
     key: 'weekly_pulls_30',
@@ -184,16 +184,21 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
   },
+  // Pas de filtre `uniqueOnly` : une collection complète rendrait la quête
+  // infaisable et coûterait le bonus « semaine parfaite ». La clé historique
+  // est gardée pour ne pas changer la taille du pool, donc le tirage.
+  // ~16 % de PEU COMMUNE par tirage : 8 cartes ≈ 50 tirages, entre les 30 de
+  // « Semaine Explosive » et les ~65 des 3 RARE d'« Éclat Hebdomadaire ».
   {
     key: 'weekly_uniques_5',
-    nameFr: 'Nouvelles Trouvailles',
-    nameEn: 'New Finds',
-    descriptionFr: 'Obtiens 5 nouvelles cartes uniques cette semaine.',
-    descriptionEn: 'Get 5 new unique cards this week.',
+    nameFr: 'Belles Trouvailles',
+    nameEn: 'Nice Finds',
+    descriptionFr: 'Obtiens 8 cartes PEU COMMUNES cette semaine.',
+    descriptionEn: 'Get 8 UNCOMMON cards this week.',
     criterion: {
       event: 'PULL_COMPLETED',
-      target: 5,
-      filter: { uniqueOnly: true },
+      target: 8,
+      filter: { rarity: 'UNCOMMON' },
     },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
@@ -304,6 +309,30 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     descriptionFr: 'Recycle 15 pièces d’équipement cette semaine.',
     descriptionEn: 'Salvage 15 pieces of equipment this week.',
     criterion: { event: 'EQUIPMENT_SALVAGED', target: 15 },
+    period: 'WEEKLY',
+    ...WEEKLY_REWARD,
+  },
+  // Boucle quotidienne : 4 commandes livrables par jour (orders.dailyCap), 10
+  // se font en trois jours de jeu sur sept.
+  {
+    key: 'weekly_orders_10',
+    nameFr: 'Livreur',
+    nameEn: 'Courier',
+    descriptionFr: 'Livre 10 commandes cette semaine.',
+    descriptionEn: 'Deliver 10 orders this week.',
+    criterion: { event: 'ORDER_DELIVERED', target: 10 },
+    period: 'WEEKLY',
+    ...WEEKLY_REWARD,
+  },
+  // 5 transmutations communes = 25 doubles (alchemy.costCommon), soit à peu
+  // près ce que rendent les 30 tirages de « Semaine Explosive ».
+  {
+    key: 'weekly_alchemy_5',
+    nameFr: 'Apprenti Alchimiste',
+    nameEn: 'Apprentice Alchemist',
+    descriptionFr: 'Réalise 5 transmutations d’alchimie cette semaine.',
+    descriptionEn: 'Perform 5 alchemy transmutations this week.',
+    criterion: { event: 'ALCHEMY_TRANSMUTED', target: 5 },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
   },

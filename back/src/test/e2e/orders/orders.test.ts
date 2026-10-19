@@ -41,10 +41,26 @@ describe('Orders routes', () => {
   }
 
   let rareWater: { id: string; setId: string }
+  let questId: string
 
   beforeAll(async () => {
     app = await buildTestApp()
     prisma = (app as any).iocContainer.postgresOrm.prisma
+    // Créée avant toute livraison : le pool de quêtes est mis en cache au
+    // premier suivi (TTL 60 s).
+    const quest = await prisma.quest.create({
+      data: {
+        key: `test_orders_delivered_${suffix}`,
+        nameFr: 'Test Livreur',
+        nameEn: 'Test Courier',
+        descriptionFr: 'Test',
+        descriptionEn: 'Test',
+        period: 'ONESHOT',
+        criterion: { event: 'ORDER_DELIVERED', target: 10 },
+        isActive: true,
+      },
+    })
+    questId = quest.id
     const set = await prisma.cardSet.create({
       data: { nameFr: `OrdersSet${suffix}`, nameEn: `OrdersSet${suffix}`, isActive: true },
     })
@@ -59,7 +75,11 @@ describe('Orders routes', () => {
     })
   })
 
-  afterAll(() => app.close())
+  afterAll(async () => {
+    await prisma.userQuest.deleteMany({ where: { questId } })
+    await prisma.quest.deleteMany({ where: { id: questId } })
+    await app.close()
+  })
 
   it('GET /orders — génère 3 emplacements, idempotent', async () => {
     const { cookie } = await registerUser('ordboard')
@@ -111,6 +131,8 @@ describe('Orders routes', () => {
     expect(after.gold - before.gold).toBe(1280)
     expect(after.tokens - before.tokens).toBe(1)
     expect((await prisma.userCard.findUnique({ where: { id: uc.id } })).quantity).toBe(1)
+    const uq = await prisma.userQuest.findFirst({ where: { userId: id, questId } })
+    expect(uq?.progress).toBe(1)
 
     // Review Focus 4 : seconde livraison de la même commande → 409, rien recrédité.
     const again = await app.inject({

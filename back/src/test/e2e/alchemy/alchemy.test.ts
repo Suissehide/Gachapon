@@ -60,6 +60,7 @@ describe('Alchemy routes', () => {
   let uncommonB: { id: string }
   let rareA: { id: string }
   let questId: string
+  let transmuteQuestId: string
   const questKey = `test_alchemy_recycle_${suffix}`
 
   beforeAll(async () => {
@@ -83,6 +84,19 @@ describe('Alchemy routes', () => {
       },
     })
     questId = quest.id
+    const transmuteQuest = await prisma.quest.create({
+      data: {
+        key: `test_alchemy_transmuted_${suffix}`,
+        nameFr: 'Test Apprenti',
+        nameEn: 'Test Apprentice',
+        descriptionFr: 'Test',
+        descriptionEn: 'Test',
+        period: 'WEEKLY',
+        criterion: { event: 'ALCHEMY_TRANSMUTED', target: 5 },
+        isActive: true,
+      },
+    })
+    transmuteQuestId = transmuteQuest.id
 
     const set = await prisma.cardSet.create({
       data: { nameFr: `AlchemySet${suffix}`, nameEn: `AlchemySet${suffix}`, isActive: true },
@@ -114,8 +128,9 @@ describe('Alchemy routes', () => {
   })
 
   afterAll(async () => {
-    await prisma.userQuest.deleteMany({ where: { questId } })
-    await prisma.quest.deleteMany({ where: { id: questId } })
+    const questIds = [questId, transmuteQuestId]
+    await prisma.userQuest.deleteMany({ where: { questId: { in: questIds } } })
+    await prisma.quest.deleteMany({ where: { id: { in: questIds } } })
     await app.close()
   })
 
@@ -268,7 +283,7 @@ describe('Alchemy routes', () => {
     expect((await prisma.userCard.findUnique({ where: { id: stack.id } })).quantity).toBe(6)
   })
 
-  it('POST /alchemy/transmute — avance la quête hebdo « Alchimiste » (CARD_RECYCLED) de 5', async () => {
+  it('POST /alchemy/transmute — avance « Alchimiste » (CARD_RECYCLED) de 5 et « Apprenti Alchimiste » de 1', async () => {
     const { id, cookie } = await registerUser('alcquest')
     const stack = await giveStack(id, commonA.id, 6) // available = 5
 
@@ -283,6 +298,11 @@ describe('Alchemy routes', () => {
     })
     expect(uq).not.toBeNull()
     expect(uq.progress).toBe(5)
+
+    const transmuted = await prisma.userQuest.findFirst({
+      where: { userId: id, questId: transmuteQuestId, periodKey },
+    })
+    expect(transmuted?.progress).toBe(1)
   })
 
   it('POST /alchemy/transmute — renvoie les succès débloqués (CARDS_RECYCLED)', async () => {

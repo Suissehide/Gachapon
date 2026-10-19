@@ -195,6 +195,9 @@ export class AlchemyDomain implements IAlchemyDomain {
             userId,
             { kind: 'CARD_RECYCLED', amount: cost },
           )
+          await this.#achievementsDomain.track(tx, userId, {
+            kind: 'ALCHEMY_TRANSMUTED',
+          })
           return { ...result, unlockedAchievements }
         },
         { isolationLevel: 'Serializable' },

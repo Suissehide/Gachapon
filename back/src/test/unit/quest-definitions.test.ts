@@ -34,10 +34,18 @@ describe('définitions de quêtes', () => {
 // ---------------------------------------------------------------------------
 describe('pool hebdomadaire', () => {
   // Le tirage prend 3 quêtes parmi le pool. La taille du pool est ce qui
-  // produit la variation semaine à semaine : 11 quêtes = 165 combinaisons
+  // produit la variation semaine à semaine : 13 quêtes = 286 combinaisons
   // possibles contre 35 avec les 7 quêtes d'origine.
-  it('compte 11 quêtes', () => {
-    expect(weekly()).toHaveLength(11)
+  it('compte 13 quêtes', () => {
+    expect(weekly()).toHaveLength(13)
+  })
+
+  // Une quête « cartes jamais possédées » devient infaisable à collection
+  // complète et coûte le bonus « semaine parfaite » aux vétérans.
+  it("n'exige jamais de carte nouvelle", () => {
+    for (const q of weekly()) {
+      expect(q.criterion.filter?.uniqueOnly).toBeUndefined()
+    }
   })
 
   it('contient les 4 quêtes équipement', () => {
