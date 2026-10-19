@@ -30,13 +30,23 @@ export function pickMonsterStage<T extends { chapter: number; index: number }>(
   }
   const highestChapter = Math.max(...cleared.map((stage) => stage.chapter))
   const candidates = cleared.filter((stage) => stage.chapter === highestChapter)
-  return candidates[Math.floor(rng() * candidates.length)]
+  const picked = candidates[Math.floor(rng() * candidates.length)]
+  if (picked === undefined) {
+    // Ne peut pas arriver : l'indice est tiré dans [0, candidates.length).
+    throw new Error('indice hors bornes dans pickMonsterStage')
+  }
+  return picked
 }
 
 /** Pure : un lot parmi les quatre, à poids égaux. */
 export function pickLootKind(rng: () => number): WandererLootKind {
   const kinds: WandererLootKind[] = ['GOLD', 'DUST', 'TOKENS', 'CARD']
-  return kinds[Math.floor(rng() * kinds.length)]
+  const picked = kinds[Math.floor(rng() * kinds.length)]
+  if (picked === undefined) {
+    // Ne peut pas arriver : l'indice est tiré dans [0, kinds.length).
+    throw new Error('indice hors bornes dans pickLootKind')
+  }
+  return picked
 }
 
 /** Pure : montant du lot tiré, à partir du butin de farm de l'étage et des clés `wanderer.*`. */
