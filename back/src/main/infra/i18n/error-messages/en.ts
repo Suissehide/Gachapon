@@ -226,6 +226,9 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'raid.formerMemberFallback': 'Former member',
   'raid.adminPatchNothingToUpdate': 'Nothing to update',
 
+  // --- return bonus ---
+  'returnBonus.notFound': 'No return chest to claim',
+
   // --- orders ---
   'orders.notFound': 'Order not found',
   'orders.alreadyClosed': 'This order is no longer open',

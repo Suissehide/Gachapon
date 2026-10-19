@@ -92,4 +92,76 @@ describe('Bonus de retour', () => {
       expect(body.returnChest?.days).toBe(4)
     })
   })
+
+  describe('POST /return-bonus/claim', () => {
+    const claim = (cookie?: string) =>
+      app.inject({
+        method: 'POST',
+        url: '/return-bonus/claim',
+        headers: cookie ? { cookie } : {},
+      })
+
+    const seedChest = (userId: string) =>
+      prisma.returnChest.create({
+        data: { userId, days: 3, cappedDays: 3, tokens: 21, energy: 63 },
+      })
+
+    it('crédite le coffre une seule fois et le retire', async () => {
+      const u = await registerUser()
+      await seedChest(u.id)
+      await prisma.user.update({
+        where: { id: u.id },
+        data: { tokens: 4, lastTokenAt: new Date(), combatPoints: 10, lastCombatPointAt: new Date() },
+      })
+
+      const res = await claim(u.cookie)
+      expect(res.statusCode).toBe(200)
+      expect(res.json()).toEqual({
+        tokens: 25,
+        combatPoints: 73,
+        gained: { days: 3, cappedDays: 3, tokens: 21, energy: 63 },
+      })
+      expect(await prisma.returnChest.findUnique({ where: { userId: u.id } })).toBeNull()
+      const body = await me(u.cookie)
+      expect(body.returnChest).toBeNull()
+    })
+
+    it('jetons au plafond : le cadeau n’est pas avalé', async () => {
+      const u = await registerUser()
+      await seedChest(u.id)
+      await prisma.user.update({
+        where: { id: u.id },
+        data: { tokens: 10, lastTokenAt: new Date(Date.now() - 5 * 60 * 60 * 1000) },
+      })
+
+      const res = await claim(u.cookie)
+      expect(res.statusCode).toBe(200)
+      expect(res.json().tokens).toBe(31)
+    })
+
+    it('deux récupérations simultanées → un seul crédit', async () => {
+      const u = await registerUser()
+      await seedChest(u.id)
+      await prisma.user.update({
+        where: { id: u.id },
+        data: { tokens: 4, lastTokenAt: new Date() },
+      })
+
+      const results = await Promise.all([claim(u.cookie), claim(u.cookie)])
+      expect(results.map((r) => r.statusCode).sort()).toEqual([200, 404])
+      const user = await prisma.user.findUnique({ where: { id: u.id } })
+      expect(user.tokens).toBe(25)
+    })
+
+    it('aucun coffre → 404', async () => {
+      const u = await registerUser()
+      const res = await claim(u.cookie)
+      expect(res.statusCode).toBe(404)
+    })
+
+    it('sans session → 401', async () => {
+      const res = await claim()
+      expect(res.statusCode).toBe(401)
+    })
+  })
 })

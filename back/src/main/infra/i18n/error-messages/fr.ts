@@ -260,6 +260,9 @@ export const FR_MESSAGES = {
   // PATCH admin sans aucun champ renseigné (`admin-raid.schema.ts`).
   'raid.adminPatchNothingToUpdate': 'Rien à modifier',
 
+  // --- return bonus ---
+  'returnBonus.notFound': 'Aucun coffre de retour à récupérer',
+
   // --- orders ---
   'orders.notFound': 'Commande introuvable',
   'orders.alreadyClosed': "Cette commande n'est plus ouverte",

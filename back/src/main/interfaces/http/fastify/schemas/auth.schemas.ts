@@ -1,6 +1,7 @@
 import { z } from 'zod/v4'
 
 import { unlockedAchievementSchema } from './achievements.schemas'
+import { returnChestSchema } from './return-bonus.schema'
 
 export const registerBodySchema = z.object({
   username: z
@@ -31,15 +32,7 @@ export const userResponseSchema = z.object({
   createdAt: z.date(),
   skillPoints: z.number().int().nonnegative(),
   pendingRewardsCount: z.number().int().nonnegative(),
-  returnChest: z
-    .object({
-      days: z.number().int(),
-      cappedDays: z.number().int(),
-      tokens: z.number().int(),
-      energy: z.number().int(),
-    })
-    .nullable()
-    .default(null),
+  returnChest: returnChestSchema.nullable().default(null),
   unlockedAchievements: z.array(unlockedAchievementSchema).default([]),
 })
 
