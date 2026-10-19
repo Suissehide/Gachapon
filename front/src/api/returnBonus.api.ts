@@ -1,5 +1,4 @@
 import { apiUrl } from '../constants/config.constant.ts'
-import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { ReturnChest } from '../stores/auth.store.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
@@ -16,7 +15,7 @@ export const ReturnBonusApi = {
       method: 'POST',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, i18n.t('returnBonus:apiTitle'))
+      handleHttpError(res)
     }
     return res.json()
   },

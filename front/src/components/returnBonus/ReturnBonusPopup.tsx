@@ -29,6 +29,11 @@ const SPARKS = Array.from({ length: 18 }, (_, i) => {
   }
 })
 
+/** Fermeture sans ouverture : vaut jusqu'au prochain chargement complet de la
+ *  page. Au niveau du module pour survivre aux démontages de la mise en page
+ *  authentifiée (guide, admin…) comme aux `fetchMe()` en cours de session. */
+let dismissedThisPageLoad = false
+
 /** Compte de 0 à `target` en `durationMs` (ease-out cubique). */
 function useCountUp(target: number, delayMs: number, durationMs = 700) {
   const [value, setValue] = useState(0)
@@ -122,10 +127,11 @@ export function ReturnBonusPopup() {
   const chest = useAuthStore((s) => s.user?.returnChest ?? null)
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const claim = useClaimReturnBonus()
-  // Fermer sans ouvrir : masqué jusqu'au prochain chargement complet de la
-  // page, en mémoire seulement, pour qu'un fetchMe() en cours de session ne
-  // rouvre pas la popup.
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissed, setDismissedState] = useState(dismissedThisPageLoad)
+  const setDismissed = (value: boolean) => {
+    dismissedThisPageLoad = value
+    setDismissedState(value)
+  }
   const [popping, setPopping] = useState(false)
   const [claimed, setClaimed] = useState<ReturnChestClaim | null>(null)
   const ctaRef = useRef<HTMLButtonElement>(null)
