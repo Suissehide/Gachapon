@@ -1,10 +1,15 @@
-import type { BattleLogEntry, SimulatorUnit } from '../../api/combat.api'
+import type {
+  BattleLogEntry,
+  SimulatorUnit,
+  UnitStatus,
+} from '../../api/combat.api'
 
 export type SceneUnit = SimulatorUnit & {
   maxHp: number
   currentHp: number
   alive: boolean
   side: 'A' | 'B'
+  statuses?: UnitStatus[]
 }
 
 export type SceneSpeed = 1 | 2 | 4

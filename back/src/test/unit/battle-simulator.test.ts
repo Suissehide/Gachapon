@@ -912,6 +912,32 @@ describe('simulateBattle', () => {
       }
     })
 
+    it('TURN_END expose la brûlure active dans son instantané de statuts', () => {
+      const result = simulateBattle({
+        teamA: [makeUnit('A0', { atk: 100, spd: 999, passiveKey: 'BURN' })],
+        teamB: [makeUnit('B0', { hp: 100000, def: 0, spd: 100 })],
+        seed: 'burn-test',
+        timeoutTurns: 2,
+      })
+      const first = result.log.find((e) => e.type === 'TURN_END')
+      expect(first?.type === 'TURN_END' && first.statuses?.B0).toEqual([
+        { key: 'BURN', turns: 2, value: expect.any(Number) },
+      ])
+    })
+
+    it('TURN_END expose les charges de Puissance du porteur', () => {
+      const result = simulateBattle({
+        teamA: [makeUnit('A0', { spd: 999, passiveKey: 'EMPOWER' })],
+        teamB: [makeUnit('B0', { hp: 100000, spd: 100 })],
+        seed: 'empower-status',
+        timeoutTurns: 2,
+      })
+      const first = result.log.find((e) => e.type === 'TURN_END')
+      expect(first?.type === 'TURN_END' && first.statuses?.A0).toEqual([
+        { key: 'EMPOWER', value: expect.any(Number) },
+      ])
+    })
+
     it('BLESSING soigne un allié blessé en fin de tour', () => {
       // ATB: A0 (spd=100, BLESSING) must get a turn after B0 damages A1.
       const result = simulateBattle({

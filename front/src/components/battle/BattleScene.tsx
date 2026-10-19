@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { BattleLogEntry, SimulatorUnit } from '../../api/combat.api'
+import type {
+  BattleLogEntry,
+  SimulatorUnit,
+  UnitStatus,
+} from '../../api/combat.api'
 import { BattleControls } from './BattleControls'
 import { FloatingNumber } from './FloatingNumber'
 import { PassiveBadge } from './PassiveBadge'
@@ -99,6 +103,16 @@ function applyEntry(entry: BattleLogEntry, units: SceneUnit[]): SceneUnit[] {
           ? { ...u, currentHp: Math.min(u.maxHp, u.currentHp + amount) }
           : u,
       )
+    }
+    case 'TURN_END': {
+      const statuses = entry.statuses as
+        | Record<string, UnitStatus[]>
+        | undefined
+      // Journaux antérieurs aux instantanés : pas de champ, rien à afficher.
+      if (!statuses) {
+        return units
+      }
+      return units.map((u) => ({ ...u, statuses: statuses[u.id] ?? [] }))
     }
     default:
       return units

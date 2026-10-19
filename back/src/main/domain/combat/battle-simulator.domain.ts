@@ -99,9 +99,35 @@ export type LogEntry =
   | { type: 'DEATH'; unitId: string }
   | { type: 'REBIRTH'; unitId: string; restoredHp: number }
   | { type: 'HEAL'; unitId: string; amount: number }
-  | { type: 'TURN_END'; turn: number }
+  | {
+      type: 'TURN_END'
+      turn: number
+      /** Effets actifs après l'action, par unité vivante qui en porte. */
+      statuses?: Record<string, UnitStatus[]>
+    }
   | { type: 'TIMEOUT' }
   | { type: 'WIN'; side: Side }
+
+export type StatusKey =
+  | 'BURN'
+  | 'POISON'
+  | 'STUN'
+  | 'WEAKEN'
+  | 'SUNDER'
+  | 'SHIELD'
+  | 'HUNTED'
+  | 'EMPOWER'
+  | 'FORTIFY'
+  | 'BANNER'
+  | 'FURY'
+
+export interface UnitStatus {
+  key: StatusKey
+  /** Tours restants, absent pour les effets sans durée. */
+  turns?: number
+  /** Dégâts par tour (DoT), bouclier restant, ou % (affaiblissements et bonus). */
+  value?: number
+}
 
 export interface SimulatorResult {
   won: Side | null
@@ -1462,6 +1488,60 @@ function applyHasteBonusTurn(actor: BattleUnit, log: LogEntry[]): void {
   }
 }
 
+function debuffStatuses(u: BattleUnit): UnitStatus[] {
+  const list: UnitStatus[] = u.dots.map((d) => ({
+    key: d.source,
+    turns: d.turnsLeft,
+    value: d.dmgPerTurn,
+  }))
+  if (u.stunned) {
+    list.push({ key: 'STUN', turns: 1 })
+  }
+  if (u.weaken) {
+    list.push({ key: 'WEAKEN', turns: u.weaken.turnsLeft, value: u.weaken.pct })
+  }
+  if (u.sunder) {
+    list.push({ key: 'SUNDER', turns: u.sunder.turnsLeft, value: u.sunder.pct })
+  }
+  if (u.huntedBy !== null) {
+    list.push({ key: 'HUNTED' })
+  }
+  return list
+}
+
+/** Bonus qui évoluent en combat ; les passifs constants (RAMPART…) n'en sont pas. */
+function buffStatuses(u: BattleUnit): UnitStatus[] {
+  const list: UnitStatus[] = []
+  if (u.shield > 0) {
+    list.push({ key: 'SHIELD', value: Math.round(u.shield) })
+  }
+  for (const key of ['EMPOWER', 'FORTIFY'] as const) {
+    const charges = u.stacks[key.toLowerCase()] ?? 0
+    if (u.passiveKey === key && charges > 0) {
+      list.push({ key, value: Math.round(u.passiveValuePct * charges) })
+    }
+  }
+  if (u.effectiveAtk > u.baseAtk) {
+    const pct = Math.round((u.effectiveAtk / u.baseAtk - 1) * 100)
+    list.push({ key: 'BANNER', value: pct })
+  }
+  if (u.passiveKey === 'FURY' && u.currentHp < u.maxHp * 0.5) {
+    list.push({ key: 'FURY', value: u.passiveValuePct })
+  }
+  return list
+}
+
+function snapshotStatuses(units: BattleUnit[]): Record<string, UnitStatus[]> {
+  const out: Record<string, UnitStatus[]> = {}
+  for (const u of units) {
+    const list = u.alive ? [...debuffStatuses(u), ...buffStatuses(u)] : []
+    if (list.length > 0) {
+      out[u.id] = list
+    }
+  }
+  return out
+}
+
 /** Applique DoT, action et soins pour le tour d'une unité actrice. */
 function runActorTurn(
   actor: BattleUnit,
@@ -1550,7 +1630,11 @@ export function simulateBattle(input: SimulatorInput): SimulatorResult {
     runActorTurn(next.actor, units, prng, log, elementMults)
 
     actions += 1
-    log.push({ type: 'TURN_END', turn: actions })
+    log.push({
+      type: 'TURN_END',
+      turn: actions,
+      statuses: snapshotStatuses(units),
+    })
 
     const winner = checkVictory(units)
     if (winner !== null) {

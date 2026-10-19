@@ -47,6 +47,23 @@ export type SimulatorUnit = {
   palier: number
 }
 
+export type UnitStatus = {
+  key:
+    | 'BURN'
+    | 'POISON'
+    | 'STUN'
+    | 'WEAKEN'
+    | 'SUNDER'
+    | 'SHIELD'
+    | 'HUNTED'
+    | 'EMPOWER'
+    | 'FORTIFY'
+    | 'BANNER'
+    | 'FURY'
+  turns?: number
+  value?: number
+}
+
 export type BattleLogEntry = Record<string, unknown> & { type: string }
 
 export type DebugBattleResult = {

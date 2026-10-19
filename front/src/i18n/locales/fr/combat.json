@@ -201,5 +201,26 @@
     "resume": "Reprendre",
     "pause": "Pause",
     "skip": "Passer"
+  },
+  "unitStatus": {
+    "BURN": "Brûlure",
+    "POISON": "Poison",
+    "STUN": "Étourdi",
+    "WEAKEN": "Affaibli",
+    "SUNDER": "Armure brisée",
+    "SHIELD": "Bouclier",
+    "HUNTED": "Traqué",
+    "turns_other": "{{count}} tours restants",
+    "perTurn": "{{value}} dégâts par tour",
+    "pct": "-{{value}} %",
+    "shield": "{{value}} PV absorbés",
+    "turns_one": "{{count}} tour restant",
+    "EMPOWER": "Puissance",
+    "FORTIFY": "Fortification",
+    "BANNER": "Bannière",
+    "FURY": "Furie",
+    "atkUp": "+{{value}} % ATQ",
+    "defUp": "+{{value}} % DEF",
+    "dmgUp": "+{{value}} % dégâts"
   }
 }

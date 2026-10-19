@@ -201,5 +201,26 @@
     "resume": "Resume",
     "pause": "Pause",
     "skip": "Skip"
+  },
+  "unitStatus": {
+    "BURN": "Burn",
+    "POISON": "Poison",
+    "STUN": "Stunned",
+    "WEAKEN": "Weakened",
+    "SUNDER": "Sundered",
+    "SHIELD": "Shield",
+    "HUNTED": "Hunted",
+    "turns_other": "{{count}} turns left",
+    "perTurn": "{{value}} damage per turn",
+    "pct": "-{{value}}%",
+    "shield": "absorbs {{value}} HP",
+    "turns_one": "{{count}} turn left",
+    "EMPOWER": "Empowerment",
+    "FORTIFY": "Fortification",
+    "BANNER": "Banner",
+    "FURY": "Fury",
+    "atkUp": "+{{value}}% ATK",
+    "defUp": "+{{value}}% DEF",
+    "dmgUp": "+{{value}}% damage"
   }
 }

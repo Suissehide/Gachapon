@@ -1,6 +1,21 @@
-import { Skull } from 'lucide-react'
+import {
+  Angry,
+  BicepsFlexed,
+  Crosshair,
+  Droplet,
+  Flag,
+  Flame,
+  type LucideIcon,
+  Shield,
+  ShieldOff,
+  ShieldPlus,
+  Skull,
+  Swords,
+  Zap,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import type { UnitStatus } from '../../api/combat.api'
 import type { CardElement } from '../../constants/card.constant'
 import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
@@ -26,6 +41,99 @@ type Props = {
 }
 
 const PLACEHOLDER_RARITY = 'COMMON' as const
+
+const STATUS_STYLE: Record<
+  UnitStatus['key'],
+  { icon: LucideIcon; className: string }
+> = {
+  BURN: { icon: Flame, className: 'text-orange-600' },
+  POISON: { icon: Droplet, className: 'text-lime-700' },
+  STUN: { icon: Zap, className: 'text-yellow-700' },
+  WEAKEN: { icon: Swords, className: 'text-rose-600' },
+  SUNDER: { icon: ShieldOff, className: 'text-rose-600' },
+  SHIELD: { icon: Shield, className: 'text-sky-600' },
+  HUNTED: { icon: Crosshair, className: 'text-red-600' },
+  EMPOWER: { icon: BicepsFlexed, className: 'text-emerald-600' },
+  FORTIFY: { icon: ShieldPlus, className: 'text-emerald-600' },
+  BANNER: { icon: Flag, className: 'text-emerald-600' },
+  FURY: { icon: Angry, className: 'text-emerald-600' },
+}
+
+function StatusChip({ status }: { status: UnitStatus }) {
+  const { t } = useTranslation('combat')
+  const locale = currentLocale()
+  // Clés littérales : une clé construite échappe à check-i18n-keys.mjs.
+  const labels: Record<UnitStatus['key'], string> = {
+    BURN: t('unitStatus.BURN'),
+    POISON: t('unitStatus.POISON'),
+    STUN: t('unitStatus.STUN'),
+    WEAKEN: t('unitStatus.WEAKEN'),
+    SUNDER: t('unitStatus.SUNDER'),
+    SHIELD: t('unitStatus.SHIELD'),
+    HUNTED: t('unitStatus.HUNTED'),
+    EMPOWER: t('unitStatus.EMPOWER'),
+    FORTIFY: t('unitStatus.FORTIFY'),
+    BANNER: t('unitStatus.BANNER'),
+    FURY: t('unitStatus.FURY'),
+  }
+  const value = formatNumber(status.value ?? 0, locale)
+  const details: Partial<Record<UnitStatus['key'], string>> = {
+    BURN: t('unitStatus.perTurn', { value }),
+    POISON: t('unitStatus.perTurn', { value }),
+    WEAKEN: t('unitStatus.pct', { value }),
+    SUNDER: t('unitStatus.pct', { value }),
+    SHIELD: t('unitStatus.shield', { value }),
+    EMPOWER: t('unitStatus.atkUp', { value }),
+    BANNER: t('unitStatus.atkUp', { value }),
+    FORTIFY: t('unitStatus.defUp', { value }),
+    FURY: t('unitStatus.dmgUp', { value }),
+  }
+  const detail = details[status.key] ?? null
+  // Durée si l'effet en a une, sinon sa valeur (bouclier restant, bonus en %).
+  const badge =
+    status.turns ??
+    (status.key === 'SHIELD' ? value : status.value ? `+${value}%` : null)
+  const lines = [
+    detail,
+    status.turns !== undefined
+      ? t('unitStatus.turns', { count: status.turns })
+      : null,
+  ].filter((l): l is string => l !== null)
+  const { icon: Icon, className } = STATUS_STYLE[status.key]
+  // Bulle CSS plutôt que `title` : le délai natif du navigateur est trop long.
+  // Un bouton pour que le tap mobile (focus) l'ouvre aussi.
+  return (
+    <button
+      type="button"
+      aria-label={[labels[status.key], ...lines].join(' · ')}
+      className={`group relative inline-flex h-5 cursor-help items-center gap-0.5 rounded-full border border-border bg-card/90 px-1.5 shadow-sm text-[10px] font-bold ${className}`}
+    >
+      <Icon className="h-3 w-3" />
+      <span className="font-mono tabular-nums">{badge}</span>
+      <span
+        aria-hidden
+        className="pointer-events-none absolute right-full top-0 z-50 mr-1.5 hidden w-max max-w-[180px] rounded-md border border-border bg-card px-2 py-1 text-left text-[11px] font-normal text-text shadow-md group-hover:block group-focus:block"
+      >
+        <span className="block font-bold">{labels[status.key]}</span>
+        {lines.map((l) => (
+          <span key={l} className="block text-text-light">
+            {l}
+          </span>
+        ))}
+      </span>
+    </button>
+  )
+}
+
+/** Colonne posée sur la carte, coin haut-droit (le haut-gauche porte niveau et élément). */
+function StatusRow({ unit }: { unit: SceneUnit }) {
+  return (
+    <div className="pointer-events-auto absolute right-1.5 top-1.5 z-30 flex flex-col items-end gap-1">
+      {unit.alive &&
+        (unit.statuses ?? []).map((s) => <StatusChip key={s.key} status={s} />)}
+    </div>
+  )
+}
 
 export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
   const { t } = useTranslation('combat')
@@ -93,6 +201,7 @@ export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
             level={isAlly ? unit.level : null}
             element={(unit.element ?? null) as CardElement | null}
           />
+          <StatusRow unit={unit} />
           {isDead && (
             <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center animate-[battleSkullIn_0.3s_ease]">
               <Skull className="h-12 w-12 text-text-light drop-shadow-md" />
