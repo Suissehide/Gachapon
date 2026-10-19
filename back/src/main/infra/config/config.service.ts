@@ -323,6 +323,13 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // token (30 j), il ne peut plus jamais rouvrir son compte. La purge ne
   // supprime donc que des comptes déjà inaccessibles.
   'guest.purgeAfterDays': 30,
+  // Coffre « Bon retour » (spec 2026-10-19-bonus-de-retour) : à partir de
+  // minDays jours d'absence, tokensPerDay / energyPerDay par jour, plafonné à
+  // maxDays jours. Reste sous ce que rapporte le jeu sur la même période.
+  'returnBonus.minDays': 3,
+  'returnBonus.maxDays': 7,
+  'returnBonus.tokensPerDay': 7,
+  'returnBonus.energyPerDay': 21,
   // Commandes de clients (spec 2026-10-02, recalibrée). Revenu borné par
   // slots × délai × plafond (4 livraisons/jour) : ≈ 5 000 or/jour, ≈ 350
   // poussière/jour nets du recyclage et ~4-6 jetons/jour, soit ≈ 25 % d'une

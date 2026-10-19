@@ -16,6 +16,14 @@ type StreakUpdateResult = {
   newBestStreak: number
 }
 
+/** Nombre de jours calendaires UTC entre deux instants. */
+export function utcDayGap(from: Date, to: Date): number {
+  return Math.round(
+    (utcDayStart(to).getTime() - utcDayStart(from).getTime()) /
+      (24 * 60 * 60 * 1000),
+  )
+}
+
 /** Pure function — no I/O. Computes new streak state. */
 export function calculateStreakUpdate(input: StreakInput): StreakUpdateResult {
   const { lastLoginAt, streakDays, bestStreak } = input
@@ -28,11 +36,7 @@ export function calculateStreakUpdate(input: StreakInput): StreakUpdateResult {
     }
   }
 
-  const nowDay = utcDayStart(new Date())
-  const lastDay = utcDayStart(lastLoginAt)
-  const dayGap = Math.round(
-    (nowDay.getTime() - lastDay.getTime()) / (24 * 60 * 60 * 1000),
-  )
+  const dayGap = utcDayGap(lastLoginAt, new Date())
 
   if (dayGap === 0) {
     return {
