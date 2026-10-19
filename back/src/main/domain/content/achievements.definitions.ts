@@ -1,5 +1,5 @@
 /**
- * Définitions des succès — 64 entrées.
+ * Définitions des succès — 62 entrées.
  *
  * Vit sous `src/main/` et non dans `prisma/seed/` parce que du code de
  * PRODUCTION la consomme : le backfill de traductions au démarrage doit lire
@@ -802,33 +802,6 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
-    key: 'flawless_clears_100',
-    nameFr: 'Perfection',
-    nameEn: 'Perfection',
-    descriptionFr: 'Gagner 100 combats sans aucune perte.',
-    descriptionEn: 'Win 100 battles without losing a single card.',
-    family: 'mastery',
-    tier: 4,
-    hidden: false,
-    sortOrder: 3,
-    criterion: { type: 'FLAWLESS_CLEARS_COUNT', threshold: 100 },
-    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
-  },
-  {
-    key: 'understaffed_clear_1',
-    nameFr: 'Surpassé en nombre',
-    nameEn: 'Outnumbered',
-    descriptionFr:
-      'Gagner un combat en sous-effectif (moins de 3 personnages).',
-    descriptionEn: 'Win a battle undermanned (fewer than 3 characters).',
-    family: 'mastery',
-    tier: 2,
-    hidden: false,
-    sortOrder: 4,
-    criterion: { type: 'UNDERSTAFFED_CLEARS_COUNT', threshold: 1 },
-    reward: { tokens: 4, dust: 100, xp: 50 },
-  },
-  {
     key: 'cards_max_level_1',
     nameFr: 'Apogée',
     nameEn: 'Apex',
@@ -854,6 +827,19 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     sortOrder: 6,
     criterion: { type: 'CARDS_AT_MAX_LEVEL', threshold: 5 },
     reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
+  },
+  {
+    key: 'cards_max_level_10',
+    nameFr: "Légion d'élite",
+    nameEn: 'Elite Legion',
+    descriptionFr: 'Monter 10 personnages au niveau maximum.',
+    descriptionEn: 'Level 10 characters to the maximum.',
+    family: 'mastery',
+    tier: 4,
+    hidden: false,
+    sortOrder: 7,
+    criterion: { type: 'CARDS_AT_MAX_LEVEL', threshold: 10 },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
 
   // cachés

@@ -77,7 +77,6 @@ const CARDS_LEGITIMATE_IDENTICAL = new Set([
 // -----------------------------------------------------------------------
 const ACHIEVEMENTS_LEGITIMATE_IDENTICAL = new Set([
   'level_50', // "Expert" — cognat, même orthographe dans les deux langues
-  'flawless_clears_100', // "Perfection" — cognat, même orthographe
 ])
 
 // -----------------------------------------------------------------------
