@@ -148,6 +148,11 @@ export const CONFIG_KEYS = [
   'alchemy.costUncommon',
   'alchemy.costRare',
   'alchemy.costEpic',
+  'wanderer.minDelayMinutes',
+  'wanderer.maxDelayMinutes',
+  'wanderer.durationMinutes',
+  'wanderer.lootMult',
+  'wanderer.tokens',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

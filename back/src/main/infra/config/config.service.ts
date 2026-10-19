@@ -361,6 +361,15 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'alchemy.costUncommon': 6,
   'alchemy.costRare': 8,
   'alchemy.costEpic': 6,
+  // Monstre errant (spec 2026-10-19) : une apparition par jour UTC, sur un
+  // étage déjà battu du chapitre le plus avancé, fenêtre de durationMinutes.
+  // Butin à la victoire = farm de l'étage × lootMult (or/poussière) ou tokens
+  // fixe, à poids égaux avec un lot carte.
+  'wanderer.minDelayMinutes': 60,
+  'wanderer.maxDelayMinutes': 360,
+  'wanderer.durationMinutes': 180,
+  'wanderer.lootMult': 5,
+  'wanderer.tokens': 5,
 }
 
 export class ConfigService implements ConfigServiceInterface {

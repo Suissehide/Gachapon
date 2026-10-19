@@ -321,7 +321,7 @@ interface StageAccess {
   isNewChapterFirst: boolean
 }
 
-function isStageCleared(
+export function isStageCleared(
   stage: StagePosition,
   progress: CampaignProgress,
 ): boolean {
