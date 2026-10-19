@@ -12,6 +12,7 @@ import {
   resolveEnemyImageUrl,
 } from './enemy-appearance'
 import {
+  activeWandererQuery,
   pickMonsterStage,
   pickSpawnDelayMinutes,
 } from './wandering-monster-rules'
@@ -84,18 +85,8 @@ export class WanderingMonsterDomain implements IWanderingMonsterDomain {
   }
 
   async findActive(userId: string, now: Date): Promise<WandererView | null> {
-    // Un monstre de la veille qui déborde encore sur la fenêtre du jour est
-    // le plus ancien (expiresAt le plus proche) : orderBy le fait ressortir
-    // en premier s'il y en avait deux (il ne peut pas y en avoir deux actifs
-    // en pratique, une apparition par jour, mais la règle le garantit).
     const wm = await this.#postgresOrm.prisma.wanderingMonster.findFirst({
-      where: {
-        userId,
-        appearsAt: { lte: now },
-        expiresAt: { gt: now },
-        defeatedAt: null,
-      },
-      orderBy: { expiresAt: 'asc' },
+      ...activeWandererQuery(userId, now),
       include: { stage: true },
     })
     if (!wm) {

@@ -11,6 +11,7 @@ import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/sk
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import {
   type AttackPattern,
+  type LogEntry,
   type SimulatorUnit,
   simulateBattle,
 } from '../combat/battle-simulator.domain'
@@ -29,6 +30,7 @@ import {
 } from '../combat/equipment-drop.domain'
 import { computeEquippedCardStats } from '../combat/equipped-card-stats'
 import { effectiveSweepCost } from '../combat-points/combat-points.tx'
+import { creditTokensInTx } from '../economy/token-credit'
 import {
   INITIAL_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
@@ -43,6 +45,7 @@ import {
   type SetKey,
   setBonusesFromConfig,
 } from '../equipment/set-bonuses'
+import { pickVariant, pickWeightedRandom } from '../gacha/gacha.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { levelAfterXpGain } from '../shared/xp'
@@ -54,6 +57,11 @@ import {
   genericEnemyName,
   resolveEnemyImageUrl,
 } from './enemy-appearance'
+import {
+  activeWandererQuery,
+  computeLoot,
+  pickLootKind,
+} from './wandering-monster-rules'
 
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 
@@ -470,6 +478,36 @@ function toCardCatalogEntry(c: {
   }
 }
 
+// Clés de config lues avant la transaction pour simuler un combat d'étage.
+const STAGE_SIM_CONFIG_KEYS = [
+  'combat.elementAdvantageMult',
+  'combat.elementDisadvantageMult',
+  'combat.defMitigationRef',
+  'combat.baseCritRate',
+  'combat.baseCritDmg',
+  'combat.baseArmorPen',
+  'combat.baseLifesteal',
+] as const
+
+const VARIANT_RATE_KEYS = [
+  'brilliantRateRare',
+  'brilliantRateEpic',
+  'brilliantRateLegendary',
+  'holoRateRare',
+  'holoRateEpic',
+  'holoRateLegendary',
+] as const
+
+/** Lot du monstre errant tel que rendu au front ; la carte reprend la fiche du combat. */
+export type WandererLootView =
+  | { kind: 'GOLD' | 'DUST' | 'TOKENS'; amount: number }
+  | { kind: 'CARD'; amount: 1; card: CardDropPayload }
+
+interface StageSimCtx {
+  cfg: Record<(typeof STAGE_SIM_CONFIG_KEYS)[number], number>
+  setDefs: Record<SetKey, SetDefinition>
+}
+
 export class CampaignDomain {
   readonly #postgresOrm
   readonly #combatPointsTx
@@ -481,6 +519,8 @@ export class CampaignDomain {
   readonly #userRewardRepository: UserRewardRepositoryInterface
   readonly #skillTreeRepository: ISkillTreeRepository
   readonly #teamProgressionDomain: ITeamProgressionDomain
+  readonly #cardRepository
+  readonly #userCardRepository
 
   constructor({
     postgresOrm,
@@ -493,6 +533,8 @@ export class CampaignDomain {
     userRewardRepository,
     skillTreeRepository,
     teamProgressionDomain,
+    cardRepository,
+    userCardRepository,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
@@ -504,6 +546,8 @@ export class CampaignDomain {
     this.#userRewardRepository = userRewardRepository
     this.#skillTreeRepository = skillTreeRepository
     this.#teamProgressionDomain = teamProgressionDomain
+    this.#cardRepository = cardRepository
+    this.#userCardRepository = userCardRepository
   }
 
   /**
@@ -591,13 +635,7 @@ export class CampaignDomain {
         await Promise.all([
           this.#configService.getMany(
             'combat.battleCost',
-            'combat.elementAdvantageMult',
-            'combat.elementDisadvantageMult',
-            'combat.defMitigationRef',
-            'combat.baseCritRate',
-            'combat.baseCritDmg',
-            'combat.baseArmorPen',
-            'combat.baseLifesteal',
+            ...STAGE_SIM_CONFIG_KEYS,
             'xp.base',
             'xp.slope',
             'xp.levelCap',
@@ -634,45 +672,11 @@ export class CampaignDomain {
 
           const access = await this.#resolveStageAccess(tx, stage, progress)
 
-          const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
-            tx,
-            userId,
-            CAMPAIGN_TEAM_KEY,
-          )
-          if (userCardIds.length === 0) {
-            throw Boom.badRequest(errorMessage('combat.noTeamComposed'))
-          }
-
-          const baseStats: CombatStatsBaseline = {
-            critRate: battleCfg['combat.baseCritRate'],
-            critDmg: battleCfg['combat.baseCritDmg'],
-            armorPen: battleCfg['combat.baseArmorPen'],
-            lifesteal: battleCfg['combat.baseLifesteal'],
-          }
-          const teamUnits = await this.#buildPlayerSimUnits(
-            tx,
-            userId,
-            userCardIds,
-            battleCfg['combat.defMitigationRef'],
-            baseStats,
+          const sim = await this.#simulateStageInTx(tx, userId, stage, {
+            cfg: battleCfg,
             setDefs,
-          )
-          const enemyUnits = this.#buildEnemySimUnits(
-            enemyTeamSchema.parse(stage.enemyTeam),
-            battleCfg['combat.defMitigationRef'],
-            baseStats,
-          )
-          const seed = `${userId}:${stageId}:${Date.now()}`
-          const sim = simulateBattle({
-            teamA: teamUnits,
-            teamB: enemyUnits,
-            seed,
-            elementAdvantageMult: battleCfg['combat.elementAdvantageMult'],
-            elementDisadvantageMult:
-              battleCfg['combat.elementDisadvantageMult'],
           })
-
-          const won = sim.won === 'A'
+          const { won, seed, teamA: teamUnits, teamB: enemyUnits } = sim
           let rewards: BattleRewards | null = null
 
           if (won) {
@@ -732,6 +736,129 @@ export class CampaignDomain {
           }
         },
         { isolationLevel: 'Serializable' },
+      )
+    })
+  }
+
+  /**
+   * Combat contre le monstre errant actif : gratuit, sans progression ni
+   * butin de farm, ni XP, ni événement de quête ou de succès. Une victoire
+   * marque le monstre vaincu et crédite un seul lot tiré au hasard.
+   */
+  fightWanderer(userId: string): Promise<{
+    won: boolean
+    log: unknown[]
+    teamA: SimulatorUnit[]
+    teamB: SimulatorUnit[]
+    loot: WandererLootView | null
+  }> {
+    return retryOnSerialization(async () => {
+      // Config et effets lus AVANT la transaction, comme attackStage.
+      const [c, upgrades, teamEffects] = await Promise.all([
+        this.#configService.getMany(
+          ...STAGE_SIM_CONFIG_KEYS,
+          ...SET_BONUS_CONFIG_KEYS,
+          ...VARIANT_RATE_KEYS,
+          'wanderer.lootMult',
+          'wanderer.tokens',
+          'tokenRegenIntervalMinutes',
+          'tokenMaxStock',
+        ),
+        this.#skillTreeRepository.getEffectsForUser(userId),
+        this.#teamProgressionDomain.effectsForUser(userId),
+      ])
+      const setDefs = setBonusesFromConfig(c)
+      return this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const now = new Date()
+          const monster = await tx.wanderingMonster.findFirst({
+            ...activeWandererQuery(userId, now),
+            include: { stage: true },
+          })
+          if (!monster) {
+            throw Boom.notFound(errorMessage('campaign.wandererNotFound'))
+          }
+
+          const sim = await this.#simulateStageInTx(tx, userId, monster.stage, {
+            cfg: c,
+            setDefs,
+          })
+          const battle = {
+            won: sim.won,
+            log: sim.log,
+            teamA: sim.teamA,
+            teamB: sim.teamB,
+          }
+          if (!sim.won) {
+            return { ...battle, loot: null }
+          }
+
+          const { count } = await tx.wanderingMonster.updateMany({
+            where: { id: monster.id, defeatedAt: null },
+            data: { defeatedAt: now },
+          })
+          if (count === 0) {
+            throw Boom.notFound(errorMessage('campaign.wandererNotFound'))
+          }
+
+          const loot = computeLoot(
+            pickLootKind(Math.random),
+            (monster.stage.lootTable as unknown as LootTable).farm,
+            { lootMult: c['wanderer.lootMult'], tokens: c['wanderer.tokens'] },
+          )
+          switch (loot.kind) {
+            case 'GOLD':
+              await tx.user.update({
+                where: { id: userId },
+                data: { gold: { increment: loot.amount } },
+              })
+              return { ...battle, loot }
+            case 'DUST':
+              await tx.user.update({
+                where: { id: userId },
+                data: {
+                  dust: { increment: loot.amount },
+                  dustGenerated: { increment: loot.amount },
+                },
+              })
+              return { ...battle, loot }
+            case 'TOKENS':
+              await creditTokensInTx(tx, userId, loot.amount, {
+                upgrades,
+                teamLoot: teamEffects.loot,
+                cfg: c,
+              })
+              return { ...battle, loot }
+            case 'CARD': {
+              // Taux de base du gacha : ni chance, ni boost, ni pitié.
+              const pool = await this.#cardRepository.findActiveForPullInTx(
+                tx,
+                false,
+              )
+              const card = pickWeightedRandom(pool)
+              const variant = pickVariant(card.rarity, c)
+              const { wasDuplicate } =
+                await this.#userCardRepository.upsertInTx(
+                  tx,
+                  userId,
+                  card.id,
+                  variant,
+                )
+              return {
+                ...battle,
+                loot: {
+                  kind: 'CARD',
+                  amount: 1,
+                  card: this.#cardDropPayload(
+                    toCardCatalogEntry(card),
+                    wasDuplicate,
+                  ),
+                },
+              }
+            }
+          }
+        },
+        { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
       )
     })
   }
@@ -1160,6 +1287,13 @@ export class CampaignDomain {
     picked: CardCatalogEntry,
   ): Promise<CardDropPayload> {
     const { wasDuplicate } = await this.#grantCard(tx, userId, picked.id)
+    return this.#cardDropPayload(picked, wasDuplicate)
+  }
+
+  #cardDropPayload(
+    picked: CardCatalogEntry,
+    wasDuplicate: boolean,
+  ): CardDropPayload {
     return {
       cardId: picked.id,
       name: picked.name,
@@ -1390,6 +1524,69 @@ export class CampaignDomain {
       data: { userId, cardId, variant: 'NORMAL', quantity: 1 },
     })
     return { wasDuplicate: false }
+  }
+
+  /**
+   * Équipe de campagne contre l'équipe ennemie d'un étage : résout l'équipe,
+   * construit les unités et lance la simulation. Partagé par le combat
+   * d'étage et le combat contre le monstre errant.
+   */
+  async #simulateStageInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    stage: { id: string; enemyTeam: Prisma.JsonValue },
+    ctx: StageSimCtx,
+  ): Promise<{
+    won: boolean
+    seed: string
+    log: LogEntry[]
+    teamA: SimulatorUnit[]
+    teamB: SimulatorUnit[]
+  }> {
+    const { cfg, setDefs } = ctx
+    const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
+      tx,
+      userId,
+      CAMPAIGN_TEAM_KEY,
+    )
+    if (userCardIds.length === 0) {
+      throw Boom.badRequest(errorMessage('combat.noTeamComposed'))
+    }
+
+    const baseStats: CombatStatsBaseline = {
+      critRate: cfg['combat.baseCritRate'],
+      critDmg: cfg['combat.baseCritDmg'],
+      armorPen: cfg['combat.baseArmorPen'],
+      lifesteal: cfg['combat.baseLifesteal'],
+    }
+    const teamUnits = await this.#buildPlayerSimUnits(
+      tx,
+      userId,
+      userCardIds,
+      cfg['combat.defMitigationRef'],
+      baseStats,
+      setDefs,
+    )
+    const enemyUnits = this.#buildEnemySimUnits(
+      enemyTeamSchema.parse(stage.enemyTeam),
+      cfg['combat.defMitigationRef'],
+      baseStats,
+    )
+    const seed = `${userId}:${stage.id}:${Date.now()}`
+    const sim = simulateBattle({
+      teamA: teamUnits,
+      teamB: enemyUnits,
+      seed,
+      elementAdvantageMult: cfg['combat.elementAdvantageMult'],
+      elementDisadvantageMult: cfg['combat.elementDisadvantageMult'],
+    })
+    return {
+      won: sim.won === 'A',
+      seed,
+      log: sim.log,
+      teamA: teamUnits,
+      teamB: enemyUnits,
+    }
   }
 
   async #buildPlayerSimUnits(

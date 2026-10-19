@@ -56,3 +56,21 @@ export function computeLoot(
       return { kind, amount: 1 }
   }
 }
+
+/**
+ * Le monstre actif d'un joueur : apparu, pas expiré, pas vaincu. Le plus
+ * ancien d'abord (expiresAt le plus proche), pour qu'un monstre de la veille
+ * qui déborde sur la fenêtre du jour passe avant celui du jour. Partagé par la
+ * lecture et le combat, qui doivent viser le même monstre.
+ */
+export function activeWandererQuery(userId: string, now: Date) {
+  return {
+    where: {
+      userId,
+      appearsAt: { lte: now },
+      expiresAt: { gt: now },
+      defeatedAt: null,
+    },
+    orderBy: { expiresAt: 'asc' as const },
+  }
+}

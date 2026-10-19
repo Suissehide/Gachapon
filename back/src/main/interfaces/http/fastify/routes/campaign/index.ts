@@ -7,7 +7,10 @@ import {
   sweepBodySchema,
   sweepResponseSchema,
 } from '../../schemas/campaign.schema'
-import { wandererResponseSchema } from '../../schemas/wanderer.schema'
+import {
+  wandererBattleResponseSchema,
+  wandererResponseSchema,
+} from '../../schemas/wanderer.schema'
 
 export const campaignRouter: FastifyPluginCallbackZod = (fastify) => {
   const { campaignDomain, wanderingMonsterDomain } = fastify.iocContainer
@@ -39,6 +42,18 @@ export const campaignRouter: FastifyPluginCallbackZod = (fastify) => {
         new Date(),
       ),
     }),
+  )
+
+  fastify.post(
+    '/campaign/wanderer/battle',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Fight the active wandering monster',
+        response: { 200: wandererBattleResponseSchema },
+      },
+    },
+    (request) => campaignDomain.fightWanderer(request.user.userID),
   )
 
   fastify.post(

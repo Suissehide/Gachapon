@@ -11,11 +11,7 @@ import type {
   PostgresORMInterface,
   PrimaTransactionClient,
 } from '../../types/infra/orm/client'
-import {
-  calculateTokens,
-  effectiveRegenInterval,
-  overflowDust,
-} from '../economy/economy.domain'
+import { creditTokensInTx } from '../economy/token-credit'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   computeReturnChest,
@@ -115,34 +111,10 @@ export class ReturnBonusDomain implements IReturnBonusDomain {
           }
           await tx.returnChest.delete({ where: { userId } })
 
-          // Régénération matérialisée AVANT le crédit (même calcul que
-          // orders.deliver) : sinon calculateTokens plafonnerait plus tard
-          // `stock + regen` à maxStock et avalerait le cadeau.
-          const user = await tx.user.findUniqueOrThrow({
-            where: { id: userId },
-            select: { tokens: true, lastTokenAt: true },
-          })
-          const { tokens, newLastTokenAt, overflow } = calculateTokens(
-            user.lastTokenAt,
-            user.tokens,
-            effectiveRegenInterval({
-              intervalMinutes: cfg.tokenRegenIntervalMinutes,
-              reductionMinutes: upgrades.regenReductionMinutes,
-              lootBonusPct: teamEffects.loot,
-            }),
-            cfg.tokenMaxStock + upgrades.tokenVaultBonus,
-            upgrades.multiTokenChance,
-          )
-          const updated = await tx.user.update({
-            where: { id: userId },
-            data: {
-              tokens: tokens + chest.tokens,
-              lastTokenAt: newLastTokenAt ?? undefined,
-              dust: {
-                increment: overflowDust(overflow, upgrades.tokenOverflowDust),
-              },
-            },
-            select: { tokens: true },
+          const tokens = await creditTokensInTx(tx, userId, chest.tokens, {
+            upgrades,
+            teamLoot: teamEffects.loot,
+            cfg,
           })
           const { combatPointsAfter } = await this.#combatPointsTx.creditInTx(
             tx,
@@ -151,7 +123,7 @@ export class ReturnBonusDomain implements IReturnBonusDomain {
             upgrades,
           )
           return {
-            tokens: updated.tokens,
+            tokens,
             combatPoints: combatPointsAfter,
             gained: chest,
           }

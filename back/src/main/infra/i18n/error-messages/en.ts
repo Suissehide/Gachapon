@@ -215,6 +215,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'campaign.stageLocked': 'Stage is locked',
   'campaign.sweepRunsOutOfRange': 'Sweep runs must be 1-10',
   'campaign.stageNotClearedYet': 'Stage not cleared yet — cannot sweep',
+  'campaign.wandererNotFound': 'No wandering monster to fight',
   'raid.notFound': 'Raid not found',
   'raid.bossAlreadyDefeated':
     'The boss is already defeated, come back next week',

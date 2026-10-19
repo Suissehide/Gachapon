@@ -246,6 +246,7 @@ export const FR_MESSAGES = {
   'campaign.stageLocked': 'Étape verrouillée',
   'campaign.sweepRunsOutOfRange': 'Le balayage doit être compris entre 1 et 10',
   'campaign.stageNotClearedYet': 'Étape pas encore terminée — rien à balayer',
+  'campaign.wandererNotFound': 'Aucun monstre errant à combattre',
   'raid.notFound': 'Raid introuvable',
   'raid.bossAlreadyDefeated':
     'Le boss est déjà vaincu, rendez-vous la semaine prochaine',
