@@ -58,17 +58,20 @@ export function WandererLevelCard({
           <b className="truncate font-display text-[18px] text-text">
             {wanderer.name}
           </b>
-          <span className="truncate text-[13px] font-semibold text-currency-energy-ink">
+          {/* Pas de `truncate` : la maquette exige la ligne complète
+              « Gratuit · Butin surprise » — une carte étroite (grille à 3
+              colonnes) la coupait sinon avant « Butin surprise ». */}
+          <span className="text-[13px] font-semibold leading-snug text-currency-energy-ink">
             <span className="text-emerald-700">{t('levelCard.free')}</span>
             {' · '}
             {t('levelCard.surpriseLoot')}
           </span>
         </div>
-        <span className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-currency-energy px-3.5 font-display text-[14.5px] font-bold text-white shadow-[0_3px_0_var(--currency-energy-ink)]">
-          <Swords className="h-4 w-4" />
-          {t('levelCard.fight')}
-        </span>
       </div>
+      <span className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-currency-energy px-3.5 font-display text-[14.5px] font-bold text-white shadow-[0_3px_0_var(--currency-energy-ink)]">
+        <Swords className="h-4 w-4" />
+        {t('levelCard.fight')}
+      </span>
     </button>
   )
 }
