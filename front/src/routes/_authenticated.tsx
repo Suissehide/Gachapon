@@ -6,6 +6,7 @@ import { Navbar } from '../components/custom/Navbar.tsx'
 import { GuestSaveBanner } from '../components/guest/GuestSaveBanner.tsx'
 import { GuestSaveDialog } from '../components/guest/GuestSaveDialog.tsx'
 import { LevelUpOverlay } from '../components/level/LevelUpOverlay.tsx'
+import { ReturnBonusPopup } from '../components/returnBonus/ReturnBonusPopup.tsx'
 import { RewardRevealOverlay } from '../components/rewards/RewardRevealOverlay.tsx'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useAuthDialogStore } from '../stores/authDialog.store.ts'
@@ -33,6 +34,7 @@ function AuthenticatedLayout() {
       <LevelUpOverlay />
       <AchievementUnlockToast />
       <RewardRevealOverlay />
+      <ReturnBonusPopup />
       <GuestSaveDialog />
       {/* « Se connecter à ce compte » depuis la conversion d'un invité : la
           popup de connexion n'était montée que sur les pages publiques. */}

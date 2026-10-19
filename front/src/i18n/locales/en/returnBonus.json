@@ -1,0 +1,15 @@
+{
+  "eyebrowAway_one": "{{count}} day away",
+  "eyebrowAway_other": "{{count}} days away",
+  "title": "Welcome back!",
+  "subtitle": "A chest filled up while you were away.",
+  "open": "Open the chest",
+  "eyebrowOpened": "Chest opened",
+  "openedTitle": "You get",
+  "daysOfRewards_one": "day of rewards",
+  "daysOfRewards_other": "days of rewards",
+  "tokens": "tokens",
+  "energy": "energy",
+  "claim": "Claim",
+  "apiTitle": "Welcome-back chest"
+}

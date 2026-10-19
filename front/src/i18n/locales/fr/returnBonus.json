@@ -1,0 +1,15 @@
+{
+  "eyebrowAway_one": "{{count}} jour d'absence",
+  "eyebrowAway_other": "{{count}} jours d'absence",
+  "title": "Bon retour !",
+  "subtitle": "Un coffre s'est rempli pendant ton absence.",
+  "open": "Ouvrir le coffre",
+  "eyebrowOpened": "Coffre ouvert",
+  "openedTitle": "Tu récupères",
+  "daysOfRewards_one": "jour de récompenses",
+  "daysOfRewards_other": "jours de récompenses",
+  "tokens": "jetons",
+  "energy": "énergie",
+  "claim": "Récupérer",
+  "apiTitle": "Coffre de retour"
+}

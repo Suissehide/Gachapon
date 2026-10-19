@@ -5,6 +5,14 @@ import { api } from '../lib/api.js'
 import { queryClient } from '../lib/queryClient.ts'
 import { useAchievementUnlockStore } from './achievementUnlock.store.ts'
 
+/** Coffre « Bon retour » en attente : `days` réels, `cappedDays` pour le « ×n ». */
+export type ReturnChest = {
+  days: number
+  cappedDays: number
+  tokens: number
+  energy: number
+}
+
 export type AuthUser = {
   id: string
   username: string
@@ -18,6 +26,7 @@ export type AuthUser = {
   banner: string | null
   skillPoints: number
   pendingRewardsCount: number
+  returnChest: ReturnChest | null
 }
 
 type MeResponse = AuthUser & {

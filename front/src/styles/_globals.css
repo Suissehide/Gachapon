@@ -72,6 +72,8 @@
   --color-currency-gold-ink: var(--currency-gold-ink);
   --color-currency-token: var(--currency-token);
   --color-currency-token-ink: var(--currency-token-ink);
+  --color-currency-energy: var(--currency-energy);
+  --color-currency-energy-ink: var(--currency-energy-ink);
   --color-wager-bet: var(--wager-bet);
   --color-wager-bet-ink: var(--wager-bet-ink);
   --color-wager-bet-soft: var(--wager-bet-soft);
@@ -225,6 +227,60 @@ h6 {
 
 .reward-claim {
   animation: rewardClaim 300ms ease-in forwards;
+}
+
+/* Coffre « Bon retour » (handoff design_handoff_popup_retour) */
+@keyframes returnChestWobble {
+  0%,
+  70%,
+  100% {
+    rotate: 0deg;
+  }
+  75% {
+    rotate: -6deg;
+  }
+  80% {
+    rotate: 6deg;
+  }
+  85% {
+    rotate: -4deg;
+  }
+  90% {
+    rotate: 3deg;
+  }
+}
+
+@keyframes returnChestPulse {
+  50% {
+    transform: scale(1.07);
+  }
+}
+
+@keyframes returnChestPop {
+  40% {
+    transform: scale(1.25) rotate(-8deg);
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes returnChestSpin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes returnChestTileIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* BRILLIANT — Golden glow pulse */

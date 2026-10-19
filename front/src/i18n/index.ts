@@ -26,6 +26,7 @@ import ordersEn from './locales/en/orders.json'
 import passivesEn from './locales/en/passives.json'
 import profileEn from './locales/en/profile.json'
 import questsEn from './locales/en/quests.json'
+import returnBonusEn from './locales/en/returnBonus.json'
 import rewardsEn from './locales/en/rewards.json'
 import settingsEn from './locales/en/settings.json'
 import shopEn from './locales/en/shop.json'
@@ -61,6 +62,7 @@ import ordersFr from './locales/fr/orders.json'
 import passivesFr from './locales/fr/passives.json'
 import profileFr from './locales/fr/profile.json'
 import questsFr from './locales/fr/quests.json'
+import returnBonusFr from './locales/fr/returnBonus.json'
 import rewardsFr from './locales/fr/rewards.json'
 import settingsFr from './locales/fr/settings.json'
 import shopFr from './locales/fr/shop.json'
@@ -366,6 +368,7 @@ void i18next.use(initReactI18next).init({
       collection: collectionFr,
       wishlist: wishlistFr,
       profile: profileFr,
+      returnBonus: returnBonusFr,
       rewards: rewardsFr,
       stats: statsFr,
       streak: streakFr,
@@ -403,6 +406,7 @@ void i18next.use(initReactI18next).init({
       collection: collectionEn,
       wishlist: wishlistEn,
       profile: profileEn,
+      returnBonus: returnBonusEn,
       rewards: rewardsEn,
       stats: statsEn,
       streak: streakEn,
@@ -443,6 +447,7 @@ void i18next.use(initReactI18next).init({
     'collection',
     'wishlist',
     'profile',
+    'returnBonus',
     'rewards',
     'stats',
     'streak',

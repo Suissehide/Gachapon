@@ -185,6 +185,8 @@
   --currency-gold-ink: #854d0e;
   --currency-token: #ea580c;
   --currency-token-ink: #9a3412;
+  --currency-energy: #7c3aed;
+  --currency-energy-ink: #5b21b6;
 
   /* Pastilles de notification de la topbar (point de nav, pilule de
      sous-menu, compteur ancré cloche/cadeau) — handoff
