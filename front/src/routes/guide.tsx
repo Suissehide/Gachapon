@@ -11,12 +11,15 @@ import {
   Crown,
   Dices,
   Flame,
+  FlaskConical,
   Gauge,
+  Ghost,
   Gift,
   Layers,
   LifeBuoy,
   ListChecks,
   Network,
+  Package,
   Shield,
   Skull,
   Sparkles,
@@ -24,6 +27,7 @@ import {
   Store,
   Swords,
   Ticket,
+  UserRound,
   Users,
   Wallet,
   Zap,
@@ -68,6 +72,7 @@ const intro = p('intro')
 // de la langue. Les libellés viennent de `guide:sectionLabels.<id>`.
 // L'ordre est recopié dans le sommaire de scripts/seo-routes.mjs.
 const SECTIONS: SectionSpec[] = [
+  { id: 'invite', icon: UserRound, blocks: [intro, list(), tip] },
   {
     id: 'monnaies',
     icon: Wallet,
@@ -107,6 +112,8 @@ const SECTIONS: SectionSpec[] = [
     icon: Store,
     blocks: [intro, { kind: 'cards', key: 'cards' }],
   },
+  { id: 'commandes', icon: Package, blocks: [intro, list(), tip] },
+  { id: 'alchimie', icon: FlaskConical, blocks: [intro, list(), tip] },
   { id: 'niveaux', icon: Gauge, blocks: [intro, list(), info] },
   {
     id: 'competences',
@@ -118,6 +125,7 @@ const SECTIONS: SectionSpec[] = [
     icon: Swords,
     blocks: [intro, list(), p('firstClear'), info],
   },
+  { id: 'errant', icon: Ghost, blocks: [intro, list(), tip] },
   { id: 'elements', icon: Atom, blocks: [intro, list(), tip] },
   { id: 'tours', icon: Castle, blocks: [intro, list()] },
   { id: 'combat-points', icon: BatteryCharging, blocks: [intro, list(), tip] },

@@ -13,6 +13,8 @@ const swaggerPlugin = fastifyPlugin(async (fastify: FastifyInstance) => {
         description: [
           'Public API for the Gachapon gacha game platform.',
           '',
+          'Guest accounts can use every solo endpoint; team, raid, duel, bet and API-key endpoints answer 403 `GUEST_FORBIDDEN`.',
+          '',
           'Protected endpoints accept either the `access_token` session cookie or an API key sent in the `X-API-Key` header — generate one in Settings → API keys. Endpoints without a lock need no authentication.',
           '',
           'Building a Discord bot? Follow the step-by-step guide at /discord.',
@@ -27,19 +29,27 @@ const swaggerPlugin = fastifyPlugin(async (fastify: FastifyInstance) => {
         },
         {
           name: 'Collection',
-          description: 'Cards, sets, a player collection and card upgrades.',
+          description:
+            'Cards, sets, a player collection, card upgrades and alchemy.',
         },
         { name: 'Wishlist', description: 'Cards a player is hunting for.' },
         {
           name: 'Progression',
-          description: 'Daily streak, quests, achievements, rewards, skills.',
+          description:
+            'Daily streak, welcome-back chest, quests, achievements, rewards, skills.',
         },
-        { name: 'Shop', description: 'Permanent shop and daily shop.' },
+        {
+          name: 'Shop',
+          description: 'Permanent shop, daily shop and customer orders.',
+        },
         {
           name: 'Combat',
           description: 'Combat teams, points and equipment.',
         },
-        { name: 'Campaign', description: 'Story campaign stages.' },
+        {
+          name: 'Campaign',
+          description: 'Story campaign stages and the wandering monster.',
+        },
         { name: 'Tower', description: 'Elemental towers.' },
         {
           name: 'Teams',

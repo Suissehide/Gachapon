@@ -10,6 +10,7 @@
     "heading": "Sommaire"
   },
   "sectionLabels": {
+    "invite": "Jouer en invité",
     "monnaies": "Les ressources",
     "tokens": "Jetons",
     "pulls": "Tirer une capsule",
@@ -17,9 +18,12 @@
     "piete": "Pitié",
     "doublon": "Doublons & poussière",
     "boutique": "Boutique",
+    "commandes": "Commandes",
+    "alchimie": "Alchimie",
     "niveaux": "Niveau du compte",
     "competences": "Arbre de compétences",
     "campagne": "Campagne & combats",
+    "errant": "Monstre errant",
     "elements": "Éléments",
     "tours": "Tours",
     "combat-points": "Énergie",
@@ -37,6 +41,15 @@
     "api": "API & Discord"
   },
   "sections": {
+    "invite": {
+      "intro": "Le bouton <strong>Jouer</strong> de l'accueil lance une partie <strong>invitée</strong>, sans e-mail ni mot de passe : tu reçois un pseudo et tu tires tout de suite.",
+      "list": {
+        "i1": "Tout le jeu solo est ouvert : tirages, collection, boutique, commandes, alchimie, campagne, tours, quêtes et succès.",
+        "i2": "Les <strong>équipes</strong>, le raid, les duels, les paris et les clés API sont réservés aux comptes.",
+        "i3": "<strong>Sauvegarde ta progression</strong> par e-mail, Google ou Discord, depuis la bannière ou les Paramètres : tu gardes tout ce que tu as gagné."
+      },
+      "tip": "Tant qu'il n'est pas sauvegardé, un compte invité ne vit que dans ce navigateur, et il est supprimé après 30 jours sans connexion."
+    },
     "monnaies": {
       "intro": "Six ressources. Les jetons, l'énergie, la poussière et l'or s'affichent dans la <strong>barre du haut</strong> ; tes points de compétence non dépensés apparaissent en pastille sur le lien Compétences.",
       "cards": {
@@ -46,11 +59,11 @@
         },
         "i2": {
           "title": "Poussière",
-          "text": "Vient du recyclage des doublons, des quêtes, de la chaîne de connexion et des paliers de niveau. Sert au marché, aux vœux, aux packs d'énergie, aux boosts, à monter tes cartes et à réinitialiser l'arbre de compétences."
+          "text": "Vient du recyclage des doublons, des commandes, des quêtes, de la chaîne de connexion et des paliers de niveau. Sert au marché, aux vœux, aux packs d'énergie, aux boosts, à monter tes cartes et à réinitialiser l'arbre de compétences."
         },
         "i3": {
           "title": "Or",
-          "text": "Gagné en combat et en raid. Sert à monter le <strong>niveau</strong> de tes cartes, à améliorer ton équipement et à acheter des packs de jetons."
+          "text": "Gagné en combat, en raid et en livrant des commandes. Sert à monter le <strong>niveau</strong> de tes cartes, à améliorer ton équipement et à acheter des packs de jetons."
         },
         "i4": {
           "title": "Énergie",
@@ -72,7 +85,7 @@
         "i1": "Ton stock a un <strong>plafond</strong>. Au-delà, les jetons régénérés sont perdus, sauf avec la compétence <strong>Trop-plein</strong>, qui les convertit en poussière.",
         "i2": "La barre du haut affiche ton solde et le temps avant le prochain jeton."
       },
-      "info": "Autres sources de jetons : les <strong>packs de jetons</strong> de la boutique (payés en or), les quêtes, la chaîne de connexion, les paliers de niveau et le raid. Plusieurs compétences et le bonus d'équipe Flux de jetons accélèrent la régénération ou relèvent le plafond.",
+      "info": "Autres sources de jetons : les <strong>packs de jetons</strong> de la boutique (payés en or), les commandes, les quêtes, la chaîne de connexion, les paliers de niveau, le raid, le monstre errant et le coffre de retour. Plusieurs compétences et le bonus d'équipe Flux de jetons accélèrent la régénération ou relèvent le plafond.",
       "tip": "Dépense tes jetons avant d'atteindre le plafond, ou investis tôt dans le plafond si tu ne passes pas souvent."
     },
     "pulls": {
@@ -109,7 +122,8 @@
       "list": {
         "i1": "Les doublons servent à <strong>l'ascension</strong> : faire passer une carte au palier suivant en consomme un.",
         "i2": "Tu peux aussi <strong>recycler</strong> un doublon en poussière depuis la collection. Le montant dépend de la rareté.",
-        "i3": "<strong>Tout recycler</strong> convertit d'un coup tes exemplaires en trop, jusqu'à la rareté que tu choisis (variante normale uniquement)."
+        "i3": "<strong>Tout recycler</strong> convertit d'un coup tes exemplaires en trop, jusqu'à la rareté que tu choisis (variante normale uniquement).",
+        "i4": "Livre-les aux clients du <strong>Comptoir</strong>, ou verse-les dans l'<strong>Alchimie</strong> pour obtenir une carte de la rareté au-dessus."
       },
       "uses": "La poussière sert au <strong>marché</strong>, aux <strong>vœux</strong>, à <strong>monter tes cartes</strong>, aux packs d'énergie et aux boosts, et à <strong>réinitialiser</strong> l'arbre de compétences.",
       "tip": "Garde des doublons des cartes que tu fais combattre : sans eux, pas d'ascension. La compétence Recyclage augmente la poussière reçue."
@@ -130,6 +144,25 @@
           "text": "Les <strong>packs de jetons</strong> se paient en or. Les <strong>packs d'énergie</strong> se paient en poussière, en nombre limité par jour, et peuvent faire dépasser ton plafond d'énergie. Les <strong>boosts</strong>, en poussière, augmentent les chances des raretés hautes pendant quelques tirages. Il y a aussi des cosmétiques."
         }
       }
+    },
+    "commandes": {
+      "intro": "Au <strong>Comptoir</strong>, des clients cherchent des cartes. Livre-leur tes <strong>doublons</strong> contre de l'or, de la poussière et des jetons.",
+      "list": {
+        "i1": "Jusqu'à <strong>trois clients</strong> attendent en même temps. Chacun demande des cartes d'une rareté donnée, parfois d'un set ou d'un élément précis.",
+        "i2": "Seuls tes doublons en variante normale partent : tu gardes toujours un exemplaire de chaque carte.",
+        "i3": "Tu peux livrer <strong>quatre commandes par jour</strong>. Un client servi libère sa place, et le suivant arrive quelques heures plus tard.",
+        "i4": "Un client ne t'arrange pas ? <strong>Congédie-le</strong>. Le premier congé du jour est gratuit et un nouveau client arrive tout de suite ; après, la place reste libre jusqu'au prochain client."
+      },
+      "tip": "Plus la rareté demandée est haute, plus la commande paie. Deux clients sur trois demandent en général des cartes que tu as déjà en double."
+    },
+    "alchimie": {
+      "intro": "L'<strong>Alchimie</strong> transforme des doublons en une carte <strong>aléatoire</strong> de la rareté au-dessus.",
+      "list": {
+        "i1": "Recettes : 5 communes → 1 peu commune, 6 peu communes → 1 rare, 8 rares → 1 épique, 6 épiques → 1 légendaire. Tu peux mélanger des cartes différentes de la même rareté.",
+        "i2": "Seuls les doublons en variante normale comptent, et tu gardes toujours un exemplaire de chaque carte. La carte obtenue peut sortir dans une variante.",
+        "i3": "Les cartes engagées dans un duel en cours ne peuvent pas être transmutées."
+      },
+      "tip": "En poussière, recycler tes doublons rapporte plus que recycler la carte obtenue : l'Alchimie sert à viser les raretés hautes, pas à faire de la poussière."
     },
     "niveaux": {
       "intro": "Ton <strong>niveau de compte</strong> monte avec l'XP gagnée en tirant et en combattant, jusqu'au niveau 100.",
@@ -173,6 +206,15 @@
       },
       "firstClear": "Le <strong>premier passage</strong> d'une étape donne des récompenses garanties (or, poussière, XP, parfois une pièce d'équipement ou une carte). Rejouer une étape déjà gagnée rapporte des récompenses répétables, avec des chances de drop.",
       "info": "Sur une étape déjà gagnée, <strong>Combat multiple</strong> enchaîne plusieurs combats d'un coup (×1 ou ×5), contre l'énergie correspondante."
+    },
+    "errant": {
+      "intro": "Chaque jour, un <strong>monstre errant</strong> surgit sur un étage déjà battu de ton chapitre de campagne le plus avancé. Il reste <strong>trois heures</strong>, puis repart.",
+      "list": {
+        "i1": "Il apparaît à un moment différent chaque jour, directement sur la carte de campagne.",
+        "i2": "Le combat est <strong>gratuit</strong>, sans énergie, et les tentatives sont illimitées tant qu'il est là.",
+        "i3": "La victoire lâche un <strong>butin surprise</strong> : or, poussière, jetons ou carte."
+      },
+      "tip": "Passe voir la carte de campagne une fois par jour pour ne pas le manquer."
     },
     "elements": {
       "intro": "Chaque carte et chaque monstre a un <strong>élément</strong>. Attaquer avec l'avantage fait plus de dégâts, attaquer avec le désavantage en fait moins.",
@@ -222,7 +264,8 @@
       "list": {
         "i1": "La <strong>campagne</strong> lâche les Armes, Armures et Anneaux ; les <strong>tours</strong> lâchent les quatre autres types.",
         "i2": "Tu <strong>améliores</strong> une pièce avec de l'or. À certains niveaux, elle gagne une stat secondaire ou en renforce une.",
-        "i3": "Les pièces dont tu n'as pas besoin se <strong>vendent</strong> contre de l'or."
+        "i3": "Les pièces dont tu n'as pas besoin se <strong>vendent</strong> contre de l'or.",
+        "i4": "Le bouton <strong>Échanger</strong> transfère tout l'équipement d'une carte vers une autre, en un clic."
       },
       "setsIntro": "Chaque pièce appartient à un <strong>set</strong>. Porter assez de pièces du même set <strong>sur la même carte</strong> active son bonus :",
       "sets": {
@@ -255,7 +298,8 @@
     "chaine": {
       "intro": "Connecte-toi <strong>chaque jour</strong> pour allonger ta chaîne. Un jour manqué la remet à zéro ; ta <strong>meilleure chaîne</strong> reste enregistrée.",
       "list": {
-        "i1": "Chaque jour de chaîne rapporte quelque chose, et les jours 3, 7, 14 et 30 rapportent davantage (jetons, poussière, XP)."
+        "i1": "Chaque jour de chaîne rapporte quelque chose, et les jours 3, 7, 14 et 30 rapportent davantage (jetons, poussière, XP).",
+        "i2": "<strong>Bon retour !</strong> Après au moins trois jours d'absence, un coffre de jetons et d'énergie t'attend. Plus l'absence est longue, plus il est garni (jusqu'à sept jours comptés)."
       }
     },
     "recompenses": {
@@ -297,7 +341,8 @@
       "list": {
         "i1": "Trois rôles : <strong>chef</strong>, <strong>officier</strong> et <strong>membre</strong>. Le chef peut céder son rôle.",
         "i2": "Le chef et les officiers invitent par pseudo ou par e-mail ; une invitation expire au bout de 48 h.",
-        "i3": "Une équipe peut s'ouvrir aux <strong>candidatures</strong> : elle apparaît alors dans l'annuaire, où n'importe quel joueur peut postuler. Le chef et les officiers acceptent ou refusent."
+        "i3": "Une équipe peut s'ouvrir aux <strong>candidatures</strong> : elle apparaît alors dans l'annuaire, où n'importe quel joueur peut postuler. Le chef et les officiers acceptent ou refusent.",
+        "i4": "Chaque équipe a une <strong>fiche publique</strong>, visible par les non-membres."
       },
       "progression": "<strong>Progression d'équipe</strong> : chaque semaine, les membres gagnent des points d'équipe (dégâts de raid, tirages, duels et paris gagnés). Ces points font monter l'équipe de niveau, et chaque niveau donne un point à placer dans l'un de ces quatre bonus :",
       "perks": {
@@ -313,7 +358,7 @@
       "list": {
         "i1": "Chaque membre a un nombre limité d'<strong>attaques par jour</strong> ; le bonus Cadence de raid en ajoute.",
         "i2": "Les dégâts de tous les membres remplissent une barre commune.",
-        "i3": "À 25, 50, 75 et 100 % de la barre, chaque participant reçoit une récompense (jetons, or, poussière, et une carte épique à 100 %), une fois par semaine et par équipe. Elle arrive dans la cloche.",
+        "i3": "À 25, 50, 75 et 100 % de la barre, chaque participant reçoit une récompense (jetons, or, poussière, et une carte épique à 100 % à partir du niveau 3), une fois par semaine et par équipe. Elle arrive dans la cloche.",
         "i4": "Un raid gagné augmente la difficulté de la semaine suivante ; une semaine sans victoire la fait redescendre. Les PV du boss sont calculés comme si l'équipe avait au moins 10 membres."
       }
     },

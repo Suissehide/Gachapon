@@ -10,6 +10,7 @@
     "heading": "Contents"
   },
   "sectionLabels": {
+    "invite": "Playing as a guest",
     "monnaies": "Resources",
     "tokens": "Tokens",
     "pulls": "Pulling a capsule",
@@ -17,9 +18,12 @@
     "piete": "Pity",
     "doublon": "Duplicates & dust",
     "boutique": "Shop",
+    "commandes": "Orders",
+    "alchimie": "Alchemy",
     "niveaux": "Account level",
     "competences": "Skill tree",
     "campagne": "Campaign & battles",
+    "errant": "Wandering monster",
     "elements": "Elements",
     "tours": "Towers",
     "combat-points": "Energy",
@@ -37,6 +41,15 @@
     "api": "API & Discord"
   },
   "sections": {
+    "invite": {
+      "intro": "The <strong>Play</strong> button on the home page starts a <strong>guest</strong> game, with no email or password: you get a username and start pulling right away.",
+      "list": {
+        "i1": "The whole solo game is open: pulls, collection, shop, orders, alchemy, campaign, towers, quests and achievements.",
+        "i2": "<strong>Teams</strong>, raids, duels, bets and API keys are for accounts only.",
+        "i3": "<strong>Save your progress</strong> with an email, Google or Discord, from the banner or Settings: you keep everything you earned."
+      },
+      "tip": "Until you save it, a guest account only lives in this browser, and it is deleted after 30 days without logging in."
+    },
     "monnaies": {
       "intro": "Six resources. Tokens, energy, dust and gold are shown in the <strong>top bar</strong>; unspent skill points show up as a badge on the Skills link.",
       "cards": {
@@ -46,11 +59,11 @@
         },
         "i2": {
           "title": "Dust",
-          "text": "Comes from recycling duplicates, quests, the login streak and level milestones. Spent in the market, on wishes, energy packs and boosts, on levelling your cards, and on resetting the skill tree."
+          "text": "Comes from recycling duplicates, orders, quests, the login streak and level milestones. Spent in the market, on wishes, energy packs and boosts, on levelling your cards, and on resetting the skill tree."
         },
         "i3": {
           "title": "Gold",
-          "text": "Earned in battles and raids. Spent on your cards' <strong>level</strong>, on upgrading equipment, and on token packs."
+          "text": "Earned in battles, raids and orders. Spent on your cards' <strong>level</strong>, on upgrading equipment, and on token packs."
         },
         "i4": {
           "title": "Energy",
@@ -72,7 +85,7 @@
         "i1": "Your stock has a <strong>cap</strong>. Tokens regenerated past it are lost, unless you have the <strong>Overflow</strong> skill, which turns them into dust.",
         "i2": "The top bar shows your balance and the time until the next token."
       },
-      "info": "Other ways to get tokens: <strong>token packs</strong> in the shop (paid in gold), quests, the login streak, level milestones and the raid. Several skills and the Token flow team bonus speed up regeneration or raise the cap.",
+      "info": "Other ways to get tokens: <strong>token packs</strong> in the shop (paid in gold), orders, quests, the login streak, level milestones, the raid, the wandering monster and the welcome-back chest. Several skills and the Token flow team bonus speed up regeneration or raise the cap.",
       "tip": "Spend your tokens before you hit the cap, or invest in the cap early if you don't drop by often."
     },
     "pulls": {
@@ -109,7 +122,8 @@
       "list": {
         "i1": "Duplicates are used for <strong>ascension</strong>: moving a card up to the next tier costs one.",
         "i2": "You can also <strong>recycle</strong> a duplicate into dust from the collection. The amount depends on rarity.",
-        "i3": "<strong>Recycle everything</strong> converts all your spare copies at once, up to the rarity you pick (normal variant only)."
+        "i3": "<strong>Recycle everything</strong> converts all your spare copies at once, up to the rarity you pick (normal variant only).",
+        "i4": "Deliver them to customers at the <strong>Counter</strong>, or pour them into <strong>Alchemy</strong> to get a card of the next rarity."
       },
       "uses": "Dust is spent in the <strong>market</strong>, on <strong>wishes</strong>, on <strong>levelling your cards</strong>, on energy packs and boosts, and on <strong>resetting</strong> the skill tree.",
       "tip": "Keep duplicates of the cards you fight with: without them, no ascension. The Recycling skill increases the dust you get."
@@ -130,6 +144,25 @@
           "text": "<strong>Token packs</strong> cost gold. <strong>Energy packs</strong> cost dust, are limited per day, and can take your energy past its cap. <strong>Boosts</strong>, paid in dust, raise the odds of the higher rarities for a few pulls. There are cosmetics too."
         }
       }
+    },
+    "commandes": {
+      "intro": "At the <strong>Counter</strong>, customers are looking for cards. Hand them your <strong>duplicates</strong> for gold, dust and tokens.",
+      "list": {
+        "i1": "Up to <strong>three customers</strong> wait at once. Each one asks for cards of a given rarity, sometimes from a specific set or element.",
+        "i2": "Only your normal-variant duplicates go: you always keep one copy of each card.",
+        "i3": "You can deliver <strong>four orders a day</strong>. A served customer frees their spot, and the next one shows up a few hours later.",
+        "i4": "Customer not working for you? <strong>Dismiss</strong> them. Your first dismissal of the day is free and a new customer arrives at once; after that, the spot stays empty until the next customer."
+      },
+      "tip": "The higher the requested rarity, the more the order pays. Two customers out of three usually ask for cards you already have duplicates of."
+    },
+    "alchimie": {
+      "intro": "<strong>Alchemy</strong> turns duplicates into a <strong>random</strong> card of the next rarity.",
+      "list": {
+        "i1": "Recipes: 5 commons → 1 uncommon, 6 uncommons → 1 rare, 8 rares → 1 epic, 6 epics → 1 legendary. You can mix different cards of the same rarity.",
+        "i2": "Only normal-variant duplicates count, and you always keep one copy of each card. The card you get can come out in a variant.",
+        "i3": "Cards committed to an ongoing duel cannot be transmuted."
+      },
+      "tip": "In dust terms, recycling your duplicates pays more than recycling the card you get: Alchemy is for reaching higher rarities, not for making dust."
     },
     "niveaux": {
       "intro": "Your <strong>account level</strong> goes up with the XP you earn by pulling and fighting, up to level 100.",
@@ -173,6 +206,15 @@
       },
       "firstClear": "Your <strong>first clear</strong> of a stage gives guaranteed rewards (gold, dust, XP, sometimes a piece of equipment or a card). Replaying a stage you've already won gives repeatable rewards, with a chance of drops.",
       "info": "On a stage you've already won, <strong>Multiple battle</strong> chains several fights at once (×1 or ×5) for the matching energy."
+    },
+    "errant": {
+      "intro": "Every day, a <strong>wandering monster</strong> shows up on an already-cleared stage of your furthest campaign chapter. It stays for <strong>three hours</strong>, then leaves.",
+      "list": {
+        "i1": "It appears at a different time each day, right on the campaign map.",
+        "i2": "The fight is <strong>free</strong>, with no energy cost, and attempts are unlimited while it is there.",
+        "i3": "Victory drops <strong>surprise loot</strong>: gold, dust, tokens or a card."
+      },
+      "tip": "Check the campaign map once a day so you don't miss it."
     },
     "elements": {
       "intro": "Every card and every monster has an <strong>element</strong>. Attacking with the advantage deals more damage; attacking at a disadvantage deals less.",
@@ -222,7 +264,8 @@
       "list": {
         "i1": "The <strong>campaign</strong> drops Weapons, Armor and Rings; the <strong>towers</strong> drop the other four types.",
         "i2": "You <strong>upgrade</strong> a piece with gold. At certain levels it gains a sub-stat or improves one.",
-        "i3": "Pieces you don't need can be <strong>sold</strong> for gold."
+        "i3": "Pieces you don't need can be <strong>sold</strong> for gold.",
+        "i4": "The <strong>Swap</strong> button moves all of a card's equipment to another card in one click."
       },
       "setsIntro": "Every piece belongs to a <strong>set</strong>. Wearing enough pieces of the same set <strong>on the same card</strong> activates its bonus:",
       "sets": {
@@ -255,7 +298,8 @@
     "chaine": {
       "intro": "Log in <strong>every day</strong> to grow your streak. Missing a day resets it; your <strong>best streak</strong> is kept.",
       "list": {
-        "i1": "Every streak day gives you something, and days 3, 7, 14 and 30 give more (tokens, dust, XP)."
+        "i1": "Every streak day gives you something, and days 3, 7, 14 and 30 give more (tokens, dust, XP).",
+        "i2": "<strong>Welcome back!</strong> After at least three days away, a chest of tokens and energy is waiting for you. The longer you were gone, the fuller it is (up to seven days counted)."
       }
     },
     "recompenses": {
@@ -297,7 +341,8 @@
       "list": {
         "i1": "Three roles: <strong>leader</strong>, <strong>officer</strong> and <strong>member</strong>. The leader can hand the role over.",
         "i2": "The leader and officers invite by username or email; an invitation expires after 48 hours.",
-        "i3": "A team can open itself to <strong>applications</strong>: it then shows up in the directory, where any player can apply. The leader and officers accept or decline."
+        "i3": "A team can open itself to <strong>applications</strong>: it then shows up in the directory, where any player can apply. The leader and officers accept or decline.",
+        "i4": "Every team has a <strong>public page</strong>, visible to non-members."
       },
       "progression": "<strong>Team progression</strong>: every week, members earn team points (raid damage, pulls, duels and bets won). These points level the team up, and each level gives a point to put into one of four bonuses:",
       "perks": {
@@ -313,7 +358,7 @@
       "list": {
         "i1": "Each member has a limited number of <strong>attacks per day</strong>; the Raid cadence bonus adds more.",
         "i2": "Every member's damage fills a shared bar.",
-        "i3": "At 25, 50, 75 and 100% of the bar, every participant gets a reward (tokens, gold, dust, and an epic card at 100%), once per week and per team. It lands in the bell.",
+        "i3": "At 25, 50, 75 and 100% of the bar, every participant gets a reward (tokens, gold, dust, and an epic card at 100% from level 3), once per week and per team. It lands in the bell.",
         "i4": "Beating the raid raises next week's difficulty; a week without a win lowers it. Boss HP is calculated as if the team had at least 10 members."
       }
     },

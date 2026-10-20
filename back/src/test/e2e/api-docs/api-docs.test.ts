@@ -60,6 +60,24 @@ describe('API docs — OpenAPI spec', () => {
     })
   })
 
+  it('should give every operation a declared tag and a summary', async () => {
+    const response = await app.inject({ method: 'GET', url: '/openapi.json' })
+    const spec = response.json()
+    const declared = new Set(spec.tags.map((t: { name: string }) => t.name))
+    const missing: string[] = []
+    for (const [path, ops] of Object.entries(spec.paths ?? {})) {
+      for (const [method, op] of Object.entries(
+        ops as Record<string, { tags?: string[]; summary?: string }>,
+      )) {
+        const tag = op.tags?.[0]
+        if (!tag || !declared.has(tag) || !op.summary) {
+          missing.push(`${method.toUpperCase()} ${path}`)
+        }
+      }
+    }
+    expect(missing).toEqual([])
+  })
+
   it('should not expose /openapi.json in the spec itself', async () => {
     const response = await app.inject({ method: 'GET', url: '/openapi.json' })
     const spec = response.json()

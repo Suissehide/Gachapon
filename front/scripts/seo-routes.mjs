@@ -138,8 +138,8 @@ export const SEO_ROUTES = [
     navLabel: { fr: 'Guide du joueur', en: 'Player guide' },
     title: { fr: 'Guide du joueur — Gachapon', en: 'Player guide — Gachapon' },
     description: {
-      fr: "Comment fonctionne Gachapon : jetons, tirages, raretés, pitié, poussière, boutique, arbre de compétences, campagne, éléments, tours, équipement, équipes, raid, duels et API publique.",
-      en: 'How Gachapon works: tokens, pulls, rarities, pity, dust, the shop, the skill tree, the campaign, elements, towers, equipment, teams, raids, duels, and the public API.',
+      fr: "Comment fonctionne Gachapon : jetons, tirages, raretés, pitié, poussière, boutique, commandes, alchimie, arbre de compétences, campagne, monstre errant, éléments, tours, équipement, équipes, raid, duels, mode invité et API publique.",
+      en: 'How Gachapon works: tokens, pulls, rarities, pity, dust, the shop, orders, alchemy, the skill tree, the campaign, the wandering monster, elements, towers, equipment, teams, raids, duels, guest mode, and the public API.',
     },
     sitemap: { changefreq: 'monthly', priority: '0.8' },
     staticBlock: {
@@ -154,6 +154,7 @@ export const SEO_ROUTES = [
           // Reprend SECTION_IDS dans src/routes/guide.tsx, dans l'ordre, et
           // les libellés de guide:sectionLabels.<id> des deux locales.
           items: [
+            { fr: 'Jouer en invité', en: 'Playing as a guest' },
             { fr: 'Les ressources', en: 'Resources' },
             { fr: 'Jetons', en: 'Tokens' },
             { fr: 'Tirer une capsule', en: 'Pulling a capsule' },
@@ -161,9 +162,12 @@ export const SEO_ROUTES = [
             { fr: 'Pitié', en: 'Pity' },
             { fr: 'Doublons & poussière', en: 'Duplicates & dust' },
             { fr: 'Boutique', en: 'Shop' },
+            { fr: 'Commandes', en: 'Orders' },
+            { fr: 'Alchimie', en: 'Alchemy' },
             { fr: 'Niveau du compte', en: 'Account level' },
             { fr: 'Arbre de compétences', en: 'Skill tree' },
             { fr: 'Campagne & combats', en: 'Campaign & battles' },
+            { fr: 'Monstre errant', en: 'Wandering monster' },
             { fr: 'Éléments', en: 'Elements' },
             { fr: 'Tours', en: 'Towers' },
             { fr: 'Énergie', en: 'Energy' },
