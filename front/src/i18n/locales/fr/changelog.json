@@ -10,6 +10,19 @@
     "fixed": "Corrigé"
   },
   "releases": {
+    "v3_8": {
+      "title": "Le monstre errant",
+      "date": "Octobre 2026",
+      "summary": "Un monstre errant qui surgit sur ta carte de campagne, un coffre pour fêter ton retour et des quêtes hebdomadaires renouvelées.",
+      "entries": {
+        "e1": "Un monstre errant apparaît chaque jour sur un étage déjà battu de ton chapitre le plus avancé, et repart au bout de trois heures. Le combat est gratuit, les tentatives illimitées, et la victoire lâche un butin surprise : or, poussière, jetons ou carte.",
+        "e2": "Après au moins trois jours d’absence, un popup « Bon retour ! » t’offre un coffre de jetons et d’énergie, d’autant plus garni que ton absence a été longue (jusqu’à sept jours comptés).",
+        "e3": "Deux nouvelles quêtes hebdomadaires, Livreur (10 commandes) et Apprenti Alchimiste (5 transmutations), et Belles Trouvailles remplace Nouvelles Trouvailles : 8 cartes peu communes, faisable même à collection complète. Côté succès, Légion d’élite (10 personnages au niveau max) remplace Surpassé en nombre et Perfection, qui étaient infaisables.",
+        "e4": "En combat, les effets actifs (brûlure, poison, étourdissement, bouclier, Furie…) s’affichent en pastilles sur chaque carte, avec leur détail au survol ou au tap. La variante Brillante a enfin sa propre animation de révélation, distincte de la légendaire.",
+        "e5": "Les bonus d’équipe sont relevés : +40 % de jetons, +30 % d’XP et −30 % sur le coût d’amélioration d’équipement. Une pastille signale la boutique quand la boutique du jour se renouvelle, et le site te prévient quand une nouvelle version est en ligne.",
+        "e6": "Les quêtes se mettent à jour tout de suite après un recyclage ou une amélioration d’équipement ; « Tout révéler » joue l’animation même quand il ne reste qu’une carte ; un filtre de set coché reste décochable après un changement d’emplacement."
+      }
+    },
     "v3_7": {
       "title": "La campagne s’agrandit",
       "date": "Octobre 2026",

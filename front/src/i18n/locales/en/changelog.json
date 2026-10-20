@@ -10,6 +10,19 @@
     "fixed": "Fixed"
   },
   "releases": {
+    "v3_8": {
+      "title": "The Wandering Monster",
+      "date": "October 2026",
+      "summary": "A wandering monster that shows up on your campaign map, a chest to celebrate your return and refreshed weekly quests.",
+      "entries": {
+        "e1": "A wandering monster appears every day on an already-cleared stage of your furthest chapter, and leaves after three hours. The fight is free, attempts are unlimited, and victory drops surprise loot: gold, dust, tokens or a card.",
+        "e2": "After at least three days away, a \"Welcome back!\" popup gives you a chest of tokens and energy, bigger the longer you were gone (up to seven days counted).",
+        "e3": "Two new weekly quests, Courier (10 orders) and Apprentice Alchemist (5 transmutations), and Nice Finds replaces New Finds: 8 uncommon cards, doable even with a complete collection. On the achievements side, Elite Legion (10 characters at max level) replaces Outnumbered and Perfection, which were impossible to complete.",
+        "e4": "In combat, active effects (burn, poison, stun, shield, Fury…) show as badges on each card, with details on hover or tap. The Brilliant variant finally has its own reveal animation, distinct from the legendary one.",
+        "e5": "Team bonuses are raised: +40% tokens, +30% XP and −30% equipment upgrade cost. A badge flags the shop when the daily shop refreshes, and the site lets you know when a new version is live.",
+        "e6": "Quests update right away after recycling or upgrading equipment; \"Reveal all\" plays the animation even when only one card is left; a checked set filter can be unchecked again after switching slots."
+      }
+    },
     "v3_7": {
       "title": "The Campaign Grows",
       "date": "October 2026",
