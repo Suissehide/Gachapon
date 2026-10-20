@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: 6de9571465c5b914652ef329bea9db2fd8e093b9
+// last-synced-commit: cfba78dd64642cacbd0be7db122c56518d9f7f00
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../libs/utils.ts'
