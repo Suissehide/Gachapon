@@ -4,6 +4,7 @@ import {
   pickLootKind,
   pickMonsterStage,
   pickSpawnDelayMinutes,
+  soloWandererSpec,
 } from '../../main/domain/campaign/wandering-monster-rules'
 
 describe('pickSpawnDelayMinutes', () => {
@@ -53,5 +54,36 @@ describe('computeLoot', () => {
     expect(computeLoot('DUST', farm, cfg)).toEqual({ kind: 'DUST', amount: 120 })
     expect(computeLoot('TOKENS', farm, cfg)).toEqual({ kind: 'TOKENS', amount: 5 })
     expect(computeLoot('CARD', farm, cfg)).toEqual({ kind: 'CARD', amount: 1 })
+  })
+})
+
+describe('soloWandererSpec', () => {
+  const enemy = (atk: number, element: string) => ({
+    baseHp: 100,
+    baseAtk: atk,
+    baseDef: 20,
+    baseSpd: 90,
+    attackPattern: 'BASIC',
+    element,
+  })
+
+  it('fond l’équipe en un monstre AOE_3 : PV cumulés, attaque moyenne, tête conservée', () => {
+    const solo = soloWandererSpec(
+      [enemy(10, 'DARK'), enemy(20, 'FIRE'), enemy(30, 'WATER')],
+      1.5,
+    )
+    expect(solo).toEqual({
+      baseHp: 450,
+      baseAtk: 30,
+      baseDef: 20,
+      baseSpd: 90,
+      attackPattern: 'AOE_3',
+      element: 'DARK',
+    })
+  })
+
+  it('un boss, déjà seul, est rendu tel quel', () => {
+    const boss = { ...enemy(50, 'FIRE'), attackPattern: 'AOE_3' }
+    expect(soloWandererSpec([boss], 1.5)).toBe(boss)
   })
 })

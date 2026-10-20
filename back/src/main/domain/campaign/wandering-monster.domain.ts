@@ -4,7 +4,6 @@ import type {
   WandererView,
 } from '../../types/domain/campaign/wandering-monster.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
-import { type EnemySpec, enemyTeamSchema } from './campaign.domain'
 import { computeTeamPower } from './campaign-power'
 import {
   enemyNameFromAppearance,
@@ -15,6 +14,7 @@ import {
   activeWandererQuery,
   pickMonsterStage,
   pickSpawnDelayMinutes,
+  wandererSoloEnemy,
 } from './wandering-monster-rules'
 
 export class WanderingMonsterDomain implements IWanderingMonsterDomain {
@@ -93,20 +93,17 @@ export class WanderingMonsterDomain implements IWanderingMonsterDomain {
       return null
     }
 
-    const enemyTeam = enemyTeamSchema.parse(wm.stage.enemyTeam)
-    const head: EnemySpec | undefined = enemyTeam[0]
+    const solo = wandererSoloEnemy(wm.stage)
     return {
       stageId: wm.stageId,
       chapter: wm.stage.chapter,
       index: wm.stage.index,
       stageLabel: wm.stage.label,
       expiresAt: wm.expiresAt.toISOString(),
-      name: head
-        ? (enemyNameFromAppearance(head.appearance) ?? genericEnemyName(1))
-        : genericEnemyName(1),
-      imageUrl: head ? this.#resolveEnemyImage(head.appearance) : null,
-      element: head?.element ?? null,
-      recommendedPower: computeTeamPower(enemyTeam),
+      name: enemyNameFromAppearance(solo.appearance) ?? genericEnemyName(1),
+      imageUrl: this.#resolveEnemyImage(solo.appearance),
+      element: solo.element ?? null,
+      recommendedPower: computeTeamPower([solo]),
     }
   }
 

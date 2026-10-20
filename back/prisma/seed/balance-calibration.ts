@@ -24,6 +24,7 @@
 // sous-stats.
 
 import { type CardRarity, EquipmentSlot } from '../../src/generated/client'
+import { soloWandererSpec } from '../../src/main/domain/campaign/wandering-monster-rules'
 import {
   type SimulatorUnit,
   simulateBattle,
@@ -43,6 +44,7 @@ import {
   RARITY_BASE,
   REFERENCE_CHAPTERS,
   STAGES_PER_CHAPTER,
+  wandererSoloScale,
 } from '../../src/main/domain/content/campaign.definitions'
 import { buildEquipmentCatalog } from '../../src/main/domain/content/equipment.definitions'
 import {
@@ -684,6 +686,48 @@ export function campaignWinRate(opts: {
       }),
       teamB: enemies,
       seed: `camp-calib-${opts.chapter}-${opts.index}-${k}`,
+      elementAdvantageMult: ELEMENT_ADVANTAGE_MULT,
+      elementDisadvantageMult: ELEMENT_DISADVANTAGE_MULT,
+    })
+    if (sim.won === 'A') {
+      wins++
+    }
+  }
+  return wins / opts.runs
+}
+
+/** Taux de victoire visé par le joueur de référence face au monstre errant. */
+export const WANDERER_TARGET = 0.75
+
+/**
+ * Taux de victoire du profil de référence d'un étage normal face au monstre
+ * errant qui y apparaîtrait : l'équipe de l'étage fondue en un monstre solo
+ * (`soloWandererSpec`). `scale` absent = l'échelle livrée
+ * (`wandererSoloScale`) ; le fit de `SIM_MODE=wanderer` la fait varier.
+ */
+export function wandererWinRate(opts: {
+  chapter: number
+  index: number
+  runs: number
+  scale?: number
+}): number {
+  const team = normalEnemyTeam(opts.chapter, opts.index)
+  const scale = opts.scale ?? wandererSoloScale(opts.chapter, opts.index)
+  const enemies = buildEnemySimUnits([soloWandererSpec(team, scale)] as never, {
+    defMitigationRef: DEF_MITIGATION_REF,
+    baseStats: BASE_STATS,
+    resolveImage: () => null,
+  })
+  const profile = campaignProfile(opts.chapter, opts.index)
+  let wins = 0
+  for (let k = 0; k < opts.runs; k++) {
+    const sim = simulateBattle({
+      teamA: referenceTeam(profile, {
+        element: counterPickElement(enemies),
+        seed: 1000 + k,
+      }),
+      teamB: enemies,
+      seed: `wanderer-${opts.chapter}-${opts.index}-${k}`,
       elementAdvantageMult: ELEMENT_ADVANTAGE_MULT,
       elementDisadvantageMult: ELEMENT_DISADVANTAGE_MULT,
     })

@@ -61,6 +61,7 @@ import {
   activeWandererQuery,
   computeLoot,
   pickLootKind,
+  wandererSoloEnemy,
 } from './wandering-monster-rules'
 
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
@@ -779,10 +780,16 @@ export class CampaignDomain {
             throw Boom.notFound(errorMessage('campaign.wandererNotFound'))
           }
 
-          const sim = await this.#simulateStageInTx(tx, userId, monster.stage, {
-            cfg: c,
-            setDefs,
-          })
+          // Le monstre combat seul : l'équipe de l'étage fondue en un ennemi.
+          const sim = await this.#simulateStageInTx(
+            tx,
+            userId,
+            {
+              id: monster.stage.id,
+              enemyTeam: [wandererSoloEnemy(monster.stage)],
+            },
+            { cfg: c, setDefs },
+          )
           const battle = {
             won: sim.won,
             log: sim.log,

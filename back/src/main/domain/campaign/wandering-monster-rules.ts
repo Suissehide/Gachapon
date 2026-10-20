@@ -1,4 +1,9 @@
-import { isStageCleared } from './campaign.domain'
+import { wandererSoloScale } from '../content/campaign.definitions'
+import {
+  type EnemySpec,
+  enemyTeamSchema,
+  isStageCleared,
+} from './campaign.domain'
 
 // Règles pures du monstre errant (spec docs/superpowers/specs/2026-10-19-monstre-errant-design.md, section « Règles »).
 
@@ -83,4 +88,55 @@ export function activeWandererQuery(userId: string, now: Date) {
     },
     orderBy: { expiresAt: 'asc' as const },
   }
+}
+
+type SoloSource = {
+  baseHp: number
+  baseAtk: number
+  baseDef: number
+  baseSpd: number
+  attackPattern?: string | null
+}
+
+/**
+ * Pure : l'équipe de l'étage fondue en UN monstre, bâti comme un boss — une
+ * seule unité qui frappe toute l'équipe (AOE_3). Il porte les PV cumulés de
+ * l'équipe et l'attaque, la défense et la vitesse moyennes ; `scale`
+ * (`wandererSoloScale`) multiplie PV et attaque pour que le monstre seul soit
+ * aussi dur que l'étage. Le reste
+ * (apparence, élément, passif, mitigation) vient de l'ennemi de tête. Un
+ * étage de boss est déjà solo : rendu tel quel.
+ */
+export function soloWandererSpec<T extends SoloSource>(
+  team: T[],
+  scale: number,
+): T {
+  const head = team[0]
+  if (head === undefined) {
+    throw new Error('équipe ennemie vide dans soloWandererSpec')
+  }
+  if (team.length === 1) {
+    return head
+  }
+  const sum = (pick: (e: T) => number) =>
+    team.reduce((acc, e) => acc + pick(e), 0)
+  const mean = (pick: (e: T) => number) => sum(pick) / team.length
+  return {
+    ...head,
+    baseHp: Math.round(sum((e) => e.baseHp) * scale),
+    baseAtk: Math.round(mean((e) => e.baseAtk) * scale),
+    baseDef: Math.round(mean((e) => e.baseDef)),
+    baseSpd: Math.round(mean((e) => e.baseSpd)),
+    attackPattern: 'AOE_3',
+  }
+}
+
+/** L'ennemi unique qu'affronte le joueur sur l'étage visité, à l'échelle de cet étage. */
+export function wandererSoloEnemy(stage: {
+  chapter: number
+  index: number
+  enemyTeam: unknown
+}): EnemySpec {
+  const team = enemyTeamSchema.parse(stage.enemyTeam)
+  return soloWandererSpec(team, wandererSoloScale(stage.chapter, stage.index))
 }

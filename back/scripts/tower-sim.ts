@@ -16,6 +16,7 @@
 //   SIM_MODE=aoe       …                                   # coût d'une unité AOE_3
 //   SIM_MODE=campaign  …                                   # la campagne face au stuff
 //   SIM_MODE=campaign-fit …                                # re-fitte les boss (SIM_STAGES : étages)
+//   SIM_MODE=wanderer …                                    # fitte l'échelle du monstre errant solo
 //
 // Variables : SIM_RUNS (défaut 200), SIM_EQUIP, SIM_EQUIP_RARITY,
 // SIM_GEAR_COUNTS, SIM_LEVELS, SIM_COUNTERPICK=none.
@@ -27,6 +28,8 @@ import {
   referenceTeam,
   towerFloorProfile,
   towerWinRate,
+  WANDERER_TARGET,
+  wandererWinRate as wandererReferenceWinRate,
 } from '../prisma/seed/balance-calibration'
 import type { CardRarity } from '../src/generated/client'
 import {
@@ -386,12 +389,62 @@ function campaignFit(): void {
   }
 }
 
+// Monstre errant : l'équipe d'un étage normal fondue en un monstre solo
+// AOE_3. Pour chaque étage, l'échelle qui amène le joueur de référence à
+// WANDERER_TARGET de victoires ; imprime la table WANDERER_SCALE.
+/** Échelle du monstre solo qui rend au joueur de l'étage le taux `target`. */
+function fitWandererScale(chapter: number, index: number, target: number) {
+  let lo = 0.05
+  let hi = 5
+  for (let i = 0; i < 14; i++) {
+    const mid = Math.sqrt(lo * hi)
+    const win = wandererReferenceWinRate({
+      chapter,
+      index,
+      runs: RUNS,
+      scale: mid,
+    })
+    if (win >= target) {
+      lo = mid
+    } else {
+      hi = mid
+    }
+  }
+  return Math.round(lo * 100) / 100
+}
+
+function wanderer(): void {
+  console.log(
+    `# Monstre errant solo — ${RUNS} runs, cible ${pct(WANDERER_TARGET)}`,
+  )
+  console.log('étage\tsolo actuel\téchelle fittée')
+  const rows: string[] = []
+  const ecarts: number[] = []
+  for (let chapter = 1; chapter <= CHAPTER_COUNT; chapter++) {
+    const row: number[] = []
+    for (let index = 1; index < STAGES_PER_CHAPTER; index++) {
+      const fit = fitWandererScale(chapter, index, WANDERER_TARGET)
+      row.push(fit)
+      const now = wandererReferenceWinRate({ chapter, index, runs: RUNS })
+      ecarts.push(Math.abs(now - WANDERER_TARGET))
+      console.log(`${chapter}-${index}\t${pct(now)}\t×${fit}`)
+    }
+    rows.push(`  [${row.join(', ')}],`)
+  }
+  const moyenne = ecarts.reduce((acc, e) => acc + e, 0) / ecarts.length
+  console.log(
+    `\nécart actuel à la cible : max ${pct(Math.max(...ecarts))}, moyen ${pct(moyenne)} pts`,
+  )
+  console.log(`WANDERER_SCALE = [\n${rows.join('\n')}\n]`)
+}
+
 const MODES: Record<string, () => void> = {
   grid,
   fit,
   aoe,
   campaign,
   'campaign-fit': campaignFit,
+  wanderer,
 }
 const mode = process.env.SIM_MODE ?? 'grid'
 const run = MODES[mode]

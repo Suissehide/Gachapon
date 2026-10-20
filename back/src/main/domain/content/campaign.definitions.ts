@@ -331,6 +331,45 @@ export function bossGearCompensation(chapter: number): number {
   return BOSS_GEAR_COMPENSATION[chapter - 1] ?? 1
 }
 
+/**
+ * Échelle du monstre errant solo (`soloWandererSpec`), étage par étage : ses
+ * PV cumulés et son attaque moyenne sont multipliés par cette valeur pour que
+ * le joueur de référence de l'étage le batte `WANDERER_TARGET` fois sur cent
+ * (balance-calibration.ts) — un peu plus dur qu'un étage normal, moins qu'un
+ * boss.
+ *
+ * Une valeur par étage, pas par chapitre : le monstre frappe toute l'équipe
+ * (AOE_3), si bien que le taux de victoire bascule pour quelques % d'échelle,
+ * et l'échelle juste zigzague d'un étage à l'autre avec l'élément de tête
+ * (LIGHT ⇄ DARK se battent mutuellement : le joueur qui contre-pique est
+ * frappé avec avantage, ×0,76 environ) et les paliers d'équipement du joueur.
+ * Une constante par chapitre laissait des étages à 0 %.
+ *
+ * Générée par `SIM_MODE=wanderer` de scripts/tower-sim.ts, remesurée par
+ * wandering-monster-balance.test.ts. Ligne = chapitre, colonne = étage 1 à 9.
+ */
+const WANDERER_SCALE: readonly (readonly number[])[] = [
+  [1.22, 1.23, 1.2, 1.35, 1.2, 1.36, 1.27, 1.23, 1.38],
+  [0.94, 1.24, 0.95, 0.93, 1.19, 0.95, 0.91, 1.17, 0.9],
+  [0.92, 1.21, 1.19, 0.94, 1.2, 1.2, 0.93, 1.19, 1.19],
+  [1.3, 1.33, 1.33, 1.35, 1.35, 1.34, 1.5, 1.43, 1.43],
+  [1.14, 1.15, 1.14, 1.12, 1.11, 1.1, 1.11, 1.1, 1.05],
+  [1.29, 0.99, 1.31, 1.3, 1, 1.32, 1.32, 1.02, 1.33],
+  [1.2, 0.89, 1.18, 1.18, 0.9, 1.23, 1.19, 0.89, 1.19],
+  [1.2, 0.9, 1.19, 1.2, 0.9, 1.21, 1.2, 0.95, 1.29],
+  [1.35, 1.01, 1.34, 1.47, 1.12, 1.5, 1.48, 1.1, 1.39],
+  [1.34, 1.01, 1.35, 1.34, 1.01, 1.33, 1.33, 1.01, 1.32],
+  [1.18, 1.18, 0.92, 1.19, 1.2, 0.93, 1.22, 1.27, 0.99],
+  [1.31, 1.33, 1.33, 1.35, 1.36, 1.36, 1.37, 1.35, 1.34],
+  [1.2, 0.91, 0.92, 1.21, 0.91, 0.91, 1.2, 0.92, 0.91],
+  [0.92, 1.21, 1.22, 0.92, 1.21, 1.22, 0.92, 1.22, 1.21],
+  [0.91, 1.2, 1.21, 0.9, 1.21, 1.2, 0.9, 1.2, 1.19],
+]
+
+export function wandererSoloScale(chapter: number, index: number): number {
+  return WANDERER_SCALE[chapter - 1]?.[index - 1] ?? 1
+}
+
 // Boss = check de build : PV ×3.25 + AOE_3 (frappe toute l'équipe, threat ×7
 // dans la jauge affichée). L'atk n'est PAS gonflée (×1.0) : l'AOE sur un solo
 // est déjà brutal. Mesuré le 2026-08-07 avec la courbe continue : le boss
