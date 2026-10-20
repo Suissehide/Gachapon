@@ -1,48 +1,59 @@
-import { Coins, Gift, Sparkles, Swords, Ticket } from 'lucide-react'
+import { Coins, RotateCcw, Skull, Sparkles, Ticket } from 'lucide-react'
 import { Dialog } from 'radix-ui'
-import { type ReactNode, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type {
   WandererBattleResult,
+  WandererLootView,
   WandererView,
 } from '../../api/campaign.api.ts'
-import placeholderImg from '../../assets/data/not-found.png'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useToast } from '../../hooks/useToast.ts'
-import { currentLocale } from '../../i18n/index.ts'
-import { cn, formatNumber } from '../../libs/utils.ts'
+import { cn } from '../../libs/utils.ts'
 import { formatWandererCountdown } from '../../queries/useCampaign.ts'
-import { CardDropReward } from '../battle/resultKit.tsx'
+import {
+  CardDropReward,
+  RESULT_BADGE_LOSS,
+  ResultBadge,
+  ResultPanel,
+} from '../battle/resultKit.tsx'
 import { Button } from '../ui/button.tsx'
 import { Popup, PopupContent } from '../ui/popup.tsx'
+import {
+  CHEST_POP_MS,
+  ChestBurst,
+  ChestButton,
+  ChestGlow,
+  ChestRewardTile,
+  chestEyebrowClass,
+  chestTitleClass,
+} from '../ui/rewardChest.tsx'
 
 // Teintes des pastilles de monnaie de la barre du haut, par lot.
 const CURRENCY_TILE = {
   GOLD: {
     icon: Coins,
-    tile: 'border-currency-gold/30 bg-currency-gold/10 text-currency-gold-ink',
+    tone: 'border-currency-gold/30 bg-currency-gold/10 text-currency-gold-ink',
     label: 'loot.gold',
   },
   DUST: {
     icon: Sparkles,
-    tile: 'border-currency-dust/30 bg-currency-dust/10 text-currency-dust-ink',
+    tone: 'border-currency-dust/30 bg-currency-dust/10 text-currency-dust-ink',
     label: 'loot.dust',
   },
   TOKENS: {
     icon: Ticket,
-    tile: 'border-currency-token/30 bg-currency-token/10 text-currency-token-ink',
+    tone: 'border-currency-token/30 bg-currency-token/10 text-currency-token-ink',
     label: 'loot.tokens',
   },
 } as const
 
-const CTA =
-  'h-14 w-full rounded-2xl bg-currency-energy text-[17px] font-extrabold text-white shadow-[0_3px_0_var(--currency-energy-ink)] hover:bg-currency-energy/90 active:translate-y-0.5'
-
 /**
- * Fin de combat contre le monstre errant : défaite, puis coffre et butin en
- * cas de victoire. Le lot est déjà crédité par le serveur à la victoire ; le
- * coffre et le butin ne font que le révéler.
+ * Fin de combat contre le monstre errant. Défaite : mêmes boutons que la
+ * défaite d'une étape. Victoire : même coffre que la popup « Bon retour ! ».
+ * Le lot est déjà crédité par le serveur à la victoire ; le coffre ne fait
+ * que le révéler.
  */
 export function WandererResult({
   result,
@@ -55,93 +66,109 @@ export function WandererResult({
   onRetry: () => void
   onBack: () => void
 }) {
+  if (result.won && result.loot) {
+    return (
+      <WandererLoot
+        loot={result.loot}
+        name={wanderer?.name ?? ''}
+        onDone={onBack}
+      />
+    )
+  }
+  return (
+    <WandererDefeat wanderer={wanderer} onRetry={onRetry} onBack={onBack} />
+  )
+}
+
+function WandererDefeat({
+  wanderer,
+  onRetry,
+  onBack,
+}: {
+  wanderer: WandererView | null
+  onRetry: () => void
+  onBack: () => void
+}) {
+  const { t } = useTranslation(['wanderer', 'combat'])
+  return (
+    <Popup
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onBack()
+        }
+      }}
+    >
+      <PopupContent
+        size="lg"
+        className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
+      >
+        <ResultPanel>
+          <ResultBadge
+            className={RESULT_BADGE_LOSS}
+            icon={<Skull className="h-8 w-8" />}
+          />
+          <Dialog.Title className="mt-4 font-display text-3xl font-bold text-text">
+            {t('wanderer:lose.title', { name: wanderer?.name ?? '' })}
+          </Dialog.Title>
+          {wanderer && (
+            <p className="mt-2 max-w-sm text-sm text-text-light">
+              {t('wanderer:lose.body', {
+                stage: wanderer.stageLabel,
+                time: formatWandererCountdown(
+                  new Date(wanderer.expiresAt).getTime() - Date.now(),
+                ),
+              })}
+            </p>
+          )}
+          <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+            <Button variant="outline" onClick={onBack}>
+              {t('combat:battle.defeat.back')}
+            </Button>
+            <Button variant="violet" onClick={onRetry} className="gap-2">
+              <RotateCcw className="h-4 w-4" />
+              {t('combat:battle.defeat.retry')}
+            </Button>
+          </div>
+        </ResultPanel>
+      </PopupContent>
+    </Popup>
+  )
+}
+
+function WandererLoot({
+  loot,
+  name,
+  onDone,
+}: {
+  loot: WandererLootView
+  name: string
+  onDone: () => void
+}) {
   const { t } = useTranslation('wanderer')
   const { toast } = useToast()
+  const [popping, setPopping] = useState(false)
   const [opened, setOpened] = useState(false)
-  const loot = result.won ? result.loot : null
-  const name = wanderer?.name ?? ''
-  const image = wanderer?.imageUrl ?? placeholderImg
+  const ctaRef = useRef<HTMLButtonElement>(null)
+
+  // « Récupérer » remplace « Ouvrir le butin » : le focus doit le suivre.
+  useEffect(() => {
+    if (opened) {
+      ctaRef.current?.focus()
+    }
+  }, [opened])
+
+  const openChest = () => {
+    if (popping) {
+      return
+    }
+    setPopping(true)
+    setTimeout(() => setOpened(true), CHEST_POP_MS)
+  }
 
   const claim = () => {
     toast({ title: t('toast.claimed'), severity: TOAST_SEVERITY.SUCCESS })
-    onBack()
-  }
-
-  let eyebrow: string
-  let title: string
-  let body: ReactNode
-  if (!loot) {
-    eyebrow = t('lose.eyebrow')
-    title = t('lose.title', { name })
-    body = (
-      <>
-        <div className="mx-auto mb-4 h-[150px] w-fit overflow-hidden rounded-2xl bg-text p-[5px] shadow-[0_0_0_2px_var(--currency-energy)] grayscale-[0.5]">
-          <img
-            src={image}
-            alt=""
-            className="h-full w-auto rounded-[11px] object-cover"
-            style={{ aspectRatio: '300 / 420' }}
-          />
-        </div>
-        {wanderer && (
-          <p className="mb-[18px] text-[15px] leading-[1.45] text-pretty text-text-light">
-            {t('lose.body', {
-              stage: wanderer.stageLabel,
-              time: formatWandererCountdown(
-                new Date(wanderer.expiresAt).getTime() - Date.now(),
-              ),
-            })}
-          </p>
-        )}
-        <Button className={CTA} onClick={onRetry}>
-          <Swords className="h-[18px] w-[18px]" />
-          {t('lose.retry')}
-        </Button>
-        <Button
-          variant="ghost"
-          className="mt-2 h-[42px] w-full text-[14.5px] font-bold text-text-light"
-          onClick={onBack}
-        >
-          {t('lose.later')}
-        </Button>
-      </>
-    )
-  } else if (opened) {
-    eyebrow = t('loot.eyebrow')
-    title = t('loot.title')
-    body = (
-      <>
-        {loot.kind === 'CARD' ? (
-          <CardDropReward drop={loot.card} className="mb-[22px]" />
-        ) : (
-          <LootTile kind={loot.kind} amount={loot.amount} />
-        )}
-        <Button className={CTA} onClick={claim}>
-          {t('loot.claim')}
-        </Button>
-      </>
-    )
-  } else {
-    eyebrow = t('victory.eyebrow')
-    title = t('victory.title', { name })
-    body = (
-      <>
-        <button
-          type="button"
-          aria-label={t('victory.open')}
-          onClick={() => setOpened(true)}
-          className="mx-auto mt-1.5 mb-[26px] block h-[160px] cursor-pointer rounded-[14px] bg-text p-[5px] shadow-[0_0_0_2px_var(--currency-energy),0_20px_34px_-14px_color-mix(in_srgb,var(--currency-energy)_80%,transparent)]"
-          style={{ aspectRatio: '300 / 420' }}
-        >
-          <span className="grid h-full w-full place-items-center rounded-[10px] bg-linear-160 from-currency-energy/60 via-currency-energy to-currency-energy-ink text-white">
-            <Gift className="h-14 w-14" />
-          </span>
-        </button>
-        <Button className={CTA} onClick={() => setOpened(true)}>
-          {t('victory.open')}
-        </Button>
-      </>
-    )
+    onDone()
   }
 
   return (
@@ -151,66 +178,78 @@ export function WandererResult({
         if (open) {
           return
         }
-        // Après une victoire, fermer ne saute jamais la révélation : depuis
-        // le coffre, on l'ouvre ; depuis le butin, c'est « Récupérer ».
-        if (!loot) {
-          onBack()
-        } else if (opened) {
+        // Fermer ne saute jamais la révélation : depuis le coffre, on
+        // l'ouvre ; depuis le butin, c'est « Récupérer ».
+        if (opened) {
           claim()
         } else {
-          setOpened(true)
+          openChest()
         }
       }}
     >
-      <PopupContent className="rounded-[28px] border-0 bg-card text-center shadow-[0_40px_80px_-30px_color-mix(in_srgb,var(--currency-energy)_45%,transparent)]">
-        <div className="relative max-h-[calc(100dvh-2rem)] overflow-y-auto px-7 pt-[30px] pb-[26px]">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-[220px] bg-[radial-gradient(60%_100%_at_50%_0%,color-mix(in_srgb,var(--currency-energy)_16%,transparent),transparent_70%)]"
-          />
-          <div className="relative">
-            <div
-              className={cn(
-                'font-mono text-[11px] font-bold uppercase tracking-[0.22em]',
-                loot ? 'text-currency-energy-ink' : 'text-danger-ink',
-              )}
-            >
-              {eyebrow}
-            </div>
-            <Dialog.Title className="mt-1.5 mb-4 font-display text-[28px] font-extrabold tracking-[-0.02em] text-text">
-              {title}
-            </Dialog.Title>
-            {body}
-          </div>
+      <PopupContent
+        className="rounded-[28px] border-0 shadow-[0_40px_80px_-30px_rgba(27,23,38,0.55)]"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault()
+          ctaRef.current?.focus()
+        }}
+      >
+        <div className="relative px-7 pt-[30px] pb-[26px] text-center">
+          <ChestGlow />
+          {opened ? (
+            <>
+              <div className={chestEyebrowClass}>{t('loot.eyebrow')}</div>
+              <Dialog.Title className={cn(chestTitleClass, 'mt-2 mb-1.5')}>
+                {t('loot.title')}
+              </Dialog.Title>
+              <ChestBurst className="mb-[22px] py-4">
+                {loot.kind === 'CARD' ? (
+                  <CardDropReward drop={loot.card} className="w-[170px]" />
+                ) : (
+                  <ChestRewardTile
+                    icon={CURRENCY_TILE[loot.kind].icon}
+                    amount={loot.amount}
+                    label={t(CURRENCY_TILE[loot.kind].label)}
+                    toneClass={CURRENCY_TILE[loot.kind].tone}
+                    className="w-[170px]"
+                  />
+                )}
+              </ChestBurst>
+              <Button
+                ref={ctaRef}
+                variant="violet"
+                size="lg"
+                className="relative w-full"
+                onClick={claim}
+              >
+                {t('loot.claim')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className={chestEyebrowClass}>{t('victory.eyebrow')}</div>
+              <Dialog.Title className={cn(chestTitleClass, 'mt-2 mb-1.5')}>
+                {t('victory.title', { name })}
+              </Dialog.Title>
+              <ChestButton
+                label={t('victory.open')}
+                popping={popping}
+                onOpen={openChest}
+              />
+              <Button
+                ref={ctaRef}
+                variant="violet"
+                size="lg"
+                className="relative w-full"
+                onClick={openChest}
+                disabled={popping}
+              >
+                {t('victory.open')}
+              </Button>
+            </>
+          )}
         </div>
       </PopupContent>
     </Popup>
-  )
-}
-
-function LootTile({
-  kind,
-  amount,
-}: {
-  kind: keyof typeof CURRENCY_TILE
-  amount: number
-}) {
-  const { t } = useTranslation('wanderer')
-  const { icon: Icon, tile, label } = CURRENCY_TILE[kind]
-  return (
-    <div
-      className={cn(
-        'mt-1 mb-[22px] flex flex-col items-center gap-2 rounded-[22px] border px-4 pt-6 pb-5',
-        tile,
-      )}
-    >
-      <span className="grid h-[60px] w-[60px] place-items-center rounded-[18px] border border-current/20 bg-card">
-        <Icon className="h-[30px] w-[30px]" />
-      </span>
-      <b className="font-display text-[44px] leading-none font-extrabold">
-        +{formatNumber(amount, currentLocale())}
-      </b>
-      <small className="text-[15px] font-semibold">{t(label)}</small>
-    </div>
   )
 }

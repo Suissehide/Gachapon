@@ -43,6 +43,7 @@ import { InfoButton } from '../../components/shared/InfoButton.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
+import { buttonVariants } from '../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import {
   CAMPAIGN_TEAM_KEY,
@@ -127,11 +128,12 @@ function CampaignPage() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [elementsOpen, setElementsOpen] = useState(false)
   const [wandererOpen, setWandererOpen] = useState(false)
-  // When the team editor is opened from the prep modal we remember which stage
-  // to return to, so closing the editor (Valider/Annuler) reopens the prep
-  // modal instead of dropping the player back on the bare campaign.
-  const [editorReturnStage, setEditorReturnStage] =
-    useState<CampaignStage | null>(null)
+  // When the team editor is opened from a prep modal (stage or wandering
+  // monster) we remember how to reopen it, so closing the editor
+  // (Valider/Annuler) returns there instead of the bare campaign.
+  const [reopenAfterEditor, setReopenAfterEditor] = useState<
+    (() => void) | null
+  >(null)
 
   // ?editor=true auto-opens the team editor popup (used by /combat redirect and
   // the battle page's "revoir mon équipe" link).
@@ -190,7 +192,8 @@ function CampaignPage() {
   const data = campaign.data
   const chapter = data.chapters.find((c) => c.chapter === activeChapter)
 
-  const hasTeam = (team.data?.team.length ?? 0) >= 1
+  const teamUnits = team.data?.team ?? []
+  const hasTeam = teamUnits.length >= 1
   const currentPC = points.data?.combatPoints ?? 0
   const battleCost = points.data?.battleCost ?? 1
   const sweepCost = points.data?.sweepCost ?? 1
@@ -293,11 +296,16 @@ function CampaignPage() {
         wanderer={wanderer}
         open={wandererOpen}
         onOpenChange={setWandererOpen}
+        team={teamUnits}
+        onEditTeam={() => {
+          setReopenAfterEditor(() => () => setWandererOpen(true))
+          setEditorOpen(true)
+        }}
       />
 
       {/* Persistent team dock */}
       <TeamDock
-        team={team.data?.team ?? []}
+        team={teamUnits}
         onEdit={() => setEditorOpen(true)}
         modeLabel={CAMPAIGN_TEAM_LABEL}
       />
@@ -308,9 +316,9 @@ function CampaignPage() {
         open={editorOpen}
         onOpenChange={(v) => {
           setEditorOpen(v)
-          if (!v && editorReturnStage) {
-            setPrep(editorReturnStage)
-            setEditorReturnStage(null)
+          if (!v && reopenAfterEditor) {
+            reopenAfterEditor()
+            setReopenAfterEditor(null)
           }
         }}
         teamKey={CAMPAIGN_TEAM_KEY}
@@ -337,7 +345,7 @@ function CampaignPage() {
             <PrepModal
               stage={prep}
               chapter={activeChapter}
-              team={team.data?.team ?? []}
+              team={teamUnits}
               currentPC={currentPC}
               battleCost={battleCost}
               sweepCost={sweepCost}
@@ -347,7 +355,7 @@ function CampaignPage() {
               onFight={handleFight}
               onSweep={handleSweep}
               onEditTeam={() => {
-                setEditorReturnStage(prep)
+                setReopenAfterEditor(() => () => setPrep(prep))
                 setEditorOpen(true)
               }}
               onClose={() => setPrep(null)}
@@ -683,7 +691,12 @@ function LevelCard({
       )}
 
       {isCurrent && (
-        <span className="mt-3.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-4 py-3 font-display text-[15px] font-bold text-white shadow-[0_10px_22px_-10px_rgba(245,158,11,0.6)] transition-transform">
+        <span
+          className={buttonVariants({
+            size: 'lg',
+            className: 'mt-3.5 w-full gap-2',
+          })}
+        >
           <Swords className="h-4 w-4" />
           {t('combat:campaign.fight')}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

@@ -1,35 +1,35 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Gift, Swords } from 'lucide-react'
+import { Check, Clock, Gift, Sparkles } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { useTranslation } from 'react-i18next'
 
 import type { WandererView } from '../../api/campaign.api.ts'
-import placeholderImg from '../../assets/data/not-found.png'
-import { currentLocale } from '../../i18n/index.ts'
-import { formatNumber } from '../../libs/utils.ts'
+import type { TeamUnit } from '../../api/combat.api.ts'
 import { formatWandererCountdown } from '../../queries/useCampaign.ts'
-import { Button } from '../ui/button.tsx'
+import { BattlePrepModal, RewardPill } from '../battle/BattlePrepModal.tsx'
 import { Popup, PopupContent } from '../ui/popup.tsx'
 
 /**
- * Fenêtre avant-combat du monstre errant (phase "pre" de la maquette — les
- * phases de combat et de résultat vivent sur l'écran de combat existant,
- * voir `search: { wanderer: true }`). `Dialog.Title` est utilisé directement
- * (pas `PopupTitle`, qui aligne son contenu à gauche) pour un titre centré,
- * comme `ReturnBonusPopup`.
+ * Fenêtre avant-combat du monstre errant : la même que celle d'une étape de
+ * campagne (`BattlePrepModal`), sans coût d'énergie et avec un butin
+ * surprise. Le combat et le butin vivent sur l'écran de combat
+ * (`search: { wanderer: true }`).
  */
 export function WandererModal({
   wanderer,
   open,
   onOpenChange,
+  team,
+  onEditTeam,
 }: {
   wanderer: WandererView | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  team: TeamUnit[]
+  onEditTeam: () => void
 }) {
-  const { t } = useTranslation('wanderer')
+  const { t } = useTranslation(['wanderer', 'combat'])
   const navigate = useNavigate()
-  const locale = currentLocale()
 
   if (!wanderer) {
     return null
@@ -38,71 +38,80 @@ export function WandererModal({
   const countdown = formatWandererCountdown(
     new Date(wanderer.expiresAt).getTime() - Date.now(),
   )
+  const hasTeam = team.length > 0
 
   return (
     <Popup open={open} onOpenChange={onOpenChange}>
-      <PopupContent className="rounded-[28px] border-0 bg-card text-center shadow-[0_40px_80px_-30px_rgba(124,58,237,0.45)]">
-        <div className="relative px-7 pt-[30px] pb-[26px]">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-[220px] bg-[radial-gradient(60%_100%_at_50%_0%,color-mix(in_srgb,var(--currency-energy)_16%,transparent),transparent_70%)]"
-          />
-          <div className="relative font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-currency-energy-ink">
-            {t('eyebrowStage', { stage: wanderer.stageLabel })}
-          </div>
-          <Dialog.Title className="relative mt-1.5 mb-4 font-display text-[28px] font-extrabold tracking-[-0.02em] text-text">
-            {wanderer.name}
-          </Dialog.Title>
-          <div className="relative mx-auto mb-4 h-[240px] w-fit overflow-hidden rounded-2xl bg-text p-[5px] shadow-[0_0_0_2px_var(--currency-energy)]">
-            <img
-              src={wanderer.imageUrl ?? placeholderImg}
-              alt=""
-              className="h-full w-auto rounded-[11px] object-cover"
-              style={{ aspectRatio: '300 / 420' }}
-            />
-          </div>
-          <div className="relative mb-4 grid grid-cols-3 gap-2">
-            <div className="flex flex-col gap-1 rounded-2xl border border-border bg-background px-1.5 py-2.5">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-                {t('pre.cost')}
-              </span>
-              <b className="text-[16px] text-emerald-700">{t('pre.free')}</b>
-            </div>
-            <div className="flex flex-col gap-1 rounded-2xl border border-border bg-background px-1.5 py-2.5">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-                {t('pre.power')}
-              </span>
-              <b className="text-[16px] text-text">
-                {formatNumber(wanderer.recommendedPower, locale)}
-              </b>
-            </div>
-            <div className="flex flex-col gap-1 rounded-2xl border border-border bg-background px-1.5 py-2.5">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-                {t('pre.loot')}
-              </span>
-              <b className="flex items-center justify-center gap-1 text-[16px] text-currency-energy-ink">
-                <Gift className="h-4 w-4" />
-                {t('pre.surprise')}
-              </b>
-            </div>
-          </div>
-          <Button
-            className="relative h-14 w-full rounded-2xl bg-currency-energy text-[17px] font-extrabold text-white shadow-[0_3px_0_var(--currency-energy-ink)] hover:bg-currency-energy/90 active:translate-y-0.5"
-            onClick={() =>
-              navigate({
-                to: '/battle/$stageId',
-                params: { stageId: wanderer.stageId },
-                search: { wanderer: true },
-              })
-            }
-          >
-            <Swords className="h-[18px] w-[18px]" />
-            {t('pre.fight')}
-          </Button>
-          <p className="relative mt-2.5 text-[13px] text-text-light/70">
-            {t('pre.note', { time: countdown })}
-          </p>
-        </div>
+      <PopupContent
+        size="lg"
+        className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden bg-[#fbf8f3] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.6)]"
+      >
+        <Dialog.Title className="sr-only">{wanderer.name}</Dialog.Title>
+        <BattlePrepModal
+          eyebrow={t('wanderer:eyebrowStage', { stage: wanderer.stageLabel })}
+          headerAside={
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 font-mono text-[11px] font-bold tabular-nums text-text-light/70">
+              <Clock className="h-3 w-3" />
+              {countdown}
+            </span>
+          }
+          enemies={[
+            {
+              id: wanderer.stageId,
+              imageUrl: wanderer.imageUrl,
+              power: wanderer.recommendedPower,
+              element: wanderer.element,
+            },
+          ]}
+          enemiesLabel={wanderer.name}
+          isBoss
+          recommendedPower={wanderer.recommendedPower}
+          team={team}
+          currentPC={0}
+          energyCost={0}
+          hideEnergy
+          rewards={
+            <>
+              <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+                <Sparkles className="h-3 w-3 text-amber-600" />
+                {t('combat:campaign.rewardsLabel')}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <RewardPill
+                  color="#8b5cf6"
+                  label={t('wanderer:levelCard.surpriseLoot')}
+                  icon={Gift}
+                />
+              </div>
+              <ul className="mt-3.5 space-y-1.5 border-t border-[rgba(27,23,38,0.07)] pt-3.5 text-[13px] text-text">
+                {(['pre.freeNoEnergy', 'pre.unlimitedAttempts'] as const).map(
+                  (key) => (
+                    <li key={key} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-600" />
+                      {t(`wanderer:${key}`)}
+                    </li>
+                  ),
+                )}
+              </ul>
+            </>
+          }
+          fightLabel={
+            hasTeam
+              ? t('combat:campaign.fight')
+              : t('combat:battlePrep.reason.teamRequired')
+          }
+          fightVariant="violet"
+          canFight={hasTeam}
+          onFight={() =>
+            navigate({
+              to: '/battle/$stageId',
+              params: { stageId: wanderer.stageId },
+              search: { wanderer: true },
+            })
+          }
+          onEditTeam={onEditTeam}
+          onClose={() => onOpenChange(false)}
+        />
       </PopupContent>
     </Popup>
   )

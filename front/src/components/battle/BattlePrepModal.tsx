@@ -9,7 +9,7 @@ import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { computePower } from '../../utils/cardStats.ts'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
-import { Button } from '../ui/button.tsx'
+import { Button, type ButtonProps } from '../ui/button.tsx'
 import { PopupBody, PopupFooter, PopupHeader } from '../ui/popup.tsx'
 import { MiniCard } from './MiniCard.tsx'
 
@@ -40,7 +40,9 @@ export type PrepEnemy = {
  */
 export function BattlePrepModal({
   eyebrow,
+  headerAside,
   enemies,
+  enemiesLabel,
   isBoss = false,
   recommendedPower,
   team,
@@ -50,13 +52,18 @@ export function BattlePrepModal({
   rewards,
   extraActions,
   fightLabel,
+  fightVariant,
   canFight,
   onFight,
   onEditTeam,
   onClose,
 }: {
   eyebrow: ReactNode
+  /** Contenu à droite de l'en-tête, juste à gauche de la croix (timer du monstre errant). */
+  headerAside?: ReactNode
   enemies: PrepEnemy[]
+  /** Remplace « Adversaires · 1v3 » — pour un adversaire unique (monstre errant). */
+  enemiesLabel?: ReactNode
   isBoss?: boolean
   recommendedPower: number
   team: TeamUnit[]
@@ -72,6 +79,8 @@ export function BattlePrepModal({
   rewards?: ReactNode
   extraActions?: ReactNode
   fightLabel?: string
+  /** Teinte du bouton « Combattre » (violet pour le monstre errant). */
+  fightVariant?: ButtonProps['variant']
   canFight?: boolean
   /** Omis = pas de bouton « Combattre » (niveau déjà terminé). */
   onFight?: () => void
@@ -87,10 +96,13 @@ export function BattlePrepModal({
 
   return (
     <>
-      <PopupHeader>
+      {/* Ligne de 28 px à 16 px du haut : centrée sur la croix de la popup
+          (absolute top-4, h-7). */}
+      <PopupHeader className="flex min-h-7 items-center gap-3 pt-4 pr-14">
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-text-light/60">
           {eyebrow}
         </p>
+        {headerAside && <div className="ml-auto">{headerAside}</div>}
       </PopupHeader>
 
       <PopupBody className="min-h-0 space-y-4 overflow-y-auto bg-transparent">
@@ -98,9 +110,10 @@ export function BattlePrepModal({
           <div className="rounded-2xl border border-[rgba(27,23,38,0.06)] bg-white p-4">
             <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
               <Swords className="h-3 w-3 text-amber-600" />
-              {isBoss
-                ? t('combat:battlePrep.enemiesBoss')
-                : t('combat:battlePrep.enemiesNormal')}
+              {enemiesLabel ??
+                (isBoss
+                  ? t('combat:battlePrep.enemiesBoss')
+                  : t('combat:battlePrep.enemiesNormal'))}
             </div>
             <div
               className={`flex flex-wrap justify-center gap-2.5 ${
@@ -197,6 +210,7 @@ export function BattlePrepModal({
         {extraActions}
         {onFight && (
           <Button
+            variant={fightVariant}
             size="lg"
             onClick={onFight}
             disabled={!canFight}

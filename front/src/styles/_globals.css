@@ -229,6 +229,18 @@ h6 {
   animation: rewardClaim 300ms ease-in forwards;
 }
 
+/* Case du monstre errant : le fond et les couleurs de l'aura dérivent
+   lentement. */
+@keyframes wandererDrift {
+  0%,
+  100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+}
+
 /* Coffre « Bon retour » (handoff design_handoff_popup_retour) */
 @keyframes returnChestWobble {
   0%,

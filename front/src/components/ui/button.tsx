@@ -46,6 +46,10 @@ const buttonVariants = cva(
         // ambrée foncée (lisible, contrairement à --primary sur ce fond).
         amberSoft:
           'border border-primary/30 bg-primary/10 font-bold text-primary-darker hover:bg-primary/20',
+        // Pendant violet de `default` — teinte de l'énergie, réservée au
+        // monstre errant pour qu'il se distingue des étapes ambrées.
+        violet:
+          'bg-currency-energy text-white shadow-sm hover:bg-currency-energy/85 hover:shadow-[0_0_20px_color-mix(in_srgb,var(--currency-energy)_30%,transparent)]',
         // Pilule mono discrète — `.dz-locked` / `.dz-mini` du handoff duels
         // (docs/design_handoff_duels/equipe-duels.css). Sert aux actions
         // secondaires d'un panneau (« ANNULER ») et, via `buttonVariants`,

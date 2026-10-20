@@ -2,27 +2,16 @@
   "eyebrowStage": "Monstre errant · Étage {{stage}}",
   "levelCard": {
     "eyebrow": "Monstre errant",
-    "free": "Gratuit",
     "surpriseLoot": "Butin surprise",
-    "fight": "Affronter",
     "ariaLabel": "Monstre errant sur l'étage {{stage}}"
   },
   "pre": {
-    "cost": "Coût",
-    "free": "Gratuit",
-    "power": "Puissance",
-    "loot": "Butin",
-    "surprise": "Surprise",
-    "fight": "Combattre",
-    "fighting": "Combat en cours…",
-    "note": "Repart dans {{time}}. Tentatives illimitées."
+    "freeNoEnergy": "Gratuit, sans énergie",
+    "unlimitedAttempts": "Tentatives illimitées"
   },
   "lose": {
-    "eyebrow": "Défaite",
     "title": "{{name}} tient bon",
-    "body": "Il reste sur l'étage {{stage}} encore {{time}}. Renforce ton équipe ou réessaie tout de suite.",
-    "retry": "Réessayer · gratuit",
-    "later": "Plus tard"
+    "body": "Il reste sur l'étage {{stage}} encore {{time}}. Renforce ton équipe ou réessaie tout de suite."
   },
   "victory": {
     "eyebrow": "Victoire",
@@ -35,8 +24,7 @@
     "claim": "Récupérer",
     "gold": "or",
     "dust": "poussière",
-    "tokens": "jetons",
-    "card": "carte"
+    "tokens": "jetons"
   },
   "toast": {
     "claimed": "Butin récupéré"
