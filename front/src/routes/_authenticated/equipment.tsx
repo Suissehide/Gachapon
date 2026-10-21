@@ -23,11 +23,11 @@ import {
   FilterField,
   RarityDot,
 } from '../../components/collection/CollectionFilters.tsx'
+import { PowerCardPicker } from '../../components/collection/PowerCardPicker.tsx'
 import { EquipmentDropCard } from '../../components/equipment/EquipmentDropCard.tsx'
 import { SetBonusGuide } from '../../components/equipment/SetBonusGuide.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
-import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Checkbox, Select } from '../../components/ui/input.tsx'
 import {
@@ -48,7 +48,6 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import {
-  useCardsByPower,
   useEquipItem,
   useEquipmentList,
   useEquipmentSets,
@@ -350,8 +349,6 @@ function EquipmentPage() {
 
   const handleUnequip = (id: string) => unequipItem.mutate(id)
 
-  const pickerCards = useCardsByPower()
-
   return (
     <PageShell>
       <PageHeader
@@ -546,33 +543,14 @@ function EquipmentPage() {
               </PopupTitle>
             </PopupHeader>
             <PopupBody className="flex flex-col gap-4">
-              <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
-                {pickerCards.map((uc) => (
-                  <button
-                    key={uc.id}
-                    type="button"
-                    onClick={() => handleEquipOn(uc.id)}
-                    disabled={equipItem.isPending}
-                    className="rounded-lg border border-border p-2 transition-colors hover:border-primary hover:bg-primary/5"
-                  >
-                    <CardDisplay
-                      rarity={uc.card.rarity}
-                      name={uc.card.name}
-                      setName={uc.card.set.name}
-                      imageUrl={uc.card.imageUrl}
-                      variant={uc.variant}
-                      isOwned
-                      compact
-                    />
-                    <p className="mt-1 text-center text-[10px] text-text-light">
-                      {t('equipment:picker.cardLine', {
-                        level: uc.level,
-                        palier: uc.palier,
-                      })}
-                    </p>
-                  </button>
-                ))}
-              </div>
+              <PowerCardPicker
+                idPrefix="equip-on"
+                onPick={(targetUserCardId) => {
+                  if (!equipItem.isPending) {
+                    handleEquipOn(targetUserCardId)
+                  }
+                }}
+              />
             </PopupBody>
             <PopupFooter>
               <Button variant="outline" onClick={() => setPickerFor(null)}>

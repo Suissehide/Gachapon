@@ -60,8 +60,7 @@
   },
   "picker": {
     "subtitle": "Pick the card that will receive this piece.",
-    "title": "Equip \"{{name}}\" on…",
-    "cardLine": "Lvl. {{level}} · T{{palier}}"
+    "title": "Equip \"{{name}}\" on…"
   },
   "card": {
     "selectAria": "Select {{name}}",

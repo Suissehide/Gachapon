@@ -60,8 +60,7 @@
   },
   "picker": {
     "subtitle": "Sélectionne la carte qui recevra cette pièce.",
-    "title": "Équiper \"{{name}}\" sur…",
-    "cardLine": "Niv. {{level}} · P{{palier}}"
+    "title": "Équiper \"{{name}}\" sur…"
   },
   "card": {
     "selectAria": "Sélectionner {{name}}",

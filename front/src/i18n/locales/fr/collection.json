@@ -120,10 +120,14 @@
     "swapTitle": "Échanger l'équipement",
     "swapSubtitle": "Les pièces de cette carte passent sur celle que tu choisis, et inversement.",
     "swapCancel": "Annuler",
-    "swapSearchLabel": "Nom",
-    "swapSearchPlaceholder": "Rechercher une carte…",
-    "swapEmpty": "Aucune carte ne correspond aux filtres.",
     "manage": "Gérer l'équipement"
+  },
+  "cardPicker": {
+    "searchLabel": "Nom",
+    "searchPlaceholder": "Rechercher une carte…",
+    "empty": "Aucune carte ne correspond aux filtres.",
+    "loadMore_one": "Charger plus ({{count}} restante)",
+    "loadMore_other": "Charger plus ({{count}} restantes)"
   },
   "workshop": {
     "back": "Retour à la carte",

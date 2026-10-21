@@ -120,10 +120,14 @@
     "swapTitle": "Swap equipment",
     "swapSubtitle": "This card's pieces move to the card you pick, and vice versa.",
     "swapCancel": "Cancel",
-    "swapSearchLabel": "Name",
-    "swapSearchPlaceholder": "Search a card…",
-    "swapEmpty": "No card matches the filters.",
     "manage": "Manage equipment"
+  },
+  "cardPicker": {
+    "searchLabel": "Name",
+    "searchPlaceholder": "Search a card…",
+    "empty": "No card matches the filters.",
+    "loadMore_one": "Load more ({{count}} left)",
+    "loadMore_other": "Load more ({{count}} left)"
   },
   "workshop": {
     "back": "Back to the card",

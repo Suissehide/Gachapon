@@ -23,13 +23,11 @@ import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn } from '../../libs/utils.ts'
 import {
   useActiveSetsForCard,
-  useCardsByPower,
   useEquipmentList,
   useSetColorByKey,
   useSwapEquipment,
 } from '../../queries/useEquipment.ts'
 import { Button } from '../ui/button.tsx'
-import { Input, Select } from '../ui/input.tsx'
 import {
   Popup,
   PopupBody,
@@ -38,14 +36,7 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../ui/popup.tsx'
-import { CollectionCard } from './CollectionCard.tsx'
-import {
-  ELEMENT_OPTIONS,
-  type ElementFilter,
-  FilterField,
-  RARITY_OPTIONS,
-  type RarityFilter,
-} from './CollectionFilters.tsx'
+import { PowerCardPicker } from './PowerCardPicker.tsx'
 
 export const SLOT_ORDER = [
   'WEAPON',
@@ -253,9 +244,7 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
 }
 
 /**
- * Choix de la carte avec laquelle échanger tout l'équipement — mêmes
- * vignettes et même ordre (puissance décroissante) que « Équiper sur… » de
- * la page Équipement.
+ * Choix de la carte avec laquelle échanger tout l'équipement.
  */
 function SwapEquipmentPopup({
   userCardId,
@@ -265,17 +254,6 @@ function SwapEquipmentPopup({
   onClose: () => void
 }) {
   const { t } = useTranslation('collection')
-  const [search, setSearch] = useState('')
-  const [rarity, setRarity] = useState<RarityFilter>('all')
-  const [element, setElement] = useState<ElementFilter>('all')
-  const query = search.trim().toLowerCase()
-  const cards = useCardsByPower().filter(
-    (uc) =>
-      uc.id !== userCardId &&
-      (rarity === 'all' || uc.card.rarity === rarity) &&
-      (element === 'all' || uc.card.element === element) &&
-      uc.card.name.toLowerCase().includes(query),
-  )
   const swap = useSwapEquipment()
   return (
     <Popup open onOpenChange={(v) => !v && onClose()}>
@@ -289,72 +267,19 @@ function SwapEquipmentPopup({
           </PopupTitle>
         </PopupHeader>
         <PopupBody className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-            <FilterField
-              id="swap-search"
-              label={t('collection:slotsPanel.swapSearchLabel')}
-            >
-              <Input
-                id="swap-search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t('collection:slotsPanel.swapSearchPlaceholder')}
-              />
-            </FilterField>
-            <FilterField
-              id="swap-rarity"
-              label={t('collection:filters.labels.rarity')}
-            >
-              <Select
-                id="swap-rarity"
-                options={RARITY_OPTIONS}
-                value={rarity}
-                onValueChange={(v) => setRarity(v as RarityFilter)}
-                clearable={false}
-              />
-            </FilterField>
-            <FilterField
-              id="swap-element"
-              label={t('collection:filters.labels.element')}
-            >
-              <Select
-                id="swap-element"
-                options={ELEMENT_OPTIONS}
-                value={element}
-                onValueChange={(v) => setElement(v as ElementFilter)}
-                clearable={false}
-              />
-            </FilterField>
-          </div>
-          {cards.length === 0 && (
-            <p className="py-8 text-center text-sm text-text-light">
-              {t('collection:slotsPanel.swapEmpty')}
-            </p>
-          )}
-          <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto p-2 sm:grid-cols-3 lg:grid-cols-4">
-            {cards.map((uc) => (
-              <CollectionCard
-                key={uc.id}
-                card={uc.card}
-                variant={uc.variant}
-                // Pas de pastille ×N : les doublons n'ont pas de sens pour un échange.
-                quantity={1}
-                isOwned
-                userCardId={uc.id}
-                level={uc.level}
-                palier={uc.palier}
-                onClick={() => {
-                  if (swap.isPending) {
-                    return
-                  }
-                  swap.mutate(
-                    { fromUserCardId: userCardId, toUserCardId: uc.id },
-                    { onSuccess: onClose },
-                  )
-                }}
-              />
-            ))}
-          </div>
+          <PowerCardPicker
+            idPrefix="swap"
+            excludeUserCardId={userCardId}
+            onPick={(toUserCardId) => {
+              if (swap.isPending) {
+                return
+              }
+              swap.mutate(
+                { fromUserCardId: userCardId, toUserCardId },
+                { onSuccess: onClose },
+              )
+            }}
+          />
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={onClose}>
