@@ -11,6 +11,7 @@ import { useWanderer } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useTokenBalance } from '../../queries/useGacha.ts'
 import { useOrders } from '../../queries/useOrders.ts'
+import { useRewardsLive } from '../../queries/useRewards.ts'
 import type { AuthUser } from '../../stores/auth.store'
 import { useAuthStore, useIsGuest } from '../../stores/auth.store'
 import { ChangelogButton } from '../changelog/ChangelogButton.tsx'
@@ -84,6 +85,7 @@ export function Navbar() {
   const isGuest = useIsGuest()
   const user = useAuthStore((s) => s.user)
   const { data: orders } = useOrders({ enabled: Boolean(user) })
+  useRewardsLive()
   // Le cap journalier ne se voit pas dans `deliverable` (le serveur l'ignore
   // volontairement) : la pastille doit donc le recroiser elle-même, sinon
   // elle reste allumée une fois le quota du jour atteint.

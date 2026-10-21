@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { RewardsApi } from '../api/rewards.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { wsClient } from '../lib/ws.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useLevelUpStore } from '../stores/levelUp.store.ts'
@@ -16,6 +18,26 @@ import { levelUpReward } from '../utils/levelRewards.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
 export type { ClaimResult, PendingReward } from '../api/rewards.api.ts'
+
+/**
+ * Les paliers du raid se versent à TOUS les participants quand UN coéquipier
+ * attaque : sans ce rafraîchissement, la pastille des autres reste figée
+ * jusqu'au prochain `fetchMe`. À monter une seule fois (Navbar).
+ */
+export function useRewardsLive() {
+  const queryClient = useQueryClient()
+  useEffect(
+    () =>
+      wsClient.on((event) => {
+        if (event.type !== 'raid:attack') {
+          return
+        }
+        queryClient.invalidateQueries({ queryKey: ['rewards', 'pending'] })
+        void useAuthStore.getState().fetchMe()
+      }),
+    [queryClient],
+  )
+}
 
 export const usePendingRewards = () => {
   const query = useQuery({
