@@ -18,6 +18,7 @@ export const CONFIG_KEYS = [
   'dailyShopPriceRare',
   'dailyShopPriceEpic',
   'dailyShopPriceLegendary',
+  'dailyShop.rareLuck',
   'xpPerPull',
   'combat.pointsMax',
   'combat.regenSeconds',

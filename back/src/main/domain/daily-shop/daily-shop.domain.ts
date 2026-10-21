@@ -118,6 +118,7 @@ export class DailyShopDomain implements IDailyShopDomain {
         'dailyShopPriceRare',
         'dailyShopPriceEpic',
         'dailyShopPriceLegendary',
+        'dailyShop.rareLuck',
       ),
       prisma.card.findMany({
         where: { set: { isActive: true } },
@@ -140,7 +141,7 @@ export class DailyShopDomain implements IDailyShopDomain {
       const card = pickWeightedRandom(
         pool,
         undefined,
-        effects.dailyShopLuckMultiplier ?? 1,
+        prices['dailyShop.rareLuck'] * (effects.dailyShopLuckMultiplier ?? 1),
       )
       picked.push(card)
       pool = pool.filter((c) => c.id !== card.id)
