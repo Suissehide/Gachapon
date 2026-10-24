@@ -363,7 +363,7 @@ function StatTile({
   base?: number
   accent: string
   suffix?: string
-  /** Ligne d'explication sous la valeur (ex. réduction de dégâts de la DEF). */
+  /** Infobulle au survol de la tuile (ex. réduction de dégâts de la DEF). */
   hint?: string
 }) {
   const locale = currentLocale()
@@ -379,7 +379,10 @@ function StatTile({
   // s'ajoute à droite du nombre au lieu de pousser toute la ligne, le socle
   // gardant le plus souvent le nombre de chiffres du total (tabular-nums).
   return (
-    <div className="flex flex-col gap-1.5 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3">
+    <div
+      title={hint}
+      className="flex flex-col gap-1.5 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3"
+    >
       <span className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.1em] text-[rgba(27,23,38,0.5)]">
         <span className="flex" style={{ color: accent }}>
           {icon}
@@ -404,11 +407,6 @@ function StatTile({
           </span>
         )}
       </span>
-      {hint && (
-        <span className="font-mono text-[11px] text-[rgba(27,23,38,0.5)]">
-          {hint}
-        </span>
-      )}
     </div>
   )
 }
