@@ -1,11 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { lazy, Suspense, useRef, useState } from 'react'
+import { Volume2, VolumeX } from 'lucide-react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Cauldron } from '../../components/alchemy/Cauldron.tsx'
 import { DuplicatesPanel } from '../../components/alchemy/DuplicatesPanel.tsx'
+import { capsuleAudio } from '../../components/machine/capsule/capsuleAudio.ts'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
+import { Button } from '../../components/ui/button.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import {
   ALCHEMY_RARITY_BG,
@@ -16,6 +19,7 @@ import {
 import type { CardRarity } from '../../constants/card.constant.ts'
 import type { PullBatchEntry } from '../../constants/gacha.constant.ts'
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion.ts'
+import { useStoredState } from '../../hooks/useStoredState.ts'
 import { cn } from '../../libs/utils.ts'
 import {
   transmuteResultToRevealEntry,
@@ -36,8 +40,19 @@ export const Route = createFileRoute('/_authenticated/alchemy')({
 })
 
 function AlchemyPage() {
-  const { t } = useTranslation(['alchemy', 'common'])
+  const { t } = useTranslation(['alchemy', 'common', 'gacha'])
   const { data } = useAlchemy()
+  // Même préférence que la page de tirage : off par défaut, persistante.
+  const [soundOn, setSoundOn] = useStoredState<'true' | 'false'>(
+    'play.soundOn',
+    'false',
+    ['true', 'false'],
+  )
+  useEffect(() => {
+    capsuleAudio.setMuted(soundOn !== 'true')
+  }, [soundOn])
+  const soundLabel =
+    soundOn === 'true' ? t('gacha:page.soundOff') : t('gacha:page.soundOnShort')
   const [selected, setSelected] = useState<AlchemyFromRarity | null>(null)
   // Vit ici, pas dans Workbench : celui-ci est remonté dès que le refetch
   // post-transmutation change les candidats, en pleine animation.
@@ -57,6 +72,8 @@ function AlchemyPage() {
   const startTransmute = (tier: AlchemyTier, picks: AlchemyPick[]) => {
     entry.current = null
     fxDone.current = reduced
+    // Geste utilisateur → déverrouille le contexte WebAudio
+    capsuleAudio.unlock()
     if (!reduced) {
       setFx(tier.toRarity)
     }
@@ -94,6 +111,23 @@ function AlchemyPage() {
         eyebrow={t('alchemy:page.eyebrow')}
         title={t('alchemy:page.title')}
         subtitle={t('alchemy:page.subtitle')}
+        right={
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label={soundLabel}
+            title={soundLabel}
+            aria-pressed={soundOn === 'true'}
+            onClick={() => setSoundOn(soundOn === 'true' ? 'false' : 'true')}
+          >
+            {soundOn === 'true' ? (
+              <Volume2 className="h-4 w-4" />
+            ) : (
+              <VolumeX className="h-4 w-4" />
+            )}
+          </Button>
+        }
       />
 
       {activeTier && (

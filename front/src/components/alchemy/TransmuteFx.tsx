@@ -12,7 +12,17 @@ import {
 
 import type { CardRarity } from '../../constants/card.constant.ts'
 import { useCanvasContextRecovery } from '../../hooks/useCanvasContextRecovery.ts'
+import { capsuleAudio } from '../machine/capsule/capsuleAudio.ts'
 import { getRarityTone } from '../shared/tcg-card/config.ts'
+
+/** Palier sonore de l'éclatement : plus la rareté visée est haute, plus la fanfare est longue. */
+const BURST_TIER: Record<CardRarity, number> = {
+  COMMON: 0,
+  UNCOMMON: 1,
+  RARE: 2,
+  EPIC: 3,
+  LEGENDARY: 4,
+}
 
 /** Spirale vers le cœur (s). Au-delà, le cœur pulse tant que le serveur n'a pas répondu. */
 const SWIRL = 1.5
@@ -413,6 +423,12 @@ function Swirl({
     [fx],
   )
 
+  // Whir qui monte avec la spirale, coupé à l'éclatement ou au démontage.
+  useEffect(() => {
+    capsuleAudio.startCharge()
+    return () => capsuleAudio.stopAll()
+  }, [])
+
   const burstAt = useRef<number | null>(null)
   const done = useRef(false)
   const coreRef = useRef<Mesh>(null)
@@ -433,11 +449,15 @@ function Swirl({
       (resolved || FIXED_PROGRESS !== null)
     ) {
       burstAt.current = FIXED_PROGRESS === null ? t : SWIRL
+      capsuleAudio.stopCharge()
+      capsuleAudio.burst(BURST_TIER[rarity])
     }
     const burstT = burstAt.current === null ? 0 : t - burstAt.current
     const burst = Math.min(burstT / BURST, 1)
     const burstEased = 1 - (1 - burst) ** 3
     const { u } = fx
+    // Sans effet une fois la charge coupée à l'éclatement.
+    capsuleAudio.setChargeLevel(eased)
     u.uTime.value = t
     u.uSwirl.value = eased
     u.uBurst.value = burst
