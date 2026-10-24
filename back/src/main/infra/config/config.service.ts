@@ -442,5 +442,14 @@ export class ConfigService implements ConfigServiceInterface {
       data: [{ id: 1, resetCostPerPoint: 50 }],
       skipDuplicates: true,
     })
+
+    // Une migration de données écrit GlobalConfig directement en base juste
+    // avant le démarrage : sans cette purge, l'ancienne valeur resterait servie
+    // depuis Redis jusqu'à REDIS_TTL_SECONDS.
+    await Promise.all(
+      Object.keys(this.#envDefaults).map((key) =>
+        this.#redis.del(`config:${key}`),
+      ),
+    )
   }
 }

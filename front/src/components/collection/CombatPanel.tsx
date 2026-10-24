@@ -330,14 +330,15 @@ export function CombatPanel({
 /**
  * « −X % de dégâts subis » : part des dégâts absorbée par la DEF,
  * `DEF / (K + DEF)`. Une décimale sous 10 %, sinon une carte de bas niveau
- * afficherait « −0 % » ; rien sans DEF.
+ * afficherait « −0 % » ; rien sans DEF, ni sans seuil K valide (une config
+ * en cache d'avant l'apparition du champ donnerait « −NaN % »).
  */
 function defReductionHint(
   def: number,
   k: number,
   locale: Locale,
 ): string | undefined {
-  if (def <= 0) {
+  if (def <= 0 || !Number.isFinite(k) || k <= 0) {
     return undefined
   }
   const pct = (def / (k + def)) * 100
