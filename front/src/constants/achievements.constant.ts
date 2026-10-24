@@ -88,6 +88,8 @@ export const FAMILY_VISUAL: Record<
       | 'Cog'
       | 'Layers'
       | 'HelpCircle'
+      | 'Compass'
+      | 'Swords'
   }
 > = {
   pulls: {
@@ -125,6 +127,21 @@ export const FAMILY_VISUAL: Record<
     hue: 320,
     label: i18n.t('achievements:family.machines'),
     icon: 'Cog',
+  },
+  account: {
+    hue: 50,
+    label: i18n.t('achievements:family.account'),
+    icon: 'Zap',
+  },
+  campaign: {
+    hue: 120,
+    label: i18n.t('achievements:family.campaign'),
+    icon: 'Compass',
+  },
+  mastery: {
+    hue: 0,
+    label: i18n.t('achievements:family.mastery'),
+    icon: 'Swords',
   },
 } as const
 

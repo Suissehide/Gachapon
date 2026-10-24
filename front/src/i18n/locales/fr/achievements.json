@@ -8,6 +8,9 @@
     "collectionSets": "Collection — Sets",
     "streak": "Fidélité",
     "machines": "Machines",
+    "account": "Niveau du compte",
+    "campaign": "Campagne",
+    "mastery": "Maîtrise",
     "hidden": "Succès cachés"
   },
   "apiTitles": {

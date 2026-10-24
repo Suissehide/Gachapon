@@ -1,11 +1,13 @@
 import {
   Cog,
   Coins,
+  Compass,
   Flame,
   Gem,
   HelpCircle,
   Layers,
   Sparkles,
+  Swords,
   Ticket,
   Zap,
 } from 'lucide-react'
@@ -39,6 +41,8 @@ const ICON_MAP: Record<
   Cog,
   Layers,
   HelpCircle,
+  Compass,
+  Swords,
 }
 
 const FAMILY_ORDER = [
@@ -48,6 +52,9 @@ const FAMILY_ORDER = [
   'collection_complete',
   'collection_sets',
   'machines',
+  'account',
+  'campaign',
+  'mastery',
   'streak',
   'dust',
 ]

@@ -8,6 +8,9 @@
     "collectionSets": "Collection — Sets",
     "streak": "Loyalty",
     "machines": "Machines",
+    "account": "Account level",
+    "campaign": "Campaign",
+    "mastery": "Mastery",
     "hidden": "Hidden achievements"
   },
   "apiTitles": {
