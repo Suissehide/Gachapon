@@ -15,6 +15,7 @@ export function DangerZone({ onDelete }: { onDelete: () => void }) {
         {t('dangerZone.title')}
       </h2>
       <Button
+        type="button"
         variant="outline"
         className="border-destructive/50 text-destructive hover:bg-destructive/10"
         onClick={() => setConfirmOpen(true)}
