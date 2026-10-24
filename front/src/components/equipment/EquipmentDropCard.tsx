@@ -150,8 +150,8 @@ export function EquipmentDropCard({
   const defFormula = t('common:stats.defFormula', {
     k: formatNumber(economy.combat.defenseK, locale),
   })
-  // Les lignes de DEF expliquent ce que la DEF rapporte : sa valeur seule
-  // (+20, +3 %) ne dit rien de la réduction de dégâts.
+  // La valeur d'une ligne de DEF (+20, +3 %) ne dit rien de la réduction de
+  // dégâts : son infobulle rappelle la formule.
   const statHint = (key: string) =>
     key === 'defFlat' || key === 'defPct' ? defFormula : undefined
 
@@ -228,25 +228,25 @@ export function EquipmentDropCard({
 
       {/* stat principale */}
       {main && (
-        <Tooltip content={statHint(main.key)}>
-          <div
-            className="mt-3 flex items-center gap-2.5 rounded-[13px] border p-3 px-3.5"
-            style={
-              {
-                '--sc': statColorVar(main.key),
-                background: 'color-mix(in oklab, var(--sc) 10%, var(--card))',
-                borderColor: 'color-mix(in oklab, var(--sc) 30%, transparent)',
-              } as React.CSSProperties
-            }
-          >
-            <span className="font-mono text-[11px] font-bold tracking-[0.16em] text-[color-mix(in_oklab,var(--sc)_70%,var(--text))]">
-              {formatBonusKey(main.key)}
-            </span>
+        <div
+          className="mt-3 flex items-center gap-2.5 rounded-[13px] border p-3 px-3.5"
+          style={
+            {
+              '--sc': statColorVar(main.key),
+              background: 'color-mix(in oklab, var(--sc) 10%, var(--card))',
+              borderColor: 'color-mix(in oklab, var(--sc) 30%, transparent)',
+            } as React.CSSProperties
+          }
+        >
+          <span className="font-mono text-[11px] font-bold tracking-[0.16em] text-[color-mix(in_oklab,var(--sc)_70%,var(--text))]">
+            {formatBonusKey(main.key)}
+          </span>
+          <Tooltip content={statHint(main.key)}>
             <span className="ml-auto font-display text-[26px] font-extrabold leading-none tabular-nums text-text">
               {formatValue(main.key, main.value)}
             </span>
-          </div>
-        </Tooltip>
+          </Tooltip>
+        </div>
       )}
 
       {/* sous-stats : 2 colonnes. À 3 sous-stats, la troisième se place seule
@@ -258,31 +258,32 @@ export function EquipmentDropCard({
       {subs.length > 0 && (
         <div className="mt-2 grid grid-cols-2 gap-[7px] @max-[300px]:grid-cols-1">
           {subs.map((s) => (
-            <Tooltip key={s.key} content={statHint(s.key)}>
-              <div
-                className="flex items-center gap-1.5 rounded-[11px] border border-border/60 bg-surface-2 px-2.5 py-2.5"
-                style={{ '--sc': statColorVar(s.key) } as React.CSSProperties}
-              >
-                <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--sc)]" />
-                {/* Le libellé tient sur UNE ligne : certaines clés sont longues
+            <div
+              key={s.key}
+              className="flex items-center gap-1.5 rounded-[11px] border border-border/60 bg-surface-2 px-2.5 py-2.5"
+              style={{ '--sc': statColorVar(s.key) } as React.CSSProperties}
+            >
+              <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--sc)]" />
+              {/* Le libellé tient sur UNE ligne : certaines clés sont longues
                   (« % PÉNÉTRATION ARMURE ») et passaient à la ligne, ce qui
                   décalait la hauteur des tuiles voisines. */}
-                <span
-                  className="min-w-0 truncate font-mono text-[9px] whitespace-nowrap tracking-[0.08em] text-text-light"
-                  title={statHint(s.key) ? undefined : formatBonusKey(s.key)}
-                >
-                  {formatBonusKey(s.key)}
-                </span>
+              <span
+                className="min-w-0 truncate font-mono text-[9px] whitespace-nowrap tracking-[0.08em] text-text-light"
+                title={formatBonusKey(s.key)}
+              >
+                {formatBonusKey(s.key)}
+              </span>
+              <Tooltip content={statHint(s.key)}>
                 <span className="ml-auto shrink-0 font-display text-sm font-extrabold tabular-nums text-text">
                   {formatValue(s.key, s.value)}
                 </span>
-                {highlight?.key === s.key && (
-                  <span className="shrink-0 font-mono text-[10px] font-bold text-emerald-600 tabular-nums">
-                    {formatValue(s.key, highlight.delta)}
-                  </span>
-                )}
-              </div>
-            </Tooltip>
+              </Tooltip>
+              {highlight?.key === s.key && (
+                <span className="shrink-0 font-mono text-[10px] font-bold text-emerald-600 tabular-nums">
+                  {formatValue(s.key, highlight.delta)}
+                </span>
+              )}
+            </div>
           ))}
         </div>
       )}
