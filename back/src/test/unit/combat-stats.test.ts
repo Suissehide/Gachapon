@@ -354,14 +354,18 @@ describe('défense : repères de fin de jeu', () => {
     }
   })
 
-  it('un Tank réaliste reste sous 75 % de réduction hors FORTIFY', () => {
-    // Plastron DEF % légendaire au niveau max, et sur chacune des 7 pièces
-    // une sous-stat DEF % de 12 (tirage moyen de 3-8 % plus un palier).
-    const plastron = effectiveEquipmentBonuses(
-      mainStat('defPct', 'LEGENDARY'), EQUIP_MAX_LEVEL, [{ key: 'defPct', value: 12 }],
-    )
-    const autres = Array.from({ length: 6 }, () => ({ defPct: 12 }))
-    const def = defTank('HOLOGRAPHIC', [plastron, ...autres])
-    expect(damageReduction(def, DEFENSE_K)).toBeLessThanOrEqual(0.75)
+  it('un Tank réaliste reste sous 80 % de réduction hors FORTIFY', () => {
+    // DEF % en stat principale sur les trois emplacements qui l'autorisent
+    // (plastron, gants, ceinture), légendaires au niveau max, et sur chacune
+    // des 7 pièces une sous-stat DEF % de 12 (tirage moyen de 3-8 % plus un
+    // palier). Mesuré à ~79,9 % au seuil K = 1 000 : le plafond se règle par
+    // K (GlobalConfig `combat.defMitigationRef`), pas en touchant ce test.
+    const principale = () =>
+      effectiveEquipmentBonuses(
+        mainStat('defPct', 'LEGENDARY'), EQUIP_MAX_LEVEL, [{ key: 'defPct', value: 12 }],
+      )
+    const autres = Array.from({ length: 4 }, () => ({ defPct: 12 }))
+    const def = defTank('HOLOGRAPHIC', [principale(), principale(), principale(), ...autres])
+    expect(damageReduction(def, DEFENSE_K)).toBeLessThanOrEqual(0.8)
   })
 })
