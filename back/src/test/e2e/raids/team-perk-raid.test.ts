@@ -123,7 +123,7 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
           passiveKey: null,
           element,
           appearance: 'monsters/bosses/BOSS-010',
-          mitigationScale: 1,
+         
         },
       },
       update: {},

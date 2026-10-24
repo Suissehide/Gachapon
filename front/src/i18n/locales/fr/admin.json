@@ -427,7 +427,6 @@
       "baseAtkLabel": "ATK de base",
       "baseDefLabel": "DEF de base",
       "baseSpdLabel": "VIT de base",
-      "mitigationScaleLabel": "Échelle de mitigation (facteur combiné à la DEF pour réduire les dégâts subis, ex. 12 sur les boss seedés)",
       "attackPatternLabel": "Pattern d'attaque",
       "passiveKeyLabel": "Passif (clé, vide = aucun)",
       "save": "Enregistrer"

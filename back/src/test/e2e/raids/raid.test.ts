@@ -25,7 +25,7 @@ const WEAK_BOSS_SPEC = {
   passiveKey: null,
   element: 'FIRE',
   appearance: 'monsters/bosses/BOSS-010',
-  mitigationScale: 1,
+ 
 }
 
 // PV par membre énormes : aucune attaque de test ne franchit un palier par

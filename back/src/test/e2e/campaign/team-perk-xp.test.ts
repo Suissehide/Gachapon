@@ -142,7 +142,7 @@ describe('Bonus équipe `xp` — XP de campagne', () => {
             level: 1,
             palier: 1,
             attackPattern: 'BASIC',
-            mitigationScale: 1,
+           
           },
         ],
         lootTable: {

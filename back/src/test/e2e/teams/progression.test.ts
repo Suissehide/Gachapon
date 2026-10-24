@@ -28,7 +28,7 @@ const WEAK_BOSS_SPEC = {
   passiveKey: null,
   element: 'FIRE',
   appearance: 'monsters/bosses/BOSS-010',
-  mitigationScale: 1,
+ 
 }
 
 describe("progression d'équipe : les quatre sources de points", () => {

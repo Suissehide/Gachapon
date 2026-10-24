@@ -39,10 +39,10 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // Roue élémentaire : dégâts ×1,30 en avantage, ×0,75 en désavantage, ×1 neutre.
   'combat.elementAdvantageMult': 1.3,
   'combat.elementDisadvantageMult': 0.75,
-  // Constante K de la formule de mitigation `K / (K + DEF)`. Mise à l'échelle
-  // par unité (cf. mitigationRefFor) pour que la réduction de dégâts d'une
-  // carte ne dépende plus de son niveau.
-  'combat.defMitigationRef': 100,
+  // Seuil K de la réduction de dégâts `DEF / (K + DEF)`, commun à toutes les
+  // unités : la DEF a un sens absolu (plus de DEF = toujours moins de dégâts)
+  // avec des rendements décroissants — 1 000 de DEF divise les dégâts par deux.
+  'combat.defMitigationRef': 1000,
   // Valeurs de base des stats de stuff, communes aux alliés ET aux ennemis.
   // Sans base, critDmg seul ne ferait rien et le set correspondant paraîtrait cassé.
   'combat.baseCritRate': 5,

@@ -92,7 +92,7 @@ describe('routes de tour', () => {
             level: 1,
             palier: 1,
             attackPattern: 'BASIC',
-            mitigationScale: 1,
+           
           },
         ],
         lootTable: {
@@ -131,7 +131,7 @@ describe('routes de tour', () => {
             level: 1,
             palier: 1,
             attackPattern: 'BASIC',
-            mitigationScale: 1,
+           
           },
         ],
         lootTable: {
@@ -177,7 +177,7 @@ describe('routes de tour', () => {
             level: 1,
             palier: 1,
             attackPattern: 'BASIC',
-            mitigationScale: 1,
+           
           },
         ],
         lootTable: {

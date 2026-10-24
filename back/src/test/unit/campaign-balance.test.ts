@@ -1,4 +1,6 @@
+import { damageReduction } from '../../main/domain/combat/combat-stats.domain'
 import { ELEMENTS } from '../../main/domain/combat/element'
+import { raidBossSpec } from '../../main/domain/content/raid.definitions'
 import {
   FAMILY_ELEMENTS,
   type FamilySlug,
@@ -18,6 +20,7 @@ import {
   difficultyMult,
   enemyPower,
   RARITY_BASE,
+  ENEMY_DEF_MULT,
   enemyScale,
   lootTableNormal,
   normalEnemyTeam,
@@ -26,6 +29,8 @@ import {
 } from '../../main/domain/content/campaign.definitions'
 
 const TOTAL_STAGES = CHAPTER_COUNT * STAGES_PER_CHAPTER
+const DEFENSE_K = 1000
+
 const chapitres = Array.from({ length: CHAPTER_COUNT }, (_, i) => i + 1)
 const etagesNormaux = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 /** Chapitre et étage d'un numéro d'étage global. */
@@ -36,16 +41,17 @@ const coord = (n: number) =>
   ] as const
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
-  it('stage 1-1 : valeur ancre exacte (ancre 133 PV, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {124,24,14,89}, scale = 133 / 124 (première ancre de PV,
+  it('stage 1-1 : valeur ancre exacte (ancre 130 PV, NORMAL_FACTOR=0.971)', () => {
+    // rb = COMMON {124,24,14,89}, scale = 130 / 124 (première ancre de PV,
     // fittée sur un joueur SANS équipement), NORMAL_FACTOR = 0,971.
-    // hp: 133×0.971 = 129.1 → 129 ; atk: 24×0.971×1.0726 = 25.0 → 25
-    // def: 14×0.971×1.0726 = 14.6 → 15 ; spd: 89 tel quel — la vitesse
-    // échappe au facteur ET à l'échelle, elle reste la base de rareté.
+    // hp: 130×0.971 = 126.2 → 126 ; atk: 24×0.971×1.0484 = 24.4 → 24
+    // def: 14×0.971×ENEMY_DEF_MULT = 135.9 → 136, hors échelle d'étage ;
+    // spd: 89 tel quel — la vitesse échappe au facteur ET à l'échelle, elle
+    // reste la base de rareté.
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 129,
-      baseAtk: 25,
-      baseDef: 15,
+      baseHp: 126,
+      baseAtk: 24,
+      baseDef: 136,
       baseSpd: 89,
     })
   })
@@ -78,7 +84,7 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', 
 
 describe('enemyScale — courbe à ancres, sans marche', () => {
   it("l'étage 1 est l'ancre : scale = PV de l'ancre / PV de base COMMON", () => {
-    expect(enemyScale(1)).toBeCloseTo(133 / RARITY_BASE.COMMON.hp, 10)
+    expect(enemyScale(1)).toBeCloseTo(130 / RARITY_BASE.COMMON.hp, 10)
   })
 
   it('aucune marche : PV des étages normaux, frontières de chapitre comprises', () => {
@@ -115,7 +121,7 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     expect(boss).toMatchObject({
       baseHp: Math.round(rb.hp * 3.25 * 0.92 * echelle),
       baseAtk: Math.round(rb.atk * 0.92 * echelle),
-      baseDef: Math.round(rb.def * 1.2 * 0.92 * echelle),
+      baseDef: Math.round(rb.def * 1.2 * 0.92 * ENEMY_DEF_MULT),
       baseSpd: 89,
       attackPattern: 'AOE_3',
     })
@@ -400,35 +406,29 @@ describe('boss de chapitre', () => {
   })
 })
 
-describe('mitigation des ennemis', () => {
-  it('chaque ennemi porte un mitigationScale égal à son enemyScale', () => {
-    for (const [chapitre, etage] of [[1, 1], [5, 5], [9, 9]] as const) {
-      const global = (chapitre - 1) * 10 + etage
-      for (const e of normalEnemyTeam(chapitre, etage)) {
-        expect(e.mitigationScale).toBeCloseTo(enemyScale(global), 6)
-      }
-    }
-  })
-
-  it('les boss aussi, facteur de boss compris', () => {
-    const boss = bossEnemyTeam(CHAPTER_COUNT, 10)[0]
-    expect(boss.mitigationScale).toBeCloseTo(
-      enemyScale(TOTAL_STAGES) * bossGearCompensation(CHAPTER_COUNT),
-      6,
-    )
-  })
-
+describe('DEF des ennemis', () => {
+  // La DEF d'un ennemi ne suit pas l'échelle d'étage : à rareté égale, sa
+  // réduction de dégâts est la même du premier au dernier chapitre.
   it('la réduction de dégâts d un ennemi ne dérive pas avec le chapitre', () => {
-    const reduction = (chapitre: number, etage: number) => {
-      const e = normalEnemyTeam(chapitre, etage)[0]
-      const k = 100 * e.mitigationScale
-      return 1 - k / (k + e.baseDef)
-    }
-    // 8-5 et 15-9 sont tous deux en base EPIC (RARITY_BY_CHAPTER) : à
-    // rareté égale, la réduction ne doit pas dériver avec l'étage global
-    // malgré la DEF ×3 de la fin de campagne. Une rareté différente n'est PAS
-    // comparable : ce n'est pas le même monstre.
-    expect(reduction(CHAPTER_COUNT, 9)).toBeCloseTo(reduction(8, 5), 2)
+    const reduction = (chapitre: number, etage: number) =>
+      damageReduction(normalEnemyTeam(chapitre, etage)[0].baseDef, DEFENSE_K)
+    // 8-5 et 15-9 sont tous deux en base EPIC (RARITY_BY_CHAPTER).
+    expect(reduction(CHAPTER_COUNT, 9)).toBeCloseTo(reduction(8, 5), 6)
+  })
+
+  it('un ennemi garde la réduction que lui donnait sa DEF de base', () => {
+    // d / (100 + d) : la réduction d'un ennemi avant le seuil fixe, quelle que
+    // soit son échelle. ENEMY_DEF_MULT la conserve à K = 1 000.
+    const rb = RARITY_BASE.EPIC
+    const d = rb.def * 0.971
+    const e = normalEnemyTeam(8, 5)[0]
+    expect(damageReduction(e.baseDef, DEFENSE_K)).toBeCloseTo(d / (100 + d), 2)
+  })
+
+  it('le boss du raid suit la même règle', () => {
+    expect(raidBossSpec('FIRE').baseDef).toBe(
+      Math.round(RARITY_BASE.EPIC.def * ENEMY_DEF_MULT),
+    )
   })
 })
 

@@ -9,7 +9,6 @@ import {
 } from '../src/main/domain/combat/battle-simulator.domain'
 import {
   computeFinalStats,
-  mitigationRefFor,
 } from '../src/main/domain/combat/combat-stats.domain'
 import {
   ELEMENTS,
@@ -99,14 +98,8 @@ const SIM_BASE_STATS = {
   lifesteal: 0,
 }
 
-// Référence de mitigation par défaut (GlobalConfig `combat.defMitigationRef`).
-// Le simulateur ne la posait sur AUCUNE unité : `mitigationRef` valait donc
-// `undefined`, la réduction de dégâts partait en NaN et plus un seul coup ne
-// portait — 1837 lignes de journal sans une seule entrée de dégâts, tous les
-// combats au plafond d'actions et 0 % de victoire partout. Le champ est
-// pourtant obligatoire dans SimulatorUnit ; `scripts/` n'étant pas
-// type-vérifié, rien ne l'avait signalé.
-const SIM_DEF_MITIGATION_REF = 100
+// Seuil de défense K (GlobalConfig `combat.defMitigationRef`).
+const SIM_DEFENSE_K = 1000
 
 type GearProfile = { hpPct: number; atkPct: number; defPct: number }
 const GEAR_PROFILES: Record<string, GearProfile> = {
@@ -149,13 +142,6 @@ function playerTeam(opts: {
       critDmg: stats.critDmg,
       armorPen: stats.armorPen,
       lifesteal: stats.lifesteal,
-      // Allié : dérivée du niveau/palier/variante, comme campaign.domain.
-      mitigationRef: mitigationRefFor({
-        level: opts.level,
-        palier: opts.palier,
-        variant: 'NORMAL',
-        defMitigationRef: SIM_DEF_MITIGATION_REF,
-      }),
       attackPattern: 'BASIC' as AttackPattern,
       passiveKey: opts.passiveKey ?? null,
       palier: opts.palier,
@@ -221,11 +207,6 @@ function enemyUnitsForStage(chapter: number, index: number): SimulatorUnit[] {
       critDmg: stats.critDmg,
       armorPen: stats.armorPen,
       lifesteal: stats.lifesteal,
-      // Ennemi : puissance pré-cuite dans les stats de base par le seed, donc
-      // la référence suit `mitigationScale` et non le niveau.
-      mitigationRef:
-        SIM_DEF_MITIGATION_REF *
-        ((e as { mitigationScale?: number }).mitigationScale ?? 1),
       attackPattern: (e.attackPattern ?? 'BASIC') as AttackPattern,
       passiveKey: (e as { passiveKey?: string | null }).passiveKey ?? null,
       element: e.element,
@@ -312,6 +293,7 @@ function runScenario(
       seed: `sim-${chapter}-${index}-${scenario}-${k}`,
       elementAdvantageMult: ELEMENT_ADVANTAGE_MULT,
       elementDisadvantageMult: ELEMENT_DISADVANTAGE_MULT,
+      defenseK: SIM_DEFENSE_K,
     })
     if (sim.won === 'A') {
       wins++
@@ -565,7 +547,6 @@ function mainRaid(): void {
   console.log('boss\tpalier\tcounterpick\tmean\tp10\tp90\tturns')
   for (const element of RAID_ROTATION) {
     const [boss] = buildEnemySimUnits([raidBossSpec(element)], {
-      defMitigationRef: SIM_DEF_MITIGATION_REF,
       baseStats: SIM_BASE_STATS,
       resolveImage: () => null,
     })
@@ -585,6 +566,7 @@ function mainRaid(): void {
             timeoutTurns: RAID_TIMEOUT_TURNS,
             elementAdvantageMult: ELEMENT_ADVANTAGE_MULT,
             elementDisadvantageMult: ELEMENT_DISADVANTAGE_MULT,
+            defenseK: SIM_DEFENSE_K,
           })
           damages.push(damageDealtToBoss(sim.log))
           turns += sim.turns

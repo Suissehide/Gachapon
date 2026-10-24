@@ -223,14 +223,12 @@ export class RaidDomain implements IRaidDomain {
             tx,
             userId,
             {
-              defMitigationRef: cfg['combat.defMitigationRef'],
               baseStats,
               setDefs,
             },
           )
 
           const bossUnit = this.#buildBossUnit(raid.boss, {
-            defMitigationRef: cfg['combat.defMitigationRef'],
             baseStats,
           })
 
@@ -242,6 +240,7 @@ export class RaidDomain implements IRaidDomain {
             timeoutTurns: cfg['raid.timeoutTurns'],
             elementAdvantageMult: cfg['combat.elementAdvantageMult'],
             elementDisadvantageMult: cfg['combat.elementDisadvantageMult'],
+            defenseK: cfg['combat.defMitigationRef'],
           })
 
           const hpBefore = raid.hp
@@ -318,7 +317,6 @@ export class RaidDomain implements IRaidDomain {
     tx: PrimaTransactionClient,
     userId: string,
     opts: {
-      defMitigationRef: number
       baseStats: CombatStatsBaseline
       setDefs: ReturnType<typeof setBonusesFromConfig>
     },
@@ -346,7 +344,7 @@ export class RaidDomain implements IRaidDomain {
   /** Le boss du raid en unité de simulation, PV fixés à RAID_BOSS_SIM_HP. */
   #buildBossUnit(
     boss: { spec: unknown; name: string },
-    opts: { defMitigationRef: number; baseStats: CombatStatsBaseline },
+    opts: { baseStats: CombatStatsBaseline },
   ): SimulatorUnit {
     const spec = enemySpecSchema.parse(boss.spec)
     const [bossUnit] = buildEnemySimUnits([spec], {

@@ -175,7 +175,7 @@ describe('GET /campaign/wanderer', () => {
       baseSpd: 50,
       level: 1,
       palier: 1,
-      mitigationScale: 1,
+     
       attackPattern: 'BASIC',
       element: 'FIRE',
       appearance: `monsters/slimes/SLIME-${suffix}-${n}`,

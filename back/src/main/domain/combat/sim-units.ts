@@ -12,14 +12,13 @@ import type { AttackPattern, SimulatorUnit } from './battle-simulator.domain'
 import {
   type CombatStatsBaseline,
   computeFinalStats,
-  mitigationRefFor,
 } from './combat-stats.domain'
 
 /**
  * Un ennemi stocké en JSON (TowerFloor.enemyTeam, RaidBoss.spec). Même
- * schéma que CampaignStage.enemyTeam : mitigationScale obligatoire (les
- * ennemis sont seedés à level 1 / palier 1, leur puissance étant pré-cuite
- * via ce facteur), stats de stuff optionnelles.
+ * schéma que CampaignStage.enemyTeam (ennemis seedés à level 1 / palier 1,
+ * puissance pré-cuite dans les stats de base), stats de stuff optionnelles.
+ * Objet non strict : une clé obsolète encore présente en base est ignorée.
  */
 export const enemySpecSchema = z.object({
   baseHp: z.number(),
@@ -34,7 +33,6 @@ export const enemySpecSchema = z.object({
   passiveKey: z.string().nullish(),
   element: z.string().nullish(),
   appearance: z.string().nullish(),
-  mitigationScale: z.number(),
   critRate: z.number().optional(),
   critDmg: z.number().optional(),
   armorPen: z.number().optional(),
@@ -51,7 +49,6 @@ export async function buildPlayerSimUnits(
   opts: {
     userId: string
     userCardIds: string[]
-    defMitigationRef: number
     baseStats: CombatStatsBaseline
     setDefs: Record<SetKey, SetDefinition>
     publicUrl: (key: string) => string
@@ -107,24 +104,14 @@ export async function buildPlayerSimUnits(
         passiveKey: u.card.passiveKey,
         element: u.card.element,
         palier: u.palier,
-        mitigationRef: mitigationRefFor({
-          level: u.level,
-          palier: u.palier,
-          variant: u.variant,
-          defMitigationRef: opts.defMitigationRef,
-        }),
       }
     })
 }
 
-/**
- * SimulatorUnit des ennemis d'un JSON de spec. mitigationRef =
- * defMitigationRef × e.mitigationScale (jamais dérivé du niveau).
- */
+/** SimulatorUnit des ennemis d'un JSON de spec. */
 export function buildEnemySimUnits(
   enemyTeam: EnemySpec[],
   opts: {
-    defMitigationRef: number
     baseStats: CombatStatsBaseline
     resolveImage: (appearance: string | null | undefined) => string | null
   },
@@ -161,7 +148,6 @@ export function buildEnemySimUnits(
       passiveKey: e.passiveKey ?? null,
       element: e.element ?? null,
       palier: e.palier,
-      mitigationRef: opts.defMitigationRef * e.mitigationScale,
     }
   })
 }

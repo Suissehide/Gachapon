@@ -23,7 +23,7 @@ import {
   type FamilySlug,
   makeSpriteCursor,
 } from './bestiary.definitions'
-import { RARITY_BASE } from './campaign.definitions'
+import { ENEMY_DEF_MULT, RARITY_BASE } from './campaign.definitions'
 
 export { TOWER_ELEMENTS, TOWER_FLOOR_COUNT }
 export type { TowerElement }
@@ -52,7 +52,7 @@ export type { TowerElement }
  * La jauge reste un outil d'AFFICHAGE. Pour calibrer, le simulateur.
  */
 const FLOOR_SCALE = [
-  2.6, 6.2, 11, 16.2, 33.5, 51, 55.9, 65.6, 78.4, 94.5,
+  2.3, 5.4, 9.9, 15.1, 33.6, 53.8, 62.4, 73, 88.6, 110.8,
 ] as const
 
 /**
@@ -99,9 +99,8 @@ export function towerEnemyStatsAtScale(scale: number, floor: number) {
   return {
     baseHp: Math.round(BASE.hp * scale),
     baseAtk: Math.round(BASE.atk * scale),
-    baseDef: Math.round(BASE.def * scale),
+    baseDef: Math.round(BASE.def * ENEMY_DEF_MULT),
     baseSpd: Math.round(BASE.spd * (1 + 0.02 * (floor - 1))),
-    mitigationScale: scale,
   }
 }
 
@@ -126,11 +125,13 @@ function scaleAt(
   return value
 }
 
+/** Échelle de difficulté seedée pour un étage. */
+export function towerFloorScale(floor: number): number {
+  return scaleAt(FLOOR_SCALE, floor, 'Échelle de difficulté')
+}
+
 export function towerEnemyPower(floor: number) {
-  return towerEnemyStatsAtScale(
-    scaleAt(FLOOR_SCALE, floor, 'Échelle de difficulté'),
-    floor,
-  )
+  return towerEnemyStatsAtScale(towerFloorScale(floor), floor)
 }
 
 /**

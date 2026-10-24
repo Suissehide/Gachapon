@@ -71,9 +71,6 @@ const simulatorUnitSchema = z.object({
   passiveKey: z.string().nullable(),
   element: z.string().nullable().optional(),
   palier: z.number().int().min(1).max(MAX_PALIER),
-  // Défaut 100 : préserve la compatibilité des charges utiles existantes de
-  // cette route de debug admin, où mitigationRef n'était pas encore envoyé.
-  mitigationRef: z.number().positive().default(100),
   // Défauts alignés sur DEFAULTS (config.service.ts) : préservent la
   // compatibilité des charges utiles existantes de cette route de debug
   // admin, où ces 4 stats n'étaient pas encore envoyées.

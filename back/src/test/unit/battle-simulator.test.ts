@@ -26,7 +26,6 @@ function makeUnit(
     attackPattern: 'BASIC',
     passiveKey: null,
     palier: 1,
-    mitigationRef: 100,
     critRate: 5,
     critDmg: 150,
     armorPen: 0,
@@ -1261,41 +1260,44 @@ describe('ATB scheduler', () => {
   })
 })
 
-describe('mitigation mise à l échelle', () => {
-  it('une DEF doublée avec un mitigationRef doublé donne la même réduction', () => {
-    // A0 subit aussi les attaques de B0 (celui-ci a l'ATQ par défaut) : sa
-    // propre DEF doit être mise à l'échelle avec son mitigationRef, sinon
-    // seule la protection de B0 est invariante et pas celle d'A0 — un écart
-    // qui ne se voyait pas avant l'ajout du tirage de critique (tâche 6),
-    // celui-ci consommant un appel PRNG de plus par coup et faisant basculer
-    // le nombre de coups nécessaires pour achever A0.
-    const seed = 'mitigation-invariance'
-    const petit = simulateBattle({
-      seed,
-      teamA: [makeUnit('A0', { atk: 100, def: 10, mitigationRef: 100 })],
-      teamB: [makeUnit('B0', { hp: 100000, def: 50, mitigationRef: 100 })],
-    })
-    const grand = simulateBattle({
-      seed,
-      teamA: [makeUnit('A0', { atk: 100, def: 100, mitigationRef: 1000 })],
-      teamB: [makeUnit('B0', { hp: 100000, def: 500, mitigationRef: 1000 })],
-    })
-    const degats = (r: typeof petit) =>
-      r.log.filter((e) => e.type === 'ATTACK').length
-    expect(degats(petit)).toBe(degats(grand))
+describe('défense à seuil fixe', () => {
+  const premierCoupSur = (r: ReturnType<typeof simulateBattle>, id: string) => {
+    for (const e of r.log) {
+      if (e.type === 'ATTACK' && e.attackerId === 'A0') {
+        const d = e.damages.find((x) => x.id === id)
+        if (d) {
+          return d.final
+        }
+      }
+    }
+    throw new Error(`aucun coup sur ${id}`)
+  }
+
+  it('plus de DEF ne fait jamais subir plus de dégâts, quel que soit le niveau', () => {
+    const attaquant = makeUnit('A0', { atk: 1000, critRate: 0, spd: 1000 })
+    const combat = (cible: Partial<SimulatorUnit>) =>
+      simulateBattle({
+        seed: 'seuil-fixe',
+        defenseK: 1000,
+        teamA: [attaquant],
+        teamB: [makeUnit('B0', { hp: 1_000_000, atk: 1, ...cible })],
+      })
+    const faible = premierCoupSur(combat({ def: 300, level: 20 }), 'B0')
+    const forte = premierCoupSur(combat({ def: 1000, level: 70 }), 'B0')
+    expect(forte).toBeLessThan(faible)
   })
 
-  it('un mitigationRef plus élevé réduit la protection apportée par la même DEF', () => {
-    const cible = { hp: 10000, def: 100, atk: 1, spd: 1 }
-    const dur = simulateBattle({
-      seed: 's', teamA: [makeUnit('A0', { atk: 200 })],
-      teamB: [makeUnit('B0', { ...cible, mitigationRef: 100 })],
-    })
-    const mou = simulateBattle({
-      seed: 's', teamA: [makeUnit('A0', { atk: 200 })],
-      teamB: [makeUnit('B0', { ...cible, mitigationRef: 1000 })],
-    })
-    expect(mou.turns).toBeLessThan(dur.turns)
+  it('K vient de l entrée, pas des unités', () => {
+    const combat = (defenseK: number) =>
+      simulateBattle({
+        seed: 'seuil-entree',
+        defenseK,
+        teamA: [makeUnit('A0', { atk: 1000, critRate: 0, spd: 1000 })],
+        teamB: [makeUnit('B0', { hp: 1_000_000, atk: 1, def: 500 })],
+      })
+    expect(premierCoupSur(combat(100), 'B0')).toBeLessThan(
+      premierCoupSur(combat(1000), 'B0'),
+    )
   })
 })
 
@@ -1732,8 +1734,8 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
     // porteur de FORTIFY ne peut jamais porter BULWARK en même temps, donc
     // cette fixture était structurellement impossible telle que décrite.
     // On exerce la même garde `final > 0` autrement : le makeUnit par défaut
-    // (def: 10, mitigationRef: 100) ne rend PAS des dégâts nuls pour un atk
-    // de 1 — 100/(100+10) * 1 * variance reste ~0,82 à 1,0, arrondi à 1, donc
+    // (def: 10) ne rend PAS des dégâts nuls pour un atk
+    // de 1 — 1000/(1000+10) * 1 * variance reste ~0,82 à 1,0, arrondi à 1, donc
     // FORTIFY empilerait quand même. Une DEF réellement écrasante
     // (1 000 000) écrase le ratio de mitigation et arrondit `final` à 0.
     const r = simulateBattle({
@@ -1787,7 +1789,6 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
           hp: 1_000_000,
           atk: 1,
           def: defBase,
-          mitigationRef,
           palier,
           critRate: 0,
           spd: 1,
@@ -1803,6 +1804,7 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
         }),
       ],
       timeoutTurns: 60,
+      defenseK: mitigationRef,
     })
 
     const hitsOnA0: number[] = []

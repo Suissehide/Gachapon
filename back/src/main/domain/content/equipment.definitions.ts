@@ -147,11 +147,9 @@ const SLOT_MAIN_STATS: Record<EquipmentSlot, (keyof EquipmentBonuses)[]> = {
 // PV et de la DEF %, une carte de bas niveau du plat.
 //
 // La DEF a son PROPRE barème plat, ~2,3× sous celui de l'ATQ. La réduction
-// de dégâts vaut DEF / (référence + DEF), où la référence suit le niveau et
-// le palier de la carte (`mitigationRefFor`) : un bonus plat pèse donc
-// énormément en début de jeu (référence ~180 au niveau 10) et plus rien en
-// fin (~1 670 au niveau 70). Au barème de l'ATQ, une armure légendaire
-// ferait passer un Tank niveau 10 de 25 % à 76 % de réduction.
+// de dégâts vaut DEF / (K + DEF) avec un seuil K fixe (`damageReduction`) :
+// un point de DEF plate vaut le même partout, tandis qu'un bonus en % grandit
+// avec la DEF de la carte — la DEF % est la voie du Tank en fin de jeu.
 const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
   atkFlat: { COMMON: 18, UNCOMMON: 28, RARE: 45, EPIC: 72, LEGENDARY: 115 },
   defFlat: { COMMON: 8, UNCOMMON: 12, RARE: 20, EPIC: 32, LEGENDARY: 50 },

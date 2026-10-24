@@ -1,7 +1,13 @@
 import { describe, expect, it } from '@jest/globals'
 
-import { computeFinalStats, mitigationRefFor } from '../../main/domain/combat/combat-stats.domain'
+import { computeFinalStats, damageReduction } from '../../main/domain/combat/combat-stats.domain'
+import { buildEquipmentCatalog } from '../../main/domain/content/equipment.definitions'
+import {
+  EQUIP_MAX_LEVEL,
+  effectiveEquipmentBonuses,
+} from '../../main/domain/equipment/equipment-progression'
 import { computeSetBonuses, setBonusesFromConfig } from '../../main/domain/equipment/set-bonuses'
+import { PROFILS } from '../helpers/passive-power'
 
 const BASE = {
   baseHp: 200,
@@ -250,42 +256,17 @@ describe('combat-stats: nouvelles stats', () => {
   })
 })
 
-describe('combat-stats: mitigationRefFor', () => {
-  it('vaut la référence brute au niveau 1, palier 1, NORMAL', () => {
-    expect(
-      mitigationRefFor({ level: 1, palier: 1, variant: 'NORMAL', defMitigationRef: 100 }),
-    ).toBe(100)
+describe('combat-stats: damageReduction', () => {
+  it('vaut DEF / (K + DEF)', () => {
+    expect(damageReduction(1000, 1000)).toBeCloseTo(0.5)
+    expect(damageReduction(0, 1000)).toBe(0)
+    expect(damageReduction(-50, 1000)).toBe(0)
   })
 
-  it('suit exactement le facteur d échelle appliqué à la DEF de base', () => {
-    // Le contrat : DEF finale / DEF de base === mitigationRef / defMitigationRef.
-    // C est ce qui rend la réduction de dégâts invariante en progression.
-    const base = { baseHp: 200, baseAtk: 20, baseDef: 10, baseSpd: 100 }
-    for (const [level, palier, variant] of [
-      [70, 7, 'NORMAL'],
-      [35, 4, 'BRILLIANT'],
-      [12, 2, 'HOLOGRAPHIC'],
-    ] as const) {
-      const stats = computeFinalStats({
-        ...base, level, palier, variant, baseStats: BASES_COMBAT,
-      })
-      const ref = mitigationRefFor({ level, palier, variant, defMitigationRef: 100 })
-      // arrondi de computeFinalStats -> tolérance
-      expect(ref / 100).toBeCloseTo(stats.def / base.baseDef, 1)
+  it('est strictement croissante en DEF', () => {
+    for (let d = 0; d < 5000; d += 50) {
+      expect(damageReduction(d + 1, 1000)).toBeGreaterThan(damageReduction(d, 1000))
     }
-  })
-
-  it('la réduction de dégâts d une même carte ne dépend plus du niveau', () => {
-    const baseDef = 14
-    const reduction = (level: number, palier: number) => {
-      const stats = computeFinalStats({
-        baseHp: 200, baseAtk: 20, baseDef, baseSpd: 100, level, palier, variant: 'NORMAL',
-        baseStats: BASES_COMBAT,
-      })
-      const ref = mitigationRefFor({ level, palier, variant: 'NORMAL', defMitigationRef: 100 })
-      return 1 - ref / (ref + stats.def)
-    }
-    expect(reduction(70, 7)).toBeCloseTo(reduction(1, 1), 2)
   })
 })
 
@@ -343,5 +324,44 @@ describe('bonus de set appliqués aux stats finales', () => {
       })
       expect(stats.critDmg).toBe(BASES_COMBAT.critDmg)
     }
+  })
+})
+
+describe('défense : repères de fin de jeu', () => {
+  const DEFENSE_K = 1000
+  const defTank = (variant: 'NORMAL' | 'HOLOGRAPHIC', equipment = [{}]) =>
+    computeFinalStats({
+      ...PROFILS.Tank, level: 70, palier: 7, variant, equipment, baseStats: BASES_COMBAT,
+    }).def
+  const mainStat = (stat: 'defFlat' | 'defPct', rarity: string) => {
+    const piece = buildEquipmentCatalog().find(
+      (r) => r.mainStat === stat && r.rarity === rarity,
+    )
+    if (!piece) {
+      throw new Error(`pas de pièce ${stat} ${rarity}`)
+    }
+    return piece.bonuses as Record<string, number>
+  }
+
+  it('DEF % bat DEF plate en fin de jeu, pour chaque rareté', () => {
+    const nue = damageReduction(defTank('NORMAL'), DEFENSE_K)
+    for (const rarity of ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']) {
+      const gainPct =
+        damageReduction(defTank('NORMAL', [mainStat('defPct', rarity)]), DEFENSE_K) - nue
+      const gainFlat =
+        damageReduction(defTank('NORMAL', [mainStat('defFlat', rarity)]), DEFENSE_K) - nue
+      expect(gainPct).toBeGreaterThanOrEqual(2 * gainFlat)
+    }
+  })
+
+  it('un Tank réaliste reste sous 75 % de réduction hors FORTIFY', () => {
+    // Plastron DEF % légendaire au niveau max, et sur chacune des 7 pièces
+    // une sous-stat DEF % de 12 (tirage moyen de 3-8 % plus un palier).
+    const plastron = effectiveEquipmentBonuses(
+      mainStat('defPct', 'LEGENDARY'), EQUIP_MAX_LEVEL, [{ key: 'defPct', value: 12 }],
+    )
+    const autres = Array.from({ length: 6 }, () => ({ defPct: 12 }))
+    const def = defTank('HOLOGRAPHIC', [plastron, ...autres])
+    expect(damageReduction(def, DEFENSE_K)).toBeLessThanOrEqual(0.75)
   })
 })

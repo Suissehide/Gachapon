@@ -56,12 +56,12 @@ import {
 import {
   TOWER_FLOOR_COUNT,
   towerAoeUnitCount,
-  towerEnemyPower,
+  towerFloorScale,
 } from '../src/main/domain/content/tower.definitions'
 
 const RUNS = Number(process.env.SIM_RUNS ?? 200)
 const BASE_STATS = { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 }
-const DEF_MITIGATION_REF = 100
+const DEFENSE_K = 1000
 const ADV = 1.3
 const DISADV = 1 / 1.3
 
@@ -98,7 +98,7 @@ function grid(): void {
           pct(
             towerWinRate({
               floor,
-              scale: towerEnemyPower(floor).mitigationScale,
+              scale: towerFloorScale(floor),
               aoeUnits: towerAoeUnitCount(floor),
               profile: p,
               runs: RUNS,
@@ -196,7 +196,6 @@ function campaignEnemies(chapter: number, index: number): SimulatorUnit[] {
       ? bossEnemyTeam(chapter, index)
       : normalEnemyTeam(chapter, index)
   return buildEnemySimUnits(team as never, {
-    defMitigationRef: DEF_MITIGATION_REF,
     baseStats: BASE_STATS,
     resolveImage: () => null,
   })
@@ -253,6 +252,7 @@ function campaignWinRate(
       seed: `camp-${chapter}-${index}-${k}`,
       elementAdvantageMult: ADV,
       elementDisadvantageMult: DISADV,
+      defenseK: DEFENSE_K,
     })
     if (sim.won === 'A') {
       wins++

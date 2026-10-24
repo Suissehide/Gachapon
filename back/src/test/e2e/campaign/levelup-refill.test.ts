@@ -77,7 +77,7 @@ describe('Campaign battle level-up → refill énergie', () => {
             palier: 1,
             attackPattern: 'BASIC',
             // Stats écrites à la main (non mises à l'échelle par enemyScale) => 1.
-            mitigationScale: 1,
+           
           },
         ],
         lootTable: {

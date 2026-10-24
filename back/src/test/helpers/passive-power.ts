@@ -11,12 +11,9 @@ import {
   type SimulatorUnit,
   simulateBattle,
 } from '../../main/domain/combat/battle-simulator.domain'
-import {
-  computeFinalStats,
-  mitigationRefFor,
-} from '../../main/domain/combat/combat-stats.domain'
+import { computeFinalStats } from '../../main/domain/combat/combat-stats.domain'
 
-const PROFILS = {
+export const PROFILS = {
   Mage: { baseHp: 252, baseAtk: 61, baseDef: 30, baseSpd: 98 },
   Combattant: { baseHp: 354, baseAtk: 44, baseDef: 43, baseSpd: 96 },
   Tank: { baseHp: 408, baseAtk: 31, baseDef: 55, baseSpd: 88 },
@@ -52,12 +49,6 @@ function unite(
     passiveKey,
     palier: 7,
     level: 70,
-    mitigationRef: mitigationRefFor({
-      level: 70,
-      palier: 7,
-      variant: 'NORMAL',
-      defMitigationRef: 100,
-    }),
   }
 }
 

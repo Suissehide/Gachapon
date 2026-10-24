@@ -18,7 +18,7 @@ const WEAK_BOSS_SPEC = {
   passiveKey: null,
   element: 'FIRE',
   appearance: 'monsters/bosses/BOSS-010',
-  mitigationScale: 1,
+ 
 }
 
 const HP_PER_MEMBER = 1000

@@ -29,7 +29,6 @@ import {
   type SimulatorUnit,
   simulateBattle,
 } from '../../src/main/domain/combat/battle-simulator.domain'
-import { mitigationRefFor } from '../../src/main/domain/combat/combat-stats.domain'
 import {
   ELEMENTS,
   type Element,
@@ -50,7 +49,7 @@ import { buildEquipmentCatalog } from '../../src/main/domain/content/equipment.d
 import {
   TOWER_FLOOR_COUNT,
   towerAoeUnitCount,
-  towerEnemyPower,
+  towerFloorScale,
   towerEnemyStatsAtScale,
 } from '../../src/main/domain/content/tower.definitions'
 import {
@@ -68,7 +67,8 @@ import { setBonusesFromConfig } from '../../src/main/domain/equipment/set-bonuse
 // config, et la calibration doit se faire contre les valeurs par défaut, pas
 // contre le réglage d'une base particulière.
 const BASE_STATS = { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 }
-const DEF_MITIGATION_REF = 100
+/** Seuil de défense K (GlobalConfig `combat.defMitigationRef`). */
+const DEFENSE_K = 1000
 const ELEMENT_ADVANTAGE_MULT = 1.3
 const ELEMENT_DISADVANTAGE_MULT = 1 / 1.3
 
@@ -335,12 +335,6 @@ export function referenceTeam(
       passiveKey: null,
       element: opts.element,
       palier,
-      mitigationRef: mitigationRefFor({
-        level: profile.level,
-        palier,
-        variant: 'NORMAL',
-        defMitigationRef: DEF_MITIGATION_REF,
-      }),
     }
   })
 }
@@ -365,7 +359,6 @@ export function towerEnemiesAtScale(
     appearance: null,
   }))
   return buildEnemySimUnits(specs as never, {
-    defMitigationRef: DEF_MITIGATION_REF,
     baseStats: BASE_STATS,
     resolveImage: () => null,
   })
@@ -396,6 +389,7 @@ export function towerWinRate(opts: {
       seed: `tower-calib-${opts.floor}-${k}`,
       elementAdvantageMult: ELEMENT_ADVANTAGE_MULT,
       elementDisadvantageMult: ELEMENT_DISADVANTAGE_MULT,
+      defenseK: DEFENSE_K,
     })
     if (sim.won === 'A') {
       wins++
@@ -460,9 +454,7 @@ export function towerFloorProfile(floor: number): ReferenceProfile {
 export function towerReferenceWinRate(floor: number, runs = 80): number {
   return towerWinRate({
     floor,
-    // L'échelle réellement seedée pour cet étage : `mitigationScale` EST
-    // l'échelle (cf. towerEnemyStatsAtScale), on ne la recopie donc pas.
-    scale: towerEnemyPower(floor).mitigationScale,
+    scale: towerFloorScale(floor),
     aoeUnits: towerAoeUnitCount(floor),
     profile: towerFloorProfile(floor),
     runs,
@@ -605,8 +597,9 @@ export function campaignProfile(
 
 /**
  * Ennemis d'un étage de campagne, éventuellement mis à l'échelle par `mult`.
- * `mult` ne sert QU'AU FIT (chercher la compensation d'équipement) : à 1, ce
- * sont exactement les ennemis que le seed écrit.
+ * `mult` ne sert QU'AU FIT (chercher la compensation d'équipement) et ne touche
+ * que PV et ATQ, comme l'échelle d'étage du seed : à 1, ce sont exactement les
+ * ennemis que le seed écrit.
  */
 export function campaignEnemies(
   chapter: number,
@@ -621,11 +614,8 @@ export function campaignEnemies(
     ...e,
     baseHp: Math.round(e.baseHp * mult),
     baseAtk: Math.round(e.baseAtk * mult),
-    baseDef: Math.round(e.baseDef * mult),
-    mitigationScale: (e.mitigationScale ?? 1) * mult,
   }))
   return buildEnemySimUnits(scaled as never, {
-    defMitigationRef: DEF_MITIGATION_REF,
     baseStats: BASE_STATS,
     resolveImage: () => null,
   })
@@ -688,6 +678,7 @@ export function campaignWinRate(opts: {
       seed: `camp-calib-${opts.chapter}-${opts.index}-${k}`,
       elementAdvantageMult: ELEMENT_ADVANTAGE_MULT,
       elementDisadvantageMult: ELEMENT_DISADVANTAGE_MULT,
+      defenseK: DEFENSE_K,
     })
     if (sim.won === 'A') {
       wins++
@@ -714,7 +705,6 @@ export function wandererWinRate(opts: {
   const team = normalEnemyTeam(opts.chapter, opts.index)
   const scale = opts.scale ?? wandererSoloScale(opts.chapter, opts.index)
   const enemies = buildEnemySimUnits([soloWandererSpec(team, scale)] as never, {
-    defMitigationRef: DEF_MITIGATION_REF,
     baseStats: BASE_STATS,
     resolveImage: () => null,
   })
@@ -730,6 +720,7 @@ export function wandererWinRate(opts: {
       seed: `wanderer-${opts.chapter}-${opts.index}-${k}`,
       elementAdvantageMult: ELEMENT_ADVANTAGE_MULT,
       elementDisadvantageMult: ELEMENT_DISADVANTAGE_MULT,
+      defenseK: DEFENSE_K,
     })
     if (sim.won === 'A') {
       wins++

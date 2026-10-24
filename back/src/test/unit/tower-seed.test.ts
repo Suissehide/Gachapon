@@ -6,7 +6,10 @@ import {
   FAMILY_ELEMENTS,
   type FamilySlug,
 } from '../../main/domain/content/bestiary.definitions'
-import { RARITY_BASE } from '../../main/domain/content/campaign.definitions'
+import {
+  ENEMY_DEF_MULT,
+  RARITY_BASE,
+} from '../../main/domain/content/campaign.definitions'
 import {
   towerFloorProfile,
   towerReferenceWinRate,
@@ -194,16 +197,16 @@ describe('seed des tours', () => {
     const echelle = p1.baseHp / RARITY_BASE.EPIC.hp
     expect(echelle).toBeGreaterThan(0)
     expect(p1.baseAtk).toBe(Math.round(RARITY_BASE.EPIC.atk * echelle))
-    expect(p1.baseDef).toBe(Math.round(RARITY_BASE.EPIC.def * echelle))
+    expect(p1.baseDef).toBe(Math.round(RARITY_BASE.EPIC.def * ENEMY_DEF_MULT))
     // La vitesse ne suit pas l'échelle de l'étage, seulement son index.
     expect(p1.baseSpd).toBe(RARITY_BASE.EPIC.spd)
   })
 
-  it('chaque ennemi porte son mitigationScale', () => {
+  it('la DEF des ennemis ne suit pas l échelle d étage', () => {
+    const attendu = Math.round(RARITY_BASE.EPIC.def * ENEMY_DEF_MULT)
     for (const e of etages) {
       for (const ennemi of e.enemyTeam) {
-        expect(typeof ennemi.mitigationScale).toBe('number')
-        expect(ennemi.mitigationScale).toBeGreaterThan(0)
+        expect(ennemi.baseDef).toBe(attendu)
       }
     }
   })

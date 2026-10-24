@@ -59,10 +59,9 @@ import {
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 
 // Un ennemi stocké dans TowerFloor.enemyTeam (Json). Même schéma que
-// CampaignStage.enemyTeam (voir campaign.domain.ts) : mitigationScale
-// obligatoire (les ennemis de tour sont seedés à level 1 / palier 1, leur
-// puissance étant pré-cuite via ce facteur — cf. towerEnemyPower côté seed),
-// les quatre stats de stuff optionnelles (surcharge par le seed, aucune tour
+// CampaignStage.enemyTeam (voir campaign.domain.ts) : les ennemis de tour
+// sont seedés à level 1 / palier 1, leur puissance pré-cuite dans leurs stats
+// de base (cf. towerEnemyPower côté seed), les quatre stats de stuff optionnelles (surcharge par le seed, aucune tour
 // n'en surcharge à ce jour).
 const towerEnemyTeamSchema = z.array(enemySpecSchema)
 
@@ -354,14 +353,12 @@ export class TowerDomain {
             lifesteal: battleCfg['combat.baseLifesteal'],
           }
           const teamUnits = await this.#buildPlayerTeam(tx, userId, element, {
-            defMitigationRef: battleCfg['combat.defMitigationRef'],
             baseStats,
             setDefs,
           })
           const enemyUnits = buildEnemySimUnits(
             towerEnemyTeamSchema.parse(towerFloor.enemyTeam),
             {
-              defMitigationRef: battleCfg['combat.defMitigationRef'],
               baseStats,
               resolveImage: (appearance) => this.#resolveEnemyImage(appearance),
             },
@@ -375,6 +372,7 @@ export class TowerDomain {
             elementAdvantageMult: battleCfg['combat.elementAdvantageMult'],
             elementDisadvantageMult:
               battleCfg['combat.elementDisadvantageMult'],
+            defenseK: battleCfg['combat.defMitigationRef'],
           })
 
           const won = sim.won === 'A'
@@ -570,7 +568,6 @@ export class TowerDomain {
     userId: string,
     element: TowerElement,
     opts: {
-      defMitigationRef: number
       baseStats: CombatStatsBaseline
       setDefs: ReturnType<typeof setBonusesFromConfig>
     },

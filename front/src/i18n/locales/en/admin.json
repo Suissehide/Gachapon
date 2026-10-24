@@ -427,7 +427,6 @@
       "baseAtkLabel": "Base ATK",
       "baseDefLabel": "Base DEF",
       "baseSpdLabel": "Base SPD",
-      "mitigationScaleLabel": "Mitigation scale (factor combined with DEF to reduce damage taken, e.g. 12 on seeded bosses)",
       "attackPatternLabel": "Attack pattern",
       "passiveKeyLabel": "Passive (key, empty = none)",
       "save": "Save"

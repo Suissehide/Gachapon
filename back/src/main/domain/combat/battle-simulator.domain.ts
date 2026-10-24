@@ -1,3 +1,4 @@
+import { damageReduction } from './combat-stats.domain'
 import { elementMultiplier, elementRelation } from './element'
 import { PASSIVES, type PassiveKey } from './passives'
 
@@ -34,12 +35,6 @@ export interface SimulatorUnit {
   /** Élément (FIRE/WATER/NATURE/EARTH/LIGHT/DARK) ; null = neutre. */
   element?: string | null
   palier: number
-  /**
-   * Référence de mitigation de l'unité. Doit être mise à l'échelle de la même
-   * façon que sa DEF, sinon l'unité devient en papier ou increvable.
-   * Allié : mitigationRefFor(niveau/palier/variante). Ennemi : defMitigationRef × scale du seed.
-   */
-  mitigationRef: number
   /** Chance de coup critique, en points de pourcentage. */
   critRate: number
   /** Multiplicateur de coup critique, en points de pourcentage (150 = x1,5). */
@@ -55,15 +50,22 @@ export interface SimulatorInput {
   teamB: SimulatorUnit[]
   seed: string
   timeoutTurns?: number
+  /** Seuil de défense K, commun à toutes les unités (défaut DEFAULT_DEFENSE_K). */
+  defenseK?: number
   /** Multiplicateur de dégâts en avantage élémentaire (défaut 1.3). */
   elementAdvantageMult?: number
   /** Multiplicateur de dégâts en désavantage élémentaire (défaut 0.75). */
   elementDisadvantageMult?: number
 }
 
-interface ElementMults {
+/** Seuil de défense par défaut, aligné sur GlobalConfig `combat.defMitigationRef`. */
+export const DEFAULT_DEFENSE_K = 1000
+
+/** Règles de dégâts communes au combat : roue élémentaire et seuil de défense. */
+interface DamageRules {
   adv: number
   dis: number
+  defenseK: number
 }
 
 export interface DamageEntry {
@@ -255,7 +257,6 @@ interface BattleUnit {
   passiveKey: PassiveKey | null
   passiveValuePct: number
   palier: number
-  mitigationRef: number
   critRate: number
   critDmg: number
   armorPen: number
@@ -318,7 +319,6 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     passiveKey,
     passiveValuePct,
     palier: u.palier,
-    mitigationRef: u.mitigationRef,
     critRate: u.critRate,
     critDmg: u.critDmg,
     armorPen: u.armorPen,
@@ -502,16 +502,15 @@ function applyBanner(units: BattleUnit[], side: Side, log: LogEntry[]): void {
 function computeRawDamage(
   attackerEffectiveAtk: number,
   targetDef: number,
-  targetMitigationRef: number,
+  defenseK: number,
   prng: () => number,
   patternMultiplier: number,
 ): number {
   const variance = 0.9 + 0.2 * prng()
-  const k = Math.max(1, targetMitigationRef)
   return (
     attackerEffectiveAtk *
     patternMultiplier *
-    (k / (k + Math.max(0, targetDef))) *
+    (1 - damageReduction(targetDef, defenseK)) *
     variance
   )
 }
@@ -531,8 +530,7 @@ interface StrikeContext {
   prng: () => number
   log: LogEntry[]
   patternMultiplier: number
-  /** Multiplicateurs de la roue élémentaire (avantage / désavantage). */
-  elementMults: ElementMults
+  rules: DamageRules
 }
 
 /**
@@ -807,7 +805,7 @@ function resolveAttackOnTarget(
   prng: () => number,
   log: LogEntry[],
   patternMultiplier: number,
-  elementMults: ElementMults,
+  rules: DamageRules,
 ): DamageEntry {
   // TAUNT — lu et remis à zéro avant l'esquive, pour ne jamais fuir sur un
   // coup suivant non attiré.
@@ -833,7 +831,7 @@ function resolveAttackOnTarget(
   let raw = computeRawDamage(
     resolveAttackerAtk(attacker),
     effectiveDef,
-    target.mitigationRef,
+    rules.defenseK,
     prng,
     patternMultiplier,
   )
@@ -852,8 +850,8 @@ function resolveAttackOnTarget(
   const elMult = elementMultiplier(
     attacker.element,
     target.element,
-    elementMults.adv,
-    elementMults.dis,
+    rules.adv,
+    rules.dis,
   )
   if (elMult !== 1) {
     raw *= elMult
@@ -1045,15 +1043,7 @@ function processDeaths(
 }
 
 function performStrike(ctx: StrikeContext): void {
-  const {
-    attacker,
-    units,
-    targets,
-    prng,
-    log,
-    patternMultiplier,
-    elementMults,
-  } = ctx
+  const { attacker, units, targets, prng, log, patternMultiplier, rules } = ctx
   const damages: DamageEntry[] = []
   const targetIds = targets.map((t) => t.id)
 
@@ -1065,7 +1055,7 @@ function performStrike(ctx: StrikeContext): void {
       prng,
       log,
       patternMultiplier,
-      elementMults,
+      rules,
     )
     damages.push(entry)
   }
@@ -1235,7 +1225,7 @@ function performUnitAction(
   units: BattleUnit[],
   prng: () => number,
   log: LogEntry[],
-  elementMults: ElementMults,
+  rules: DamageRules,
 ): void {
   if (!attacker.alive) {
     return
@@ -1262,7 +1252,7 @@ function performUnitAction(
       prng,
       log,
       patternMultiplier,
-      elementMults,
+      rules,
     })
   }
 }
@@ -1548,7 +1538,7 @@ function runActorTurn(
   units: BattleUnit[],
   prng: () => number,
   log: LogEntry[],
-  elementMults: ElementMults,
+  rules: DamageRules,
 ): void {
   applyDotsToUnit(actor, log)
   if (actor.alive && actor.stunned) {
@@ -1563,7 +1553,7 @@ function runActorTurn(
     })
   } else if (actor.alive) {
     actor.stunImmune = false
-    performUnitAction(actor, units, prng, log, elementMults)
+    performUnitAction(actor, units, prng, log, rules)
     // Compteur de cadence : incrémenté après l'action, jamais avant — les
     // passifs de cadence (tâche 9) se basent sur (attackCount + 1) % N.
     actor.attackCount += 1
@@ -1597,9 +1587,10 @@ export function simulateBattle(input: SimulatorInput): SimulatorResult {
 
   const prng = mulberry32(hashSeed(input.seed))
 
-  const elementMults: ElementMults = {
+  const rules: DamageRules = {
     adv: input.elementAdvantageMult ?? 1.3,
     dis: input.elementDisadvantageMult ?? 0.75,
+    defenseK: input.defenseK ?? DEFAULT_DEFENSE_K,
   }
 
   applyBanner(units, 'A', log)
@@ -1627,7 +1618,7 @@ export function simulateBattle(input: SimulatorInput): SimulatorResult {
     }
     elapsed += next.dt
 
-    runActorTurn(next.actor, units, prng, log, elementMults)
+    runActorTurn(next.actor, units, prng, log, rules)
 
     actions += 1
     log.push({

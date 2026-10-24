@@ -48,7 +48,7 @@ describe('admin raid routes', () => {
         spec: {
           baseHp: 100, baseAtk: 10, baseDef: 5, baseSpd: 100, level: 1, palier: 1,
           attackPattern: 'BASIC', passiveKey: null, element: 'WATER',
-          appearance: 'monsters/bosses/BOSS-011', mitigationScale: 1,
+          appearance: 'monsters/bosses/BOSS-011',
         },
       },
       update: {
@@ -57,7 +57,7 @@ describe('admin raid routes', () => {
         spec: {
           baseHp: 100, baseAtk: 10, baseDef: 5, baseSpd: 100, level: 1, palier: 1,
           attackPattern: 'BASIC', passiveKey: null, element: 'WATER',
-          appearance: 'monsters/bosses/BOSS-011', mitigationScale: 1,
+          appearance: 'monsters/bosses/BOSS-011',
         },
       },
     })
@@ -93,7 +93,7 @@ describe('admin raid routes', () => {
         spec: {
           baseHp: 100, baseAtk: 20, baseDef: 5, baseSpd: 100, level: 1, palier: 1,
           attackPattern: 'AOE_3', passiveKey: null, element: 'WATER',
-          appearance: 'monsters/bosses/BOSS-015', mitigationScale: 2,
+          appearance: 'monsters/bosses/BOSS-015',
         },
       },
     })

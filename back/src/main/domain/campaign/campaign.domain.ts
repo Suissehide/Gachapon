@@ -18,7 +18,6 @@ import {
 import {
   type CombatStatsBaseline,
   computeFinalStats,
-  mitigationRefFor,
 } from '../combat/combat-stats.domain'
 import { CAMPAIGN_TEAM_KEY } from '../combat/combat-team-keys'
 import {
@@ -92,12 +91,6 @@ const enemySpecSchema = z.object({
   // Sous-chemin MinIO sans cards/ ni .png, ex. "monsters/slimes/SLIME-001".
   // Purement cosmétique. Absent => placeholder côté front.
   appearance: z.string().nullish(),
-  // Facteur d'échelle de la puissance de l'ennemi, écrit par le seed
-  // (enemyScale). Obligatoire : les ennemis sont seedés à level 1 / palier 1
-  // avec leur puissance pré-cuite dans leurs stats de base, donc un
-  // mitigationRef dérivé du niveau vaudrait toujours 100 pendant que leur DEF
-  // est déjà multipliée par ce facteur — voir mitigationRefFor vs #buildEnemySimUnits.
-  mitigationScale: z.number(),
   // Stats de stuff : absentes => valeurs de base (GlobalConfig). Point
   // d'extension pour un seed futur (ex. boss « bourreau » à 40 % de critRate) ;
   // aucun ennemi ne les surcharge à ce jour.
@@ -1570,13 +1563,11 @@ export class CampaignDomain {
       tx,
       userId,
       userCardIds,
-      cfg['combat.defMitigationRef'],
       baseStats,
       setDefs,
     )
     const enemyUnits = this.#buildEnemySimUnits(
       enemyTeamSchema.parse(stage.enemyTeam),
-      cfg['combat.defMitigationRef'],
       baseStats,
     )
     const seed = `${userId}:${stage.id}:${Date.now()}`
@@ -1586,6 +1577,7 @@ export class CampaignDomain {
       seed,
       elementAdvantageMult: cfg['combat.elementAdvantageMult'],
       elementDisadvantageMult: cfg['combat.elementDisadvantageMult'],
+      defenseK: cfg['combat.defMitigationRef'],
     })
     return {
       won: sim.won === 'A',
@@ -1600,7 +1592,6 @@ export class CampaignDomain {
     tx: PrimaTransactionClient,
     userId: string,
     userCardIds: string[],
-    defMitigationRef: number,
     baseStats: CombatStatsBaseline,
     setDefs: Record<SetKey, SetDefinition>,
   ): Promise<SimulatorUnit[]> {
@@ -1656,12 +1647,6 @@ export class CampaignDomain {
           passiveKey: u.card.passiveKey,
           element: u.card.element,
           palier: u.palier,
-          mitigationRef: mitigationRefFor({
-            level: u.level,
-            palier: u.palier,
-            variant: u.variant,
-            defMitigationRef,
-          }),
         }
       })
   }
@@ -1678,7 +1663,6 @@ export class CampaignDomain {
 
   #buildEnemySimUnits(
     enemyTeam: EnemySpec[],
-    defMitigationRef: number,
     baseStats: CombatStatsBaseline,
   ): SimulatorUnit[] {
     return enemyTeam.map((e, idx) => {
@@ -1716,7 +1700,6 @@ export class CampaignDomain {
         passiveKey: e.passiveKey ?? null,
         element: e.element ?? null,
         palier: e.palier,
-        mitigationRef: defMitigationRef * e.mitigationScale,
       }
     })
   }

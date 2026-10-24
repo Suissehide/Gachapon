@@ -53,7 +53,7 @@ const PROBE_ENEMY_TEAM = [
     level: 1,
     palier: 1,
     attackPattern: 'BASIC',
-    mitigationScale: 1,
+   
   },
 ]
 

@@ -8,7 +8,7 @@
  */
 
 import type { TowerElement } from '../tower/tower-slots'
-import { RARITY_BASE } from './campaign.definitions'
+import { ENEMY_DEF_MULT, RARITY_BASE } from './campaign.definitions'
 
 // Profil épique de campagne, même source unique que les tours.
 const BASE = RARITY_BASE.EPIC
@@ -58,7 +58,7 @@ export function raidBossSpec(element: TowerElement) {
     // rester conforme à enemySpecSchema.
     baseHp: BASE.hp,
     baseAtk: Math.round(BASE.atk * RAID_BOSS_SCALE),
-    baseDef: Math.round(BASE.def * RAID_BOSS_SCALE),
+    baseDef: Math.round(BASE.def * ENEMY_DEF_MULT),
     baseSpd: BASE.spd,
     level: 1,
     palier: 1,
@@ -66,7 +66,6 @@ export function raidBossSpec(element: TowerElement) {
     passiveKey: null,
     element,
     appearance: RAID_BOSS_APPEARANCE[element],
-    mitigationScale: RAID_BOSS_SCALE,
   }
 }
 

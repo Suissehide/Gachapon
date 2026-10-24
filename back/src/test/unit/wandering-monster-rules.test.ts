@@ -6,6 +6,8 @@ import {
   pickSpawnDelayMinutes,
   soloWandererSpec,
 } from '../../main/domain/campaign/wandering-monster-rules'
+import { enemyTeamSchema } from '../../main/domain/campaign/campaign.domain'
+import { enemySpecSchema } from '../../main/domain/combat/sim-units'
 
 describe('pickSpawnDelayMinutes', () => {
   it('délai entre 60 et 360 minutes', () => {
@@ -85,5 +87,19 @@ describe('soloWandererSpec', () => {
   it('un boss, déjà seul, est rendu tel quel', () => {
     const boss = { ...enemy(50, 'FIRE'), attackPattern: 'AOE_3' }
     expect(soloWandererSpec([boss], 1.5)).toBe(boss)
+  })
+})
+
+describe('schémas d ennemis stockés en JSON', () => {
+  // Les lignes en base peuvent encore porter une clé que le moteur n'utilise
+  // plus : elles doivent se lire, pas faire échouer un combat.
+  const ennemi = {
+    baseHp: 100, baseAtk: 10, baseDef: 10, baseSpd: 100,
+    level: 1, palier: 1, mitigationScale: 12,
+  }
+
+  it('un enemyTeam qui porte encore mitigationScale se parse', () => {
+    expect(() => enemyTeamSchema.parse([ennemi])).not.toThrow()
+    expect(() => enemySpecSchema.parse(ennemi)).not.toThrow()
   })
 })

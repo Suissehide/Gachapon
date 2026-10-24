@@ -76,7 +76,6 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
       baseAtk: boss.spec.baseAtk as number | undefined,
       baseDef: boss.spec.baseDef as number | undefined,
       baseSpd: boss.spec.baseSpd as number | undefined,
-      mitigationScale: boss.spec.mitigationScale as number | undefined,
       attackPattern: boss.spec.attackPattern ?? 'BASIC',
       passiveKey: boss.spec.passiveKey ?? '',
     },
@@ -95,9 +94,6 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
         }
         if (value.baseSpd === undefined) {
           fields.baseSpd = t('raid.requiredValue')
-        }
-        if (value.mitigationScale === undefined) {
-          fields.mitigationScale = t('raid.requiredValue')
         }
         if (Object.keys(fields).length > 0) {
           return { fields, form: Object.values(fields)[0] }
@@ -120,7 +116,6 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
             baseAtk: Number(value.baseAtk),
             baseDef: Number(value.baseDef),
             baseSpd: Number(value.baseSpd),
-            mitigationScale: Number(value.mitigationScale),
             attackPattern: value.attackPattern,
             passiveKey: value.passiveKey || null,
           },
@@ -156,9 +151,6 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
         </form.AppField>
         <form.AppField name="baseSpd">
           {(f) => <f.Number label={t('raid.boss.baseSpdLabel')} />}
-        </form.AppField>
-        <form.AppField name="mitigationScale">
-          {(f) => <f.Number label={t('raid.boss.mitigationScaleLabel')} />}
         </form.AppField>
         <form.AppField name="attackPattern">
           {(f) => (

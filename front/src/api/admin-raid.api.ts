@@ -21,7 +21,6 @@ export type RaidBossSpec = {
   passiveKey?: string | null
   element?: string | null
   appearance?: string | null
-  mitigationScale: number
   critRate?: number
   critDmg?: number
   armorPen?: number

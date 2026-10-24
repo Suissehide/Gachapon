@@ -148,7 +148,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:BLESSING.describe', {
-        value: formatPct((3 + p) / 2, currentLocale()),
+        value: formatPct(((3 + p) * 2) / 5, currentLocale()),
       })
     },
   },
@@ -157,7 +157,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:SANCTUARY.describe', {
-        value: formatPct((3 + 2 * p) / 10, currentLocale()),
+        value: formatPct(((3 + 2 * p) * 2) / 25, currentLocale()),
       })
     },
   },

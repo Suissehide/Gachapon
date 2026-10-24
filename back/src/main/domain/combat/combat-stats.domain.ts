@@ -89,35 +89,14 @@ function palierMultiplier(palier: number): number {
 }
 
 /**
- * Référence de mitigation d'une unité : reproduit exactement le facteur d'échelle
- * appliqué à la DEF de base par `computeStat` (niveau, variante, palier), mais
- * PAS les bonus d'équipement.
- *
- * C'est volontaire : la DEF de base devient invariante en progression (un Tank
- * réduit autant les dégâts au niveau 1 qu'au niveau 70), tandis que l'équipement
- * apporte un gain de mitigation réel. Sans ça, la constante fixe de l'ancienne
- * formule faisait passer un Tank épique de 15 % à 73 % de réduction par simple
- * montée en niveau.
- *
- * Même remarque pour `skillModifiers.defPct` : `computeStat` l'agrège dans la
- * DEF finale au même titre que l'équipement (voir `computeFinalStats`), mais
- * cette référence ne le reproduit pas non plus. Un futur skill accordant de la
- * DEF en pourcentage casserait donc l'invariance exactement comme le ferait
- * l'équipement — c'est délibéré, pas un oubli.
+ * Part des dégâts absorbée par la DEF : `DEF / (K + DEF)`, K étant le seuil
+ * unique du jeu (GlobalConfig `combat.defMitigationRef`). Strictement
+ * croissante en DEF : une carte qui a plus de DEF encaisse toujours mieux,
+ * quels que soient son niveau, sa variante ou son palier.
  */
-export function mitigationRefFor(input: {
-  level: number
-  palier: number
-  variant: CardVariant
-  defMitigationRef: number
-}): number {
-  const { level, palier, variant, defMitigationRef } = input
-  return (
-    defMitigationRef *
-    levelMultiplier(level) *
-    VARIANT_MULT[variant] *
-    palierMultiplier(palier)
-  )
+export function damageReduction(def: number, k: number): number {
+  const d = Math.max(0, def)
+  return d / (Math.max(1, k) + d)
 }
 
 /**

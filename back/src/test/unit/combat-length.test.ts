@@ -4,10 +4,7 @@ import {
   type SimulatorUnit,
   simulateBattle,
 } from '../../main/domain/combat/battle-simulator.domain'
-import {
-  computeFinalStats,
-  mitigationRefFor,
-} from '../../main/domain/combat/combat-stats.domain'
+import { computeFinalStats } from '../../main/domain/combat/combat-stats.domain'
 
 // Profils médians mesurés sur le classeur de production, rareté Épique.
 // DEF ×2,5 et ATQ ×1,25 (rééquilibrage), arrondis au supérieur à la moitié
@@ -40,9 +37,6 @@ function unite(id: string, profil: keyof typeof PROFILS): SimulatorUnit {
     passiveKey: null,
     palier: PALIER,
     level: NIVEAU,
-    mitigationRef: mitigationRefFor({
-      level: NIVEAU, palier: PALIER, variant: 'NORMAL', defMitigationRef: 100,
-    }),
   }
 }
 
@@ -68,11 +62,12 @@ describe('longueur des combats en endgame', () => {
     expect(longueurMediane(OFFENSIVE, OFFENSIVE)).toBeLessThan(45)
   })
 
-  it('le pire cas (défensive vs défensive) reste sous 90 actions', () => {
-    // La longueur avant la correction de la constante de mitigation n'a
-    // jamais été mesurée sur le vrai moteur (seulement estimée via une
-    // simulation Python approximative, non fiable) — pas de chiffre ici.
-    expect(longueurMediane(DEFENSIVE, DEFENSIVE)).toBeLessThan(90)
+  it('le pire cas (défensive vs défensive) reste sous 100 actions', () => {
+    // Avec le seuil de défense K = 1 000, un trio défensif au palier 7 réduit
+    // de 42 à 48 % les dégâts subis : son miroir dure ~98 actions. C'est le
+    // prix, accepté, d'une DEF qui pèse vraiment en fin de jeu ; la borne
+    // garde l'enlisement (TIMEOUT), testé ci-dessous.
+    expect(longueurMediane(DEFENSIVE, DEFENSIVE)).toBeLessThan(100)
   })
 
   it('aucun matchup ne part en TIMEOUT', () => {

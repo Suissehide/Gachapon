@@ -358,7 +358,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: (3 + p) / 2 }
+      return { valuePct: ((3 + p) * 2) / 5 }
     },
     describe(palier) {
       return localizedDescribe('BLESSING', clampPalier(palier))
@@ -372,7 +372,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: (3 + 2 * p) / 10 }
+      return { valuePct: ((3 + 2 * p) * 2) / 25 }
     },
     describe(palier) {
       return localizedDescribe('SANCTUARY', clampPalier(palier))

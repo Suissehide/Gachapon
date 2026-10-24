@@ -162,17 +162,17 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Bénédiction',
     labelEn: 'Blessing',
     describeFr: (p) =>
-      `Soigne l'allié le plus faible de ${pct((3 + p) / 2, 'fr')} % de ses PV max en fin de tour`,
+      `Soigne l'allié le plus faible de ${pct(((3 + p) * 2) / 5, 'fr')} % de ses PV max en fin de tour`,
     describeEn: (p) =>
-      `Heals the weakest ally for ${pct((3 + p) / 2, 'en')}% of their max HP at the end of the turn`,
+      `Heals the weakest ally for ${pct(((3 + p) * 2) / 5, 'en')}% of their max HP at the end of the turn`,
   },
   SANCTUARY: {
     labelFr: 'Sanctuaire',
     labelEn: 'Sanctuary',
     describeFr: (p) =>
-      `Soigne toute l'équipe de ${pct((3 + 2 * p) / 10, 'fr')} % des PV max en fin de tour`,
+      `Soigne toute l'équipe de ${pct(((3 + 2 * p) * 2) / 25, 'fr')} % des PV max en fin de tour`,
     describeEn: (p) =>
-      `Heals the whole team for ${pct((3 + 2 * p) / 10, 'en')}% of max HP at the end of the turn`,
+      `Heals the whole team for ${pct(((3 + 2 * p) * 2) / 25, 'en')}% of max HP at the end of the turn`,
   },
 
   BURN: {

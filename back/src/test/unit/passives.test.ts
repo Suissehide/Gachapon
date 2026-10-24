@@ -110,15 +110,15 @@ describe('passives', () => {
   })
 
   describe('BLESSING', () => {
-    it('2% at P1, 4.5% at P6', () => {
-      expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(2)
-      expect(PASSIVES.BLESSING.compute(6).valuePct).toBe(4.5)
+    it('1.6% at P1, 3.6% at P6', () => {
+      expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(1.6)
+      expect(PASSIVES.BLESSING.compute(6).valuePct).toBe(3.6)
     })
   })
   describe('SANCTUARY', () => {
-    it('0.5% at P1, 1.5% at P6', () => {
-      expect(PASSIVES.SANCTUARY.compute(1).valuePct).toBe(0.5)
-      expect(PASSIVES.SANCTUARY.compute(6).valuePct).toBe(1.5)
+    it('0.4% at P1, 1.2% at P6', () => {
+      expect(PASSIVES.SANCTUARY.compute(1).valuePct).toBe(0.4)
+      expect(PASSIVES.SANCTUARY.compute(6).valuePct).toBe(1.2)
     })
   })
   describe('BURN', () => {
