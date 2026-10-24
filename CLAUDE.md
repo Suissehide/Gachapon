@@ -133,6 +133,7 @@ SEO postbuild — `scripts/prerender-seo.mjs` rewrites per-route `<title>`/`<met
 | `popup.tsx` | `Popup` — centered modal (Radix Dialog), `size`: default·lg·xl; `PopupTitle` takes `icon`/`subtitle` |
 | `sheet.tsx` | `Sheet` — slide-in panel, `side`: top·bottom·left·right (default right) |
 | `popover.tsx` | `PopoverRoot/Trigger/Content/Anchor/Close/Arrow` (Radix) |
+| `tooltip.tsx` | `Tooltip` — infobulle au survol/focus (Radix, délai 150 ms) : `content`, `side`, `delayDuration` ; préférer à l'attribut `title` |
 | `dropdownMenu.tsx` | Styled Radix DropdownMenu parts (`DropdownMenuCustomContent`, `…Item`, `…CheckboxItem`, …) — compose with raw `DropdownMenu.Root/Trigger` |
 | `dropdownFilter.tsx` | `DropdownFilter` (default export) — filter menu: `filters[] {id,label,checked,icon,colorClass}`, `onFilterChange`, `onClear` |
 | `segmentedControl.tsx` | `SegmentedControl<T>` — generic tabs: `options[]`, `value`, `onChange`, `stretch` |

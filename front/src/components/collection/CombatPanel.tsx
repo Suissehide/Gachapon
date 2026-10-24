@@ -47,6 +47,7 @@ import {
   statColorVar,
 } from '../../utils/cardStats'
 import { Button } from '../ui/button'
+import { Tooltip } from '../ui/tooltip.tsx'
 
 type Props = {
   userCardId: string
@@ -379,35 +380,34 @@ function StatTile({
   // s'ajoute à droite du nombre au lieu de pousser toute la ligne, le socle
   // gardant le plus souvent le nombre de chiffres du total (tabular-nums).
   return (
-    <div
-      title={hint}
-      className="flex flex-col gap-1.5 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3"
-    >
-      <span className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.1em] text-[rgba(27,23,38,0.5)]">
-        <span className="flex" style={{ color: accent }}>
-          {icon}
-        </span>
-        {label}
-      </span>
-      <span className="font-display text-[22px] font-extrabold leading-none tabular-nums text-text">
-        <span className={scindable ? 'group-hover:hidden' : undefined}>
-          {formatNumber(total, locale)}
-          {suffix}
-        </span>
-        {scindable && (
-          <span className="hidden group-hover:inline">
-            {formatNumber(socle, locale)}
-            {suffix}
-            <span className="text-[16px]" style={{ color: accent }}>
-              {' '}
-              {apport > 0 ? '+' : '−'}
-              {formatNumber(Math.abs(apport), locale)}
-              {suffix}
-            </span>
+    <Tooltip content={hint}>
+      <div className="flex flex-col gap-1.5 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3">
+        <span className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.1em] text-[rgba(27,23,38,0.5)]">
+          <span className="flex" style={{ color: accent }}>
+            {icon}
           </span>
-        )}
-      </span>
-    </div>
+          {label}
+        </span>
+        <span className="font-display text-[22px] font-extrabold leading-none tabular-nums text-text">
+          <span className={scindable ? 'group-hover:hidden' : undefined}>
+            {formatNumber(total, locale)}
+            {suffix}
+          </span>
+          {scindable && (
+            <span className="hidden group-hover:inline">
+              {formatNumber(socle, locale)}
+              {suffix}
+              <span className="text-[16px]" style={{ color: accent }}>
+                {' '}
+                {apport > 0 ? '+' : '−'}
+                {formatNumber(Math.abs(apport), locale)}
+                {suffix}
+              </span>
+            </span>
+          )}
+        </span>
+      </div>
+    </Tooltip>
   )
 }
 
