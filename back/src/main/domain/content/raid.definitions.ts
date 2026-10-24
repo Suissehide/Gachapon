@@ -20,7 +20,8 @@ const BASE = RARITY_BASE.EPIC
  * palier 5, gear epic, un contre-pick) subit ~8,7 attaques du boss en
  * moyenne avant d'être anéantie — dans la cible de 7 à 9 tours sur 10 — donc
  * la valeur provisoire est conservée telle quelle plutôt que déplacée à
- * l'aveugle.
+ * l'aveugle. Elle ne porte que sur l'ATQ : la DEF du boss suit
+ * ENEMY_DEF_MULT, comme tous les ennemis.
  */
 export const RAID_BOSS_SCALE = 12
 

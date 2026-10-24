@@ -61,8 +61,8 @@ type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 // Un ennemi stocké dans TowerFloor.enemyTeam (Json). Même schéma que
 // CampaignStage.enemyTeam (voir campaign.domain.ts) : les ennemis de tour
 // sont seedés à level 1 / palier 1, leur puissance pré-cuite dans leurs stats
-// de base (cf. towerEnemyPower côté seed), les quatre stats de stuff optionnelles (surcharge par le seed, aucune tour
-// n'en surcharge à ce jour).
+// de base (cf. towerEnemyPower côté seed), les quatre stats de stuff
+// optionnelles (surcharge par le seed, aucune tour n'en surcharge à ce jour).
 const towerEnemyTeamSchema = z.array(enemySpecSchema)
 
 // lootTable JSON d'un TowerFloor (prisma/seed/tower.ts:towerFloorLoot).

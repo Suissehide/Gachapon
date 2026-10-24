@@ -103,9 +103,8 @@ type SoloSource = {
  * seule unité qui frappe toute l'équipe (AOE_3). Il porte les PV cumulés de
  * l'équipe et l'attaque, la défense et la vitesse moyennes ; `scale`
  * (`wandererSoloScale`) multiplie PV et attaque pour que le monstre seul soit
- * aussi dur que l'étage. Le reste
- * (apparence, élément, passif, mitigation) vient de l'ennemi de tête. Un
- * étage de boss est déjà solo : rendu tel quel.
+ * aussi dur que l'étage. Le reste (apparence, élément, passif) vient de
+ * l'ennemi de tête. Un étage de boss est déjà solo : rendu tel quel.
  */
 export function soloWandererSpec<T extends SoloSource>(
   team: T[],

@@ -160,6 +160,35 @@ describe('POST /combat/debug/battle', () => {
     expect(res1.json()).toEqual(res2.json())
   })
 
+  it('applique le seuil de défense K de la config', async () => {
+    const { configService } = (app as any).iocContainer
+    const premiersDegats = async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/combat/debug/battle',
+        headers: { cookie: adminCookies, 'content-type': 'application/json' },
+        payload: {
+          teamA: sampleTeam('A'),
+          teamB: sampleTeam('B').map((u) => ({ ...u, def: 500 })),
+          seed: 'seuil-config',
+        },
+      })
+      expect(res.statusCode).toBe(200)
+      const attaque = (res.json().log as { type: string; damages?: { final: number }[] }[])
+        .find((e) => e.type === 'ATTACK')
+      return attaque?.damages?.[0]?.final ?? 0
+    }
+    try {
+      await configService.set('combat.defMitigationRef', 100)
+      const k100 = await premiersDegats()
+      await configService.set('combat.defMitigationRef', 1000)
+      const k1000 = await premiersDegats()
+      expect(k100).toBeLessThan(k1000)
+    } finally {
+      await configService.set('combat.defMitigationRef', 1000)
+    }
+  })
+
   it('accepts a palier-7 unit (card max palier)', async () => {
     const teamA = sampleTeam('A').map((u) => ({ ...u, palier: 7 }))
     const res = await app.inject({
