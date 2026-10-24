@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { Card, CardVariant } from '../../constants/card.constant'
 import { PASSIVE_LABELS } from '../../constants/passives.constant'
-import i18n, { currentLocale, type Locale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useAscendCard } from '../../queries/useAscendCard'
 import {
@@ -37,6 +37,7 @@ import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import {
   computePower,
+  defReductionHint,
   displayStatBases,
   dustCostNextLevel,
   finalSpeed,
@@ -326,26 +327,6 @@ export function CombatPanel({
       )}
     </>
   )
-}
-
-/**
- * « −X % de dégâts subis » : part des dégâts absorbée par la DEF,
- * `DEF / (K + DEF)`. Une décimale sous 10 %, sinon une carte de bas niveau
- * afficherait « −0 % » ; rien sans DEF, ni sans seuil K valide (une config
- * en cache d'avant l'apparition du champ donnerait « −NaN % »).
- */
-function defReductionHint(
-  def: number,
-  k: number,
-  locale: Locale,
-): string | undefined {
-  if (def <= 0 || !Number.isFinite(k) || k <= 0) {
-    return undefined
-  }
-  const pct = (def / (k + def)) * 100
-  return i18n.t('common:stats.defReduction', {
-    pct: formatNumber(pct, locale, { maximumFractionDigits: pct < 10 ? 1 : 0 }),
-  })
 }
 
 function StatTile({

@@ -32,6 +32,7 @@ import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
 import {
   activeSetsForCard,
+  defReductionHint,
   scaledBaseBonus,
   statColorVar,
 } from '../../utils/cardStats.ts'
@@ -55,6 +56,7 @@ import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
 import { Label } from '../ui/label.tsx'
 import { Switch } from '../ui/switch.tsx'
+import { Tooltip } from '../ui/tooltip.tsx'
 import { SLOT_ICONS, SLOT_LABELS, SLOT_ORDER } from './EquipmentSlotsPanel.tsx'
 
 const STAT_LABEL: Record<LabStat, string> = {
@@ -1172,6 +1174,8 @@ function StatsPanel({
   const { t } = useTranslation('collection')
   const locale = currentLocale()
   const show = prev ?? cur
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const defHint = defReductionHint(show.def, economy.combat.defenseK, locale)
   const setDef = new Map<string, EquipmentSetDefinition>(
     setDefs.map((d) => [d.key, d]),
   )
@@ -1271,9 +1275,11 @@ function StatsPanel({
               >
                 {g > 0 ? `+${fmt(k, g)}` : '—'}
               </span>
-              <b className="text-right font-display text-[15px] font-extrabold tabular-nums">
-                {fmt(k, show[k])}
-              </b>
+              <Tooltip content={k === 'def' ? defHint : undefined}>
+                <b className="text-right font-display text-[15px] font-extrabold tabular-nums">
+                  {fmt(k, show[k])}
+                </b>
+              </Tooltip>
               <span className="text-right">
                 {prev && <Delta v={prev[k] - cur[k]} k={k} />}
               </span>

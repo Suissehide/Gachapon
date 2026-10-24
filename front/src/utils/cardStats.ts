@@ -4,7 +4,8 @@ import type {
   EquipmentSetKey,
 } from '../api/equipment.api'
 import type { CardRarity, CardVariant } from '../constants/card.constant'
-import i18n from '../i18n/index.ts'
+import i18n, { type Locale } from '../i18n/index.ts'
+import { formatNumber } from '../libs/utils.ts'
 
 const VARIANT_MULT: Record<CardVariant, number> = {
   NORMAL: 1.0,
@@ -636,4 +637,24 @@ export function formatBonusKey(key: string): string {
 
 export function isAtTopOfPalier(level: number, palier: number): boolean {
   return level === maxLevelInPalier(palier)
+}
+
+/**
+ * « −X % de dégâts subis » : part des dégâts absorbée par la DEF,
+ * `DEF / (K + DEF)`. Une décimale sous 10 %, sinon une carte de bas niveau
+ * afficherait « −0 % » ; rien sans DEF, ni sans seuil K valide (une config
+ * en cache d'avant l'apparition du champ donnerait « −NaN % »).
+ */
+export function defReductionHint(
+  def: number,
+  k: number,
+  locale: Locale,
+): string | undefined {
+  if (def <= 0 || !Number.isFinite(k) || k <= 0) {
+    return undefined
+  }
+  const pct = (def / (k + def)) * 100
+  return i18n.t('common:stats.defReduction', {
+    pct: formatNumber(pct, locale, { maximumFractionDigits: pct < 10 ? 1 : 0 }),
+  })
 }

@@ -23,7 +23,6 @@ import {
   statColorVar,
 } from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
-import { Tooltip } from '../ui/tooltip.tsx'
 
 // Rang de rareté, pour la jauge de 5 pastilles de l'en-tête (Commune 1/5 …
 // Légendaire 5/5). Le handoff la veut lisible d'un coup d'œil, avant même de
@@ -146,14 +145,6 @@ export function EquipmentDropCard({
   const SlotIcon = SLOT_ICONS[drop.slot]
   const main = mainStat(drop, equipLevelScale)
   const subs = drop.substats.slice(0, 4)
-  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
-  const defFormula = t('common:stats.defFormula', {
-    k: formatNumber(economy.combat.defenseK, locale),
-  })
-  // La valeur d'une ligne de DEF (+20, +3 %) ne dit rien de la réduction de
-  // dégâts : son infobulle rappelle la formule.
-  const statHint = (key: string) =>
-    key === 'defFlat' || key === 'defPct' ? defFormula : undefined
 
   return (
     <div
@@ -241,11 +232,9 @@ export function EquipmentDropCard({
           <span className="font-mono text-[11px] font-bold tracking-[0.16em] text-[color-mix(in_oklab,var(--sc)_70%,var(--text))]">
             {formatBonusKey(main.key)}
           </span>
-          <Tooltip content={statHint(main.key)}>
-            <span className="ml-auto font-display text-[26px] font-extrabold leading-none tabular-nums text-text">
-              {formatValue(main.key, main.value)}
-            </span>
-          </Tooltip>
+          <span className="ml-auto font-display text-[26px] font-extrabold leading-none tabular-nums text-text">
+            {formatValue(main.key, main.value)}
+          </span>
         </div>
       )}
 
@@ -273,11 +262,9 @@ export function EquipmentDropCard({
               >
                 {formatBonusKey(s.key)}
               </span>
-              <Tooltip content={statHint(s.key)}>
-                <span className="ml-auto shrink-0 font-display text-sm font-extrabold tabular-nums text-text">
-                  {formatValue(s.key, s.value)}
-                </span>
-              </Tooltip>
+              <span className="ml-auto shrink-0 font-display text-sm font-extrabold tabular-nums text-text">
+                {formatValue(s.key, s.value)}
+              </span>
               {highlight?.key === s.key && (
                 <span className="shrink-0 font-mono text-[10px] font-bold text-emerald-600 tabular-nums">
                   {formatValue(s.key, highlight.delta)}
