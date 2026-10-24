@@ -101,7 +101,8 @@
     "armorPen": "ARMOR PEN",
     "armorPenShort": "ARM. PEN",
     "lifesteal": "LIFESTEAL",
-    "defReduction": "−{{pct}}% damage taken"
+    "defReduction": "−{{pct}}% damage taken",
+    "defFormula": "Damage reduction = DEF / ({{k}} + DEF)"
   },
   "gold": {
     "amount": "{{amount}} gold",

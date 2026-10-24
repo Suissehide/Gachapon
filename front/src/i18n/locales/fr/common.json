@@ -101,7 +101,8 @@
     "armorPen": "PÉNÉTRATION ARMURE",
     "armorPenShort": "PÉNÉ. ARMURE",
     "lifesteal": "VOL DE VIE",
-    "defReduction": "−{{pct}} % de dégâts subis"
+    "defReduction": "−{{pct}} % de dégâts subis",
+    "defFormula": "Réduction des dégâts subis = DEF / ({{k}} + DEF)"
   },
   "gold": {
     "amount": "{{amount}} or",
