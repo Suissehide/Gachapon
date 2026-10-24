@@ -20,21 +20,31 @@ export const DEFAULT_DUMMY: DummySpec = {
   attackPattern: 'BASIC',
 }
 
+/** Réglages des mannequins, bornes alignées sur le back. */
+export const dummyListSchema = z
+  .array(
+    z.object({
+      element: z.enum(ELEMENT_ORDER).nullable(),
+      def: z.number().int().min(0).max(100_000),
+      atk: z.number().int().min(0).max(100_000),
+      attackPattern: z.enum(ATTACK_PATTERNS),
+    }),
+  )
+  .min(1)
+  .max(MAX_DUMMIES)
+
 /**
- * Réglages des mannequins, portés par l'URL : le combat les relit, et
- * « Réglages » y revient sans rien perdre. Bornes alignées sur le back.
+ * Combat : les réglages viennent toujours de l'URL, la page de réglages les
+ * y met avant d'y naviguer.
  */
 export const dummySearchSchema = z.object({
-  dummies: z
-    .array(
-      z.object({
-        element: z.enum(ELEMENT_ORDER).nullable(),
-        def: z.number().int().min(0).max(100_000),
-        atk: z.number().int().min(0).max(100_000),
-        attackPattern: z.enum(ATTACK_PATTERNS),
-      }),
-    )
-    .min(1)
-    .max(MAX_DUMMIES)
-    .catch([DEFAULT_DUMMY]),
+  dummies: dummyListSchema.catch([DEFAULT_DUMMY]),
+})
+
+/**
+ * Réglages : absents de l'URL (lien du menu), la page reprend les derniers
+ * réglages gardés dans le navigateur.
+ */
+export const dummySetupSearchSchema = z.object({
+  dummies: dummyListSchema.optional().catch(undefined),
 })

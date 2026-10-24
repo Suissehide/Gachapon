@@ -32,9 +32,8 @@ type Props = {
    * Largeur du conteneur centré. **Par défaut : inchangée** — toutes les
    * pages existantes gardent leur longueur de ligne au pixel près.
    *
-   * `wide` existe pour les écrans réellement en deux colonnes : la fiche
-   * d'équipe (rail fixe de 340 px + contenu) et le poutch (fiches + panneau
-   * d'historique de 380 px). Dans la
+   * `wide` existe pour la fiche d'équipe, **seul écran de l'application
+   * réellement en deux colonnes** (rail fixe de 340 px + contenu). Dans la
    * largeur par défaut, sa colonne de droite tombe à 628 px : le portrait du
    * boss et la rangée de quatre paliers de récompense n'y tiennent pas, et
    * la grille des paliers se replierait en 2×2 par accident plutôt que par

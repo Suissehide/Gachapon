@@ -1,11 +1,11 @@
 {
   "dummy": {
-    "title": "Punching bag",
-    "subtitle": "Set up to 3 punching bags and hit them with your team, no energy or loot.",
-    "name": "Bag {{n}}",
-    "add": "Add a punching bag",
+    "title": "Training dummy",
+    "subtitle": "Set up to 3 training dummies and hit them with your team, no energy or loot.",
+    "name": "Dummy {{n}}",
+    "add": "Add a dummy",
     "addCount": "{{count}}/{{max}}",
-    "remove": "Remove this punching bag",
+    "remove": "Remove this dummy",
     "element": "Element",
     "neutral": "Neutral",
     "def": "DEF",

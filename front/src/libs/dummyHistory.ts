@@ -1,6 +1,7 @@
 import type { DummySpec } from '../api/combat.api.ts'
+import { dummyListSchema } from '../constants/dummy.constant.ts'
 
-/** Un essai contre les poutchs, tel que gardé dans le navigateur. */
+/** Un essai contre les mannequins, tel que gardé dans le navigateur. */
 export type DummyTry = {
   /** Numéro d'essai, croissant par joueur. */
   n: number
@@ -40,5 +41,27 @@ export function pushDummyTry(userId: string, entry: Omit<DummyTry, 'n'>) {
     )
   } catch {
     // Stockage bloqué ou plein : l'essai n'est simplement pas gardé.
+  }
+}
+
+const settingsKey = (userId: string) => `dummy-settings:${userId}`
+
+/** Derniers réglages des mannequins, null si absents ou illisibles. */
+export function readDummySettings(userId: string): DummySpec[] | null {
+  try {
+    const parsed = dummyListSchema.safeParse(
+      JSON.parse(localStorage.getItem(settingsKey(userId)) ?? 'null'),
+    )
+    return parsed.success ? parsed.data : null
+  } catch {
+    return null
+  }
+}
+
+export function saveDummySettings(userId: string, dummies: DummySpec[]) {
+  try {
+    localStorage.setItem(settingsKey(userId), JSON.stringify(dummies))
+  } catch {
+    // Stockage bloqué ou plein : les réglages vivent seulement dans l'URL.
   }
 }

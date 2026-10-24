@@ -1,11 +1,11 @@
 {
   "dummy": {
-    "title": "Poutch",
-    "subtitle": "Règle jusqu'à 3 poutchs et frappe dessus avec ton équipe, sans énergie ni butin.",
-    "name": "Poutch {{n}}",
-    "add": "Ajouter un poutch",
+    "title": "Mannequin d'entraînement",
+    "subtitle": "Règle jusqu'à 3 mannequins et frappe dessus avec ton équipe, sans énergie ni butin.",
+    "name": "Mannequin {{n}}",
+    "add": "Ajouter un mannequin",
     "addCount": "{{count}}/{{max}}",
-    "remove": "Retirer ce poutch",
+    "remove": "Retirer ce mannequin",
     "element": "Élément",
     "neutral": "Neutre",
     "def": "DEF",

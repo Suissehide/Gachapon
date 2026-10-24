@@ -5,7 +5,7 @@ import { pushDummyTry } from '../libs/dummyHistory.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
 /**
- * Combat contre les poutchs, réglé comme `useFightWanderer` : une seule
+ * Combat contre les mannequins, réglé comme `useFightWanderer` : une seule
  * requête sous StrictMode, jamais relancée par le focus ; `attempt`
  * incrémenté = nouveau combat. Chaque combat est versé à l'historique.
  */

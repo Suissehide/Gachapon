@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Plus, Swords, X } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { DummySpec } from '../../api/combat.api.ts'
@@ -26,18 +26,23 @@ import {
 import {
   ATTACK_PATTERNS,
   DEFAULT_DUMMY,
-  dummySearchSchema,
+  dummySetupSearchSchema,
   MAX_DUMMIES,
 } from '../../constants/dummy.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
-import { type DummyTry, readDummyHistory } from '../../libs/dummyHistory.ts'
+import {
+  type DummyTry,
+  readDummyHistory,
+  readDummySettings,
+  saveDummySettings,
+} from '../../libs/dummyHistory.ts'
 import { cn, formatNumber } from '../../libs/utils.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
 
 export const Route = createFileRoute('/_authenticated/dummy')({
   component: DummySetupPage,
-  validateSearch: dummySearchSchema,
+  validateSearch: dummySetupSearchSchema,
 })
 
 const NEUTRAL = 'NEUTRAL'
@@ -45,7 +50,7 @@ const NEUTRAL_COLOR = 'var(--color-slate-400)'
 const STAT_MAX = 100_000
 const STAT_STEP = 50
 const HISTORY_SHOWN = 5
-// Les poutchs n'ont pas d'identité propre : seule leur place compte.
+// Les mannequins n'ont pas d'identité propre : seule leur place compte.
 const SLOT_KEYS = Array.from({ length: MAX_DUMMIES }, (_, i) => `dummy-${i}`)
 const TEAM_SLOT_KEYS = ['team-0', 'team-1', 'team-2']
 const ELEMENT_CHOICES: (CardElement | null)[] = [null, ...ELEMENT_ORDER]
@@ -68,15 +73,27 @@ const perTurn = (t: DummyTry) => Math.round(t.totalDamage / t.turns)
 function DummySetupPage() {
   const { t } = useTranslation('combat')
   const navigate = useNavigate()
-  const { dummies } = Route.useSearch()
+  const search = Route.useSearch()
   const userId = useAuthStore((s) => s.user?.id)
+  // Sans réglages dans l'URL (lien du menu), on reprend les derniers gardés.
+  // Relu quand l'utilisateur arrive : au chargement direct, il n'est pas
+  // encore connu au premier rendu.
+  const saved = useMemo(
+    () => (userId ? readDummySettings(userId) : null),
+    [userId],
+  )
+  const dummies = search.dummies ?? saved ?? [DEFAULT_DUMMY]
   const team = useCombatTeam(DUMMY_TEAM_KEY).data?.team ?? []
   const [editorOpen, setEditorOpen] = useState(false)
   // Relu à chaque arrivée sur la page : le combat vient d'y écrire.
   const [history] = useState(() => (userId ? readDummyHistory(userId) : []))
 
-  const setDummies = (next: DummySpec[]) =>
+  const setDummies = (next: DummySpec[]) => {
+    if (userId) {
+      saveDummySettings(userId, next)
+    }
     navigate({ to: '/dummy', search: { dummies: next }, replace: true })
+  }
   const update = (index: number, patch: Partial<DummySpec>) =>
     setDummies(dummies.map((d, i) => (i === index ? { ...d, ...patch } : d)))
 
@@ -157,7 +174,7 @@ function DummySetupPage() {
   )
 }
 
-/** Carte TCG du poutch, montée comme celle des ennemis (`EnemyCard`). */
+/** Carte TCG du mannequin, montée comme celle des ennemis (`EnemyCard`). */
 function DummyPortrait({ element }: { element: CardElement | null }) {
   return (
     <div className="relative aspect-[2/3] w-[62px] shrink-0">
