@@ -4,6 +4,8 @@ import { z } from 'zod/v4'
 import {
   combatDebugBattleBodySchema,
   combatDebugBattleResponseSchema,
+  combatDummyBodySchema,
+  combatDummyResponseSchema,
   combatPointsResponseSchema,
   combatTeamKeyParamSchema,
   combatTeamPutBodySchema,
@@ -12,8 +14,13 @@ import {
 } from '../../schemas/combat.schema'
 
 export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { combatTeamTx, combatDebugDomain, combatPointsTx, storageClient } =
-    fastify.iocContainer
+  const {
+    combatTeamTx,
+    combatDebugDomain,
+    combatPointsTx,
+    storageClient,
+    trainingDummyDomain,
+  } = fastify.iocContainer
 
   // The team query returns raw image storage keys; front-end consumers expect
   // resolved public URLs (same as /collection and /gacha). Wrap once here.
@@ -114,6 +121,20 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
       await combatTeamTx.clearForKey(request.user.userID, request.params.key)
       return reply.code(204).send(null)
     },
+  )
+
+  fastify.post(
+    '/combat/dummy',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Free battle against a training dummy',
+        body: combatDummyBodySchema,
+        response: { 200: combatDummyResponseSchema },
+      },
+    },
+    (request) =>
+      trainingDummyDomain.fight(request.user.userID, request.body.dummies),
   )
 
   fastify.post(

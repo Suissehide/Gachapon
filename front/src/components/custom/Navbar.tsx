@@ -127,6 +127,7 @@ export function Navbar() {
           badgeDot: true,
         },
         { to: '/tower', label: t('layout:appNav.tower') },
+        { to: '/dummy', label: t('layout:appNav.dummy') },
       ],
     },
     {

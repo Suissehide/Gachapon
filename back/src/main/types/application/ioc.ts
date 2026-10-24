@@ -5,6 +5,7 @@ import type { CardDustConversionDomain } from '../../domain/card-dust-conversion
 import type { CardLevelingTx } from '../../domain/card-leveling/card-leveling.tx'
 import type { CombatDebugDomain } from '../../domain/combat/combat-debug.domain'
 import type { CombatTeamTx } from '../../domain/combat/combat-team.tx'
+import type { TrainingDummyDomain } from '../../domain/combat/training-dummy.domain'
 import type { CombatPointsTx } from '../../domain/combat-points/combat-points.tx'
 import type { EquipmentDomain } from '../../domain/equipment/equipment.domain'
 import type { ContentTranslationsBootstrap } from '../../domain/i18n/content-translations.bootstrap'
@@ -117,6 +118,7 @@ export interface IocContainer {
   readonly cardAscensionTx: CardAscensionTx
   readonly combatTeamTx: CombatTeamTx
   readonly combatDebugDomain: CombatDebugDomain
+  readonly trainingDummyDomain: TrainingDummyDomain
   readonly combatPointsTx: CombatPointsTx
   readonly campaignDomain: CampaignDomain
   readonly wanderingMonsterDomain: IWanderingMonsterDomain

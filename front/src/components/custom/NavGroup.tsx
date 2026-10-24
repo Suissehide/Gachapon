@@ -24,6 +24,7 @@ export type NavItem = {
     | '/alchemy'
     | '/campaign'
     | '/tower'
+    | '/dummy'
     | '/shop'
     | '/orders'
     | '/team'

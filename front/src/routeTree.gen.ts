@@ -35,6 +35,7 @@ import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedEquipmentRouteImport } from './routes/_authenticated/equipment'
+import { Route as AuthenticatedDummyRouteImport } from './routes/_authenticated/dummy'
 import { Route as AuthenticatedCombatRouteImport } from './routes/_authenticated/combat'
 import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated/collection'
 import { Route as AuthenticatedCampaignRouteImport } from './routes/_authenticated/campaign'
@@ -46,6 +47,7 @@ import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index
 import { Route as AuthenticatedTowerElementRouteImport } from './routes/_authenticated/tower_.$element'
 import { Route as AuthenticatedTeamIdRouteImport } from './routes/_authenticated/team/$id'
 import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
+import { Route as AuthenticatedDummyFightRouteImport } from './routes/_authenticated/dummy_.fight'
 import { Route as AuthenticatedBattleStageIdRouteImport } from './routes/_authenticated/battle.$stageId'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users'
 import { Route as AdminAdminTranslationsRouteImport } from './routes/_admin/admin.translations'
@@ -193,6 +195,11 @@ const AuthenticatedEquipmentRoute = AuthenticatedEquipmentRouteImport.update({
   path: '/equipment',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedDummyRoute = AuthenticatedDummyRouteImport.update({
+  id: '/dummy',
+  path: '/dummy',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCombatRoute = AuthenticatedCombatRouteImport.update({
   id: '/combat',
   path: '/combat',
@@ -251,6 +258,11 @@ const AuthenticatedProfileUsernameRoute =
     path: '/profile/$username',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedDummyFightRoute = AuthenticatedDummyFightRouteImport.update({
+  id: '/dummy_/fight',
+  path: '/dummy/fight',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedBattleStageIdRoute =
   AuthenticatedBattleStageIdRouteImport.update({
     id: '/battle/$stageId',
@@ -360,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/campaign': typeof AuthenticatedCampaignRoute
   '/collection': typeof AuthenticatedCollectionRoute
   '/combat': typeof AuthenticatedCombatRoute
+  '/dummy': typeof AuthenticatedDummyRoute
   '/equipment': typeof AuthenticatedEquipmentRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/orders': typeof AuthenticatedOrdersRoute
@@ -385,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/admin/translations': typeof AdminAdminTranslationsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
+  '/dummy/fight': typeof AuthenticatedDummyFightRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
   '/tower/$element': typeof AuthenticatedTowerElementRoute
@@ -413,6 +427,7 @@ export interface FileRoutesByTo {
   '/campaign': typeof AuthenticatedCampaignRoute
   '/collection': typeof AuthenticatedCollectionRoute
   '/combat': typeof AuthenticatedCombatRoute
+  '/dummy': typeof AuthenticatedDummyRoute
   '/equipment': typeof AuthenticatedEquipmentRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/orders': typeof AuthenticatedOrdersRoute
@@ -438,6 +453,7 @@ export interface FileRoutesByTo {
   '/admin/translations': typeof AdminAdminTranslationsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
+  '/dummy/fight': typeof AuthenticatedDummyFightRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
   '/tower/$element': typeof AuthenticatedTowerElementRoute
@@ -470,6 +486,7 @@ export interface FileRoutesById {
   '/_authenticated/campaign': typeof AuthenticatedCampaignRoute
   '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/combat': typeof AuthenticatedCombatRoute
+  '/_authenticated/dummy': typeof AuthenticatedDummyRoute
   '/_authenticated/equipment': typeof AuthenticatedEquipmentRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
@@ -495,6 +512,7 @@ export interface FileRoutesById {
   '/_admin/admin/translations': typeof AdminAdminTranslationsRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_authenticated/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
+  '/_authenticated/dummy_/fight': typeof AuthenticatedDummyFightRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/_authenticated/team/$id': typeof AuthenticatedTeamIdRoute
   '/_authenticated/tower_/$element': typeof AuthenticatedTowerElementRoute
@@ -526,6 +544,7 @@ export interface FileRouteTypes {
     | '/campaign'
     | '/collection'
     | '/combat'
+    | '/dummy'
     | '/equipment'
     | '/leaderboard'
     | '/orders'
@@ -551,6 +570,7 @@ export interface FileRouteTypes {
     | '/admin/translations'
     | '/admin/users'
     | '/battle/$stageId'
+    | '/dummy/fight'
     | '/profile/$username'
     | '/team/$id'
     | '/tower/$element'
@@ -579,6 +599,7 @@ export interface FileRouteTypes {
     | '/campaign'
     | '/collection'
     | '/combat'
+    | '/dummy'
     | '/equipment'
     | '/leaderboard'
     | '/orders'
@@ -604,6 +625,7 @@ export interface FileRouteTypes {
     | '/admin/translations'
     | '/admin/users'
     | '/battle/$stageId'
+    | '/dummy/fight'
     | '/profile/$username'
     | '/team/$id'
     | '/tower/$element'
@@ -635,6 +657,7 @@ export interface FileRouteTypes {
     | '/_authenticated/campaign'
     | '/_authenticated/collection'
     | '/_authenticated/combat'
+    | '/_authenticated/dummy'
     | '/_authenticated/equipment'
     | '/_authenticated/leaderboard'
     | '/_authenticated/orders'
@@ -660,6 +683,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/translations'
     | '/_admin/admin/users'
     | '/_authenticated/battle/$stageId'
+    | '/_authenticated/dummy_/fight'
     | '/_authenticated/profile/$username'
     | '/_authenticated/team/$id'
     | '/_authenticated/tower_/$element'
@@ -874,6 +898,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipmentRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/dummy': {
+      id: '/_authenticated/dummy'
+      path: '/dummy'
+      fullPath: '/dummy'
+      preLoaderRoute: typeof AuthenticatedDummyRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/combat': {
       id: '/_authenticated/combat'
       path: '/combat'
@@ -949,6 +980,13 @@ declare module '@tanstack/react-router' {
       path: '/profile/$username'
       fullPath: '/profile/$username'
       preLoaderRoute: typeof AuthenticatedProfileUsernameRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dummy_/fight': {
+      id: '/_authenticated/dummy_/fight'
+      path: '/dummy/fight'
+      fullPath: '/dummy/fight'
+      preLoaderRoute: typeof AuthenticatedDummyFightRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/battle/$stageId': {
@@ -1127,6 +1165,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCampaignRoute: typeof AuthenticatedCampaignRoute
   AuthenticatedCollectionRoute: typeof AuthenticatedCollectionRoute
   AuthenticatedCombatRoute: typeof AuthenticatedCombatRoute
+  AuthenticatedDummyRoute: typeof AuthenticatedDummyRoute
   AuthenticatedEquipmentRoute: typeof AuthenticatedEquipmentRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
@@ -1137,6 +1176,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
   AuthenticatedTowerRoute: typeof AuthenticatedTowerRoute
   AuthenticatedBattleStageIdRoute: typeof AuthenticatedBattleStageIdRoute
+  AuthenticatedDummyFightRoute: typeof AuthenticatedDummyFightRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
   AuthenticatedTeamIdRoute: typeof AuthenticatedTeamIdRoute
   AuthenticatedTowerElementRoute: typeof AuthenticatedTowerElementRoute
@@ -1152,6 +1192,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCampaignRoute: AuthenticatedCampaignRoute,
   AuthenticatedCollectionRoute: AuthenticatedCollectionRoute,
   AuthenticatedCombatRoute: AuthenticatedCombatRoute,
+  AuthenticatedDummyRoute: AuthenticatedDummyRoute,
   AuthenticatedEquipmentRoute: AuthenticatedEquipmentRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
@@ -1162,6 +1203,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
   AuthenticatedTowerRoute: AuthenticatedTowerRoute,
   AuthenticatedBattleStageIdRoute: AuthenticatedBattleStageIdRoute,
+  AuthenticatedDummyFightRoute: AuthenticatedDummyFightRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
   AuthenticatedTeamIdRoute: AuthenticatedTeamIdRoute,
   AuthenticatedTowerElementRoute: AuthenticatedTowerElementRoute,

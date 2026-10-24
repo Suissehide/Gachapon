@@ -7,6 +7,7 @@ import i18n from '../i18n/index.ts'
  */
 export const CAMPAIGN_TEAM_KEY = 'campaign'
 export const RAID_TEAM_KEY = 'raid'
+export const DUMMY_TEAM_KEY = 'dummy'
 
 export const towerTeamKey = (element: string): string => `tower:${element}`
 
@@ -15,3 +16,4 @@ export const towerTeamKey = (element: string): string => `tower:${element}`
 // `i18n/useLocale.ts`).
 export const CAMPAIGN_TEAM_LABEL = i18n.t('combat:teamLabel.campaign')
 export const RAID_TEAM_LABEL = i18n.t('combat:teamLabel.raid')
+export const DUMMY_TEAM_LABEL = i18n.t('combat:dummy.title')

@@ -1,7 +1,7 @@
 import { TOWER_ELEMENTS, type TowerElement } from '../tower/tower-slots'
 
 /**
- * Les six mémoires d'équipe : la campagne, le raid, et une par tour.
+ * Les mémoires d'équipe : la campagne, le raid, le mannequin, et une par tour.
  *
  * SOURCE UNIQUE. Les clés de tour sont DÉRIVÉES de `TOWER_ELEMENTS`, jamais
  * recopiées : une cinquième tour n'exigera ni migration ni retouche ici. La
@@ -9,6 +9,7 @@ import { TOWER_ELEMENTS, type TowerElement } from '../tower/tower-slots'
  */
 export const CAMPAIGN_TEAM_KEY = 'campaign'
 export const RAID_TEAM_KEY = 'raid'
+export const DUMMY_TEAM_KEY = 'dummy'
 
 export type TowerTeamKey = `tower:${TowerElement}`
 
@@ -19,6 +20,7 @@ export type TowerTeamKey = `tower:${TowerElement}`
 export type CombatTeamKey =
   | typeof CAMPAIGN_TEAM_KEY
   | typeof RAID_TEAM_KEY
+  | typeof DUMMY_TEAM_KEY
   | TowerTeamKey
 
 export const towerTeamKey = (element: TowerElement): TowerTeamKey =>
@@ -34,6 +36,7 @@ export const towerTeamKey = (element: TowerElement): TowerTeamKey =>
 export const COMBAT_TEAM_KEY_TUPLE = [
   CAMPAIGN_TEAM_KEY,
   RAID_TEAM_KEY,
+  DUMMY_TEAM_KEY,
   ...TOWER_ELEMENTS.map(towerTeamKey),
 ] as [CombatTeamKey, ...CombatTeamKey[]]
 

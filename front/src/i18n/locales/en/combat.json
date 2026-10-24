@@ -1,4 +1,40 @@
 {
+  "dummy": {
+    "title": "Punching bag",
+    "subtitle": "Set up to 3 punching bags and hit them with your team, no energy or loot.",
+    "name": "Bag {{n}}",
+    "add": "Add a punching bag",
+    "addCount": "{{count}}/{{max}}",
+    "remove": "Remove this punching bag",
+    "element": "Element",
+    "neutral": "Neutral",
+    "def": "DEF",
+    "atk": "ATK",
+    "atkHint": "0: it just takes hits",
+    "pattern": "Attack",
+    "patterns": {
+      "BASIC": "Single hit",
+      "AOE_3": "Area (3 targets)",
+      "MULTI_2": "2 targets",
+      "MONO_AMPLIFIED": "Heavy hit (×2.5)",
+      "MONO_DOUBLE": "Double hit"
+    },
+    "fight": "Strike",
+    "settings": "Settings",
+    "damage": "{{value}} damage",
+    "detail": "Over {{turns}} turns · ≈ {{perTurn}} per turn",
+    "perDummy": "{{name}}: {{value}}",
+    "history": {
+      "title": "Recent tries",
+      "legend": "damage · /turn",
+      "record": "Record",
+      "recordDetail": "{{perTurn}} per turn · try #{{n}}",
+      "turns": "{{count}} turns",
+      "perTurn": "{{value}}/t",
+      "reload": "Reload",
+      "empty": "Your tries will show up here."
+    }
+  },
   "teamLabel": {
     "campaign": "Campaign",
     "raid": "Team raid"

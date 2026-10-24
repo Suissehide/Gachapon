@@ -97,11 +97,11 @@ export class CombatTeamTx {
   }
 
   /**
-   * Les six modes d'un coup — sert la vue d'ensemble du hub des tours. Une
+   * Tous les modes d'un coup — sert la vue d'ensemble du hub des tours. Une
    * seule lecture de toutes les lignes de l'utilisateur, `pickTeam` en
    * mémoire pour chaque clé, puis une vue par jeu d'identifiants DISTINCT :
    * les modes qui héritent tous de la campagne partagent le même tableau,
-   * pas la peine de reconstruire six fois la même équipe.
+   * pas la peine de reconstruire plusieurs fois la même équipe.
    */
   async getAllResolved(
     userId: string,

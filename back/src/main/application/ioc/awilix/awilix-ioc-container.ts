@@ -16,6 +16,7 @@ import { CardLevelingTx } from '../../../domain/card-leveling/card-leveling.tx'
 import { CollectionDomain } from '../../../domain/collection/collection.domain'
 import { CombatDebugDomain } from '../../../domain/combat/combat-debug.domain'
 import { CombatTeamTx } from '../../../domain/combat/combat-team.tx'
+import { TrainingDummyDomain } from '../../../domain/combat/training-dummy.domain'
 import { CombatPointsTx } from '../../../domain/combat-points/combat-points.tx'
 import { DailyShopDomain } from '../../../domain/daily-shop/daily-shop.domain'
 import { EquipmentDomain } from '../../../domain/equipment/equipment.domain'
@@ -146,6 +147,7 @@ class AwilixIocContainer {
     this.#reg('cardAscensionTx', asClass(CardAscensionTx).singleton())
     this.#reg('combatTeamTx', asClass(CombatTeamTx).singleton())
     this.#reg('combatDebugDomain', asClass(CombatDebugDomain).singleton())
+    this.#reg('trainingDummyDomain', asClass(TrainingDummyDomain).singleton())
     this.#reg('combatPointsTx', asClass(CombatPointsTx).singleton())
     this.#reg('campaignDomain', asClass(CampaignDomain).singleton())
     this.#reg(

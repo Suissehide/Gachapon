@@ -1,4 +1,40 @@
 {
+  "dummy": {
+    "title": "Poutch",
+    "subtitle": "Règle jusqu'à 3 poutchs et frappe dessus avec ton équipe, sans énergie ni butin.",
+    "name": "Poutch {{n}}",
+    "add": "Ajouter un poutch",
+    "addCount": "{{count}}/{{max}}",
+    "remove": "Retirer ce poutch",
+    "element": "Élément",
+    "neutral": "Neutre",
+    "def": "DEF",
+    "atk": "ATK",
+    "atkHint": "0 : il encaisse",
+    "pattern": "Attaque",
+    "patterns": {
+      "BASIC": "Coup simple",
+      "AOE_3": "Zone (3 cibles)",
+      "MULTI_2": "2 cibles",
+      "MONO_AMPLIFIED": "Coup puissant (×2,5)",
+      "MONO_DOUBLE": "Double coup"
+    },
+    "fight": "Frapper",
+    "settings": "Réglages",
+    "damage": "{{value}} dégâts",
+    "detail": "En {{turns}} tours · ≈ {{perTurn}} par tour",
+    "perDummy": "{{name}} : {{value}}",
+    "history": {
+      "title": "Derniers essais",
+      "legend": "dégâts · /tour",
+      "record": "Record",
+      "recordDetail": "{{perTurn}} par tour · essai #{{n}}",
+      "turns": "{{count}} tours",
+      "perTurn": "{{value}}/t",
+      "reload": "Recharger",
+      "empty": "Tes essais apparaîtront ici."
+    }
+  },
   "teamLabel": {
     "campaign": "Campagne",
     "raid": "Raid d'équipe"

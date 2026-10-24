@@ -2,6 +2,7 @@ import { z } from 'zod/v4'
 
 import { MAX_PALIER } from '../../../../domain/card-leveling/card-leveling.domain'
 import { COMBAT_TEAM_KEY_TUPLE } from '../../../../domain/combat/combat-team-keys'
+import { ELEMENTS } from '../../../../domain/combat/element'
 
 export const combatTeamPutBodySchema = z.object({
   userCardIds: z.array(z.string().uuid()).min(1).max(3),
@@ -93,5 +94,27 @@ export const combatDebugBattleResponseSchema = z.object({
   won: z.enum(['A', 'B']).nullable(),
   // LogEntry is a discriminated union — keep loose at the schema layer
   log: z.array(z.unknown()),
+  turns: z.number().int(),
+})
+
+export const combatDummyBodySchema = z.object({
+  dummies: z
+    .array(
+      z.object({
+        element: z.enum(ELEMENTS).nullable(),
+        def: z.number().int().min(0).max(100_000),
+        atk: z.number().int().min(0).max(100_000),
+        attackPattern: attackPatternEnum,
+      }),
+    )
+    .min(1)
+    .max(3),
+})
+
+export const combatDummyResponseSchema = z.object({
+  teamA: z.array(z.unknown()),
+  teamB: z.array(z.unknown()),
+  log: z.array(z.unknown()),
+  damageByDummy: z.array(z.number().int()),
   turns: z.number().int(),
 })

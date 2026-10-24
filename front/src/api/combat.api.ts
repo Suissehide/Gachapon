@@ -1,3 +1,4 @@
+import type { CardElement } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
 import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
@@ -72,6 +73,22 @@ export type DebugBattleResult = {
   turns: number
 }
 
+export type DummySpec = {
+  element: CardElement | null
+  def: number
+  /** 0 = il encaisse sans riposter. */
+  atk: number
+  attackPattern: AttackPattern
+}
+
+export type DummyBattleResult = {
+  teamA: SimulatorUnit[]
+  teamB: SimulatorUnit[]
+  log: BattleLogEntry[]
+  damageByDummy: number[]
+  turns: number
+}
+
 export type CombatPointsView = {
   combatPoints: number
   maxStock: number
@@ -138,6 +155,18 @@ export const CombatApi = {
     if (!res.ok) {
       handleHttpError(res, {}, i18n.t('combat:toasts.clearTeamErrorTitle'))
     }
+  },
+
+  fightDummy: async (dummies: DummySpec[]): Promise<DummyBattleResult> => {
+    const res = await fetchWithAuth(`${apiUrl}/combat/dummy`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dummies }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, i18n.t('combat:apiTitles.battle'))
+    }
+    return res.json()
   },
 
   debugBattle: async (input: {

@@ -1,4 +1,8 @@
 {
+  "stepper": {
+    "decrease": "Decrease",
+    "increase": "Increase"
+  },
   "rarity": {
     "common": "Common",
     "uncommon": "Uncommon",
