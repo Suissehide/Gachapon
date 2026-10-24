@@ -81,7 +81,7 @@ function DummySetupPage() {
     setDummies(dummies.map((d, i) => (i === index ? { ...d, ...patch } : d)))
 
   return (
-    <PageShell width="wide">
+    <PageShell>
       <PageHeader
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
@@ -91,58 +91,56 @@ function DummySetupPage() {
         subtitle={t('combat:dummy.subtitle')}
       />
 
-      <div className="grid grid-cols-1 gap-[22px] xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div>
-          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-            {dummies.map((dummy, i) => (
-              <DummyCard
-                key={SLOT_KEYS[i]}
-                index={i}
-                dummy={dummy}
-                removable={dummies.length > 1}
-                onChange={(patch) => update(i, patch)}
-                onRemove={() => setDummies(dummies.filter((_, j) => j !== i))}
-              />
-            ))}
+      <div>
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+          {dummies.map((dummy, i) => (
+            <DummyCard
+              key={SLOT_KEYS[i]}
+              index={i}
+              dummy={dummy}
+              removable={dummies.length > 1}
+              onChange={(patch) => update(i, patch)}
+              onRemove={() => setDummies(dummies.filter((_, j) => j !== i))}
+            />
+          ))}
 
-            {dummies.length < MAX_DUMMIES && (
-              <Button
-                variant="dashed"
-                size="bare"
-                className="min-h-40 flex-col gap-1.5 rounded-[20px] bg-white/50 font-bold"
-                onClick={() => setDummies([...dummies, DEFAULT_DUMMY])}
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <Plus className="h-4 w-4" />
-                  {t('combat:dummy.add')}
-                </span>
-                <small className="text-[12.5px] font-medium">
-                  {t('combat:dummy.addCount', {
-                    count: dummies.length,
-                    max: MAX_DUMMIES,
-                  })}
-                </small>
-              </Button>
-            )}
-          </div>
-
-          <div className="mt-4 flex justify-end">
+          {dummies.length < MAX_DUMMIES && (
             <Button
-              size="lg"
-              className="gap-2"
-              disabled={team.length === 0}
-              onClick={() =>
-                navigate({ to: '/dummy/fight', search: { dummies } })
-              }
+              variant="dashed"
+              size="bare"
+              className="min-h-40 flex-col gap-1.5 rounded-[20px] bg-white/50 font-bold"
+              onClick={() => setDummies([...dummies, DEFAULT_DUMMY])}
             >
-              <Swords className="h-4 w-4" />
-              {t('combat:dummy.fight')}
+              <span className="inline-flex items-center gap-1.5">
+                <Plus className="h-4 w-4" />
+                {t('combat:dummy.add')}
+              </span>
+              <small className="text-[12.5px] font-medium">
+                {t('combat:dummy.addCount', {
+                  count: dummies.length,
+                  max: MAX_DUMMIES,
+                })}
+              </small>
             </Button>
-          </div>
+          )}
         </div>
 
-        <HistoryPanel history={history} onReload={setDummies} />
+        <div className="mt-4 flex justify-end">
+          <Button
+            size="lg"
+            className="gap-2"
+            disabled={team.length === 0}
+            onClick={() =>
+              navigate({ to: '/dummy/fight', search: { dummies } })
+            }
+          >
+            <Swords className="h-4 w-4" />
+            {t('combat:dummy.fight')}
+          </Button>
+        </div>
       </div>
+
+      <HistoryPanel history={history} onReload={setDummies} />
 
       <TeamDock
         team={team}
@@ -317,7 +315,7 @@ function HistoryPanel({
   const shown = history.slice(0, HISTORY_SHOWN)
 
   return (
-    <Card className="flex flex-col gap-2.5 self-start rounded-[20px] p-[18px]">
+    <Card className="flex flex-col gap-2.5 rounded-[20px] p-[18px]">
       <div className="flex items-baseline justify-between">
         <h3 className="font-display text-[19px] font-extrabold">
           {t('combat:dummy.history.title')}
