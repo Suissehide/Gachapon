@@ -56,6 +56,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     baseCritDmg: 150,
     baseArmorPen: 0,
     baseLifesteal: 0,
+    defenseK: 1000,
   },
   raid: {
     attacksPerDay: 2,

@@ -225,6 +225,12 @@ export function CombatPanel({
           value={def}
           base={bases.def}
           accent={statColorVar('def')}
+          hint={t('common:stats.defReduction', {
+            pct: formatNumber(
+              Math.round((def / (economy.combat.defenseK + def)) * 100),
+              locale,
+            ),
+          })}
         />
         <StatTile
           icon={<Zap className="h-4 w-4" />}
@@ -333,6 +339,7 @@ function StatTile({
   base,
   accent,
   suffix,
+  hint,
 }: {
   icon: ReactNode
   label: string
@@ -341,6 +348,8 @@ function StatTile({
   base?: number
   accent: string
   suffix?: string
+  /** Ligne d'explication sous la valeur (ex. réduction de dégâts de la DEF). */
+  hint?: string
 }) {
   const locale = currentLocale()
   // Toute valeur de stat est entière depuis l'arrondi à la source.
@@ -380,6 +389,11 @@ function StatTile({
           </span>
         )}
       </span>
+      {hint && (
+        <span className="font-mono text-[11px] text-[rgba(27,23,38,0.5)]">
+          {hint}
+        </span>
+      )}
     </div>
   )
 }

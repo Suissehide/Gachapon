@@ -52,6 +52,8 @@ describe('GET /economy/config', () => {
     expect(body.combat.baseCritDmg).toBe(150)
     expect(body.combat.baseArmorPen).toBe(0)
     expect(body.combat.baseLifesteal).toBe(0)
+    // Seuil K de la réduction de dégâts : le front affiche DEF / (K + DEF).
+    expect(body.combat.defenseK).toBe(1000)
     expect(body.equip.goldCostBase).toBe(25)
     expect(body.equip.goldCostExp).toBe(1.35)
     expect(body.equip.levelScale).toBe(0.1)

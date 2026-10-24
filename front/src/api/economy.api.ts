@@ -74,6 +74,8 @@ export interface EconomyConfig {
     baseCritDmg: number
     baseArmorPen: number
     baseLifesteal: number
+    /** Seuil K de la réduction de dégâts `DEF / (K + DEF)`. */
+    defenseK: number
   }
   // Raid d'équipe. `minMembers` et `levelHpBonusPct` servent la copie du
   // panneau de raid (« boss calibré pour 10 », « +10 % par victoire ») :

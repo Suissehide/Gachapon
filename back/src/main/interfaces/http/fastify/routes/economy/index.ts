@@ -80,6 +80,8 @@ const economyConfigResponseSchema = z.object({
     baseCritDmg: z.number(),
     baseArmorPen: z.number(),
     baseLifesteal: z.number(),
+    // Seuil K de la réduction de dégâts `DEF / (K + DEF)`.
+    defenseK: z.number(),
   }),
   equip: z.object({
     goldCostBase: z.number(),
@@ -179,6 +181,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'combat.baseCritDmg',
         'combat.baseArmorPen',
         'combat.baseLifesteal',
+        'combat.defMitigationRef',
         'equip.goldCostBase',
         'equip.goldCostExp',
         'equip.salvageGoldCommon',
@@ -267,6 +270,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           baseCritDmg: c['combat.baseCritDmg'],
           baseArmorPen: c['combat.baseArmorPen'],
           baseLifesteal: c['combat.baseLifesteal'],
+          defenseK: c['combat.defMitigationRef'],
         },
         equip: {
           goldCostBase: c['equip.goldCostBase'],

@@ -96,7 +96,8 @@
     "critDmgShort": "DÉG. CRIT",
     "armorPen": "PÉNÉTRATION ARMURE",
     "armorPenShort": "PÉNÉ. ARMURE",
-    "lifesteal": "VOL DE VIE"
+    "lifesteal": "VOL DE VIE",
+    "defReduction": "−{{pct}} % de dégâts subis"
   },
   "gold": {
     "amount": "{{amount}} or",

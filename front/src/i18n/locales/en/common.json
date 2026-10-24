@@ -96,7 +96,8 @@
     "critDmgShort": "CRIT DMG",
     "armorPen": "ARMOR PEN",
     "armorPenShort": "ARM. PEN",
-    "lifesteal": "LIFESTEAL"
+    "lifesteal": "LIFESTEAL",
+    "defReduction": "−{{pct}}% damage taken"
   },
   "gold": {
     "amount": "{{amount}} gold",
