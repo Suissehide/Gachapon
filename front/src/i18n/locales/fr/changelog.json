@@ -10,6 +10,18 @@
     "fixed": "Corrigé"
   },
   "releases": {
+    "v3_9": {
+      "title": "La défense remise à plat",
+      "date": "Octobre 2026",
+      "summary": "Une DEF qui protège toujours autant, un mannequin pour tester ton équipe et un Marché plus généreux en cartes rares.",
+      "entries": {
+        "e1": "La DEF a maintenant une valeur fixe : sa réduction de dégâts vaut DEF / (1000 + DEF), quel que soit le niveau de l’adversaire. Plus de DEF, c’est toujours moins de dégâts subis. La campagne, la tour, le monstre errant et le raid sont recalibrés pour garder la même difficulté. La réduction s’affiche au survol de la DEF sur la fiche de combat d’une carte et du Total DEF de l’atelier d’équipement.",
+        "e2": "Nouvel onglet Combat → Mannequin d’entraînement : règle jusqu’à trois mannequins (élément, DEF, ATK, type d’attaque) et frappe dessus pendant 20 tours avec ton équipe, sans énergie ni butin. Tu vois les dégâts totaux, par tour et par mannequin, avec l’historique de tes 20 derniers essais et ton record ; tes réglages sont gardés d’une visite à l’autre.",
+        "e3": "Au Marché, les cartes rares, épiques et légendaires coûtent deux fois moins cher et sortent plus souvent : au moins une rare ou mieux dans près d’un Marché sur trois. Le prix des vœux ne change pas.",
+        "e4": "L’Alchimie joue des sons pendant la transmutation.",
+        "e5": "La confirmation de suppression d’équipe ne se ferme plus aussitôt ouverte ; la pastille des récompenses se met à jour quand un coéquipier franchit un palier du raid ; « Échanger » et « Équiper sur… » chargent les cartes par tranches ; les libellés des succès de compte, de campagne et de maîtrise sont traduits."
+      }
+    },
     "v3_8": {
       "title": "Le monstre errant",
       "date": "Octobre 2026",

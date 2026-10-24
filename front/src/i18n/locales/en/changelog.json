@@ -10,6 +10,18 @@
     "fixed": "Fixed"
   },
   "releases": {
+    "v3_9": {
+      "title": "Defense Reworked",
+      "date": "October 2026",
+      "summary": "DEF that always protects the same way, a dummy to test your team and a Market more generous with rare cards.",
+      "entries": {
+        "e1": "DEF now has a fixed value: its damage reduction is DEF / (1000 + DEF), whatever the opponent's level. More DEF always means less damage taken. The campaign, the tower, the wandering monster and the raid are recalibrated to keep the same difficulty. The reduction shows on hover over DEF on a card's combat sheet and over Total DEF in the equipment workshop.",
+        "e2": "New Combat → Training dummy tab: set up to three dummies (element, DEF, ATK, attack type) and hit them for 20 turns with your team, with no energy cost and no loot. You see total damage, per turn and per dummy, with a history of your last 20 runs and your record; your settings are kept between visits.",
+        "e3": "In the Market, rare, epic and legendary cards cost half as much and show up more often: at least one rare or better in nearly one Market out of three. Wish prices don't change.",
+        "e4": "Alchemy plays sounds during transmutation.",
+        "e5": "The team deletion confirmation no longer closes as soon as it opens; the rewards badge updates when a teammate reaches a raid tier; \"Swap\" and \"Equip on…\" load cards in batches; account, campaign and mastery achievement labels are translated."
+      }
+    },
     "v3_8": {
       "title": "The Wandering Monster",
       "date": "October 2026",
