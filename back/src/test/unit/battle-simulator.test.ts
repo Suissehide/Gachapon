@@ -1413,6 +1413,23 @@ describe('stats offensives', () => {
     expect(fort.turns).toBeLessThan(faible.turns)
   })
 
+  it('le vol de vie est journalisé juste après l attaque qui le rapporte', () => {
+    const r = simulateBattle({
+      seed: 'ls-ordre',
+      teamA: [
+        makeUnit('A0', { hp: 1000, atk: 500, lifesteal: 50, attackPattern: 'AOE_3' }),
+      ],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 300 }), makeUnit('B1', { hp: 100000, atk: 300 })],
+    })
+    const soins = r.log.flatMap((e, i) => (e.type === 'HEAL' ? [i] : []))
+    expect(soins.length).toBeGreaterThan(0)
+    // En AOE, un soin par cible touchée : les HEAL se suivent après l'ATTACK.
+    for (const i of soins) {
+      const avant = r.log.slice(0, i).findLast((e) => e.type !== 'HEAL')
+      expect(avant?.type === 'ATTACK' && avant.attackerId).toBe('A0')
+    }
+  })
+
   it('lifesteal soigne l attaquant sans dépasser ses PV max', () => {
     const maxHp = 1000
     const r = simulateBattle({

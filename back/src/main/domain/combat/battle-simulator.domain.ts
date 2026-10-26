@@ -1047,20 +1047,26 @@ function performStrike(ctx: StrikeContext): void {
   const damages: DamageEntry[] = []
   const targetIds = targets.map((t) => t.id)
 
+  // Le vol de vie est appliqué au fil des cibles (FURY lit les PV de
+  // l'attaquant entre deux cibles), mais journalisé après l'entrée ATTACK :
+  // le replay affiche le coup avant le soin qu'il rapporte.
+  const strikeLog: LogEntry[] = []
   for (const target of targets) {
     const entry = resolveAttackOnTarget(
       attacker,
       target,
       units,
       prng,
-      log,
+      strikeLog,
       patternMultiplier,
       rules,
     )
     damages.push(entry)
   }
-
+  const isLifesteal = (e: LogEntry) => e.type === 'HEAL'
+  log.push(...strikeLog.filter((e) => !isLifesteal(e)))
   log.push({ type: 'ATTACK', attackerId: attacker.id, targetIds, damages })
+  log.push(...strikeLog.filter(isLifesteal))
 
   // VIGOR après l'entrée ATTACK : le replay doit retirer les dégâts avant
   // d'appliquer le soin, sinon le plafond de PV max le rogne à l'écran.
