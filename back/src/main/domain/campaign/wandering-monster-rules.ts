@@ -23,6 +23,26 @@ export function pickSpawnDelayMinutes(
   return minMinutes + Math.floor(rng() * span)
 }
 
+/**
+ * Pure : le monstre reste jusqu'à la fin de la journée UTC où il a été
+ * planifié, et au moins `minDurationMinutes` après son apparition — un monstre
+ * apparu tard déborde sur le lendemain au lieu de repartir aussitôt.
+ */
+export function wandererExpiresAt(
+  scheduledAt: Date,
+  appearsAt: Date,
+  minDurationMinutes: number,
+): Date {
+  const endOfDay = new Date(scheduledAt)
+  endOfDay.setUTCHours(24, 0, 0, 0)
+  return new Date(
+    Math.max(
+      endOfDay.getTime(),
+      appearsAt.getTime() + minDurationMinutes * 60_000,
+    ),
+  )
+}
+
 /** Pure : un étage déjà battu, tiré uniformément dans le chapitre le plus avancé du joueur ; null si aucun étage n'est battu. */
 export function pickMonsterStage<T extends { chapter: number; index: number }>(
   stages: T[],

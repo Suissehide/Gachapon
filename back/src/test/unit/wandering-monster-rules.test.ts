@@ -4,10 +4,33 @@ import {
   pickLootKind,
   pickMonsterStage,
   pickSpawnDelayMinutes,
+  wandererExpiresAt,
   soloWandererSpec,
 } from '../../main/domain/campaign/wandering-monster-rules'
 import { enemyTeamSchema } from '../../main/domain/campaign/campaign.domain'
 import { enemySpecSchema } from '../../main/domain/combat/sim-units'
+
+describe('wandererExpiresAt', () => {
+  it("reste jusqu'à minuit UTC", () => {
+    expect(
+      wandererExpiresAt(
+        new Date('2026-10-26T08:00:00Z'),
+        new Date('2026-10-26T10:00:00Z'),
+        180,
+      ).toISOString(),
+    ).toBe('2026-10-27T00:00:00.000Z')
+  })
+
+  it('apparu tard, garde la durée plancher', () => {
+    expect(
+      wandererExpiresAt(
+        new Date('2026-10-26T22:00:00Z'),
+        new Date('2026-10-27T02:00:00Z'),
+        180,
+      ).toISOString(),
+    ).toBe('2026-10-27T05:00:00.000Z')
+  })
+})
 
 describe('pickSpawnDelayMinutes', () => {
   it('délai entre 60 et 360 minutes', () => {

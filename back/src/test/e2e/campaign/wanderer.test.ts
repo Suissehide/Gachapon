@@ -300,10 +300,11 @@ describe('GET /campaign/wanderer', () => {
     expect(delayMinutes).toBeGreaterThanOrEqual(60)
     expect(delayMinutes).toBeLessThanOrEqual(360)
 
-    const durationMinutes = Math.round(
-      (row.expiresAt.getTime() - row.appearsAt.getTime()) / MINUTE,
+    const endOfDay = new Date(before)
+    endOfDay.setUTCHours(24, 0, 0, 0)
+    expect(row.expiresAt.getTime()).toBe(
+      Math.max(endOfDay.getTime(), row.appearsAt.getTime() + 180 * MINUTE),
     )
-    expect(durationMinutes).toBe(180)
   })
 
   it('ne renvoie rien avant appearsAt', async () => {

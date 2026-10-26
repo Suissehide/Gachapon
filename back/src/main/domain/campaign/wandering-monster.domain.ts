@@ -14,6 +14,7 @@ import {
   activeWandererQuery,
   pickMonsterStage,
   pickSpawnDelayMinutes,
+  wandererExpiresAt,
   wandererSoloEnemy,
 } from './wandering-monster-rules'
 
@@ -71,8 +72,10 @@ export class WanderingMonsterDomain implements IWanderingMonsterDomain {
       Math.random,
     )
     const appearsAt = new Date(now.getTime() + delayMinutes * 60_000)
-    const expiresAt = new Date(
-      appearsAt.getTime() + cfg['wanderer.durationMinutes'] * 60_000,
+    const expiresAt = wandererExpiresAt(
+      now,
+      appearsAt,
+      cfg['wanderer.durationMinutes'],
     )
     const day = now.toISOString().slice(0, 10)
 
