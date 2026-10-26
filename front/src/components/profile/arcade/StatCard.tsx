@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react'
 import { currentLocale } from '../../../i18n/index.ts'
 import { formatNumber } from '../../../libs/utils.ts'
 import { Card } from '../../ui/card'
+import { Tooltip } from '../../ui/tooltip.tsx'
 import type { ArcadeRarity } from './utils'
 import { RARITY_COLORS } from './utils'
 
@@ -17,6 +18,9 @@ type Props = {
 export function StatCard({ icon: Icon, label, value, rarity, hint }: Props) {
   const locale = currentLocale()
   const color = RARITY_COLORS[rarity]
+  // Au-delà de 5 chiffres, le nombre déborde de la carte : « 123 k », la
+  // valeur exacte passe dans l'infobulle.
+  const compact = value >= 100_000
   return (
     <Card className="group relative overflow-hidden p-[22px] pl-[18px] flex items-center gap-4">
       <span
@@ -40,9 +44,18 @@ export function StatCard({ icon: Icon, label, value, rarity, hint }: Props) {
         <span className="font-mono text-[11px] uppercase tracking-wider text-text-light">
           {label}
         </span>
-        <span className="font-display text-[48px] font-extrabold leading-none tabular-nums text-text">
-          {formatNumber(value, locale)}
-        </span>
+        <Tooltip content={compact && formatNumber(value, locale)}>
+          <span
+            className="font-display text-[48px] font-extrabold leading-none tabular-nums text-text"
+            tabIndex={compact ? 0 : undefined}
+          >
+            {formatNumber(
+              value,
+              locale,
+              compact ? { notation: 'compact' } : undefined,
+            )}
+          </span>
+        </Tooltip>
         {hint && (
           <span className="italic text-xs text-text-light mt-1">{hint}</span>
         )}
