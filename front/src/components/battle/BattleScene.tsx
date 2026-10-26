@@ -169,6 +169,17 @@ export function BattleScene({
   const [speed, setSpeed] = useState<SceneSpeed>(1)
   const [isPaused, setIsPaused] = useState(false)
   const completedRef = useRef(false)
+  // Dernière entrée du journal appliquée. L'effet de lecture repasse sur la
+  // même entrée quand ses dépendances changent (pause, vitesse, callback du
+  // parent recréé) : sans ce garde, un soin ou des dégâts compteraient deux fois.
+  const appliedRef = useRef(-1)
+  const claimEntry = useCallback((index: number) => {
+    if (appliedRef.current >= index) {
+      return false
+    }
+    appliedRef.current = index
+    return true
+  }, [])
   const itemKeyRef = useRef(0)
 
   const pushFloat = useCallback(
@@ -216,6 +227,7 @@ export function BattleScene({
     }
     setUnits(acc)
     setLogIndex(log.length)
+    appliedRef.current = log.length
     setFloatsByUnit({})
     setBadgesByUnit({})
     setAttackingId(null)
@@ -232,6 +244,7 @@ export function BattleScene({
   const doReplay = useCallback(() => {
     setUnits(initialUnits)
     setLogIndex(0)
+    appliedRef.current = -1
     setFloatsByUnit({})
     setBadgesByUnit({})
     setAttackingId(null)
@@ -250,12 +263,16 @@ export function BattleScene({
   }
 
   const runAttackEntry = useCallback(
-    (entry: BattleLogEntry, delay: number) => {
+    (entry: BattleLogEntry, index: number, delay: number) => {
       const targetIds = (entry.targetIds as string[] | undefined) ?? []
       setAttackingId(entry.attackerId as string)
       setTargetedIds(targetIds)
       setStrikeSeq((n) => n + 1)
       const hopTimer = setTimeout(() => {
+        setAttackingId(null)
+        if (!claimEntry(index)) {
+          return
+        }
         const damages = entry.damages as {
           id: string
           final: number
@@ -270,7 +287,6 @@ export function BattleScene({
           }
         }
         setUnits((cur) => applyEntry(entry, cur))
-        setAttackingId(null)
       }, HOP_DURATION_MS / speed)
       const targetTimer = setTimeout(() => {
         setTargetedIds([])
@@ -284,51 +300,55 @@ export function BattleScene({
         clearTimeout(nextTimer)
       }
     },
-    [pushFloat, speed],
+    [claimEntry, pushFloat, speed],
   )
 
   const runPassiveEntry = useCallback(
-    (entry: BattleLogEntry, delay: number) => {
-      const unitId = entry.unitId as string
-      const passive = entry.passive as string
-      pushBadge(unitId, passive)
-      const payload =
-        (entry.payload as { healed?: number; damage?: number }) ?? {}
-      const receiverId = (entry.targetId as string | undefined) ?? unitId
-      if (payload.healed && payload.healed > 0) {
-        pushFloat(receiverId, payload.healed, 'heal')
+    (entry: BattleLogEntry, index: number, delay: number) => {
+      if (claimEntry(index)) {
+        const unitId = entry.unitId as string
+        pushBadge(unitId, entry.passive as string)
+        const payload =
+          (entry.payload as { healed?: number; damage?: number }) ?? {}
+        const receiverId = (entry.targetId as string | undefined) ?? unitId
+        if (payload.healed && payload.healed > 0) {
+          pushFloat(receiverId, payload.healed, 'heal')
+        }
+        if (payload.damage && payload.damage > 0) {
+          pushFloat(receiverId, payload.damage, 'damage')
+        }
+        setUnits((cur) => applyEntry(entry, cur))
       }
-      if (payload.damage && payload.damage > 0) {
-        pushFloat(receiverId, payload.damage, 'damage')
-      }
-      setUnits((cur) => applyEntry(entry, cur))
       const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)
       return () => clearTimeout(t)
     },
-    [pushBadge, pushFloat],
+    [claimEntry, pushBadge, pushFloat],
   )
 
   const runHealEntry = useCallback(
-    (entry: BattleLogEntry, delay: number) => {
-      const unitId = entry.unitId as string
-      const amount = entry.amount as number
-      if (amount > 0) {
-        pushFloat(unitId, amount, 'heal')
+    (entry: BattleLogEntry, index: number, delay: number) => {
+      if (claimEntry(index)) {
+        const amount = entry.amount as number
+        if (amount > 0) {
+          pushFloat(entry.unitId as string, amount, 'heal')
+        }
+        setUnits((cur) => applyEntry(entry, cur))
       }
-      setUnits((cur) => applyEntry(entry, cur))
       const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)
       return () => clearTimeout(t)
     },
-    [pushFloat],
+    [claimEntry, pushFloat],
   )
 
   const runGenericEntry = useCallback(
-    (entry: BattleLogEntry, delay: number) => {
-      setUnits((cur) => applyEntry(entry, cur))
+    (entry: BattleLogEntry, index: number, delay: number) => {
+      if (claimEntry(index)) {
+        setUnits((cur) => applyEntry(entry, cur))
+      }
       const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)
       return () => clearTimeout(t)
     },
-    [],
+    [claimEntry],
   )
 
   useEffect(() => {
@@ -349,15 +369,15 @@ export function BattleScene({
     const delay = BASE_ENTRY_DELAY_MS / speed
 
     if (entry.type === 'ATTACK') {
-      return runAttackEntry(entry, delay)
+      return runAttackEntry(entry, logIndex, delay)
     }
     if (entry.type === 'PASSIVE') {
-      return runPassiveEntry(entry, delay)
+      return runPassiveEntry(entry, logIndex, delay)
     }
     if (entry.type === 'HEAL') {
-      return runHealEntry(entry, delay)
+      return runHealEntry(entry, logIndex, delay)
     }
-    return runGenericEntry(entry, delay)
+    return runGenericEntry(entry, logIndex, delay)
   }, [
     logIndex,
     log,
