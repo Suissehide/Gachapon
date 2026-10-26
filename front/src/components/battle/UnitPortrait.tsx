@@ -13,6 +13,7 @@ import {
   Swords,
   Zap,
 } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { UnitStatus } from '../../api/combat.api'
@@ -28,6 +29,10 @@ type Props = {
   isActing: boolean
   /** Whether this unit is the current target (triggers the shake animation). */
   isTargeted: boolean
+  /** Incrémenté à chaque frappe : relance l'élan ou la secousse, même si l'unité frappe deux fois de suite. */
+  strikeSeq: number
+  /** Vitesse de lecture de la scène, appliquée à la durée des animations. */
+  speed: number
   /** Boss layout = bigger portrait centered (boss is alone in its row). */
   enlarged?: boolean
   /** Show passive badge label (optional) */
@@ -41,6 +46,47 @@ type Props = {
 }
 
 const PLACEHOLDER_RARITY = 'COMMON' as const
+
+const lunge = (dy: number): Keyframe[] => [
+  { transform: 'translateY(0)' },
+  { transform: `translateY(${dy}px)`, offset: 0.4 },
+  { transform: 'translateY(0)' },
+]
+const LUNGE_MS = 400
+const SHAKE: Keyframe[] = [
+  { transform: 'translateX(0)' },
+  { transform: 'translateX(-5px)' },
+  { transform: 'translateX(5px)' },
+  { transform: 'translateX(-3px)' },
+  { transform: 'translateX(0)' },
+]
+const SHAKE_MS = 320
+
+/**
+ * Players (side A) sit at the bottom and lunge UP. Enemies (side B) sit at the
+ * top and lunge DOWN. Targeted units shake regardless of side. Web Animations
+ * plutôt qu'une classe CSS : l'animation va au bout même quand la scène retire
+ * l'état, et chaque frappe la relance (double coup d'un même attaquant).
+ */
+function useStrikeAnimation(
+  kind: 'lunge' | 'shake' | null,
+  strikeSeq: number,
+  speed: number,
+  isAlly: boolean,
+) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!kind || strikeSeq === 0) {
+      return
+    }
+    const [frames, ms] =
+      kind === 'lunge'
+        ? [lunge(isAlly ? -14 : 14), LUNGE_MS]
+        : [SHAKE, SHAKE_MS]
+    ref.current?.animate(frames, { duration: ms / speed, easing: 'ease' })
+  }, [kind, strikeSeq, speed, isAlly])
+  return ref
+}
 
 const STATUS_STYLE: Record<
   UnitStatus['key'],
@@ -135,7 +181,14 @@ function StatusRow({ unit }: { unit: SceneUnit }) {
   )
 }
 
-export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
+export function UnitPortrait({
+  unit,
+  isActing,
+  isTargeted,
+  strikeSeq,
+  speed,
+  enlarged,
+}: Props) {
   const { t } = useTranslation('combat')
   const locale = currentLocale()
   const hpPct = Math.max(0, (unit.currentHp / unit.maxHp) * 100)
@@ -152,15 +205,12 @@ export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
           ? 'bg-gradient-to-r from-emerald-500 to-emerald-600'
           : 'bg-gradient-to-r from-emerald-400 to-emerald-500'
 
-  // Players (side A) sit at the bottom and lunge UP. Enemies (side B) sit at the
-  // top and lunge DOWN. Targeted units shake regardless of side.
-  const animClass = isActing
-    ? isAlly
-      ? 'animate-[battleLungeUp_0.4s_ease]'
-      : 'animate-[battleLungeDown_0.4s_ease]'
-    : isTargeted
-      ? 'animate-[battleShake_0.32s_ease]'
-      : ''
+  const rootRef = useStrikeAnimation(
+    isActing ? 'lunge' : isTargeted ? 'shake' : null,
+    strikeSeq,
+    speed,
+    isAlly,
+  )
 
   const ringClass = isActing
     ? 'ring-4 ring-amber-400/60 shadow-[0_14px_30px_-12px_rgba(245,158,11,0.55)]'
@@ -177,7 +227,8 @@ export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
 
   return (
     <div
-      className={`relative flex flex-col items-center gap-2 transition-transform ${animClass} ${
+      ref={rootRef}
+      className={`relative flex flex-col items-center gap-2 transition-transform ${
         enlarged ? 'scale-[1.18]' : ''
       }`}
       style={{ transformOrigin: 'center center' }}

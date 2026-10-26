@@ -157,6 +157,7 @@ export function BattleScene({
   const [logIndex, setLogIndex] = useState(0)
   const [attackingId, setAttackingId] = useState<string | null>(null)
   const [targetedIds, setTargetedIds] = useState<string[]>([])
+  const [strikeSeq, setStrikeSeq] = useState(0)
   const [floatsByUnit, setFloatsByUnit] = useState<Record<string, FloatItem[]>>(
     {},
   )
@@ -251,6 +252,7 @@ export function BattleScene({
       const targetIds = (entry.targetIds as string[] | undefined) ?? []
       setAttackingId(entry.attackerId as string)
       setTargetedIds(targetIds)
+      setStrikeSeq((n) => n + 1)
       const hopTimer = setTimeout(() => {
         const damages = entry.damages as {
           id: string
@@ -394,6 +396,8 @@ export function BattleScene({
         unit={u}
         isActing={attackingId === u.id}
         isTargeted={targetedIds.includes(u.id)}
+        strikeSeq={strikeSeq}
+        speed={speed}
         enlarged={enlarged}
       />
       {(floatsByUnit[u.id] ?? []).map((f) => (

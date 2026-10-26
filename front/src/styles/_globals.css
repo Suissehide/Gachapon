@@ -1440,39 +1440,6 @@ h6 {
 }
 
 /* ── Battle scene animations ── */
-@keyframes battleLungeUp {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-14px);
-  }
-}
-@keyframes battleLungeDown {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(14px);
-  }
-}
-@keyframes battleShake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-5px);
-  }
-  50% {
-    transform: translateX(5px);
-  }
-  75% {
-    transform: translateX(-3px);
-  }
-}
 @keyframes battleSkullIn {
   from {
     transform: scale(0.3);
