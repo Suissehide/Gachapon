@@ -58,18 +58,20 @@ function applyEntry(entry: BattleLogEntry, units: SceneUnit[]): SceneUnit[] {
         (entry.payload as { healed?: number; damage?: number }) ?? {}
       // Dégâts hors entrée ATTACK : ticks de BURN/POISON, part encaissée
       // par un GUARDIAN (sur `unitId`), renvoi de RIPOSTE (sur `targetId`).
+      // Soins : sur soi (REGEN, VIGOR) ou sur un allié (BLESSING, SANCTUARY,
+      // sur `targetId`).
+      const receiverId = (entry.targetId as string | undefined) ?? unitId
       if (payload.damage && payload.damage > 0) {
         const damage = payload.damage
-        const victimId = (entry.targetId as string | undefined) ?? unitId
         return units.map((u) =>
-          u.id === victimId
+          u.id === receiverId
             ? { ...u, currentHp: Math.max(0, u.currentHp - damage) }
             : u,
         )
       }
       if (payload.healed && payload.healed > 0) {
         return units.map((u) =>
-          u.id === unitId
+          u.id === receiverId
             ? {
                 ...u,
                 currentHp: Math.min(
@@ -292,12 +294,12 @@ export function BattleScene({
       pushBadge(unitId, passive)
       const payload =
         (entry.payload as { healed?: number; damage?: number }) ?? {}
+      const receiverId = (entry.targetId as string | undefined) ?? unitId
       if (payload.healed && payload.healed > 0) {
-        pushFloat(unitId, payload.healed, 'heal')
+        pushFloat(receiverId, payload.healed, 'heal')
       }
       if (payload.damage && payload.damage > 0) {
-        const victimId = (entry.targetId as string | undefined) ?? unitId
-        pushFloat(victimId, payload.damage, 'damage')
+        pushFloat(receiverId, payload.damage, 'damage')
       }
       setUnits((cur) => applyEntry(entry, cur))
       const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)

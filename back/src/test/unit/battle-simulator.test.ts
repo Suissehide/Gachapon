@@ -979,6 +979,46 @@ describe('simulateBattle', () => {
       expect(entries[0]?.payload.healed).toBeGreaterThan(0)
     })
 
+    it('le journal suffit à suivre les PV : aucune mort alors que le replay affiche encore des PV', () => {
+      // Mêmes règles que applyEntry (front BattleScene) : un soin ou des dégâts
+      // de passif vont à `targetId`, sinon à `unitId`.
+      const deathsWithHpLeft: string[] = []
+      for (let s = 0; s < 50; s++) {
+        const teamA = [
+          makeUnit('A0', { hp: 9000, atk: 1500, def: 800, spd: 110, passiveKey: 'SANCTUARY' }),
+          makeUnit('A1', { hp: 9000, atk: 1500, def: 800, spd: 110, passiveKey: 'BLESSING' }),
+          makeUnit('A2', { hp: 9000, atk: 1500, def: 800, spd: 110 }),
+        ]
+        const teamB = [
+          makeUnit('B0', { hp: 53288, atk: 2745, def: 453, spd: 102, attackPattern: 'AOE_3' }),
+        ]
+        const maxHp = new Map([...teamA, ...teamB].map((u) => [u.id, u.hp]))
+        const hp = new Map(maxHp)
+        const hit = (id: string, delta: number) =>
+          hp.set(id, Math.min(maxHp.get(id) ?? 0, (hp.get(id) ?? 0) + delta))
+        const { log } = simulateBattle({ teamA, teamB, seed: `replay-${s}` })
+        for (const e of log) {
+          if (e.type === 'ATTACK') {
+            for (const d of e.damages) {
+              if (!d.dodged) {
+                hit(d.id, -d.final)
+              }
+            }
+          } else if (e.type === 'PASSIVE') {
+            const { damage, healed } = e.payload
+            hit(e.targetId ?? e.unitId, damage ? -damage : (healed ?? 0))
+          } else if (e.type === 'HEAL') {
+            hit(e.unitId, e.amount)
+          } else if (e.type === 'REBIRTH') {
+            hp.set(e.unitId, e.restoredHp)
+          } else if (e.type === 'DEATH' && (hp.get(e.unitId) ?? 0) > 0) {
+            deathsWithHpLeft.push(`replay-${s}:${e.unitId}`)
+          }
+        }
+      }
+      expect(deathsWithHpLeft).toEqual([])
+    })
+
   })
 
   // ------------------------------------------------------------------------
@@ -1614,6 +1654,19 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
       (e) => e.type === 'PASSIVE' && e.passive === 'VIGOR',
     )
     expect(declenchements).toHaveLength(1)
+  })
+
+  it('VIGOR est journalisé après le coup qui le déclenche, pour que le replay retire les dégâts avant le soin', () => {
+    const r = simulateBattle({
+      seed: 'vigor',
+      teamA: [makeUnit('A0', { passiveKey: 'VIGOR', hp: 1000, atk: 1 })],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 120, spd: 300 })],
+    })
+    const i = r.log.findIndex(
+      (e) => e.type === 'PASSIVE' && e.passive === 'VIGOR',
+    )
+    const coup = r.log[i - 1]
+    expect(coup?.type === 'ATTACK' && coup.targetIds).toEqual(['A0'])
   })
 
   // Trouvaille de relecture (round 1) : applyVigorSecondWind n'était câblée

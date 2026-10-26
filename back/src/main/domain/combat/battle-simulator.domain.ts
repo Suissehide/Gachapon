@@ -93,8 +93,9 @@ export type LogEntry =
       passive: string
       payload: Record<string, number>
       /**
-       * Unité qui subit `payload.damage` quand ce n'est pas `unitId`
-       * (RIPOSTE : le porteur renvoie, l'attaquant encaisse).
+       * Unité qui subit `payload.damage` ou reçoit `payload.healed` quand ce
+       * n'est pas `unitId` (RIPOSTE : le porteur renvoie, l'attaquant
+       * encaisse ; BLESSING / SANCTUARY : le porteur soigne un allié).
        */
       targetId?: string
     }
@@ -748,7 +749,7 @@ function applyFortifyStack(
  * Effet de bord voulu : un coup qui amène `currentHp` à 0 ne fait PAS mourir
  * l'unité sur le coup — `target.alive` n'est mis à `false` que par
  * `finalizeDeath`, appelé APRÈS cette fonction sur les deux chemins d'appel
- * (voir `resolveAttackOnTarget` et `applyDotsToUnit`). La garde `!target.alive`
+ * (voir `performStrike` et `applyDotsToUnit`). La garde `!target.alive`
  * ci-dessous est donc encore fausse à 0 PV : VIGOR se déclenche, soigne, et le
  * coup mortel est purement et simplement annulé — ce n'est pas une simple
  * marge de survie « de justesse », c'est une négation complète du coup fatal.
@@ -884,7 +885,6 @@ function resolveAttackOnTarget(
     attacker.vengeanceMark = Math.max(attacker.vengeanceMark, 1) as 1 | 2
   }
   applyFortifyStack(target, final, log)
-  applyVigorSecondWind(target, log)
 
   // BURN / POISON (attacker) — applique un effet de dégâts sur la durée à la cible.
   if (final > 0) {
@@ -1061,6 +1061,15 @@ function performStrike(ctx: StrikeContext): void {
   }
 
   log.push({ type: 'ATTACK', attackerId: attacker.id, targetIds, damages })
+
+  // VIGOR après l'entrée ATTACK : le replay doit retirer les dégâts avant
+  // d'appliquer le soin, sinon le plafond de PV max le rogne à l'écran.
+  for (let i = 0; i < targets.length; i++) {
+    const target = targets[i]
+    if (target && !damages[i]?.dodged) {
+      applyVigorSecondWind(target, log)
+    }
+  }
 
   processRiposteOnSurvivors(attacker, targets, damages, log)
   processDeaths(attacker, targets, log)
@@ -1381,6 +1390,7 @@ function applyBlessingFromUnit(
     unitId: healer.id,
     passive: 'BLESSING',
     payload: { healed },
+    targetId: target.id,
   })
 }
 
@@ -1410,6 +1420,7 @@ function applySanctuaryFromUnit(
       unitId: src.id,
       passive: 'SANCTUARY',
       payload: { healed },
+      targetId: ally.id,
     })
   }
 }
