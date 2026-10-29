@@ -232,9 +232,10 @@ export class TowerDomain {
    * Détail d'une tour : ses étages avec leur statut pour ce joueur.
    */
   async getTower(userId: string, element: TowerElement): Promise<TowerView> {
-    const [floors, progressRows] = await Promise.all([
+    const [floors, progressRows, effects] = await Promise.all([
       this.#towerRepository.listFloors(element),
       this.#towerRepository.getProgress(userId),
+      this.#skillTreeRepository.getEffectsForUser(userId),
     ])
     const highestFloor =
       progressRows.find((p) => p.element === element)?.highestFloor ?? 0
@@ -252,7 +253,13 @@ export class TowerDomain {
       const loot = f.lootTable as unknown as TowerLootTable
       // Un étage déjà franchi se refarme : c'est le butin de farm qui compte.
       const isFirstClear = status !== 'cleared'
-      const shown = isFirstClear ? loot.firstClear : loot.farm
+      const raw = isFirstClear ? loot.firstClear : loot.farm
+      // Même bonus d'arbre que le combat et le balayage : l'aperçu annonce
+      // ce qui sera crédité.
+      const bonused = applyCombatBonuses(
+        { gold: raw.gold, xp: raw.xp, equipmentDropChance: 1, cardChance: 0 },
+        effects,
+      )
       return {
         index: f.index,
         label: f.label,
@@ -260,9 +267,9 @@ export class TowerDomain {
         status,
         recommendedPower: computeTeamPower(enemyTeam),
         rewardPreview: {
-          gold: shown.gold,
-          dust: shown.dust,
-          xp: shown.xp,
+          gold: bonused.gold,
+          dust: raw.dust,
+          xp: bonused.xp,
           guaranteedMinRarity: isFirstClear
             ? (loot.firstClear.guaranteedEquipment?.minRarity ?? null)
             : null,

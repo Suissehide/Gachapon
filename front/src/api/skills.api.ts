@@ -61,6 +61,7 @@ export type SkillEffects = {
   goldShopDiscount: number
   equipUpgradeDiscount: number
   salvageBonus: number
+  dustHarvestMultiplier: number
   [key: string]: number
 }
 export type SkillTreeState = {

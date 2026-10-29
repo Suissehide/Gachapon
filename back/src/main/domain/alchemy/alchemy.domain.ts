@@ -154,6 +154,8 @@ export class AlchemyDomain implements IAlchemyDomain {
       throw Boom.conflict(errorMessage('alchemy.noTargetCard'))
     }
     const target = weightedPick(pool, Math.random)
+    // Taux de base, sans VARIANT_LUCK : choix de la spec alchimie, le résultat
+    // ne doit pas concurrencer le gacha.
     const variant = pickVariant(toRarity, rates)
     const existing = await tx.userCard.findUnique({
       where: { userId_cardId_variant: { userId, cardId: target.id, variant } },

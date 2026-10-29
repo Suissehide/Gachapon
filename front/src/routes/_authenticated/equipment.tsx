@@ -51,6 +51,7 @@ import {
   useEquipItem,
   useEquipmentList,
   useEquipmentSets,
+  useSalvageGold,
   useSalvageItems,
   useUnequipItem,
   useUpgradeItem,
@@ -229,7 +230,7 @@ function EquipmentPage() {
   const equipItem = useEquipItem()
   const unequipItem = useUnequipItem()
   const salvageItems = useSalvageItems()
-  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const salvageGoldOf = useSalvageGold()
 
   const [slotFilter, setSlotFilter] = useState<EquipmentSlot[]>([])
   const [rarityFilter, setRarityFilter] = useState<EquipmentRarity[]>([])
@@ -290,10 +291,7 @@ function EquipmentPage() {
   // jamais dans la sélection.
   const sellable = filtered.filter((i) => !i.equippedOnId)
   const selectedItems = items.filter((i) => selected.has(i.id))
-  const selectionGold = selectedItems.reduce(
-    (sum, i) => sum + (economy.equip.salvageGold[i.rarity] ?? 0),
-    0,
-  )
+  const selectionGold = salvageGoldOf(selectedItems)
   const allSellableSelected =
     sellable.length > 0 && sellable.every((i) => selected.has(i.id))
 
@@ -584,6 +582,7 @@ function EquipmentCard({
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const upgradeItem = useUpgradeItem()
   const salvageItems = useSalvageItems()
+  const salvageGoldOf = useSalvageGold()
   const gold = useAuthStore((st) => st.user?.gold ?? 0)
   // Écart de la dernière amélioration, effacé au bout de quelques secondes :
   // c'est un accusé de réception, pas une information permanente.
@@ -620,7 +619,7 @@ function EquipmentCard({
   // serveur facture le prix remisé.
   const atMaxLevel = item.nextUpgradeCost === null
   const upgradeCost = item.nextUpgradeCost ?? 0
-  const salvageGold = economy.equip.salvageGold[item.rarity] ?? 0
+  const salvageGold = salvageGoldOf([item])
   const busy = isPending || upgradeItem.isPending || salvageItems.isPending
   // On ne vend pas une pièce portée : le serveur la refuse, autant le dire
   // avant le clic plutôt qu'après l'erreur.

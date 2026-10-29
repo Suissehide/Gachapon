@@ -146,7 +146,7 @@ export interface EquipmentSalvageResult {
 
 /**
  * Or rendu par UNE pièce recyclée, skill Ferrailleur (SALVAGE_BONUS) appliqué
- * pièce par pièce et arrondi — la prévisualisation front (EquipmentSlotPopup)
+ * pièce par pièce et arrondi — la prévisualisation front (useSalvageGold)
  * fait la même somme d'arrondis, le total affiché égale le total crédité.
  */
 export function salvageGoldWithBonus(

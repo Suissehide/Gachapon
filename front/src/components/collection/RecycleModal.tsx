@@ -10,6 +10,7 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
+import { useSkillTree } from '../../queries/useSkills.ts'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
@@ -42,11 +43,17 @@ export function RecycleModal({
   const [quantity, setQuantity] = useState(1)
   const { mutate: recycle, isPending } = useRecycle()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const { data: skillState } = useSkillTree()
 
   const locale = currentLocale()
   const maxRecyclable = card.quantity - 1
-  const dustPerCard = economy.recycle[card.rarity] ?? 0
-  const dustTotal = quantity * dustPerCard
+  // Bonus « Recyclage » (DUST_HARVEST) compris, arrondi comme le serveur :
+  // sur le total, pas par copie.
+  const dustRate =
+    (economy.recycle[card.rarity] ?? 0) *
+    (skillState?.effects?.dustHarvestMultiplier ?? 1)
+  const dustPerCard = Math.round(dustRate)
+  const dustTotal = Math.round(dustRate * quantity)
   const rarityText =
     RARITY_COLORS[card.rarity]?.split(' ')[1] ?? 'text-text-light'
 

@@ -19,8 +19,26 @@ import {
 import { invalidateBattleCache } from './useCampaign.ts'
 import { useUserCollection } from './useCollection.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
+import { useSkillTree } from './useSkills.ts'
 
 const EQUIPMENT_KEY = ['equipment']
+
+/**
+ * Or rendu par le recyclage de pièces, bonus SALVAGE_BONUS compris. Même règle
+ * que le serveur (`salvageGoldWithBonus`) : bonus par pièce puis arrondi.
+ */
+export function useSalvageGold() {
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const { data: skillState } = useSkillTree()
+  const byRarity: Record<string, number> = economy.equip.salvageGold
+  const bonusPct = skillState?.effects?.salvageBonus ?? 0
+  return (items: { rarity: string }[]) =>
+    items.reduce(
+      (sum, i) =>
+        sum + Math.round((byRarity[i.rarity] ?? 0) * (1 + bonusPct / 100)),
+      0,
+    )
+}
 
 export function useEquipmentList() {
   return useQuery({

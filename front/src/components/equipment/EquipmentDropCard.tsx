@@ -16,7 +16,7 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
-import { useSalvageItems } from '../../queries/useEquipment.ts'
+import { useSalvageGold, useSalvageItems } from '../../queries/useEquipment.ts'
 import {
   formatBonusKey,
   scaledBaseBonus,
@@ -343,6 +343,7 @@ export function EquipmentDropReward({
   className?: string
 }) {
   const salvageItems = useSalvageItems()
+  const salvageGold = useSalvageGold()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const { toast } = useToast()
   const [scrappedGold, setScrappedGold] = useState<number | null>(null)
@@ -351,7 +352,7 @@ export function EquipmentDropReward({
     return null
   }
 
-  const scrapGold = economy.equip.salvageGold[drop.rarity] ?? 0
+  const scrapGold = salvageGold([drop])
 
   if (scrappedGold !== null) {
     // La confirmation garde EXACTEMENT l'encombrement de la fiche détruite :

@@ -184,13 +184,16 @@ export interface RewardPreview {
  * always seeded complete) — a top-level guard turns a malformed row into a
  * debuggable error instead of a cryptic property-read crash across getCampaign.
  *
- * `teamXpBonusPct` is the caller's team `xp` perk effect (percentage points,
- * e.g. 4 for +4 %), resolved ONCE by the caller via `effectsForUser` and
- * passed in — never read from a domain here, that would break purity and
- * turn a per-stage `.map()` into one Postgres query per stage.
+ * The preview goes through `battleLootWithBonuses`, the same function the
+ * battle credits with, so the announced gold / XP / drop chance include the
+ * skill-tree and team bonuses. `effects` and `teamXpBonusPct` are resolved
+ * ONCE by the caller and passed in — never read from a domain here, that
+ * would break purity and turn a per-stage `.map()` into one Postgres query
+ * per stage.
  */
 export function extractRewardPreview(
   lootTable: unknown,
+  effects: CombatBonusEffects,
   teamXpBonusPct: number,
 ): RewardPreview {
   const lt = lootTable as LootTable
@@ -199,20 +202,14 @@ export function extractRewardPreview(
       `Stage has a malformed lootTable: ${JSON.stringify(lootTable)}`,
     )
   }
-  const fc = lt.firstClear
-  const farm = lt.farm
-  const xpMult = 1 + teamXpBonusPct / 100
+  const { firstClear: fc, farm } = battleLootWithBonuses(
+    lt,
+    effects,
+    teamXpBonusPct,
+  )
   return {
-    firstClear: {
-      gold: fc.gold,
-      dust: fc.dust,
-      xp: Math.round(fc.xp * xpMult),
-    },
-    farm: {
-      gold: farm.gold,
-      dust: farm.dust,
-      xp: Math.round(farm.xp * xpMult),
-    },
+    firstClear: { gold: fc.gold, dust: fc.dust, xp: fc.xp },
+    farm: { gold: farm.gold, dust: farm.dust, xp: farm.xp },
     farmEquipmentChance: farm.equipmentDropChance,
     farmCardChance: farm.cardChance,
     guaranteedEquipment: fc.guaranteedEquipment != null,
@@ -552,12 +549,13 @@ export class CampaignDomain {
     // Résolu UNE fois pour toute la requête — jamais dans le `.map()` de
     // stages ci-dessous, qui tournerait sinon une requête Postgres par
     // stage sur une route qui rend un chapitre entier.
-    const [progress, stages, teamEffects] = await Promise.all([
+    const [progress, stages, teamEffects, effects] = await Promise.all([
       this.#getOrCreateProgress(userId),
       orm.prisma.campaignStage.findMany({
         orderBy: [{ chapter: 'asc' }, { index: 'asc' }],
       }),
       this.#teamProgressionDomain.effectsForUser(userId),
+      this.#skillTreeRepository.getEffectsForUser(userId),
     ])
 
     const byChapter = new Map<number, typeof stages>()
@@ -590,7 +588,11 @@ export class CampaignDomain {
           isBoss: s.isBoss,
           status: stageStatus(s, progress, previousChapterCleared),
           recommendedPower: computeTeamPower(enemyTeam),
-          rewardPreview: extractRewardPreview(s.lootTable, teamEffects.xp),
+          rewardPreview: extractRewardPreview(
+            s.lootTable,
+            effects,
+            teamEffects.xp,
+          ),
           enemies: enemyTeam.map((e, idx) => ({
             id: `B${idx}`,
             imageUrl: this.#resolveEnemyImage(e.appearance),
@@ -801,11 +803,22 @@ export class CampaignDomain {
             throw Boom.notFound(errorMessage('campaign.wandererNotFound'))
           }
 
-          const loot = computeLoot(
+          const rawLoot = computeLoot(
             pickLootKind(Math.random),
             (monster.stage.lootTable as unknown as LootTable).farm,
             { lootMult: c['wanderer.lootMult'], tokens: c['wanderer.tokens'] },
           )
+          // C'est une victoire : GOLD_BONUS porte sur le lot d'or, comme en
+          // campagne et en tour.
+          const loot =
+            rawLoot.kind === 'GOLD'
+              ? {
+                  ...rawLoot,
+                  amount: Math.round(
+                    rawLoot.amount * (1 + upgrades.goldBonus / 100),
+                  ),
+                }
+              : rawLoot
           switch (loot.kind) {
             case 'GOLD':
               await tx.user.update({

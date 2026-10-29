@@ -23,12 +23,12 @@ import {
   useEquipItem,
   useEquipmentList,
   useEquipmentSets,
+  useSalvageGold,
   useSalvageItems,
   useSetColorByKey,
   useUnequipItem,
   useUpgradeItem,
 } from '../../queries/useEquipment.ts'
-import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
 import {
   activeSetsForCard,
@@ -99,19 +99,6 @@ function bonusText(key: string, value: number): string {
   return `${STAT_LABEL[bonusStat(key)] ?? key} +${n}${key.endsWith('Pct') ? ' %' : ''}`
 }
 
-/** Même règle que le serveur (`salvageGoldWithBonus`) : bonus par pièce puis arrondi. */
-function salvageGold(
-  items: { rarity: string }[],
-  byRarity: Record<string, number>,
-  bonusPct = 0,
-): number {
-  return items.reduce(
-    (sum, i) =>
-      sum + Math.round((byRarity[i.rarity] ?? 0) * (1 + bonusPct / 100)),
-    0,
-  )
-}
-
 function activeSetKeys(
   items: EquipmentInstance[],
   userCardId: string,
@@ -171,7 +158,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
   const { data: equip } = useEquipmentList()
   const { data: setsData } = useEquipmentSets()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
-  const { data: skillState } = useSkillTree()
+  const salvageGold = useSalvageGold()
   const setColor = useSetColorByKey()
   const gold = useAuthStore((s) => s.user?.gold ?? 0)
 
@@ -322,13 +309,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
     })
   }
 
-  const salvageByRarity = economy.equip.salvageGold
-  const salvageBonus = skillState?.effects?.salvageBonus
-  const checkedGold = salvageGold(
-    items.filter((i) => checked.includes(i.id)),
-    salvageByRarity,
-    salvageBonus,
-  )
+  const checkedGold = salvageGold(items.filter((i) => checked.includes(i.id)))
   const isDefaultPrio = prio.join() === advice.prio.join()
 
   return (
@@ -650,11 +631,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
                       highlight={highlight}
                       maxSubstats={economy.equip.maxSubstats}
                       milestone={economy.equip.substatMilestone}
-                      sellGold={salvageGold(
-                        [it],
-                        salvageByRarity,
-                        salvageBonus,
-                      )}
+                      sellGold={salvageGold([it])}
                       confirmSell={confirm === it.id}
                       onUpgrade={() => {
                         setHighlight(null)

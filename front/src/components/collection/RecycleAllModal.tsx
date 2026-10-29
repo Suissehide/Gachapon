@@ -14,6 +14,7 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
+import { useSkillTree } from '../../queries/useSkills.ts'
 import { Button } from '../ui/button.tsx'
 import { Select } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
@@ -57,6 +58,8 @@ export function RecycleAllModal({
   const [maxRarity, setMaxRarity] = useState<BulkRecycleMaxRarity>('COMMON')
   const { mutate: recycleAll, isPending } = useRecycleAll()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const { data: skillState } = useSkillTree()
+  const dustMult = skillState?.effects?.dustHarvestMultiplier ?? 1
 
   const preview = useMemo(() => {
     const allowed: readonly string[] = RARITY_ORDER.slice(
@@ -73,10 +76,13 @@ export function RecycleAllModal({
         continue
       }
       copies += uc.quantity - 1
-      dust += (uc.quantity - 1) * (economy.recycle[uc.card.rarity] ?? 0)
+      // Arrondi par carte, comme computeBulkRecycle côté serveur.
+      dust += Math.round(
+        (economy.recycle[uc.card.rarity] ?? 0) * dustMult * (uc.quantity - 1),
+      )
     }
     return { copies, dust }
-  }, [userCards, maxRarity, economy])
+  }, [userCards, maxRarity, economy, dustMult])
 
   const handleRecycleAll = () => {
     recycleAll(maxRarity, { onSuccess: () => onOpenChange(false) })
