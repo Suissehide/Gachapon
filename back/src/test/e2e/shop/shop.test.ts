@@ -179,6 +179,44 @@ describe('Shop routes', () => {
     expect(purchase!.amountSpent).toBe(500)
   })
 
+  it('POST /shop/:id/buy — un pack de jetons règle d\'abord la régénération en attente', async () => {
+    const { postgresOrm, configService } = (app as any).iocContainer
+    const { tokenMaxStock } = await configService.getMany('tokenMaxStock')
+
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        nameFr: `Regen Pack${suffix}`,
+        nameEn: `Regen Pack${suffix}`,
+        descriptionFr: 'Pack de jetons',
+        descriptionEn: 'Token pack',
+        type: 'TOKEN_PACK',
+        cost: 100,
+        currency: 'GOLD',
+        value: { tokens: 5 },
+        isActive: true,
+      },
+    })
+
+    // Un jeton sous le plafond, dernière régénération il y a une semaine :
+    // le stock aurait dû remonter au plafond avant le crédit.
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: {
+        gold: 100,
+        tokens: tokenMaxStock - 1,
+        lastTokenAt: new Date(Date.now() - 7 * 24 * 3600 * 1000),
+      },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().newTokenTotal).toBe(tokenMaxStock + 5)
+  })
+
   it('POST /shop/:id/buy — 404 si article inexistant', async () => {
     const res = await app.inject({
       method: 'POST',
@@ -832,6 +870,81 @@ describe('Shop routes', () => {
     expect(dbUser.gold).toBe(2000 - 850)
 
     // Cleanup: remove UserSkill + node + branch so later tests see no discount
+    await postgresOrm.prisma.userSkill.delete({ where: { userId_nodeId: { userId, nodeId: node.id } } })
+    await postgresOrm.prisma.skillNode.delete({ where: { id: node.id } })
+    await postgresOrm.prisma.skillBranch.delete({ where: { id: branch.id } })
+  })
+
+  it('POST /shop/:id/buy — Réduction 15 % sur un article en poussière : GET /shop et achat à 850', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const branch = await postgresOrm.prisma.skillBranch.create({
+      data: {
+        nameFr: `Reduction${suffix}`,
+        nameEn: `Reduction${suffix}`,
+        descriptionFr: 'Test branch',
+        descriptionEn: 'Test branch',
+        icon: 'tag',
+        color: '#f59e0b',
+        order: 99,
+      },
+    })
+    const node = await postgresOrm.prisma.skillNode.create({
+      data: {
+        branchId: branch.id,
+        nameFr: 'Réduction Lv1',
+        nameEn: 'Discount Lv1',
+        descriptionFr: 'Remise poussière',
+        descriptionEn: 'Dust discount',
+        icon: 'tag',
+        maxLevel: 1,
+        effectType: 'SHOP_DISCOUNT',
+        posX: 0,
+        posY: 0,
+        levels: { create: [{ level: 1, effect: 15 }] },
+      },
+    })
+    await postgresOrm.prisma.userSkill.create({
+      data: { userId, nodeId: node.id, level: 1 },
+    })
+
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        nameFr: `Reduction Pack${suffix}`,
+        nameEn: `Reduction Pack${suffix}`,
+        descriptionFr: 'Pack poussière avec remise',
+        descriptionEn: 'Dust pack with discount',
+        type: 'TOKEN_PACK',
+        cost: 1000,
+        currency: 'DUST',
+        value: { tokens: 10 },
+        isActive: true,
+      },
+    })
+
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: 2000, tokens: 0 },
+    })
+
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/shop',
+      headers: { cookie: cookies },
+    })
+    expect(listRes.statusCode).toBe(200)
+    const listed = listRes.json().items.find((i: any) => i.id === item.id)
+    expect(listed.cost).toBe(850)
+
+    const buyRes = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(buyRes.statusCode).toBe(200)
+    expect(buyRes.json().amountSpent).toBe(850)
+    expect(buyRes.json().newDustTotal).toBe(2000 - 850)
+
     await postgresOrm.prisma.userSkill.delete({ where: { userId_nodeId: { userId, nodeId: node.id } } })
     await postgresOrm.prisma.skillNode.delete({ where: { id: node.id } })
     await postgresOrm.prisma.skillBranch.delete({ where: { id: branch.id } })

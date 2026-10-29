@@ -13,6 +13,7 @@ import type { ConfigServiceInterface } from '../../types/infra/config/config.ser
 import type { PostgresORMInterface } from '../../types/infra/orm/client'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import { pickWeightedRandom } from '../gacha/gacha.domain'
+import { applyPercentDiscount } from '../shared/discount'
 
 const RARITY_PRICE_KEYS = {
   COMMON: 'dailyShopPriceCommon',
@@ -44,6 +45,7 @@ function formatItem(
     }
   },
   ownedCardIds: Set<string>,
+  shopDiscount: number,
 ): DailyShopItemResult {
   return {
     id: item.id,
@@ -55,7 +57,9 @@ function formatItem(
       element: item.card.element,
       set: { id: item.card.set.id, name: item.card.set.name },
     },
-    dustPrice: item.dustPrice,
+    // The stored price is the base price; SHOP_DISCOUNT is applied on read so a
+    // skill bought mid-hour shows up immediately (and matches what buy() charges).
+    dustPrice: applyPercentDiscount(item.dustPrice, shopDiscount),
     purchased: item.purchased,
     owned: ownedCardIds.has(item.card.id),
   }
@@ -91,8 +95,9 @@ export class DailyShopDomain implements IDailyShopDomain {
     const date = currentHourUTC()
     const prisma = this.#postgresOrm.prisma
 
-    const [ownedCardIds, existing] = await Promise.all([
+    const [ownedCardIds, effects, existing] = await Promise.all([
       this.#getOwnedCardIds(userId),
+      this.#skillTreeRepository.getEffectsForUser(userId),
       prisma.dailyShop.findUnique({
         where: { userId_date: { userId, date } },
         include: {
@@ -107,11 +112,13 @@ export class DailyShopDomain implements IDailyShopDomain {
     if (existing) {
       return {
         date: existing.date.toISOString(),
-        items: existing.items.map((item) => formatItem(item, ownedCardIds)),
+        items: existing.items.map((item) =>
+          formatItem(item, ownedCardIds, effects.shopDiscount),
+        ),
       }
     }
 
-    const [prices, activeCards, effects] = await Promise.all([
+    const [prices, activeCards] = await Promise.all([
       this.#configService.getMany(
         'dailyShopPriceCommon',
         'dailyShopPriceUncommon',
@@ -124,7 +131,6 @@ export class DailyShopDomain implements IDailyShopDomain {
         where: { set: { isActive: true } },
         include: { set: true },
       }),
-      this.#skillTreeRepository.getEffectsForUser(userId),
     ])
 
     // Slots are calculated from the user's current effects; only applied to this hour's generation.
@@ -173,7 +179,9 @@ export class DailyShopDomain implements IDailyShopDomain {
 
       return {
         date: shop.date.toISOString(),
-        items: shop.items.map((item) => formatItem(item, ownedCardIds)),
+        items: shop.items.map((item) =>
+          formatItem(item, ownedCardIds, effects.shopDiscount),
+        ),
       }
     } catch (err: unknown) {
       // Race condition: another request already created the shop for this (userId, date)
@@ -193,7 +201,9 @@ export class DailyShopDomain implements IDailyShopDomain {
         })
         return {
           date: existing.date.toISOString(),
-          items: existing.items.map((item) => formatItem(item, ownedCardIds)),
+          items: existing.items.map((item) =>
+            formatItem(item, ownedCardIds, effects.shopDiscount),
+          ),
         }
       }
       throw err
@@ -224,10 +234,9 @@ export class DailyShopDomain implements IDailyShopDomain {
     }
 
     const effects = await this.#skillTreeRepository.getEffectsForUser(userId)
-    const discount = effects.shopDiscount ?? 0
-    const finalPrice = Math.max(
-      0,
-      Math.round(item.dustPrice * (1 - discount / 100)),
+    const finalPrice = applyPercentDiscount(
+      item.dustPrice,
+      effects.shopDiscount,
     )
 
     const result = await this.#postgresOrm.executeWithTransactionClient(

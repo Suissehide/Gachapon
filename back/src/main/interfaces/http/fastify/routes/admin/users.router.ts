@@ -1,6 +1,10 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import {
+  creditTokensInTx,
+  loadTokenCreditCtx,
+} from '../../../../../domain/economy/token-credit'
 import { toCsv } from '../../../../../domain/shared/csv'
 import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
@@ -185,10 +189,15 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound(errorMessage('user.notFound'))
       }
-      const result = await userRepository.incrementTokens(
-        request.params.id,
-        request.body.amount,
-      )
+      // Règle la régénération en attente avant le crédit, sinon un joueur au
+      // plafond perdrait les jetons qui lui étaient dus.
+      const { id } = request.params
+      const ctx = await loadTokenCreditCtx(fastify.iocContainer, id)
+      const tokens =
+        await fastify.iocContainer.postgresOrm.executeWithTransactionClient(
+          (tx) => creditTokensInTx(tx, id, request.body.amount, ctx),
+        )
+      const result = { tokens }
       void activityDomain.record('ADMIN_GRANT', {
         userId: request.params.id,
         username: user.username,

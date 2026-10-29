@@ -4,10 +4,12 @@ import { CardRarity, type ShopItem } from '../../../generated/client'
 import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
+import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
 import type {
   BuyShopItemResult,
   IShopDomain,
 } from '../../types/domain/shop/shop.domain.interface'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { IShopItemRepository } from '../../types/infra/orm/repositories/shop-item.repository.interface'
@@ -16,6 +18,11 @@ import type { IUserBoostRepository } from '../../types/infra/orm/repositories/us
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
 import type { CombatPointsTx } from '../combat-points/combat-points.tx'
+import {
+  creditTokensInTx,
+  loadTokenCreditCtx,
+  type TokenCreditCtx,
+} from '../economy/token-credit'
 import { applyPercentDiscount } from '../shared/discount'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { effectiveEnergyDailyCap } from './energy-cap'
@@ -39,6 +46,7 @@ export class ShopDomain implements IShopDomain {
   readonly #combatPointsTx: CombatPointsTx
   readonly #skillTreeRepository: ISkillTreeRepository
   readonly #configService: ConfigServiceInterface
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     shopItemRepository,
@@ -48,6 +56,7 @@ export class ShopDomain implements IShopDomain {
     combatPointsTx,
     skillTreeRepository,
     configService,
+    teamProgressionDomain,
   }: IocContainer) {
     this.#shopItemRepository = shopItemRepository
     this.#userBoostRepository = userBoostRepository
@@ -56,6 +65,7 @@ export class ShopDomain implements IShopDomain {
     this.#combatPointsTx = combatPointsTx
     this.#skillTreeRepository = skillTreeRepository
     this.#configService = configService
+    this.#teamProgressionDomain = teamProgressionDomain
   }
 
   async buy(userId: string, shopItemId: string): Promise<BuyShopItemResult> {
@@ -69,17 +79,29 @@ export class ShopDomain implements IShopDomain {
 
     const result = await retryOnSerialization(async () => {
       // PC_VAULT affects the regen settle inside creditInTx; GOLD_SHOP_DISCOUNT
-      // affects the price — both read outside the tx.
-      const [effects, cfg] = await Promise.all([
+      // and SHOP_DISCOUNT affect the price — all read outside the tx.
+      const [effects, cfg, tokenCtx] = await Promise.all([
         this.#skillTreeRepository.getEffectsForUser(userId),
         item.type === 'ENERGY_PACK'
           ? this.#configService.getMany('shop.energyDailyCap')
           : undefined,
+        item.type === 'TOKEN_PACK'
+          ? loadTokenCreditCtx(
+              {
+                skillTreeRepository: this.#skillTreeRepository,
+                configService: this.#configService,
+                teamProgressionDomain: this.#teamProgressionDomain,
+              },
+              userId,
+            )
+          : undefined,
       ])
-      const effectiveCost =
+      const effectiveCost = applyPercentDiscount(
+        item.cost,
         item.currency === 'GOLD'
-          ? applyPercentDiscount(item.cost, effects.goldShopDiscount)
-          : item.cost
+          ? effects.goldShopDiscount
+          : effects.shopDiscount,
+      )
 
       return this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
@@ -116,17 +138,13 @@ export class ShopDomain implements IShopDomain {
           const updateData = this.#buildUpdateData(item, effectiveCost)
           await this.#applyBoostEffect(tx, userId, item)
 
-          let newCombatPoints: number | undefined
-          if (item.type === 'ENERGY_PACK') {
-            const energyValue = item.value as EnergyValue
-            const credit = await this.#combatPointsTx.creditInTx(
-              tx,
-              userId,
-              energyValue.combatPoints as number,
-              effects,
-            )
-            newCombatPoints = credit.combatPointsAfter
-          }
+          const newCombatPoints = await this.#creditPack(
+            tx,
+            userId,
+            item,
+            effects,
+            tokenCtx,
+          )
 
           const updated = await tx.user.update({
             where: { id: userId },
@@ -214,19 +232,43 @@ export class ShopDomain implements IShopDomain {
     }
   }
 
+  /**
+   * Crédite le contenu d'un pack d'énergie ou de jetons. Les jetons passent
+   * par creditTokensInTx pour régler la régénération en attente avant le
+   * crédit (REGEN, TOKEN_VAULT, MULTI_TOKEN_CHANCE, TOKEN_OVERFLOW_DUST).
+   * Renvoie les points de combat après crédit pour un pack d'énergie.
+   */
+  async #creditPack(
+    tx: PrimaTransactionClient,
+    userId: string,
+    item: ShopItem,
+    effects: UserUpgradeEffects,
+    tokenCtx: TokenCreditCtx | undefined,
+  ): Promise<number | undefined> {
+    if (item.type === 'ENERGY_PACK') {
+      const energyValue = item.value as EnergyValue
+      const credit = await this.#combatPointsTx.creditInTx(
+        tx,
+        userId,
+        energyValue.combatPoints as number,
+        effects,
+      )
+      return credit.combatPointsAfter
+    }
+    if (item.type === 'TOKEN_PACK' && tokenCtx) {
+      const value = item.value as { tokens: number }
+      await creditTokensInTx(tx, userId, value.tokens, tokenCtx)
+    }
+    return undefined
+  }
+
   #buildUpdateData(
     item: ShopItem,
     effectiveCost: number,
   ): Record<string, unknown> {
-    const updateData: Record<string, unknown> =
-      item.currency === 'GOLD'
-        ? { gold: { decrement: effectiveCost } }
-        : { dust: { decrement: effectiveCost } }
-    if (item.type === 'TOKEN_PACK') {
-      const value = item.value as { tokens: number }
-      updateData.tokens = { increment: value.tokens }
-    }
-    return updateData
+    return item.currency === 'GOLD'
+      ? { gold: { decrement: effectiveCost } }
+      : { dust: { decrement: effectiveCost } }
   }
 
   async #applyBoostEffect(

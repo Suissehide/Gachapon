@@ -73,10 +73,12 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
             name: item.name,
             description: item.description,
             type: item.type,
-            cost:
+            cost: applyPercentDiscount(
+              item.cost,
               item.currency === 'GOLD'
-                ? applyPercentDiscount(item.cost, effects.goldShopDiscount)
-                : item.cost,
+                ? effects.goldShopDiscount
+                : effects.shopDiscount,
+            ),
             currency: item.currency,
             value: item.value,
             activeBoost,

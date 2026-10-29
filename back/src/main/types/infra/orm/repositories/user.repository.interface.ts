@@ -116,7 +116,6 @@ export interface UserRepositoryInterface {
     q: string,
     excludeId: string,
   ): Promise<Pick<UserEntity, 'id' | 'username' | 'avatar'>[]>
-  incrementTokens(id: string, amount: number): Promise<{ tokens: number }>
   incrementDust(id: string, amount: number): Promise<{ dust: number }>
   updateRole(
     id: string,

@@ -311,17 +311,6 @@ export class UserRepository implements UserRepositoryInterface {
     })
   }
 
-  async incrementTokens(
-    id: string,
-    amount: number,
-  ): Promise<{ tokens: number }> {
-    const updated = await this.#prisma.user.update({
-      where: { id },
-      data: { tokens: { increment: amount } },
-    })
-    return { tokens: updated.tokens }
-  }
-
   async incrementDust(id: string, amount: number): Promise<{ dust: number }> {
     const updated = await this.#prisma.user.update({
       where: { id },

@@ -7,6 +7,7 @@ import {
   lootTableNormal,
 } from '../../main/domain/content/campaign.definitions'
 import { SHOP_ITEMS } from '../../main/domain/content/shop.definitions'
+import { applyPercentDiscount } from '../../main/domain/shared/discount'
 import { DEFAULTS } from '../../main/infra/config/config.service'
 
 /**
@@ -42,6 +43,14 @@ function meilleurRendementParEnergie(): number {
 
 const packs = SHOP_ITEMS.filter((item) => item.type === 'ENERGY_PACK')
 
+/**
+ * Les packs sont payés en poussière : la compétence « Réduction »
+ * (SHOP_DISCOUNT, niveau max dans prisma/seed/skills.ts) s'y applique. Le
+ * garde-fou porte sur le prix le plus bas qu'un joueur puisse payer.
+ */
+const REMISE_MAX_PCT = 18
+const prixPaye = (cost: number) => applyPercentDiscount(cost, REMISE_MAX_PCT)
+
 describe("prix des packs d'énergie", () => {
   it('trouve bien des packs à contrôler', () => {
     expect(packs.length).toBeGreaterThan(0)
@@ -52,7 +61,7 @@ describe("prix des packs d'énergie", () => {
     for (const pack of packs) {
       const points = (pack.value as { combatPoints?: number }).combatPoints
       expect(points).toBeGreaterThan(0)
-      const prixParEnergie = pack.cost / (points as number)
+      const prixParEnergie = prixPaye(pack.cost) / (points as number)
       expect(prixParEnergie).toBeGreaterThan(rendement)
     }
   })
@@ -63,7 +72,9 @@ describe("prix des packs d'énergie", () => {
     const rendement = meilleurRendementParEnergie()
     for (const pack of packs) {
       const points = (pack.value as { combatPoints: number }).combatPoints
-      expect(pack.cost / points).toBeGreaterThanOrEqual(2 * rendement)
+      expect(prixPaye(pack.cost) / points).toBeGreaterThanOrEqual(
+        2 * rendement,
+      )
     }
   })
 })

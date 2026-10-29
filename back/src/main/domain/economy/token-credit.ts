@@ -1,5 +1,8 @@
 import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
+import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import {
   calculateTokens,
   effectiveRegenInterval,
@@ -50,4 +53,23 @@ export async function creditTokensInTx(
     select: { tokens: true },
   })
   return updated.tokens
+}
+
+export type TokenCreditCtx = Parameters<typeof creditTokensInTx>[3]
+
+/** Contexte de creditTokensInTx, à lire HORS de la transaction. */
+export async function loadTokenCreditCtx(
+  deps: {
+    skillTreeRepository: Pick<ISkillTreeRepository, 'getEffectsForUser'>
+    configService: Pick<ConfigServiceInterface, 'getMany'>
+    teamProgressionDomain: Pick<ITeamProgressionDomain, 'effectsForUser'>
+  },
+  userId: string,
+): Promise<TokenCreditCtx> {
+  const [upgrades, cfg, teamEffects] = await Promise.all([
+    deps.skillTreeRepository.getEffectsForUser(userId),
+    deps.configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+    deps.teamProgressionDomain.effectsForUser(userId),
+  ])
+  return { upgrades, teamLoot: teamEffects.loot, cfg }
 }
