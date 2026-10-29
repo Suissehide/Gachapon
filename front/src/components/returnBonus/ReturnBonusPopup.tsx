@@ -97,7 +97,7 @@ export function ReturnBonusPopup() {
           ctaRef.current?.focus()
         }}
       >
-        <div className="relative px-7 pt-[30px] pb-[26px] text-center">
+        <div className="relative overflow-clip px-7 pt-[30px] pb-[26px] text-center">
           <ChestGlow />
           {claimed ? (
             <>
