@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
 import { SkillsApi } from '../api/skills.api.ts'
@@ -9,6 +14,28 @@ import { useAuthStore } from '../stores/auth.store.ts'
 
 const SKILLS_KEY = ['skills'] as const
 const ADMIN_SKILLS_KEY = ['admin', 'skills'] as const
+
+/**
+ * Tout ce que le serveur calcule avec les effets de l'arbre : jetons, énergie
+ * et coût de balayage, prix des boutiques, emplacements de vœu, aperçus de
+ * butin. Sans cette invalidation, l'écran garde les anciennes valeurs jusqu'au
+ * prochain rechargement.
+ */
+function invalidateSkillDependents(qc: QueryClient): void {
+  for (const queryKey of [
+    SKILLS_KEY,
+    ['tokens', 'balance'],
+    ['combat', 'points'],
+    ['shop'],
+    ['daily-shop'],
+    ['wishlist'],
+    ['campaign'],
+    ['tower'],
+  ]) {
+    void qc.invalidateQueries({ queryKey })
+  }
+  void useAuthStore.getState().fetchMe()
+}
 
 export const useSkillTree = () => {
   const query = useQuery({ queryKey: SKILLS_KEY, queryFn: SkillsApi.getState })
@@ -28,10 +55,7 @@ export const useInvestSkill = () => {
   const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: (nodeId: string) => SkillsApi.invest(nodeId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: SKILLS_KEY })
-      void useAuthStore.getState().fetchMe()
-    },
+    onSuccess: () => invalidateSkillDependents(qc),
     onError: (error) => {
       toast({
         title: t('toasts.investErrorTitle'),
@@ -49,15 +73,7 @@ export const useInvestBatch = () => {
   return useMutation({
     mutationFn: (allocations: { nodeId: string; levels: number }[]) =>
       SkillsApi.investBatch(allocations),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: SKILLS_KEY })
-      qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
-      // Les compétences changent le coût de balayage et le stock de points de
-      // combat : sans cette invalidation, les boutons gardent l'ancien prix
-      // jusqu'au prochain rechargement.
-      qc.invalidateQueries({ queryKey: ['combat', 'points'] })
-      void useAuthStore.getState().fetchMe()
-    },
+    onSuccess: () => invalidateSkillDependents(qc),
     onError: (error) => {
       toast({
         title: t('toasts.saveErrorTitle'),
@@ -74,11 +90,7 @@ export const useResetSkills = () => {
   const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: SkillsApi.reset,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: SKILLS_KEY })
-      qc.invalidateQueries({ queryKey: ['combat', 'points'] })
-      void useAuthStore.getState().fetchMe()
-    },
+    onSuccess: () => invalidateSkillDependents(qc),
     onError: (error) => {
       toast({
         title: t('toasts.resetErrorTitle'),

@@ -218,23 +218,7 @@ export class CombatPointsTx {
     amount: number,
     effects: PcEffects = NEUTRAL_EFFECTS,
   ): Promise<{ combatPointsAfter: number }> {
-    const rawCfg = await this.#loadConfig()
-    const cfg = effectiveCombatConfig(rawCfg, effects)
-
-    const user = await tx.user.findUnique({
-      where: { id: userId },
-      select: { combatPoints: true, lastCombatPointAt: true },
-    })
-    if (!user) {
-      throw Boom.notFound(errorMessage('user.notFound'))
-    }
-
-    const state = calculateCombatPoints(
-      user.lastCombatPointAt,
-      user.combatPoints,
-      cfg.regenSeconds,
-      cfg.maxStock,
-    )
+    const state = await this.#settledState(tx, userId, effects)
 
     if (amount <= 0) {
       return { combatPointsAfter: state.combatPoints }
@@ -249,6 +233,52 @@ export class CombatPointsTx {
       },
     })
     return { combatPointsAfter: after }
+  }
+
+  /**
+   * Matérialise la regen lazy aux `effects` donnés, sans rien créditer. À
+   * appeler avec les effets EN VIGUEUR avant de les changer (investissement
+   * ou reset de l'arbre) : sinon le calcul lazy suivant appliquerait les
+   * nouveaux PC_VAULT / PC_REGEN à tout le temps écoulé depuis la dernière
+   * écriture.
+   */
+  async settleInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    effects: PcEffects,
+  ): Promise<void> {
+    const state = await this.#settledState(tx, userId, effects)
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        combatPoints: state.combatPoints,
+        lastCombatPointAt: state.newLastCombatPointAt,
+      },
+    })
+  }
+
+  async #settledState(
+    tx: PrimaTransactionClient,
+    userId: string,
+    effects: PcEffects,
+  ) {
+    const rawCfg = await this.#loadConfig()
+    const cfg = effectiveCombatConfig(rawCfg, effects)
+
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { combatPoints: true, lastCombatPointAt: true },
+    })
+    if (!user) {
+      throw Boom.notFound(errorMessage('user.notFound'))
+    }
+
+    return calculateCombatPoints(
+      user.lastCombatPointAt,
+      user.combatPoints,
+      cfg.regenSeconds,
+      cfg.maxStock,
+    )
   }
 
   /**

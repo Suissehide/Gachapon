@@ -13,20 +13,33 @@ import type {
   SkillNodeWithLevelsAndEdges,
 } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import { loadTokenCreditCtx } from '../economy/token-credit'
+import { settleRegenInTx } from './settle-regen'
 
 export class SkillInvestBatchDomain implements ISkillInvestBatchDomain {
   readonly #skillTreeRepository: ISkillTreeRepository
   readonly #userRepository: UserRepositoryInterface
   readonly #postgresOrm: PostgresOrm
+  readonly #combatPointsTx: IocContainer['combatPointsTx']
+  readonly #regenDeps: Parameters<typeof loadTokenCreditCtx>[0]
 
   constructor({
     skillTreeRepository,
     userRepository,
     postgresOrm,
+    combatPointsTx,
+    configService,
+    teamProgressionDomain,
   }: IocContainer) {
     this.#skillTreeRepository = skillTreeRepository
     this.#userRepository = userRepository
     this.#postgresOrm = postgresOrm
+    this.#combatPointsTx = combatPointsTx
+    this.#regenDeps = {
+      skillTreeRepository,
+      configService,
+      teamProgressionDomain,
+    }
   }
 
   async investBatch(
@@ -61,8 +74,10 @@ export class SkillInvestBatchDomain implements ISkillInvestBatchDomain {
     const finalLevel = this.#computeFinalLevels(addByNode, nodeById, userSkills)
     this.#assertPrerequisites(addByNode, nodeById, finalLevel)
 
+    const settleCtx = await loadTokenCreditCtx(this.#regenDeps, userId)
     const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
+        await settleRegenInTx(tx, userId, settleCtx, this.#combatPointsTx)
         for (const nodeId of addByNode.keys()) {
           await this.#skillTreeRepository.upsertUserSkillInTx(
             tx,

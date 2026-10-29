@@ -9,20 +9,33 @@ import type {
 } from '../../types/domain/skills/skill-tree.domain.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import { loadTokenCreditCtx } from '../economy/token-credit'
+import { settleRegenInTx } from './settle-regen'
 
 export class SkillResetDomain implements ISkillResetDomain {
   readonly #skillTreeRepository: ISkillTreeRepository
   readonly #userRepository: UserRepositoryInterface
   readonly #postgresOrm: PostgresOrm
+  readonly #combatPointsTx: IocContainer['combatPointsTx']
+  readonly #regenDeps: Parameters<typeof loadTokenCreditCtx>[0]
 
   constructor({
     skillTreeRepository,
     userRepository,
     postgresOrm,
+    combatPointsTx,
+    configService,
+    teamProgressionDomain,
   }: IocContainer) {
     this.#skillTreeRepository = skillTreeRepository
     this.#userRepository = userRepository
     this.#postgresOrm = postgresOrm
+    this.#combatPointsTx = combatPointsTx
+    this.#regenDeps = {
+      skillTreeRepository,
+      configService,
+      teamProgressionDomain,
+    }
   }
 
   async reset(userId: string): Promise<ResetResult> {
@@ -44,8 +57,10 @@ export class SkillResetDomain implements ISkillResetDomain {
       throw Boom.paymentRequired(errorMessage('economy.notEnoughDust'))
     }
 
+    const settleCtx = await loadTokenCreditCtx(this.#regenDeps, userId)
     const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
+        await settleRegenInTx(tx, userId, settleCtx, this.#combatPointsTx)
         await this.#skillTreeRepository.deleteUserSkillsInTx(tx, userId)
         const updated = await tx.user.update({
           where: { id: userId },

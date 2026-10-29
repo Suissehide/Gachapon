@@ -276,4 +276,51 @@ describe('Skills routes', () => {
     const res = await app.inject({ method: 'GET', url: '/skills' })
     expect(res.statusCode).toBe(401)
   })
+
+  it("POST /skills/:nodeId/invest — un point de stockage ne s'applique pas au temps déjà écoulé", async () => {
+    const { postgresOrm, configService } = (app as any).iocContainer
+    const prisma = postgresOrm.prisma
+    const { tokenMaxStock } = await configService.getMany('tokenMaxStock')
+
+    const branch = await prisma.skillBranch.create({
+      data: { nameFr: `Vault${suffix}`, nameEn: `Vault${suffix}`, descriptionFr: 'Test', descriptionEn: 'Test', icon: 'Zap', color: '#6c47ff', order: 9 },
+    })
+    const vault = await prisma.skillNode.create({
+      data: {
+        branchId: branch.id, nameFr: 'Coffre', nameEn: 'Vault', descriptionFr: 'Stockage', descriptionEn: 'Storage',
+        icon: 'Package', maxLevel: 1, effectType: 'TOKEN_VAULT', posX: 0, posY: 0,
+        levels: { create: [{ level: 1, effect: 3 }] },
+      },
+    })
+
+    // Au plafond depuis une semaine : le coffre agrandi ne doit pas se
+    // remplir avec la régénération de cette semaine-là.
+    await prisma.user.update({
+      where: { email },
+      data: {
+        skillPoints: { increment: 1 },
+        tokens: tokenMaxStock - 1,
+        lastTokenAt: new Date(Date.now() - 7 * 24 * 3600 * 1000),
+      },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/skills/${vault.id}/invest`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+
+    const balance = await app.inject({
+      method: 'GET',
+      url: '/tokens/balance',
+      headers: { cookie: cookies },
+    })
+    expect(balance.json().maxStock).toBe(tokenMaxStock + 3)
+    expect(balance.json().tokens).toBe(tokenMaxStock)
+
+    await prisma.userSkill.deleteMany({ where: { nodeId: vault.id } })
+    await prisma.skillNode.delete({ where: { id: vault.id } })
+    await prisma.skillBranch.delete({ where: { id: branch.id } })
+  })
 })
