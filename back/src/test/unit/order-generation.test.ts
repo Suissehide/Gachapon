@@ -107,6 +107,24 @@ describe('generateOrderLines', () => {
   })
 })
 
+describe('generateOrderLines — doublons astraux', () => {
+  // Revue finale #1 : un doublon LIGHT/DARK ne doit jamais servir de graine —
+  // carte non livrable (normal_POOL n'en contient jamais).
+  it('ne produit aucune ligne LIGHT/DARK à partir de doublons astraux', () => {
+    const astralDups: DuplicateStack[] = [
+      { userCardId: 'a1', cardId: 'LIGHT-RARE', rarity: 'RARE', element: 'LIGHT', setId: 's-astral', available: 3, dropWeight: 10 },
+      { userCardId: 'a2', cardId: 'DARK-EPIC', rarity: 'EPIC', element: 'DARK', setId: 's-astral', available: 2, dropWeight: 5 },
+    ]
+    for (const s of SEEDS) {
+      const lines = generateOrderLines({ duplicates: astralDups, pool, maxOwnedRarity: 'LEGENDARY', feasible: true, rng: seeded(s) })
+      for (const l of lines) {
+        expect(l.element).not.toBe('LIGHT')
+        expect(l.element).not.toBe('DARK')
+      }
+    }
+  })
+})
+
 describe('pickClient', () => {
   it('rend une carte du pool', () => {
     expect(pool.map((c) => c.id)).toContain(pickClient(pool, seeded(3)))
