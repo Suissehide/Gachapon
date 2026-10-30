@@ -1,6 +1,6 @@
 import i18n from '../../i18n/index.ts'
 
-type FloatKind = 'damage' | 'heal' | 'dodge'
+type FloatKind = 'damage' | 'heal' | 'dodge' | 'shield'
 type ElementVariant = 'advantage' | 'disadvantage' | 'neutral'
 
 type Props = {
@@ -40,11 +40,14 @@ function resolveColor(kind: FloatKind, variant: ElementVariant): string {
   if (kind === 'heal') {
     return 'text-emerald-300'
   }
+  if (kind === 'shield') {
+    return 'text-sky-400'
+  }
   return 'text-sky-300'
 }
 
 function resolvePrefix(kind: FloatKind): string {
-  if (kind === 'heal') {
+  if (kind === 'heal' || kind === 'shield') {
     return '+'
   }
   if (kind === 'damage') {

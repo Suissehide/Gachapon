@@ -1,11 +1,13 @@
 import { Swords } from 'lucide-react'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
+import { ARCHETYPE_ICONS } from '../../constants/archetypes.constant.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { computePower } from '../../utils/cardStats.ts'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
+import { Tooltip } from '../ui/tooltip.tsx'
 
 function fmt(n: number): string {
   return formatNumber(n, currentLocale())
@@ -28,8 +30,17 @@ export function MiniCard({
   showName?: boolean
 }) {
   const power = computePower(unit.stats)
+  const ArchetypeIcon = ARCHETYPE_ICONS[unit.archetype]
   return (
     <div className={`relative aspect-[2/3] ${width}`}>
+      <Tooltip
+        content={`${unit.ultimateLabel} — ${unit.ultimateDescription}`}
+        side="top"
+      >
+        <span className="absolute right-1 top-1 z-20 inline-flex h-5 w-5 items-center justify-center rounded-full border-[0.5px] border-white bg-[#1b1726]/92 text-primary shadow-[0_2px_6px_rgba(27,23,38,0.45)]">
+          <ArchetypeIcon className="h-3 w-3" />
+        </span>
+      </Tooltip>
       <TcgCardFace
         rarity={unit.rarity}
         name={unit.cardName}

@@ -6,6 +6,8 @@ import type {
   SimulatorUnit,
   UnitStatus,
 } from '../../api/combat.api'
+import { ultimateName } from '../../constants/archetypes.constant.ts'
+import type { CardArchetype } from '../../constants/card.constant.ts'
 import { BattleControls } from './BattleControls'
 import { FloatingNumber } from './FloatingNumber'
 import { PassiveBadge } from './PassiveBadge'
@@ -30,10 +32,15 @@ const TARGET_DURATION_MS = 320
 type FloatItem = {
   key: number
   value: number | string
-  kind: 'damage' | 'heal' | 'dodge'
+  kind: 'damage' | 'heal' | 'dodge' | 'shield'
   elementMult?: number
 }
-type BadgeItem = { key: number; passiveKey: string }
+type BadgeItem = {
+  key: number
+  passiveKey: string
+  kind: 'passive' | 'ultimate'
+  label?: string
+}
 
 function applyEntry(entry: BattleLogEntry, units: SceneUnit[]): SceneUnit[] {
   switch (entry.type) {
@@ -205,20 +212,28 @@ export function BattleScene({
     [],
   )
 
-  const pushBadge = useCallback((unitId: string, passiveKey: string) => {
-    itemKeyRef.current += 1
-    const key = itemKeyRef.current
-    setBadgesByUnit((cur) => ({
-      ...cur,
-      [unitId]: [...(cur[unitId] ?? []), { key, passiveKey }],
-    }))
-    setTimeout(() => {
+  const pushBadge = useCallback(
+    (
+      unitId: string,
+      passiveKey: string,
+      kind: BadgeItem['kind'] = 'passive',
+      label?: string,
+    ) => {
+      itemKeyRef.current += 1
+      const key = itemKeyRef.current
       setBadgesByUnit((cur) => ({
         ...cur,
-        [unitId]: (cur[unitId] ?? []).filter((b) => b.key !== key),
+        [unitId]: [...(cur[unitId] ?? []), { key, passiveKey, kind, label }],
       }))
-    }, FLOAT_DURATION_MS)
-  }, [])
+      setTimeout(() => {
+        setBadgesByUnit((cur) => ({
+          ...cur,
+          [unitId]: (cur[unitId] ?? []).filter((b) => b.key !== key),
+        }))
+      }, FLOAT_DURATION_MS)
+    },
+    [],
+  )
 
   const doSkip = useCallback(() => {
     let acc = initialUnits
@@ -265,7 +280,12 @@ export function BattleScene({
   const runAttackEntry = useCallback(
     (entry: BattleLogEntry, index: number, delay: number) => {
       const targetIds = (entry.targetIds as string[] | undefined) ?? []
-      setAttackingId(entry.attackerId as string)
+      const attackerId = entry.attackerId as string
+      const ultimate = entry.ultimate as CardArchetype | undefined
+      if (ultimate) {
+        pushBadge(attackerId, 'ULTIMATE', 'ultimate', ultimateName(ultimate))
+      }
+      setAttackingId(attackerId)
       setTargetedIds(targetIds)
       setStrikeSeq((n) => n + 1)
       const hopTimer = setTimeout(() => {
@@ -300,17 +320,41 @@ export function BattleScene({
         clearTimeout(nextTimer)
       }
     },
-    [claimEntry, pushFloat, speed],
+    [claimEntry, pushBadge, pushFloat, speed],
   )
 
   const runPassiveEntry = useCallback(
     (entry: BattleLogEntry, index: number, delay: number) => {
       if (claimEntry(index)) {
         const unitId = entry.unitId as string
-        pushBadge(unitId, entry.passive as string)
+        const passive = entry.passive as string
+        const targetId = entry.targetId as string | undefined
         const payload =
-          (entry.payload as { healed?: number; damage?: number }) ?? {}
-        const receiverId = (entry.targetId as string | undefined) ?? unitId
+          (entry.payload as {
+            healed?: number
+            damage?: number
+            shield?: number
+          }) ?? {}
+        if (passive === 'ULTIMATE') {
+          // Bouclier / soin d'équipe : le badge sur l'entrée d'en-tête
+          // seulement, les entrées par allié portent les chiffres.
+          if (targetId === undefined) {
+            const archetype = initialUnits.find((u) => u.id === unitId)
+              ?.archetype as CardArchetype | null | undefined
+            pushBadge(
+              unitId,
+              'ULTIMATE',
+              'ultimate',
+              archetype ? ultimateName(archetype) : undefined,
+            )
+          }
+          if (targetId && payload.shield && payload.shield > 0) {
+            pushFloat(targetId, payload.shield, 'shield')
+          }
+        } else {
+          pushBadge(unitId, passive)
+        }
+        const receiverId = targetId ?? unitId
         if (payload.healed && payload.healed > 0) {
           pushFloat(receiverId, payload.healed, 'heal')
         }
@@ -322,7 +366,7 @@ export function BattleScene({
       const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)
       return () => clearTimeout(t)
     },
-    [claimEntry, pushBadge, pushFloat],
+    [claimEntry, initialUnits, pushBadge, pushFloat],
   )
 
   const runHealEntry = useCallback(
@@ -431,7 +475,12 @@ export function BattleScene({
         />
       ))}
       {(badgesByUnit[u.id] ?? []).map((b) => (
-        <PassiveBadge key={b.key} passiveKey={b.passiveKey} />
+        <PassiveBadge
+          key={b.key}
+          passiveKey={b.passiveKey}
+          kind={b.kind}
+          label={b.label}
+        />
       ))}
     </div>
   )
