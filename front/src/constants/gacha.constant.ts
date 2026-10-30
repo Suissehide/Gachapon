@@ -79,11 +79,25 @@ export type PullBatchResult = {
   unlockedAchievements?: UnlockedAchievement[]
 }
 
+export type Capsule = {
+  type: 'ASTRAL'
+  quantity: number
+  pityCurrent: number
+  pityThreshold: number
+}
+
+export type AstralPullResult = PullBatchResult & {
+  capsulesRemaining: number
+  astralPityCurrent: number
+}
+
 // Routes
 export const GACHA_ROUTES = {
   tokenBalance: '/tokens/balance',
   pull: '/pulls',
   pullBatch: '/pulls/batch',
+  pullAstral: '/pulls/astral',
+  capsules: '/capsules',
   history: (page: number) => `/pulls/history?page=${page}`,
   rates: '/pulls/rates',
   recent: (opts?: {

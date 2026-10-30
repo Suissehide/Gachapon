@@ -1,5 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import type {
+  AstralPullResult,
+  Capsule,
   DropRate,
   PullBatchEntry,
   PullBatchResult,
@@ -20,6 +22,8 @@ export type {
   PullHistory,
   PullBatchResult,
   PullBatchEntry,
+  Capsule,
+  AstralPullResult,
 }
 
 export const GachaApi = {
@@ -86,6 +90,30 @@ export const GachaApi = {
         {},
         i18n.t('gacha:apiTitles.operations.loadDropRates'),
       )
+    }
+    return res.json()
+  },
+
+  getCapsules: async (): Promise<{ capsules: Capsule[] }> => {
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.capsules}`)
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        {},
+        i18n.t('gacha:apiTitles.operations.loadCapsules'),
+      )
+    }
+    return res.json()
+  },
+
+  pullAstral: async (count: number): Promise<AstralPullResult> => {
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.pullAstral}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ count }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, i18n.t('gacha:apiTitles.operations.pull'))
     }
     return res.json()
   },

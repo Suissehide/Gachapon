@@ -13,6 +13,8 @@ import { levelUpReward } from '../utils/levelRewards.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
 export type {
+  AstralPullResult,
+  Capsule,
   DropRate,
   PullBatchEntry,
   PullBatchResult,
@@ -136,6 +138,69 @@ export const usePullBatch = () => {
         result.pulls.some((p) => p.unlockedAchievements?.length)
       // A pull can mint a new pending reward (achievement unlock or level
       // milestone pack) — refresh the topbar badge count from /auth/me.
+      if (hasUnlocks || newLevel > oldLevel) {
+        void useAuthStore.getState().fetchMe()
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: i18n.t('gacha:toasts.pullErrorTitle'),
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+  })
+}
+
+export const useCapsules = () => {
+  const query = useQuery({
+    queryKey: ['capsules'],
+    queryFn: () => GachaApi.getCapsules(),
+  })
+
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
+export const usePullAstral = () => {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const setUser = useAuthStore((s) => s.setUser)
+  const user = useAuthStore((s) => s.user)
+  const username = useAuthStore((s) => s.user?.username ?? '')
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  return useMutation({
+    mutationFn: (count: number) => GachaApi.pullAstral(count),
+    onSuccess: (result) => {
+      // Mêmes célébrations différées que usePullBatch : la page de tirage
+      // les joue au bon moment, ce hook ne fait que synchroniser les données.
+      const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
+      const oldXp = cached?.xp ?? 0
+      const oldLevel = computeLevel(oldXp, economy.xp)
+      const newLevel = computeLevel(oldXp + result.xpGained, economy.xp)
+      if (user) {
+        setUser({
+          ...user,
+          tokens: result.tokensRemaining,
+          dust: user.dust + result.pulls.reduce((s, p) => s + p.dustEarned, 0),
+        })
+      }
+      qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+      qc.invalidateQueries({ queryKey: ['collection'] })
+      qc.invalidateQueries({ queryKey: ['profile'] })
+      qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
+      qc.invalidateQueries({ queryKey: ['shop'] })
+      qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['achievements'] })
+      qc.invalidateQueries({ queryKey: ['capsules'] })
+      const hasUnlocks =
+        !!result.unlockedAchievements?.length ||
+        result.pulls.some((p) => p.unlockedAchievements?.length)
       if (hasUnlocks || newLevel > oldLevel) {
         void useAuthStore.getState().fetchMe()
       }

@@ -97,6 +97,12 @@
      jour où on y touche. */
   --dust: #38bdf8;
 
+  /* Capsule astrale — aucune teinte déjà tokenisée ne convient : elle mêle
+     LIGHT (#E8C23D) et DARK (#7A4FB5), les deux couleurs d'élément qu'elle
+     seule distribue. Un indigo neutre entre les deux plutôt qu'un hex posé
+     dans la boutique. */
+  --astral: #6366f1;
+
   /* Palette des duels et paris — handoff `docs/design_handoff_duels`
      (`equipe-duels.css`). Le duel emprunte l'ambre déjà tokenisé ; le pari,
      lui, n'avait aucune teinte : c'est le seul bloc de la fiche d'équipe qui

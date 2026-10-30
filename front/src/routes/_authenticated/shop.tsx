@@ -101,6 +101,11 @@ const TYPE_CONFIG: Record<
     icon: <Cog className="h-4 w-4 text-primary" />,
     color: 'border-primary/30 bg-primary/5',
   },
+  CAPSULE: {
+    label: i18n.t('shop:typeLabels.CAPSULE'),
+    icon: <Sparkles className="h-4 w-4 text-astral" />,
+    color: 'border-astral/30 bg-astral/5',
+  },
 }
 
 // ── Main page ───────────────────────────────────────────────────────────────
@@ -619,7 +624,8 @@ function StaticShopCard({
     item.type === 'TOKEN_PACK' ||
     item.type === 'ENERGY_PACK' ||
     item.type === 'MACHINE' ||
-    item.type === 'BOOST'
+    item.type === 'BOOST' ||
+    item.type === 'CAPSULE'
   const pulls = item.activeBoost?.pullsRemaining ?? 0
   const isBoostActive = item.type === 'BOOST' && pulls > 0
 

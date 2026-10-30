@@ -19,6 +19,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
   gacha: {
     pullTokenCost: 1,
     pityThreshold: 300,
+    astralPityThreshold: 300,
     tokenRegenIntervalMinutes: 60,
     tokenMaxStock: 10,
   },

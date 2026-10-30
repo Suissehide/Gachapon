@@ -5,7 +5,8 @@
       "pull": "Error during the pull",
       "loadHistory": "Error loading the history",
       "loadFeed": "Error loading the feed",
-      "loadDropRates": "Error loading the drop rates"
+      "loadDropRates": "Error loading the drop rates",
+      "loadCapsules": "Error loading the capsules"
     }
   },
   "toasts": {
