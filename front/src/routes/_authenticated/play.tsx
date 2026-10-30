@@ -22,10 +22,6 @@ import {
 import type { MachineStageHandle } from '../../components/machine/MachineStage'
 import { MachineStage } from '../../components/machine/MachineStage'
 import { RevealGrid } from '../../components/machine/reveal/RevealGrid'
-import {
-  SHOOTING_STAR_MS,
-  ShootingStar,
-} from '../../components/machine/ShootingStar.tsx'
 import { AchievementsCard } from '../../components/play/AchievementsCard.tsx'
 import { activeBoostsOf, BoostCard } from '../../components/play/BoostCard.tsx'
 import { LevelCard } from '../../components/play/LevelCard.tsx'
@@ -50,7 +46,6 @@ import type {
 } from '../../constants/gacha.constant.ts'
 import type { ShopItem } from '../../constants/shop.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
-import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
 import { useToast } from '../../hooks/useToast'
 import i18n from '../../i18n/index.ts'
@@ -446,8 +441,6 @@ function Play() {
   const astral = capsuleKind === 'astral'
 
   // Étoile filante astrale, coupée en reduced motion
-  const reduced = usePrefersReducedMotion()
-  const [shootingStar, setShootingStar] = useState(false)
   const username = useAuthStore((s) => s.user?.username ?? '')
   const { toast } = useToast()
   const qc = useQueryClient()
@@ -499,14 +492,12 @@ function Play() {
   // Mirrored in refs so startPull can guard without being recreated on every balance tick
   const affordableRef = useRef(affordable)
   const capsuleKindRef = useRef(capsuleKind)
-  const reducedRef = useRef(reduced)
   const pullPendingRef = useRef(pullPending)
   useEffect(() => {
     affordableRef.current = affordable
     capsuleKindRef.current = capsuleKind
-    reducedRef.current = reduced
     pullPendingRef.current = pullPending
-  }, [affordable, capsuleKind, reduced, pullPending])
+  }, [affordable, capsuleKind, pullPending])
 
   // Stable handlers — useCallback because they're passed to children with effect deps.
   // La capsule vient d'exploser (burst gsap dans CapsuleScene). Fire the flash
@@ -686,8 +677,8 @@ function Play() {
       pendingResult.current = null
       setTeaseTier(null)
 
-      // "Skip animations" only skips the 3D machine animation (and the
-      // astral shooting star) — the capsule sequence, flash and card-reveal
+      // "Skip animations" only skips the 3D machine animation — the capsule
+      // sequence, flash and card-reveal
       // effects still play. Go straight to the capsule on the black backdrop.
       if (skipAnimationsRef.current) {
         firePull(count)
@@ -704,12 +695,7 @@ function Play() {
       if (pullAbortedRef.current) {
         return
       }
-      // En astral, l'étoile filante plonge vers la machine avant la capsule ;
-      // sinon la courte pause habituelle.
-      const star = capsuleKindRef.current === 'astral' && !reducedRef.current
-      setShootingStar(star)
-      await new Promise((res) => setTimeout(res, star ? SHOOTING_STAR_MS : 600))
-      setShootingStar(false)
+      await new Promise((res) => setTimeout(res, 600))
       if (pullAbortedRef.current) {
         return
       }
@@ -827,7 +813,6 @@ function Play() {
                   <MachineStage ref={machineRef} capsuleKind={capsuleKind} />
                 </div>
               )}
-              {shootingStar && <ShootingStar />}
             </div>
             {/* Ombre au sol */}
             <div

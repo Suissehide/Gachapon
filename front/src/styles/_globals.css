@@ -655,42 +655,6 @@ h6 {
   }
 }
 
-/* Étoile filante astrale (ShootingStar.tsx) : la traînée arrive de loin et
-   se résorbe sur sa tête au point d'impact, que l'éclat prend en relais. */
-@keyframes shootingStarFly {
-  0% {
-    opacity: 0;
-    transform: translateX(-110vmax);
-  }
-  8% {
-    opacity: 1;
-  }
-  88% {
-    opacity: 1;
-    transform: translateX(0) scaleX(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(0) scaleX(0.15);
-  }
-}
-
-@keyframes shootingStarImpact {
-  0%,
-  55% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.4);
-  }
-}
-
 @keyframes fadeInDown {
   from {
     opacity: 0;

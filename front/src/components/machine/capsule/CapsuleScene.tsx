@@ -19,6 +19,7 @@ import {
   type TeaseTier,
   tierConfig,
 } from './capsuleConfig'
+import { FALL_FROM, FallTrail } from './FallTrail'
 import { StarShower } from './StarShower'
 import auraFrag from './shaders/aura.frag.glsl'
 import auraVert from './shaders/aura.vert.glsl'
@@ -85,7 +86,8 @@ function poseCapsule(
 ) {
   const c = anim.charge
   group.rotation.set(0, 0, 0)
-  group.position.set(0, 0, 0)
+  group.position.copy(FALL_FROM).multiplyScalar(anim.fall)
+  group.rotation.z = anim.fall * 2.4
   let scale = BALL_SCALE * anim.pop
 
   if (anim.burstT > 0 && anim.burstT < 1) {
@@ -289,6 +291,8 @@ export function CapsuleScene({
   const chargeTweenRef = useRef<gsap.core.Tween | null>(null)
   const notifiedRef = useRef(false)
   const stingFiredRef = useRef(false)
+  // Lu une seule fois au montage, comme la chorégraphie qu'il pilote.
+  const fallsRef = useRef(capsuleKind === 'astral' && !reduced)
 
   const getSparkConfig = useMemo(() => () => tierConfig(tierRef.current), [])
 
@@ -367,8 +371,28 @@ export function CapsuleScene({
       sting: 0,
       camZ: 7,
       camShake: 0,
+      fall: 0,
     })
-    tl.to(anim, { pop: 1, duration: 0.45, ease: 'elastic.out(1.1, 0.5)' })
+    if (fallsRef.current) {
+      // La capsule astrale tombe du ciel en étoile filante, puis se pose.
+      tl.set(anim, { pop: 1, fall: 1 })
+      tl.to(anim, { fall: 0, duration: 0.9, ease: 'power2.in' })
+      tl.call(() => {
+        capsuleAudio.clack()
+        gsap
+          .timeline()
+          .to(anim, { sting: 0.8, duration: 0.08, ease: 'power1.out' })
+          .to(anim, { sting: 0, duration: 0.5, ease: 'power2.out' })
+        gsap.fromTo(
+          anim,
+          { camShake: 0.5 },
+          { camShake: 0, duration: 0.4, ease: 'power2.out' },
+        )
+      })
+      tl.to({}, { duration: 0.25 })
+    } else {
+      tl.to(anim, { pop: 1, duration: 0.45, ease: 'elastic.out(1.1, 0.5)' })
+    }
     for (let i = 0; i < 3; i++) {
       tl.call(() => {
         burstTargetRef.current = randomBurstTarget(burstIdxRef.current)
@@ -544,7 +568,10 @@ export function CapsuleScene({
       <ChargeSparks anim={anim} color={curColor} getConfig={getSparkConfig} />
 
       {capsuleKind === 'astral' && !reduced && (
-        <StarShower anim={anim} reduced={reduced} />
+        <>
+          <FallTrail anim={anim} />
+          <StarShower anim={anim} reduced={reduced} />
+        </>
       )}
 
       {/* Lumière interne teintée rareté — éclaire la scène à la charge */}
