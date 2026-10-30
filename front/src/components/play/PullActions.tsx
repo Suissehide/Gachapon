@@ -75,17 +75,18 @@ export function PullActions({
     >
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild disabled={disabled}>
-          <button
-            type="button"
+          <Button
+            variant="none"
+            size="bare"
             aria-label={t('gacha:page.chooseCapsule')}
-            className="flex shrink-0 cursor-pointer items-center gap-2 bg-card pl-4 pr-3 font-display text-text outline-none focus-visible:bg-surface-2 disabled:cursor-default"
+            className="flex shrink-0 items-center justify-start gap-2 rounded-none bg-card pl-4 pr-3 font-display text-text outline-none focus-visible:bg-surface-2 disabled:cursor-default"
           >
             <CapsuleSwatch kind={kind} />
             {t('gacha:page.pull')}
             <span className="ml-0.5 border-l border-border pl-2 text-text-light">
               <ChevronDown className="h-4 w-4" />
             </span>
-          </button>
+          </Button>
         </DropdownMenu.Trigger>
         <DropdownMenuCustomContent align="start" className="w-60">
           <DropdownMenuCustomCheckboxItem
