@@ -41,15 +41,15 @@ const coord = (n: number) =>
   ] as const
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
-  it('stage 1-1 : valeur ancre exacte (ancre 133 PV, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {124,24,14,89}, scale = 133 / 124 (première ancre de PV,
+  it('stage 1-1 : valeur ancre exacte (ancre 134 PV, NORMAL_FACTOR=0.971)', () => {
+    // rb = COMMON {124,24,14,89}, scale = 134 / 124 (première ancre de PV,
     // fittée sur un joueur SANS équipement), NORMAL_FACTOR = 0,971.
-    // hp: 133×0.971 = 129.1 → 129 ; atk: 24×0.971×1.0726 = 25.0 → 25
+    // hp: 134×0.971 = 130.1 → 130 ; atk: 24×0.971×1.0806 = 25.2 → 25
     // def: 14×0.971×ENEMY_DEF_MULT = 135.9 → 136, hors échelle d'étage ;
     // spd: 89 tel quel — la vitesse échappe au facteur ET à l'échelle, elle
     // reste la base de rareté.
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 129,
+      baseHp: 130,
       baseAtk: 25,
       baseDef: 136,
       baseSpd: 89,
@@ -84,7 +84,7 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', 
 
 describe('enemyScale — courbe à ancres, sans marche', () => {
   it("l'étage 1 est l'ancre : scale = PV de l'ancre / PV de base COMMON", () => {
-    expect(enemyScale(1)).toBeCloseTo(133 / RARITY_BASE.COMMON.hp, 10)
+    expect(enemyScale(1)).toBeCloseTo(134 / RARITY_BASE.COMMON.hp, 10)
   })
 
   it('aucune marche : PV des étages normaux, frontières de chapitre comprises', () => {

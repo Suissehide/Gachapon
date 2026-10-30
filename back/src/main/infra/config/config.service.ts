@@ -190,8 +190,8 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // difficiles (RAID_EPIC_CARD_MIN_LEVEL, raid.definitions.ts).
   // Calé sur les dégâts de l'équipe de référence (épiques palier 5,
   // équipement réel du harnais balance-calibration.ts), ultimes d'archétype
-  // compris : ils ajoutent ~5,5 % de dégâts au boss (scripts/balance-sim.ts).
-  'raid.baseHpPerMember': 161000,
+  // compris : ils ajoutent ~7 % de dégâts au boss (scripts/balance-sim.ts).
+  'raid.baseHpPerMember': 164000,
   // Effectif MINIMUM facturé dans les PV du boss, même pour une équipe plus
   // petite : sans lui, monter une équipe à un joueur donnait un boss à sa
   // taille et les quatre paliers toutes les semaines.

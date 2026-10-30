@@ -52,7 +52,7 @@ export type { TowerElement }
  * La jauge reste un outil d'AFFICHAGE. Pour calibrer, le simulateur.
  */
 const FLOOR_SCALE = [
-  2.4, 5.7, 10.5, 16.3, 35.8, 59.1, 69.2, 81.6, 96.6, 115.8,
+  2.4, 5.7, 10.7, 16.6, 36.5, 59.4, 70, 81.6, 97, 117.3,
 ] as const
 
 /**
