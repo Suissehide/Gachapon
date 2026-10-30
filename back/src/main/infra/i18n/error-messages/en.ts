@@ -102,6 +102,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'wishlist.cardNotFoundOrInactive': 'Card not found or set is inactive',
   'wishlist.full': 'Wishlist full ({{slots}} slots)',
   'wishlist.cardNotInWishlist': 'Card is not in your wishlist',
+  'wishlist.astralCardNotWishable':
+    'Light and Dark cards cannot be wished — they come from the astral capsule',
   'shop.shopItemNotFound': 'Shop item not found',
 
   // --- team ---
@@ -344,6 +346,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
     'The recipe needs {{expected}} cards, the selection has {{got}}',
   'alchemy.noTargetCard':
     'No card is available at the resulting rarity right now',
+  'alchemy.astralIngredient':
+    'Light and Dark cards cannot be used as an ingredient',
 
   // --- infra ---
   'httpClient.getFailed': 'Error getting data',

@@ -48,6 +48,13 @@ describe('cardMatchesLine', () => {
     expect(cardMatchesLine(card, { quantity: 1, rarity: 'RARE', setId: 's2' })).toBe(false)
     expect(cardMatchesLine(card, { quantity: 1, rarity: 'RARE', setId: 's1' })).toBe(true)
   })
+
+  it('refuse une carte LIGHT/DARK même sans filtre d\'élément sur la ligne', () => {
+    const astral = { rarity: 'RARE', element: 'LIGHT', setId: 's' } as const
+    expect(cardMatchesLine(astral, { quantity: 1, rarity: 'RARE' })).toBe(false)
+    expect(cardMatchesLine({ ...astral, element: 'DARK' }, { quantity: 1, rarity: 'RARE' })).toBe(false)
+    expect(cardMatchesLine({ ...astral, element: 'FIRE' }, { quantity: 1, rarity: 'RARE' })).toBe(true)
+  })
 })
 
 describe('validateDelivery', () => {
@@ -192,5 +199,13 @@ describe('suggestPicks', () => {
         mapOf(uc('a', 3), uc('b', 2, { element: 'FIRE' })),
       ),
     ).not.toThrow()
+  })
+
+  it('n\'inclut jamais une pile LIGHT/DARK, même pour une ligne sans filtre', () => {
+    const picks = suggestPicks(
+      [{ quantity: 1, rarity: 'RARE' }],
+      [stack('astral', 3, { element: 'LIGHT' })],
+    )
+    expect(picks).toBeNull()
   })
 })

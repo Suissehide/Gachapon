@@ -54,6 +54,7 @@ describe('Alchemy routes', () => {
   const giveStack = (userId: string, cardId: string, quantity: number) =>
     prisma.userCard.create({ data: { userId, cardId, quantity } })
 
+  let setId: string
   let commonA: { id: string }
   let commonB: { id: string }
   let uncommonA: { id: string }
@@ -101,6 +102,7 @@ describe('Alchemy routes', () => {
     const set = await prisma.cardSet.create({
       data: { nameFr: `AlchemySet${suffix}`, nameEn: `AlchemySet${suffix}`, isActive: true },
     })
+    setId = set.id
     commonA = await prisma.card.create({
       data: { setId: set.id, nameFr: `AC1${suffix}`, nameEn: `AC1${suffix}`, rarity: 'COMMON', element: 'EARTH' },
     })
@@ -376,6 +378,47 @@ describe('Alchemy routes', () => {
         await prisma.card.update({ where: { id: c.id }, data: { dropWeight: c.dropWeight } })
       }
     }
+  })
+
+  it('GET /alchemy — aucune pile LIGHT/DARK parmi les candidats', async () => {
+    const { id, cookie } = await registerUser('alcastral')
+    const darkCard = await prisma.card.create({
+      data: {
+        setId,
+        nameFr: `ADark${suffix}`,
+        nameEn: `ADark${suffix}`,
+        rarity: 'COMMON',
+        element: 'DARK',
+      },
+    })
+    await giveStack(id, darkCard.id, 8) // available = 7
+
+    const board = (await getBoard(cookie)).json()
+    const common = board.tiers.find((t: any) => t.fromRarity === 'COMMON')
+    expect(
+      common.candidates.find((c: any) => c.cardId === darkCard.id),
+    ).toBeUndefined()
+  })
+
+  it('POST /alchemy/transmute — refuse un ingrédient LIGHT/DARK, rien n’est consommé', async () => {
+    const { id, cookie } = await registerUser('alcastraltrans')
+    const lightCard = await prisma.card.create({
+      data: {
+        setId,
+        nameFr: `ALight${suffix}`,
+        nameEn: `ALight${suffix}`,
+        rarity: 'COMMON',
+        element: 'LIGHT',
+      },
+    })
+    const stack = await giveStack(id, lightCard.id, 6) // available = 5 = cost
+
+    const res = await transmute(cookie, {
+      fromRarity: 'COMMON',
+      picks: [{ userCardId: stack.id, amount: 5 }],
+    })
+    expect(res.statusCode).toBe(400)
+    expect((await prisma.userCard.findUnique({ where: { id: stack.id } })).quantity).toBe(6)
   })
 
   it('GET /alchemy — accessible à un invité', async () => {

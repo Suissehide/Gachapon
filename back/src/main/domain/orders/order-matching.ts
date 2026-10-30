@@ -8,8 +8,12 @@ import type {
   MatchableUserCard,
   OrderLine,
 } from '../../types/domain/orders/orders.domain.interface'
+import { isAstralElement } from '../gacha/card-pools'
 
 export function cardMatchesLine(card: MatchableCard, line: OrderLine): boolean {
+  if (isAstralElement(card.element)) {
+    return false
+  }
   if (card.rarity !== line.rarity) {
     return false
   }

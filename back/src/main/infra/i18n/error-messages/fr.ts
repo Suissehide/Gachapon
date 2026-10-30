@@ -122,6 +122,8 @@ export const FR_MESSAGES = {
   'wishlist.full': 'Wishlist pleine ({{slots}} emplacements)',
   'wishlist.cardNotInWishlist':
     'Cette carte n’est pas dans ta liste de souhaits',
+  'wishlist.astralCardNotWishable':
+    'Les cartes Lumière et Ténèbres ne peuvent pas faire l’objet d’un vœu — elles viennent de la capsule astrale',
   'shop.shopItemNotFound': 'Article de boutique introuvable',
 
   // --- team ---
@@ -392,6 +394,8 @@ export const FR_MESSAGES = {
     'La recette demande {{expected}} cartes, la sélection en contient {{got}}',
   'alchemy.noTargetCard':
     'Aucune carte disponible à la rareté obtenue pour le moment',
+  'alchemy.astralIngredient':
+    'Les cartes Lumière et Ténèbres ne peuvent pas servir d’ingrédient',
 
   // --- infra ---
   'httpClient.getFailed': 'Erreur lors de la récupération des données',

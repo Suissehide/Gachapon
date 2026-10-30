@@ -13,7 +13,7 @@ import type {
 } from '../../types/domain/alchemy/alchemy.domain.interface'
 import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
-import { NORMAL_POOL_WHERE } from '../gacha/card-pools'
+import { isAstralElement, NORMAL_POOL_WHERE } from '../gacha/card-pools'
 import { pickVariant } from '../gacha/gacha.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { weightedPick } from '../shared/weighted-pick'
@@ -69,7 +69,11 @@ export class AlchemyDomain implements IAlchemyDomain {
       this.#duelDomain.listEngagedCardKeysInTx(prisma, userId),
     ])
     const stacks: AlchemyStack[] = owned
-      .filter((u) => !engaged.has(`${u.cardId}:${u.variant}`))
+      .filter(
+        (u) =>
+          !engaged.has(`${u.cardId}:${u.variant}`) &&
+          !isAstralElement(u.card.element),
+      )
       .map((u) => ({
         userCardId: u.id,
         cardId: u.cardId,
@@ -115,9 +119,12 @@ export class AlchemyDomain implements IAlchemyDomain {
         cardId: true,
         quantity: true,
         variant: true,
-        card: { select: { rarity: true } },
+        card: { select: { rarity: true, element: true } },
       },
     })
+    if (userCards.some((u) => isAstralElement(u.card.element))) {
+      throw Boom.badRequest(errorMessage('alchemy.astralIngredient'))
+    }
     validateIngredients(
       fromRarity,
       picks,
