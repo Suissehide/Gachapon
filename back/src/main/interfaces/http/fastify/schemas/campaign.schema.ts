@@ -1,5 +1,7 @@
 import { z } from 'zod/v4'
 
+import { cardArchetypeEnum } from './admin-cards.schema'
+
 const stageStatusEnum = z.enum(['cleared', 'current', 'locked'])
 
 const rewardAmountsSchema = z.object({
@@ -104,6 +106,7 @@ const simulatorUnitSchema = z.object({
   spd: z.number().int(),
   attackPattern: z.string(),
   passiveKey: z.string().nullable(),
+  archetype: cardArchetypeEnum.nullable().optional(),
   element: z.string().nullable().optional(),
   palier: z.number().int(),
 })

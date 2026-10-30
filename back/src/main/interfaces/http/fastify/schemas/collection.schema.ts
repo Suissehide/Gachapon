@@ -1,7 +1,7 @@
 import { z } from 'zod/v4'
 
 import { unlockedAchievementSchema } from './achievements.schemas'
-import { cardElementEnum } from './admin-cards.schema'
+import { cardArchetypeEnum, cardElementEnum } from './admin-cards.schema'
 
 export const collectionCardsQuerySchema = z.object({
   setId: z.string().optional(),
@@ -52,6 +52,7 @@ export const userCollectionResponseSchema = z.object({
         baseDef: z.number().int(),
         baseSpd: z.number().int(),
         passiveKey: z.string().nullable(),
+        archetype: cardArchetypeEnum,
       }),
       variant: z.string(),
       quantity: z.number().int(),

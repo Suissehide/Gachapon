@@ -10,15 +10,11 @@ import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import {
-  type AttackPattern,
   type LogEntry,
   type SimulatorUnit,
   simulateBattle,
 } from '../combat/battle-simulator.domain'
-import {
-  type CombatStatsBaseline,
-  computeFinalStats,
-} from '../combat/combat-stats.domain'
+import type { CombatStatsBaseline } from '../combat/combat-stats.domain'
 import { CAMPAIGN_TEAM_KEY } from '../combat/combat-team-keys'
 import {
   pickEquipmentForRarity,
@@ -27,14 +23,13 @@ import {
   rollFirstClearCardRarity,
   rollFirstClearEquipmentRarity,
 } from '../combat/equipment-drop.domain'
-import { computeEquippedCardStats } from '../combat/equipped-card-stats'
+import { buildEnemySimUnits, buildPlayerSimUnits } from '../combat/sim-units'
 import { effectiveSweepCost } from '../combat-points/combat-points.tx'
 import { creditTokensInTx } from '../economy/token-credit'
 import {
   INITIAL_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
   SUBSTAT_RANGE_CONFIG_KEYS,
-  type Substat,
   type SubstatRanges,
   substatRangesFromConfig,
 } from '../equipment/equipment-progression'
@@ -51,11 +46,7 @@ import { levelAfterXpGain } from '../shared/xp'
 import { CAMPAIGN_EQUIPMENT_SLOTS } from '../tower/tower-slots'
 import { deriveClearFlags } from './campaign-clear-flags'
 import { computeTeamPower, unitPower } from './campaign-power'
-import {
-  enemyNameFromAppearance,
-  genericEnemyName,
-  resolveEnemyImageUrl,
-} from './enemy-appearance'
+import { resolveEnemyImageUrl } from './enemy-appearance'
 import {
   activeWandererQuery,
   computeLoot,
@@ -1572,16 +1563,19 @@ export class CampaignDomain {
       armorPen: cfg['combat.baseArmorPen'],
       lifesteal: cfg['combat.baseLifesteal'],
     }
-    const teamUnits = await this.#buildPlayerSimUnits(
-      tx,
+    const teamUnits = await buildPlayerSimUnits(tx, {
       userId,
       userCardIds,
       baseStats,
       setDefs,
-    )
-    const enemyUnits = this.#buildEnemySimUnits(
+      publicUrl: (key) => this.#storageClient.publicUrl(key),
+    })
+    const enemyUnits = buildEnemySimUnits(
       enemyTeamSchema.parse(stage.enemyTeam),
-      baseStats,
+      {
+        baseStats,
+        resolveImage: (appearance) => this.#resolveEnemyImage(appearance),
+      },
     )
     const seed = `${userId}:${stage.id}:${Date.now()}`
     const sim = simulateBattle({
@@ -1601,69 +1595,6 @@ export class CampaignDomain {
     }
   }
 
-  async #buildPlayerSimUnits(
-    tx: PrimaTransactionClient,
-    userId: string,
-    userCardIds: string[],
-    baseStats: CombatStatsBaseline,
-    setDefs: Record<SetKey, SetDefinition>,
-  ): Promise<SimulatorUnit[]> {
-    const userCards = await tx.userCard.findMany({
-      where: { id: { in: userCardIds }, userId },
-      include: {
-        card: { include: { set: true } },
-        equipment: { include: { equipment: true } },
-      },
-    })
-    const byId = new Map(userCards.map((u) => [u.id, u]))
-    return userCardIds
-      .map((id) => byId.get(id))
-      .filter((u): u is NonNullable<typeof u> => u != null)
-      .map((u, idx) => {
-        const stats = computeEquippedCardStats({
-          baseHp: u.card.baseHp,
-          baseAtk: u.card.baseAtk,
-          baseDef: u.card.baseDef,
-          baseSpd: u.card.baseSpd,
-          level: u.level,
-          palier: u.palier,
-          variant: u.variant,
-          pieces: u.equipment.map((ue) => ({
-            bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
-            level: ue.level,
-            substats: (ue.substats ?? []) as unknown as Substat[],
-            baseBoost: ue.baseBoost,
-            setKey: ue.equipment.setKey,
-          })),
-          setDefs,
-          baseStats,
-        })
-        return {
-          id: `A${idx}`,
-          name: u.card.name,
-          imageUrl: u.card.imageUrl
-            ? this.#storageClient.publicUrl(u.card.imageUrl)
-            : null,
-          rarity: u.card.rarity,
-          variant: u.variant,
-          setName: u.card.set?.name ?? null,
-          level: u.level,
-          hp: stats.hp,
-          atk: stats.atk,
-          def: stats.def,
-          spd: stats.spd,
-          critRate: stats.critRate,
-          critDmg: stats.critDmg,
-          armorPen: stats.armorPen,
-          lifesteal: stats.lifesteal,
-          attackPattern: 'BASIC' as AttackPattern,
-          passiveKey: u.card.passiveKey,
-          element: u.card.element,
-          palier: u.palier,
-        }
-      })
-  }
-
   // Résout l'apparence d'un ennemi en URL publique MinIO (préfixe env comme les
   // cartes), ou null si pas d'apparence. Partagé aperçu d'étage / combat.
   #resolveEnemyImage(appearance: string | null | undefined): string | null {
@@ -1672,49 +1603,6 @@ export class CampaignDomain {
       (key) => this.#storageClient.publicUrl(key),
       this.#config.isDevelopment ? 'staging/' : '',
     )
-  }
-
-  #buildEnemySimUnits(
-    enemyTeam: EnemySpec[],
-    baseStats: CombatStatsBaseline,
-  ): SimulatorUnit[] {
-    return enemyTeam.map((e, idx) => {
-      const stats = computeFinalStats({
-        baseHp: e.baseHp,
-        baseAtk: e.baseAtk,
-        baseDef: e.baseDef,
-        baseSpd: e.baseSpd,
-        level: e.level,
-        palier: e.palier,
-        variant: 'NORMAL',
-        // Le seed peut surcharger une stat de stuff par ennemi (ex. boss
-        // « bourreau » à 40 % de critRate) ; sinon valeur de base commune.
-        baseStats: {
-          critRate: e.critRate ?? baseStats.critRate,
-          critDmg: e.critDmg ?? baseStats.critDmg,
-          armorPen: e.armorPen ?? baseStats.armorPen,
-          lifesteal: e.lifesteal ?? baseStats.lifesteal,
-        },
-      })
-      return {
-        id: `B${idx}`,
-        name:
-          enemyNameFromAppearance(e.appearance) ?? genericEnemyName(idx + 1),
-        imageUrl: this.#resolveEnemyImage(e.appearance),
-        hp: stats.hp,
-        atk: stats.atk,
-        def: stats.def,
-        spd: stats.spd,
-        critRate: stats.critRate,
-        critDmg: stats.critDmg,
-        armorPen: stats.armorPen,
-        lifesteal: stats.lifesteal,
-        attackPattern: e.attackPattern ?? 'BASIC',
-        passiveKey: e.passiveKey ?? null,
-        element: e.element ?? null,
-        palier: e.palier,
-      }
-    })
   }
 
   #getOrCreateProgress(userId: string) {

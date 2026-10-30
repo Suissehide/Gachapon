@@ -109,6 +109,9 @@ describe('Collection routes', () => {
     })
     const coll = collRes.json()
     if (coll.cards.length === 0) return // pas de carte à recycler
+    expect(
+      ['TANK', 'SUPPORT', 'FIGHTER', 'BALANCED', 'RANGER', 'ASSASSIN', 'MAGE'],
+    ).toContain(coll.cards[0].card.archetype)
 
     // La VARIANTE compte : recycler se fait sur (carte, variante), et un
     // tirage peut sortir un Brillant ou un Holo. Le test envoyait cardId seul,

@@ -134,9 +134,20 @@ describe('Combat team routes', () => {
     })
     expect(res.statusCode).toBe(200)
     const body = res.json() as {
-      team: { userCardId: string; stats: { hp: number; atk: number } }[]
+      team: {
+        userCardId: string
+        stats: { hp: number; atk: number }
+        archetype: string
+        ultimateLabel: string
+        ultimateDescription: string
+      }[]
     }
     expect(body.team).toHaveLength(2)
+    for (const unit of body.team) {
+      expect(unit.archetype).toBe('BALANCED')
+      expect(unit.ultimateLabel.length).toBeGreaterThan(0)
+      expect(unit.ultimateDescription.length).toBeGreaterThan(0)
+    }
     expect(body.team[0].userCardId).toBe(userCard1Id)
     expect(body.team[1].userCardId).toBe(userCard2Id)
     // RARE level 1 palier 1 NORMAL: hp = 200

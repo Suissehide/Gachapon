@@ -426,8 +426,9 @@ describe('Campaign routes', () => {
     const body = res.json() as {
       won: boolean
       rewards: { isFirstClear: boolean; gold: number; dust: number; xp: number } | null
-      teamA: unknown[]
-      teamB: unknown[]
+      teamA: { archetype?: string | null }[]
+      teamB: { archetype?: string | null }[]
+      log: { type: string; attackerId?: string; ultimate?: string }[]
     }
     expect(body.won).toBe(true)
     expect(body.rewards?.isFirstClear).toBe(true)
@@ -438,6 +439,22 @@ describe('Campaign routes', () => {
     expect(Array.isArray(body.teamB)).toBe(true)
     expect(body.teamA.length).toBe(1)
     expect(body.teamB.length).toBe(1)
+    // L'archétype (défaut BALANCED pour une carte créée hors import) arrive
+    // au simulateur : l'unité alliée le porte, l'ennemi non.
+    expect(body.teamA[0].archetype).toBe('BALANCED')
+    expect(body.teamB[0].archetype ?? null).toBeNull()
+    const ultimes = body.log.filter(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'A0' && e.ultimate,
+    )
+    const actionsA0 = body.log.filter(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    // Dès la 3e action de la carte, un coup est marqué ultime.
+    if (actionsA0.length >= 3) {
+      expect(ultimes.length).toBeGreaterThan(0)
+      expect(ultimes.every((e) => e.ultimate === 'BALANCED')).toBe(true)
+    }
+    expect(body.log.some((e) => e.type === 'ATTACK' && e.attackerId !== 'A0' && e.ultimate)).toBe(false)
   })
 
   it('la pièce de premier passage ci-dessus fait progresser une quête EQUIPMENT_OBTAINED', async () => {

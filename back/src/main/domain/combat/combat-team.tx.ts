@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
+import type { CardArchetype } from '../../types/domain/combat/archetype.types'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { Substat } from '../equipment/equipment-progression'
 import {
@@ -24,6 +25,7 @@ import {
   pickTeam,
   type ResolvedTeamIds,
 } from './resolve-combat-team'
+import { ULTIMATES } from './ultimates'
 
 const MAX_TEAM_SIZE = 3
 
@@ -39,6 +41,9 @@ export interface TeamUnit {
   palier: number
   passiveKey: string | null
   passiveLabel: string | null
+  archetype: CardArchetype
+  ultimateLabel: string
+  ultimateDescription: string
   stats: { hp: number; atk: number; def: number; spd: number }
 }
 
@@ -289,6 +294,7 @@ export class CombatTeamTx {
           baseStats,
         })
         const passive = getPassive(uc.card.passiveKey)
+        const ultimate = ULTIMATES[uc.card.archetype]
         return {
           userCardId: uc.id,
           cardId: uc.cardId,
@@ -301,6 +307,9 @@ export class CombatTeamTx {
           palier: uc.palier,
           passiveKey: uc.card.passiveKey,
           passiveLabel: passive?.label ?? null,
+          archetype: uc.card.archetype,
+          ultimateLabel: ultimate.label,
+          ultimateDescription: ultimate.describe(uc.palier),
           stats,
         }
       })

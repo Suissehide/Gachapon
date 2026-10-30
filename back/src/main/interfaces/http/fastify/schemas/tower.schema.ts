@@ -1,6 +1,7 @@
 import { z } from 'zod/v4'
 
 import { TOWER_ELEMENTS } from '../../../../domain/tower/tower-slots'
+import { cardArchetypeEnum } from './admin-cards.schema'
 
 // Élément d'une tour — SEULEMENT les 4 du cycle (§6 design spec), jamais
 // l'énumération Prisma `CardElement` complète (6 valeurs, dont LIGHT/DARK
@@ -149,6 +150,7 @@ const simulatorUnitSchema = z.object({
   spd: z.number().int(),
   attackPattern: z.string(),
   passiveKey: z.string().nullable(),
+  archetype: cardArchetypeEnum.nullable().optional(),
   element: z.string().nullable().optional(),
   palier: z.number().int(),
 })

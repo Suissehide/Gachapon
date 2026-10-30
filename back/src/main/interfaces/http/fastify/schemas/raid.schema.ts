@@ -1,5 +1,6 @@
 import { z } from 'zod/v4'
 
+import { cardArchetypeEnum } from './admin-cards.schema'
 import { towerElementSchema } from './tower.schema'
 
 export const raidTeamParamSchema = z.object({ id: z.string() })
@@ -75,6 +76,7 @@ const simulatorUnitSchema = z.object({
   spd: z.number().int(),
   attackPattern: z.string(),
   passiveKey: z.string().nullable(),
+  archetype: cardArchetypeEnum.nullable().optional(),
   element: z.string().nullable().optional(),
   palier: z.number().int(),
 })

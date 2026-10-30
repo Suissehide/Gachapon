@@ -103,6 +103,7 @@ export async function buildPlayerSimUnits(
         attackPattern: 'BASIC' as AttackPattern,
         passiveKey: u.card.passiveKey,
         element: u.card.element,
+        archetype: u.card.archetype,
         palier: u.palier,
       }
     })

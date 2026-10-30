@@ -3,6 +3,7 @@ import { z } from 'zod/v4'
 import { MAX_PALIER } from '../../../../domain/card-leveling/card-leveling.domain'
 import { COMBAT_TEAM_KEY_TUPLE } from '../../../../domain/combat/combat-team-keys'
 import { ELEMENTS } from '../../../../domain/combat/element'
+import { cardArchetypeEnum } from './admin-cards.schema'
 
 export const combatTeamPutBodySchema = z.object({
   userCardIds: z.array(z.string().uuid()).min(1).max(3),
@@ -35,6 +36,9 @@ export const teamUnitSchema = z.object({
   palier: z.number().int(),
   passiveKey: z.string().nullable(),
   passiveLabel: z.string().nullable(),
+  archetype: cardArchetypeEnum,
+  ultimateLabel: z.string(),
+  ultimateDescription: z.string(),
   stats: z.object({
     hp: z.number().int(),
     atk: z.number().int(),
@@ -71,6 +75,7 @@ const simulatorUnitSchema = z.object({
   attackPattern: attackPatternEnum,
   passiveKey: z.string().nullable(),
   element: z.string().nullable().optional(),
+  archetype: cardArchetypeEnum.nullable().optional(),
   palier: z.number().int().min(1).max(MAX_PALIER),
   // Défauts alignés sur DEFAULTS (config.service.ts) : préservent la
   // compatibilité des charges utiles existantes de cette route de debug

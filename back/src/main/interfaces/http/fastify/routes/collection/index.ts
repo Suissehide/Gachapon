@@ -115,6 +115,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
             baseDef: uc.card.baseDef,
             baseSpd: uc.card.baseSpd,
             passiveKey: uc.card.passiveKey,
+            archetype: uc.card.archetype,
           },
           variant: uc.variant,
           quantity: uc.quantity,
