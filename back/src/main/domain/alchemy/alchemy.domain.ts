@@ -13,6 +13,7 @@ import type {
 } from '../../types/domain/alchemy/alchemy.domain.interface'
 import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import { NORMAL_POOL_WHERE } from '../gacha/card-pools'
 import { pickVariant } from '../gacha/gacha.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { weightedPick } from '../shared/weighted-pick'
@@ -147,7 +148,7 @@ export class AlchemyDomain implements IAlchemyDomain {
     rates: Record<(typeof VARIANT_KEYS)[number], number>,
   ): Promise<{ cardId: string; variant: CardVariant; isNew: boolean }> {
     const pool = await tx.card.findMany({
-      where: { rarity: toRarity, set: { isActive: true } },
+      where: { ...NORMAL_POOL_WHERE, rarity: toRarity },
       select: { id: true, dropWeight: true },
     })
     if (pool.every((c) => c.dropWeight <= 0)) {

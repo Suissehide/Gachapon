@@ -958,7 +958,7 @@ export class BetDomain implements IBetDomain {
     weights: RarityWeights
   }> {
     const [activeCards, effects, boosts, target] = await Promise.all([
-      this.#cardRepository.findAllActive(),
+      this.#cardRepository.findActiveNormal(),
       this.#skillTreeRepository.getEffectsForUser(targetId),
       this.#userBoostRepository.findActiveByUser(targetId),
       this.#userRepository.findById(targetId),

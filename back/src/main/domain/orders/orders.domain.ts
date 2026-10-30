@@ -26,6 +26,7 @@ import {
   effectiveRegenInterval,
   overflowDust,
 } from '../economy/economy.domain'
+import { NORMAL_POOL_WHERE } from '../gacha/card-pools'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { RARITY_ORDER } from '../wagers/wager-rules'
 import { generateOrderLines, pickClient } from './order-generation'
@@ -222,7 +223,7 @@ export class OrdersDomain implements IOrdersDomain {
         },
       }),
       tx.card.findMany({
-        where: { set: { isActive: true } },
+        where: NORMAL_POOL_WHERE,
         select: {
           id: true,
           rarity: true,

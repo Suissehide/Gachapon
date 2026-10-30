@@ -12,6 +12,7 @@ import type {
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { PostgresORMInterface } from '../../types/infra/orm/client'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
+import { NORMAL_POOL_WHERE } from '../gacha/card-pools'
 import { pickWeightedRandom } from '../gacha/gacha.domain'
 import { applyPercentDiscount } from '../shared/discount'
 
@@ -128,7 +129,7 @@ export class DailyShopDomain implements IDailyShopDomain {
         'dailyShop.rareLuck',
       ),
       prisma.card.findMany({
-        where: { set: { isActive: true } },
+        where: NORMAL_POOL_WHERE,
         include: { set: true },
       }),
     ])

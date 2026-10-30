@@ -39,6 +39,7 @@ import {
   type SetKey,
   setBonusesFromConfig,
 } from '../equipment/set-bonuses'
+import { NORMAL_POOL_WHERE } from '../gacha/card-pools'
 import { pickVariant, pickWeightedRandom } from '../gacha/gacha.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
@@ -1233,7 +1234,7 @@ export class CampaignDomain {
     let cardDrop: BattleRewards['cardDrop'] = null
     if (rollFarmCardDrop(farm, Math.random)) {
       const cardsRaw = await tx.card.findMany({
-        where: { set: { isActive: true } },
+        where: NORMAL_POOL_WHERE,
         select: CARD_CATALOG_SELECT,
       })
       const picked = this.#pickWeighted(
@@ -1438,7 +1439,7 @@ export class CampaignDomain {
       select: EQUIPMENT_CATALOG_SELECT,
     })
     const activeCardsRaw = await tx.card.findMany({
-      where: { set: { isActive: true } },
+      where: NORMAL_POOL_WHERE,
       select: CARD_CATALOG_SELECT,
     })
     return {

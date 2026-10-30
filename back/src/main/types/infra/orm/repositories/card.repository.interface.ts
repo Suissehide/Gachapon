@@ -25,6 +25,10 @@ export interface ICardRepository {
     tx: PrimaTransactionClient,
     rarity: CardRarity,
   ): Promise<CardWithSet[]>
+  /** Pool normal (hors LIGHT/DARK) — sources de production hors transaction. */
+  findActiveNormal(): Promise<CardWithSet[]>
+  /** Pool astral (LIGHT/DARK uniquement) — capsule astrale. */
+  findActiveAstralInTx(tx: PrimaTransactionClient): Promise<CardWithSet[]>
   create(data: {
     nameFr: string
     nameEn: string

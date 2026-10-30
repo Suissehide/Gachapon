@@ -477,7 +477,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async () => {
-      const cards = await cardRepository.findAllActive()
+      const cards = await cardRepository.findActiveNormal()
       return { rates: computeDropRates(cards) }
     },
   )

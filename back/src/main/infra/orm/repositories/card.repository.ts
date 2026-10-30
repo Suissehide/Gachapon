@@ -1,3 +1,7 @@
+import {
+  ASTRAL_POOL_WHERE,
+  NORMAL_POOL_WHERE,
+} from '../../../domain/gacha/card-pools'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { CardArchetype } from '../../../types/domain/combat/archetype.types'
 import type {
@@ -69,7 +73,7 @@ export class CardRepository implements ICardRepository {
   ): Promise<CardWithSet[]> {
     return tx.card.findMany({
       where: {
-        set: { isActive: true },
+        ...NORMAL_POOL_WHERE,
         ...(forceLegendary ? { rarity: 'LEGENDARY' } : {}),
       },
       include: { set: true },
@@ -82,6 +86,20 @@ export class CardRepository implements ICardRepository {
   ): Promise<CardWithSet[]> {
     return tx.card.findMany({
       where: { set: { isActive: true }, rarity },
+      include: { set: true },
+    }) as Promise<CardWithSet[]>
+  }
+
+  findActiveNormal(): Promise<CardWithSet[]> {
+    return this.#prisma.card.findMany({
+      where: NORMAL_POOL_WHERE,
+      include: WITH_SET,
+    }) as Promise<CardWithSet[]>
+  }
+
+  findActiveAstralInTx(tx: PrimaTransactionClient): Promise<CardWithSet[]> {
+    return tx.card.findMany({
+      where: ASTRAL_POOL_WHERE,
       include: { set: true },
     }) as Promise<CardWithSet[]>
   }
