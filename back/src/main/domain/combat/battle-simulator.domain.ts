@@ -1,6 +1,13 @@
+import type { CardArchetype } from '../../types/domain/combat/archetype.types'
 import { damageReduction } from './combat-stats.domain'
 import { elementMultiplier, elementRelation } from './element'
 import { PASSIVES, type PassiveKey } from './passives'
+import {
+  ULTIMATE_CADENCE,
+  ULTIMATE_SHIELD_CAP_PCT,
+  ULTIMATES,
+  type UltimateDefinition,
+} from './ultimates'
 
 export type AttackPattern =
   | 'BASIC'
@@ -34,6 +41,8 @@ export interface SimulatorUnit {
   passiveKey: string | null
   /** Élément (FIRE/WATER/NATURE/EARTH/LIGHT/DARK) ; null = neutre. */
   element?: string | null
+  /** Archétype de la carte : porte l'ultime (alliés) ; absent = pas d'ultime (ennemis). */
+  archetype?: CardArchetype | null
   palier: number
   /** Chance de coup critique, en points de pourcentage. */
   critRate: number
@@ -86,6 +95,8 @@ export type LogEntry =
       attackerId: string
       targetIds: string[]
       damages: DamageEntry[]
+      /** Coup porté par l'ultime de cet archétype (absent pour une attaque normale). */
+      ultimate?: CardArchetype
     }
   | {
       type: 'PASSIVE'
@@ -257,6 +268,7 @@ interface BattleUnit {
   attackPattern: AttackPattern
   passiveKey: PassiveKey | null
   passiveValuePct: number
+  archetype: CardArchetype | null
   palier: number
   critRate: number
   critDmg: number
@@ -319,6 +331,7 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     attackPattern: u.attackPattern,
     passiveKey,
     passiveValuePct,
+    archetype: u.archetype ?? null,
     palier: u.palier,
     critRate: u.critRate,
     critDmg: u.critDmg,
@@ -447,18 +460,19 @@ function selectTargets(
   units: BattleUnit[],
   prng: () => number,
   log: LogEntry[],
+  pattern: AttackPattern,
 ): BattleUnit[] {
   if (enemies.length === 0) {
     return []
   }
   // AOE_3 frappe tout le monde : aucune sélection de cible à faire.
-  if (attacker.attackPattern === 'AOE_3') {
+  if (pattern === 'AOE_3') {
     return [...enemies]
   }
   const forced = forcedTarget(attacker, enemies, units, prng, log)
   const pool = forced ? enemies.filter((e) => e !== forced) : enemies
   const preferred = preferAdvantagedTargets(attacker.element, pool)
-  switch (attacker.attackPattern) {
+  switch (pattern) {
     case 'BASIC':
     case 'MONO_AMPLIFIED':
     case 'MONO_DOUBLE':
@@ -532,6 +546,8 @@ interface StrikeContext {
   log: LogEntry[]
   patternMultiplier: number
   rules: DamageRules
+  /** Archétype dont l'ultime porte ce coup, null pour une attaque normale. */
+  ultimate: CardArchetype | null
 }
 
 /**
@@ -1043,7 +1059,16 @@ function processDeaths(
 }
 
 function performStrike(ctx: StrikeContext): void {
-  const { attacker, units, targets, prng, log, patternMultiplier, rules } = ctx
+  const {
+    attacker,
+    units,
+    targets,
+    prng,
+    log,
+    patternMultiplier,
+    rules,
+    ultimate,
+  } = ctx
   const damages: DamageEntry[] = []
   const targetIds = targets.map((t) => t.id)
 
@@ -1065,7 +1090,13 @@ function performStrike(ctx: StrikeContext): void {
   }
   const isLifesteal = (e: LogEntry) => e.type === 'HEAL'
   log.push(...strikeLog.filter((e) => !isLifesteal(e)))
-  log.push({ type: 'ATTACK', attackerId: attacker.id, targetIds, damages })
+  log.push({
+    type: 'ATTACK',
+    attackerId: attacker.id,
+    targetIds,
+    damages,
+    ...(ultimate ? { ultimate } : {}),
+  })
   log.push(...strikeLog.filter(isLifesteal))
 
   // VIGOR après l'entrée ATTACK : le replay doit retirer les dégâts avant
@@ -1235,6 +1266,21 @@ function applyMomentum(
 // Per-turn dispatch (one unit's action — may be multiple strikes for MONO_DOUBLE)
 // ---------------------------------------------------------------------------
 
+/**
+ * Ultime de l'action en cours, ou null : une action sur ULTIMATE_CADENCE,
+ * sur le compteur d'actions jouées (même base que CRIT et HASTE). Il part
+ * même s'il n'a rien à faire : un Soutien à équipe pleine perd son action.
+ */
+function resolveUltimate(attacker: BattleUnit): UltimateDefinition | null {
+  if (
+    attacker.archetype === null ||
+    (attacker.attackCount + 1) % ULTIMATE_CADENCE !== 0
+  ) {
+    return null
+  }
+  return ULTIMATES[attacker.archetype]
+}
+
 function performUnitAction(
   attacker: BattleUnit,
   units: BattleUnit[],
@@ -1245,8 +1291,19 @@ function performUnitAction(
   if (!attacker.alive) {
     return
   }
-  const pattern = attacker.attackPattern
-  const patternMultiplier = patternDamageMultiplier(pattern)
+  const ultimate = resolveUltimate(attacker)
+  if (ultimate?.kind === 'SHIELD') {
+    applyUltimateShield(attacker, units, log)
+    return
+  }
+  if (ultimate?.kind === 'HEAL') {
+    applyUltimateHeal(attacker, units, log)
+    return
+  }
+  const pattern = ultimate?.pattern ?? attacker.attackPattern
+  const patternMultiplier = ultimate
+    ? ultimate.compute(attacker.palier).valuePct / 100
+    : patternDamageMultiplier(pattern)
   const strikes = pattern === 'MONO_DOUBLE' ? 2 : 1
   for (let s = 0; s < strikes; s++) {
     if (!attacker.alive) {
@@ -1256,7 +1313,7 @@ function performUnitAction(
     if (enemies.length === 0) {
       return
     }
-    const targets = selectTargets(attacker, enemies, units, prng, log)
+    const targets = selectTargets(attacker, enemies, units, prng, log, pattern)
     if (targets.length === 0) {
       return
     }
@@ -1268,6 +1325,7 @@ function performUnitAction(
       log,
       patternMultiplier,
       rules,
+      ultimate: ultimate?.archetype ?? null,
     })
   }
 }
@@ -1400,21 +1458,24 @@ function applyBlessingFromUnit(
   })
 }
 
-/** SANCTUARY : la source soigne tous ses alliés vivants d'un % de PV max. */
-function applySanctuaryFromUnit(
+/**
+ * La source soigne tous ses alliés vivants (elle comprise) de `pct` % de
+ * leurs PV max, borné aux PV manquants ; une entrée par allié soigné,
+ * `passive` nommant la source du soin (SANCTUARY, ULTIMATE).
+ */
+function healAllies(
   src: BattleUnit,
   units: BattleUnit[],
+  pct: number,
+  passive: string,
   log: LogEntry[],
 ): void {
-  if (!src.alive || src.passiveKey !== 'SANCTUARY') {
-    return
-  }
   for (const ally of units) {
     if (ally.side !== src.side || !ally.alive || ally.currentHp >= ally.maxHp) {
       continue
     }
     const healed = Math.min(
-      Math.round((ally.maxHp * src.passiveValuePct) / 100),
+      Math.round((ally.maxHp * pct) / 100),
       ally.maxHp - ally.currentHp,
     )
     if (healed <= 0) {
@@ -1424,11 +1485,86 @@ function applySanctuaryFromUnit(
     log.push({
       type: 'PASSIVE',
       unitId: src.id,
-      passive: 'SANCTUARY',
+      passive,
       payload: { healed },
       targetId: ally.id,
     })
   }
+}
+
+/** SANCTUARY : la source soigne tous ses alliés vivants d'un % de PV max. */
+function applySanctuaryFromUnit(
+  src: BattleUnit,
+  units: BattleUnit[],
+  log: LogEntry[],
+): void {
+  if (!src.alive || src.passiveKey !== 'SANCTUARY') {
+    return
+  }
+  healAllies(src, units, src.passiveValuePct, 'SANCTUARY', log)
+}
+
+// ---------------------------------------------------------------------------
+// Ultimes (voir ultimates.ts) — une action sur ULTIMATE_CADENCE
+// ---------------------------------------------------------------------------
+
+/** Entrée d'en-tête : l'ultime part, même s'il n'a rien à faire ensuite. */
+function logUltimateHeader(actor: BattleUnit, log: LogEntry[]): void {
+  log.push({
+    type: 'PASSIVE',
+    unitId: actor.id,
+    passive: 'ULTIMATE',
+    payload: {},
+  })
+}
+
+/**
+ * Ultime SHIELD (Tank) : bouclier additif sur chaque allié vivant, lanceur
+ * compris, sans jamais porter un allié au-delà de ULTIMATE_SHIELD_CAP_PCT %
+ * de ses PV max. Un bouclier déjà au-dessus (BULWARK haut palier) n'est ni
+ * réduit ni augmenté : seul l'AJOUT est plafonné. Une entrée par allié, avec
+ * la part effectivement gagnée (0 si plafonné).
+ */
+function applyUltimateShield(
+  actor: BattleUnit,
+  units: BattleUnit[],
+  log: LogEntry[],
+): void {
+  logUltimateHeader(actor, log)
+  const pct = ULTIMATES.TANK.compute(actor.palier).valuePct
+  for (const ally of units) {
+    if (ally.side !== actor.side || !ally.alive) {
+      continue
+    }
+    const add = Math.round((ally.maxHp * pct) / 100)
+    const cap = Math.round((ally.maxHp * ULTIMATE_SHIELD_CAP_PCT) / 100)
+    const next = Math.max(ally.shield, Math.min(ally.shield + add, cap))
+    const gained = next - ally.shield
+    ally.shield = next
+    log.push({
+      type: 'PASSIVE',
+      unitId: actor.id,
+      passive: 'ULTIMATE',
+      payload: { shield: gained },
+      targetId: ally.id,
+    })
+  }
+}
+
+/** Ultime HEAL (Soutien) : soin d'équipe, même mécanique que SANCTUARY. */
+function applyUltimateHeal(
+  actor: BattleUnit,
+  units: BattleUnit[],
+  log: LogEntry[],
+): void {
+  logUltimateHeader(actor, log)
+  healAllies(
+    actor,
+    units,
+    ULTIMATES.SUPPORT.compute(actor.palier).valuePct,
+    'ULTIMATE',
+    log,
+  )
 }
 
 /**
