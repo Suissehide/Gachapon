@@ -12,8 +12,8 @@ import type { CardArchetype } from '../../types/domain/combat/archetype.types'
 export interface UltimateTextDefinition {
   labelFr: string
   labelEn: string
-  describeFr: (valuePct: number) => string
-  describeEn: (valuePct: number) => string
+  describeFr: (valuePct: number, cadence: number) => string
+  describeEn: (valuePct: number, cadence: number) => string
 }
 
 /** Nom de l'archétype lui-même (la carte « est » un Tank, un Mage…). */
@@ -40,57 +40,57 @@ export const ULTIMATE_TEXT: Record<CardArchetype, UltimateTextDefinition> = {
   MAGE: {
     labelFr: 'Déluge',
     labelEn: 'Deluge',
-    describeFr: (v) =>
-      `Une action sur trois, frappe tous les ennemis à ${v} % de ses dégâts`,
-    describeEn: (v) =>
-      `Every third action, hits every enemy for ${v}% of its damage`,
+    describeFr: (v, n) =>
+      `Toutes les ${n} actions, frappe tous les ennemis à ${v} % de ses dégâts`,
+    describeEn: (v, n) =>
+      `Every ${n} actions, hits every enemy for ${v}% of its damage`,
   },
   RANGER: {
     labelFr: 'Tir double',
     labelEn: 'Twin Shot',
-    describeFr: (v) =>
-      `Une action sur trois, frappe deux ennemis à ${v} % de ses dégâts`,
-    describeEn: (v) =>
-      `Every third action, hits two enemies for ${v}% of its damage`,
+    describeFr: (v, n) =>
+      `Toutes les ${n} actions, frappe deux ennemis à ${v} % de ses dégâts`,
+    describeEn: (v, n) =>
+      `Every ${n} actions, hits two enemies for ${v}% of its damage`,
   },
   ASSASSIN: {
     labelFr: 'Lames jumelles',
     labelEn: 'Twin Blades',
-    describeFr: (v) =>
-      `Une action sur trois, frappe deux fois la même cible à ${v} % de ses dégâts`,
-    describeEn: (v) =>
-      `Every third action, hits the same target twice for ${v}% of its damage`,
+    describeFr: (v, n) =>
+      `Toutes les ${n} actions, frappe deux fois la même cible à ${v} % de ses dégâts`,
+    describeEn: (v, n) =>
+      `Every ${n} actions, hits the same target twice for ${v}% of its damage`,
   },
   FIGHTER: {
     labelFr: 'Coup de boutoir',
     labelEn: 'Crushing Blow',
-    describeFr: (v) =>
-      `Une action sur trois, porte un coup à ${v} % de ses dégâts`,
-    describeEn: (v) =>
-      `Every third action, lands a single blow for ${v}% of its damage`,
+    describeFr: (v, n) =>
+      `Toutes les ${n} actions, porte un coup à ${v} % de ses dégâts`,
+    describeEn: (v, n) =>
+      `Every ${n} actions, lands a single blow for ${v}% of its damage`,
   },
   BALANCED: {
     labelFr: 'Assaut',
     labelEn: 'Onslaught',
-    describeFr: (v) =>
-      `Une action sur trois, porte un coup à ${v} % de ses dégâts`,
-    describeEn: (v) =>
-      `Every third action, lands a single blow for ${v}% of its damage`,
+    describeFr: (v, n) =>
+      `Toutes les ${n} actions, porte un coup à ${v} % de ses dégâts`,
+    describeEn: (v, n) =>
+      `Every ${n} actions, lands a single blow for ${v}% of its damage`,
   },
   TANK: {
     labelFr: 'Mur de boucliers',
     labelEn: 'Shield Wall',
-    describeFr: (v) =>
-      `Une action sur trois, au lieu d'attaquer, donne à chaque allié un bouclier de ${pct(v, 'fr')} % de ses PV max`,
-    describeEn: (v) =>
-      `Every third action, instead of attacking, grants every ally a shield worth ${pct(v, 'en')}% of their max HP`,
+    describeFr: (v, n) =>
+      `Toutes les ${n} actions, au lieu d'attaquer, donne à chaque allié un bouclier de ${pct(v, 'fr')} % de ses PV max`,
+    describeEn: (v, n) =>
+      `Every ${n} actions, instead of attacking, grants every ally a shield worth ${pct(v, 'en')}% of their max HP`,
   },
   SUPPORT: {
     labelFr: 'Prière',
     labelEn: 'Prayer',
-    describeFr: (v) =>
-      `Une action sur trois, au lieu d'attaquer, soigne chaque allié de ${pct(v, 'fr')} % de ses PV max`,
-    describeEn: (v) =>
-      `Every third action, instead of attacking, heals every ally for ${pct(v, 'en')}% of their max HP`,
+    describeFr: (v, n) =>
+      `Toutes les ${n} actions, au lieu d'attaquer, soigne chaque allié de ${pct(v, 'fr')} % de ses PV max`,
+    describeEn: (v, n) =>
+      `Every ${n} actions, instead of attacking, heals every ally for ${pct(v, 'en')}% of their max HP`,
   },
 }

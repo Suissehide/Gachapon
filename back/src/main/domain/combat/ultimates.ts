@@ -12,7 +12,7 @@ import { clampPalier } from './passives'
 
 /**
  * Ultime d'une carte, déterminé par son archétype. Déclenché par cadence
- * (`ULTIMATE_CADENCE` actions), il remplace l'attaque simple par le schéma
+ * (`cadence` actions jouées, propre à l'archétype), il remplace l'attaque simple par le schéma
  * de l'archétype (ATTACK) ou par un bouclier / soin d'équipe (SHIELD / HEAL).
  * Même magnitude pour toutes les raretés : seul le palier la fait grandir,
  * les stats de base font le reste.
@@ -24,6 +24,8 @@ export interface UltimateDefinition {
   kind: UltimateKind
   /** Schéma de frappe, ATTACK seulement. */
   pattern: AttackPattern | null
+  /** Actions jouées entre deux ultimes : la jauge a autant de crans. */
+  cadence: number
   /**
    * ATTACK : multiplicateur de dégâts par cible ou par coup, en % (100 = ×1).
    * SHIELD / HEAL : part des PV max de chaque allié, en %.
@@ -35,8 +37,6 @@ export interface UltimateDefinition {
   describe(palier: number): string
 }
 
-/** Une action sur N est l'ultime. */
-export const ULTIMATE_CADENCE = 3
 /** Le bouclier du Tank ne porte jamais un allié au-delà de cette part de ses PV max. */
 export const ULTIMATE_SHIELD_CAP_PCT = 50
 
@@ -53,6 +53,7 @@ function define(
   archetype: CardArchetype,
   kind: UltimateKind,
   pattern: AttackPattern | null,
+  cadence: number,
   magnitude: (palier: number) => number,
 ): UltimateDefinition {
   const compute = (palier: number) => ({
@@ -62,6 +63,7 @@ function define(
     archetype,
     kind,
     pattern,
+    cadence,
     compute,
     get label() {
       const text = ULTIMATE_TEXT[archetype]
@@ -71,8 +73,8 @@ function define(
       const text = ULTIMATE_TEXT[archetype]
       const { valuePct } = compute(palier)
       return getCurrentLocale() === 'FR'
-        ? text.describeFr(valuePct)
-        : text.describeEn(valuePct)
+        ? text.describeFr(valuePct, cadence)
+        : text.describeEn(valuePct, cadence)
     },
   }
 }
@@ -81,16 +83,28 @@ function define(
 // vaut à peu près autant en stats d'équipe, l'invariant ultimate-power.test.ts
 // garde la bande.
 export const ULTIMATES: Record<CardArchetype, UltimateDefinition> = {
-  MAGE: define('MAGE', 'ATTACK', 'AOE_3', (p) => 55 + 5 * p),
-  RANGER: define('RANGER', 'ATTACK', 'MULTI_2', (p) => 80 + 6 * p),
-  ASSASSIN: define('ASSASSIN', 'ATTACK', 'MONO_DOUBLE', (p) => 77 + 7 * p),
-  FIGHTER: define('FIGHTER', 'ATTACK', 'MONO_AMPLIFIED', (p) => 150 + 13 * p),
-  BALANCED: define('BALANCED', 'ATTACK', 'MONO_AMPLIFIED', (p) => 140 + 11 * p),
+  MAGE: define('MAGE', 'ATTACK', 'AOE_3', 3, (p) => 55 + 5 * p),
+  RANGER: define('RANGER', 'ATTACK', 'MULTI_2', 3, (p) => 80 + 6 * p),
+  ASSASSIN: define('ASSASSIN', 'ATTACK', 'MONO_DOUBLE', 2, (p) => 62 + 6 * p),
+  FIGHTER: define(
+    'FIGHTER',
+    'ATTACK',
+    'MONO_AMPLIFIED',
+    3,
+    (p) => 150 + 13 * p,
+  ),
+  BALANCED: define(
+    'BALANCED',
+    'ATTACK',
+    'MONO_AMPLIFIED',
+    3,
+    (p) => 140 + 11 * p,
+  ),
   // Bouclier et soin touchent toute l'équipe toutes les trois actions : ils
   // ne valent presque rien dans un combat court et beaucoup dans un combat
   // long, d'où des parts de PV bien plus petites que les multiplicateurs.
-  TANK: define('TANK', 'SHIELD', null, (p) => 3 + 0.6 * p),
-  SUPPORT: define('SUPPORT', 'HEAL', null, (p) => 3 + 0.6 * p),
+  TANK: define('TANK', 'SHIELD', null, 4, (p) => 4 + 0.8 * p),
+  SUPPORT: define('SUPPORT', 'HEAL', null, 4, (p) => 4 + 0.8 * p),
 }
 
 /** Définition d'ultime d'un archétype, ou null si la valeur est inconnue. */

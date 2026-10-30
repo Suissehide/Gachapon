@@ -3,7 +3,6 @@ import { damageReduction } from './combat-stats.domain'
 import { elementMultiplier, elementRelation } from './element'
 import { PASSIVES, type PassiveKey } from './passives'
 import {
-  ULTIMATE_CADENCE,
   ULTIMATE_SHIELD_CAP_PCT,
   ULTIMATES,
   type UltimateDefinition,
@@ -134,6 +133,7 @@ export type StatusKey =
   | 'FORTIFY'
   | 'BANNER'
   | 'FURY'
+  | 'ULTIMATE'
 
 export interface UnitStatus {
   key: StatusKey
@@ -1267,18 +1267,26 @@ function applyMomentum(
 // ---------------------------------------------------------------------------
 
 /**
- * Ultime de l'action en cours, ou null : une action sur ULTIMATE_CADENCE,
- * sur le compteur d'actions jouées (même base que CRIT et HASTE). Il part
- * même s'il n'a rien à faire : un Soutien à équipe pleine perd son action.
+ * Ultime de l'action en cours, ou null : une action sur `cadence` (propre à
+ * l'archétype), sur le compteur d'actions jouées (même base que CRIT et
+ * HASTE). Il part même s'il n'a rien à faire : un Soutien à équipe pleine
+ * perd son action.
  */
 function resolveUltimate(attacker: BattleUnit): UltimateDefinition | null {
-  if (
-    attacker.archetype === null ||
-    (attacker.attackCount + 1) % ULTIMATE_CADENCE !== 0
-  ) {
+  if (attacker.archetype === null) {
     return null
   }
-  return ULTIMATES[attacker.archetype]
+  const def = ULTIMATES[attacker.archetype]
+  return (attacker.attackCount + 1) % def.cadence === 0 ? def : null
+}
+
+/** Jauge d'ultime : crans remplis (actions jouées depuis le dernier ultime) sur `cadence`. */
+function ultimateGauge(u: BattleUnit): UnitStatus | null {
+  if (u.archetype === null) {
+    return null
+  }
+  const { cadence } = ULTIMATES[u.archetype]
+  return { key: 'ULTIMATE', value: u.attackCount % cadence, turns: cadence }
 }
 
 function performUnitAction(
@@ -1530,7 +1538,7 @@ function applySanctuaryFromUnit(
 }
 
 // ---------------------------------------------------------------------------
-// Ultimes (voir ultimates.ts) — une action sur ULTIMATE_CADENCE
+// Ultimes (voir ultimates.ts) — une action sur `cadence`
 // ---------------------------------------------------------------------------
 
 /** Entrée d'en-tête : l'ultime part, même s'il n'a rien à faire ensuite. */
@@ -1695,6 +1703,10 @@ function buffStatuses(u: BattleUnit): UnitStatus[] {
   }
   if (u.passiveKey === 'FURY' && u.currentHp < u.maxHp * 0.5) {
     list.push({ key: 'FURY', value: u.passiveValuePct })
+  }
+  const gauge = ultimateGauge(u)
+  if (gauge) {
+    list.push(gauge)
   }
   return list
 }

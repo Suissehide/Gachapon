@@ -82,13 +82,15 @@ describe('ultime en combat', () => {
     expect(third?.ultimate).toBe('MAGE')
   })
 
-  it('ASSASSIN : la 3e action donne deux entrées ATTACK ultimes sur la même cible', () => {
+  it('ASSASSIN (cadence 2) : la 2e action donne deux entrées ATTACK ultimes sur la même cible', () => {
     const { log } = run([unit('A0', { archetype: 'ASSASSIN' })], [unit('B0')])
     const attacks = attacksOf(log, 'A0')
+    expect(attacks[0]?.ultimate).toBeUndefined()
+    expect(attacks[1]?.ultimate).toBe('ASSASSIN')
     expect(attacks[2]?.ultimate).toBe('ASSASSIN')
-    expect(attacks[3]?.ultimate).toBe('ASSASSIN')
-    expect(attacks[2]?.targetIds).toEqual(attacks[3]?.targetIds)
-    expect(attacks[4]?.ultimate).toBeUndefined()
+    expect(attacks[1]?.targetIds).toEqual(attacks[2]?.targetIds)
+    expect(attacks[3]?.ultimate).toBeUndefined()
+    expect(attacks[4]?.ultimate).toBe('ASSASSIN')
   })
 
   it('ASSASSIN face à trois ennemis : les deux coups de l ultime visent la même cible', () => {
@@ -126,7 +128,7 @@ describe('ultime en combat', () => {
     expect(ratio).toBeLessThan((mult * 1.1) / 0.9)
   })
 
-  it("TANK : pas d'ATTACK à la 3e action ; bouclier posé sur chaque allié vivant, lanceur compris", () => {
+  it("TANK (cadence 4) : pas d'ATTACK à la 4e action ; bouclier posé sur chaque allié vivant, lanceur compris", () => {
     const { log } = run(
       [
         unit('A0', { archetype: 'TANK', hp: 1000 }),
@@ -146,7 +148,7 @@ describe('ultime en combat', () => {
     }
     const headerIndex = log.indexOf(header as LogEntry)
     const attacksBefore = attacksOf(log.slice(0, headerIndex), 'A0')
-    expect(attacksBefore).toHaveLength(2)
+    expect(attacksBefore).toHaveLength(3)
   })
 
   it('TANK : le bouclier est plafonné à ULTIMATE_SHIELD_CAP_PCT % des PV max', () => {
@@ -195,6 +197,54 @@ describe('ultime en combat', () => {
     }
   })
 
+  it('jauge : le statut ULTIMATE suit les actions jouées et retombe à 0 après l ultime', () => {
+    const { log } = run([unit('A0', { archetype: 'MAGE' })], [unit('B0', { spd: 1 })])
+    const gauges: Array<{ value?: number; turns?: number } | undefined> = []
+    for (const e of log) {
+      if (e.type === 'TURN_END') {
+        gauges.push((e as TurnEndEntry).statuses?.A0?.find((s) => s.key === 'ULTIMATE'))
+      }
+    }
+    // Seul A0 agit (B0 est quasi immobile) : un TURN_END par action de A0.
+    expect(gauges.slice(0, 6).map((g) => g?.value)).toEqual([1, 2, 0, 1, 2, 0])
+    expect(gauges[0]?.turns).toBe(3)
+  })
+
+  it("jauge : un ennemi sans archétype n'a jamais de statut ULTIMATE", () => {
+    const { log } = run([unit('A0', { archetype: 'MAGE' })], [unit('B0')])
+    for (const e of log) {
+      if (e.type === 'TURN_END') {
+        expect((e as TurnEndEntry).statuses?.B0?.some((s) => s.key === 'ULTIMATE') ?? false).toBe(false)
+      }
+    }
+  })
+
+  it("jauge : une action sautée par STUN ne charge pas l'ultime", () => {
+    // B0 porte STUN au palier 6 (65 % de chance) et frappe vite : A0 saute
+    // des actions. Sur chacune, sa charge d'ultime ne doit pas bouger.
+    const { log } = run(
+      [unit('A0', { archetype: 'MAGE', hp: 100000 })],
+      [unit('B0', { passiveKey: 'STUN', palier: 6, spd: 300 })],
+      40,
+    )
+    let skipped = 0
+    let lastGauge: number | undefined
+    for (const e of log) {
+      if (e.type === 'PASSIVE' && e.passive === 'STUN' && e.unitId === 'A0' && e.payload.skipped) {
+        skipped++
+        // L'entrée TURN_END qui suit porte la jauge inchangée.
+        const idx = log.indexOf(e)
+        const turnEnd = log.slice(idx).find((x) => x.type === 'TURN_END') as TurnEndEntry | undefined
+        const gauge = turnEnd?.statuses?.A0?.find((s) => s.key === 'ULTIMATE')?.value ?? 0
+        expect(gauge).toBe(lastGauge ?? 0)
+      }
+      if (e.type === 'TURN_END') {
+        lastGauge = (e as TurnEndEntry).statuses?.A0?.find((s) => s.key === 'ULTIMATE')?.value ?? 0
+      }
+    }
+    expect(skipped).toBeGreaterThan(0)
+  })
+
   it("SUPPORT : part à vide quand personne n'est blessé", () => {
     const { log } = run(
       [unit('A0', { archetype: 'SUPPORT', hp: 1000 }), unit('A1', { hp: 1000 })],
@@ -204,7 +254,7 @@ describe('ultime en combat', () => {
     expect(ults.length).toBeGreaterThan(0)
     expect(ults.every((e) => e.targetId === undefined)).toBe(true)
     const headerIndex = log.indexOf(ults[0] as LogEntry)
-    expect(attacksOf(log.slice(0, headerIndex), 'A0')).toHaveLength(2)
+    expect(attacksOf(log.slice(0, headerIndex), 'A0')).toHaveLength(3)
     expect(
       log
         .slice(headerIndex, headerIndex + 3)

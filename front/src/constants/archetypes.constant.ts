@@ -32,11 +32,11 @@ function clampPalierForUltimateDisplay(palier: number): number {
 const ULTIMATE_VALUE: Record<CardArchetype, (palier: number) => number> = {
   MAGE: (p) => 55 + 5 * p,
   RANGER: (p) => 80 + 6 * p,
-  ASSASSIN: (p) => 77 + 7 * p,
+  ASSASSIN: (p) => 62 + 6 * p,
   FIGHTER: (p) => 150 + 13 * p,
   BALANCED: (p) => 140 + 11 * p,
-  TANK: (p) => 3 + 0.6 * p,
-  SUPPORT: (p) => 3 + 0.6 * p,
+  TANK: (p) => 4 + 0.8 * p,
+  SUPPORT: (p) => 4 + 0.8 * p,
 }
 
 export const ARCHETYPE_ICONS: Record<CardArchetype, LucideIcon> = {

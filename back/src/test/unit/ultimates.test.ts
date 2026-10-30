@@ -2,7 +2,6 @@ import { describe, expect, it } from '@jest/globals'
 
 import {
   getUltimate,
-  ULTIMATE_CADENCE,
   ULTIMATE_SHIELD_CAP_PCT,
   ULTIMATES,
 } from '../../main/domain/combat/ultimates'
@@ -54,9 +53,24 @@ describe('ultimes par archétype', () => {
     }
   })
 
-  it('constantes : cadence 3, plafond de bouclier 50 %', () => {
-    expect(ULTIMATE_CADENCE).toBe(3)
+  it('cadence par archétype : Assassin 2, Tank et Soutien 4, les autres 3 ; plafond de bouclier 50 %', () => {
+    expect(ULTIMATES.ASSASSIN.cadence).toBe(2)
+    expect(ULTIMATES.TANK.cadence).toBe(4)
+    expect(ULTIMATES.SUPPORT.cadence).toBe(4)
+    for (const key of ['MAGE', 'RANGER', 'FIGHTER', 'BALANCED'] as const) {
+      expect(ULTIMATES[key].cadence).toBe(3)
+    }
     expect(ULTIMATE_SHIELD_CAP_PCT).toBe(50)
+  })
+
+  it('la description annonce la cadence de l archétype', () => {
+    runWithLocale('FR', () => {
+      expect(ULTIMATES.ASSASSIN.describe(1)).toContain('Toutes les 2 actions')
+      expect(ULTIMATES.TANK.describe(1)).toContain('Toutes les 4 actions')
+    })
+    runWithLocale('EN', () => {
+      expect(ULTIMATES.MAGE.describe(1)).toContain('Every 3 actions')
+    })
   })
 
   it('libellé et description suivent la locale de la requête', () => {
