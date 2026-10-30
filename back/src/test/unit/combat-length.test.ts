@@ -4,6 +4,7 @@ import {
   type SimulatorUnit,
   simulateBattle,
 } from '../../main/domain/combat/battle-simulator.domain'
+import type { CardArchetype } from '../../main/types/domain/combat/archetype.types'
 import { computeFinalStats } from '../../main/domain/combat/combat-stats.domain'
 
 // Profils médians mesurés sur le classeur de production, rareté Épique.
@@ -25,7 +26,26 @@ const PALIER = 7
 // de base GlobalConfig sans équipement.
 const BASES_COMBAT = { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 }
 
-function unite(id: string, profil: keyof typeof PROFILS): SimulatorUnit {
+// Chaque profil porte l'archétype de son nom : les ultimes font partie de la
+// longueur réelle des combats. Seule l'équipe du joueur (A) en a : aucun
+// ennemi du jeu n'a d'archétype (campagne, tour, raid, monstre errant), et
+// les duels se règlent au score. Un miroir où les deux camps soignent et
+// protègent toute l'équipe une action sur trois n'existe pas en jeu et
+// s'enlise (médiane 244 actions, 7 % sans vainqueur).
+const ARCHETYPES: Record<keyof typeof PROFILS, CardArchetype> = {
+  Assassin: 'ASSASSIN',
+  Mage: 'MAGE',
+  Tireur: 'RANGER',
+  Combattant: 'FIGHTER',
+  Tank: 'TANK',
+  Soutien: 'SUPPORT',
+}
+
+function unite(
+  id: string,
+  profil: keyof typeof PROFILS,
+  withUltimate: boolean,
+): SimulatorUnit {
   const base = PROFILS[profil]
   const stats = computeFinalStats({
     ...base, level: NIVEAU, palier: PALIER, variant: 'NORMAL', baseStats: BASES_COMBAT,
@@ -35,6 +55,7 @@ function unite(id: string, profil: keyof typeof PROFILS): SimulatorUnit {
     ...stats,
     attackPattern: 'BASIC',
     passiveKey: null,
+    archetype: withUltimate ? ARCHETYPES[profil] : null,
     palier: PALIER,
     level: NIVEAU,
   }
@@ -47,8 +68,8 @@ function longueurMediane(
   const tours = Array.from({ length: 25 }, (_, i) =>
     simulateBattle({
       seed: `longueur-${i}`,
-      teamA: a.map((p, idx) => unite(`A${idx}`, p)),
-      teamB: b.map((p, idx) => unite(`B${idx}`, p)),
+      teamA: a.map((p, idx) => unite(`A${idx}`, p, true)),
+      teamB: b.map((p, idx) => unite(`B${idx}`, p, false)),
     }).turns,
   ).sort((x, y) => x - y)
   return tours[Math.floor(tours.length / 2)]
@@ -62,12 +83,13 @@ describe('longueur des combats en endgame', () => {
     expect(longueurMediane(OFFENSIVE, OFFENSIVE)).toBeLessThan(45)
   })
 
-  it('le pire cas (défensive vs défensive) reste sous 100 actions', () => {
+  it('le pire cas (défensive vs défensive) reste sous 110 actions', () => {
     // Avec le seuil de défense K = 1 000, un trio défensif au palier 7 réduit
-    // de 42 à 48 % les dégâts subis : son miroir dure ~98 actions. C'est le
-    // prix, accepté, d'une DEF qui pèse vraiment en fin de jeu ; la borne
-    // garde l'enlisement (TIMEOUT), testé ci-dessous.
-    expect(longueurMediane(DEFENSIVE, DEFENSIVE)).toBeLessThan(100)
+    // de 42 à 48 % les dégâts subis : face à son double sans ultime il dure
+    // ~102 actions (le Tank et le Soutien ne frappent pas une action sur
+    // trois). C'est le prix, accepté, d'une DEF qui pèse vraiment en fin de
+    // jeu ; la borne garde l'enlisement (TIMEOUT), testé ci-dessous.
+    expect(longueurMediane(DEFENSIVE, DEFENSIVE)).toBeLessThan(110)
   })
 
   it('aucun matchup ne part en TIMEOUT', () => {
@@ -75,8 +97,8 @@ describe('longueur des combats en endgame', () => {
       for (const b of [OFFENSIVE, DEFENSIVE]) {
         const r = simulateBattle({
           seed: 'timeout',
-          teamA: a.map((p, i) => unite(`A${i}`, p)),
-          teamB: b.map((p, i) => unite(`B${i}`, p)),
+          teamA: a.map((p, i) => unite(`A${i}`, p, true)),
+          teamB: b.map((p, i) => unite(`B${i}`, p, false)),
         })
         expect(r.won).not.toBeNull()
       }

@@ -30,6 +30,12 @@ export const ARCHETYPE_LABEL: Record<
   MAGE: { fr: 'Mage', en: 'Mage' },
 }
 
+/** Valeur à une décimale au plus, avec la virgule en français (bouclier, soin). */
+function pct(value: number, lang: 'fr' | 'en'): string {
+  const rounded = Math.round(value * 10) / 10
+  return lang === 'fr' ? String(rounded).replace('.', ',') : String(rounded)
+}
+
 export const ULTIMATE_TEXT: Record<CardArchetype, UltimateTextDefinition> = {
   MAGE: {
     labelFr: 'Déluge',
@@ -75,16 +81,16 @@ export const ULTIMATE_TEXT: Record<CardArchetype, UltimateTextDefinition> = {
     labelFr: 'Mur de boucliers',
     labelEn: 'Shield Wall',
     describeFr: (v) =>
-      `Une action sur trois, au lieu d'attaquer, donne à chaque allié un bouclier de ${v} % de ses PV max`,
+      `Une action sur trois, au lieu d'attaquer, donne à chaque allié un bouclier de ${pct(v, 'fr')} % de ses PV max`,
     describeEn: (v) =>
-      `Every third action, instead of attacking, grants every ally a shield worth ${v}% of their max HP`,
+      `Every third action, instead of attacking, grants every ally a shield worth ${pct(v, 'en')}% of their max HP`,
   },
   SUPPORT: {
     labelFr: 'Prière',
     labelEn: 'Prayer',
     describeFr: (v) =>
-      `Une action sur trois, au lieu d'attaquer, soigne chaque allié de ${v} % de ses PV max`,
+      `Une action sur trois, au lieu d'attaquer, soigne chaque allié de ${pct(v, 'fr')} % de ses PV max`,
     describeEn: (v) =>
-      `Every third action, instead of attacking, heals every ally for ${v}% of their max HP`,
+      `Every third action, instead of attacking, heals every ally for ${pct(v, 'en')}% of their max HP`,
   },
 }
