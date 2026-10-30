@@ -36,7 +36,8 @@
     "tokensRemaining": "Jetons restants",
     "pullAgainX1": "Nouveau tirage x1",
     "pullAgainX10": "Tirage x10",
-    "great": "Génial !"
+    "great": "Génial !",
+    "capsulesRemaining": "Capsules astrales restantes"
   },
   "a11y": {
     "revealNextCard": "Révéler la carte suivante",

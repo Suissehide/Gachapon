@@ -19,6 +19,7 @@ import {
   type TeaseTier,
   tierConfig,
 } from './capsuleConfig'
+import { StarShower } from './StarShower'
 import auraFrag from './shaders/aura.frag.glsl'
 import auraVert from './shaders/aura.vert.glsl'
 import groundFrag from './shaders/ground.frag.glsl'
@@ -541,6 +542,8 @@ export function CapsuleScene({
       />
 
       <ChargeSparks anim={anim} color={curColor} getConfig={getSparkConfig} />
+
+      {capsuleKind === 'astral' && <StarShower anim={anim} reduced={reduced} />}
 
       {/* Lumière interne teintée rareté — éclaire la scène à la charge */}
       <pointLight

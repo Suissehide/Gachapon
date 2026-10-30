@@ -104,9 +104,10 @@
   --astral: #6366f1;
 
   /* Capsule astrale en 3D (maquette capsule-astrale-v3) : lus à l'exécution
-     par `astralPalette()` (capsuleConfig.ts) pour les matériaux three.js —
-     pas d'utilitaire Tailwind, seul le canvas les consomme. Dessus : nébuleuse
-     de jour ; dessous : nébuleuse de nuit ; or de la bande et de l'anneau. */
+     par `astralPalette()` (capsuleConfig.ts) pour les matériaux three.js ;
+     seuls les deux violets de nuit sont aussi mappés en utilitaires (bouton
+     « Tirer » de /play). Dessus : nébuleuse de jour ; dessous : nébuleuse
+     de nuit ; or de la bande et de l'anneau. */
   --astral-day-sky: #7dd3fc;
   --astral-day-haze: #fde68a;
   --astral-day-cloud: #fff7e6;

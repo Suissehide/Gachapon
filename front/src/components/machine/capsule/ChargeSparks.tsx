@@ -16,7 +16,7 @@ type SparkData = {
   speed: Float32Array
 }
 
-function makeSprite(): THREE.Texture | null {
+export function makeSprite(): THREE.Texture | null {
   if (typeof document === 'undefined') {
     return null
   }
