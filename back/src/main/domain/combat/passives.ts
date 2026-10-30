@@ -55,7 +55,7 @@ export interface PassiveDefinition {
   describe(palier: number): string
 }
 
-function clampPalier(palier: number): number {
+export function clampPalier(palier: number): number {
   if (palier < 1) {
     return 1
   }
