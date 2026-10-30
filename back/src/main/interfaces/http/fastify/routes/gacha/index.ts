@@ -14,6 +14,7 @@ import {
 } from '../../../../../infra/i18n/localized-broadcast'
 import { wsManager } from '../../../../ws/ws-manager'
 import {
+  capsulesResponseSchema,
   dropRatesResponseSchema,
   pullBatchBodySchema,
   pullBatchResponseSchema,
@@ -40,6 +41,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     betDomain,
     teamProgressionDomain,
     backgroundTasks,
+    userCapsuleRepository,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -389,6 +391,39 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       return {
         nextTokenAt: nextTokenAt?.toISOString() ?? null,
         tokens,
+      }
+    },
+  )
+
+  // GET /capsules — inventaire de capsules (toujours une entrée ASTRAL)
+  fastify.get(
+    '/capsules',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Get my capsule inventory',
+        response: { 200: capsulesResponseSchema },
+      },
+    },
+    async (request) => {
+      const [capsules, upgrades, cfg] = await Promise.all([
+        userCapsuleRepository.findByUser(request.user.userID),
+        skillTreeRepository.getEffectsForUser(request.user.userID),
+        configService.getMany('astral.pityThreshold'),
+      ])
+      const astral = capsules.find((c) => c.type === 'ASTRAL')
+      return {
+        capsules: [
+          {
+            type: 'ASTRAL' as const,
+            quantity: astral?.quantity ?? 0,
+            pityCurrent: astral?.pityCurrent ?? 0,
+            pityThreshold: effectivePityThreshold(
+              cfg['astral.pityThreshold'],
+              upgrades.pityReduction ?? 0,
+            ),
+          },
+        ],
       }
     },
   )

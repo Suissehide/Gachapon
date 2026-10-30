@@ -96,6 +96,7 @@ export const FR_MESSAGES = {
   // --- gacha ---
   'gacha.noActiveCards': 'Aucune carte active dans un set',
   'gacha.notEnoughTokens': 'Jetons insuffisants',
+  'gacha.notEnoughCapsules': "Tu n'as pas assez de capsules astrales.",
 
   // --- shop / daily-shop / wishlist ---
   'shop.itemNotFound': 'Article introuvable',
@@ -115,6 +116,10 @@ export const FR_MESSAGES = {
     'La valeur du BOOST a une rareté invalide : {{rarity}}',
   'shop.energyPackMissingCombatPoints':
     'La valeur de l’ENERGY_PACK n’a pas d’entier positif de points de combat',
+  'shop.capsuleInvalidType':
+    'La valeur du CAPSULE a un type de capsule invalide',
+  'shop.capsuleMissingQuantity':
+    'La valeur du CAPSULE n’a pas d’entier positif de quantité',
   'dailyShop.notEnoughActiveCards':
     'Pas assez de cartes actives pour générer le marché',
   'dailyShop.itemAlreadyPurchased': 'Article déjà acheté',

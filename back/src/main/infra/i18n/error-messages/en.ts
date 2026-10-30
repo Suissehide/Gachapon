@@ -80,6 +80,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   // --- gacha ---
   'gacha.noActiveCards': 'No active cards in any set',
   'gacha.notEnoughTokens': 'Not enough tokens',
+  'gacha.notEnoughCapsules': "You don't have enough astral capsules.",
 
   // --- shop / daily-shop / wishlist ---
   'shop.itemNotFound': 'Item not found',
@@ -96,6 +97,9 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'shop.boostInvalidRarity': 'BOOST item has invalid rarity: {{rarity}}',
   'shop.energyPackMissingCombatPoints':
     'ENERGY_PACK item value has no positive integer combatPoints',
+  'shop.capsuleInvalidType': 'CAPSULE item value has an invalid capsule type',
+  'shop.capsuleMissingQuantity':
+    'CAPSULE item value has no positive integer quantity',
   'dailyShop.notEnoughActiveCards':
     'Not enough active cards to generate the market',
   'dailyShop.itemAlreadyPurchased': 'Item already purchased',

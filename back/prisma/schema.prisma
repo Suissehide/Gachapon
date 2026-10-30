@@ -80,6 +80,23 @@ enum ShopItemType {
   BOOST
   COSMETIC
   MACHINE
+  CAPSULE
+}
+
+/// Type de capsule détenue en inventaire. Une seule valeur aujourd'hui
+/// (LIGHT/DARK partagent le même pool astral), mais une enum plutôt qu'un
+/// booléen pour laisser la porte ouverte à un futur type sans migration de
+/// colonne.
+enum CapsuleType {
+  ASTRAL
+}
+
+/// Origine d'un tirage : TOKEN pour le gacha normal, ASTRAL pour un tirage
+/// payé en capsule (LIGHT/DARK uniquement). N'entre pas dans la fenêtre des
+/// paris et des duels (voir betDomain/duelDomain, filtrés sur TOKEN).
+enum PullSource {
+  TOKEN
+  ASTRAL
 }
 
 enum ShopCurrency {
@@ -263,19 +280,20 @@ model User {
   towerProgress    UserTowerProgress[]
   combatTeams      UserCombatTeam[]
 
-  wishlistCards       UserWishlistCard[]
-  boosts              UserBoost[]
-  activityEvents      ActivityEvent[]
-  raidAttacks         RaidAttack[]
-  duelsAsChallenger   Duel[]             @relation("DuelChallenger")
-  duelsAsOpponent     Duel[]             @relation("DuelOpponent")
-  betsPlaced          Bet[]              @relation("BetBettor")
-  betsReceived        Bet[]              @relation("BetTarget")
-  betEntries          BetEntry[]
-  weeklies            TeamMemberWeekly[]
-  customerOrders      CustomerOrder[]
-  returnChest         ReturnChest?
-  wanderingMonsters   WanderingMonster[]
+  wishlistCards     UserWishlistCard[]
+  boosts            UserBoost[]
+  capsules          UserCapsule[]
+  activityEvents    ActivityEvent[]
+  raidAttacks       RaidAttack[]
+  duelsAsChallenger Duel[]             @relation("DuelChallenger")
+  duelsAsOpponent   Duel[]             @relation("DuelOpponent")
+  betsPlaced        Bet[]              @relation("BetBettor")
+  betsReceived      Bet[]              @relation("BetTarget")
+  betEntries        BetEntry[]
+  weeklies          TeamMemberWeekly[]
+  customerOrders    CustomerOrder[]
+  returnChest       ReturnChest?
+  wanderingMonsters WanderingMonster[]
 
   @@index([role, lastLoginAt])
 }
@@ -345,12 +363,12 @@ model Team {
   owner       User     @relation("TeamOwner", fields: [ownerId], references: [id])
   createdAt   DateTime @default(now())
 
-  members     TeamMember[]
-  invitations Invitation[]
+  members      TeamMember[]
+  invitations  Invitation[]
   joinRequests JoinRequest[]
-  raids       TeamRaid[]
-  duels       Duel[]
-  bets        Bet[]
+  raids        TeamRaid[]
+  duels        Duel[]
+  bets         Bet[]
 
   level      Int                @default(1)
   /// Progression DANS le niveau courant, pas un cumul : à la montée de niveau on retranche le seuil franchi.
@@ -362,7 +380,7 @@ model Team {
   weeklies   TeamMemberWeekly[]
   /// Vrai par défaut, y compris pour les équipes déjà en base : un annuaire
   /// vide au lancement ne se remplit jamais.
-  recruiting   Boolean       @default(true)
+  recruiting Boolean            @default(true)
 
   @@index([ownerId])
 }
@@ -488,10 +506,10 @@ model Card {
   dropWeight Float      @default(1.0)
   createdAt  DateTime   @default(now())
 
-  baseHp     Int          @default(100)
-  baseAtk    Int          @default(10)
-  baseDef    Int          @default(5)
-  baseSpd    Int          @default(100)
+  baseHp     Int           @default(100)
+  baseAtk    Int           @default(10)
+  baseDef    Int           @default(5)
+  baseSpd    Int           @default(100)
   passiveKey String?
   element    CardElement?
   archetype  CardArchetype @default(BALANCED)
@@ -500,7 +518,7 @@ model Card {
   gachaPulls     GachaPull[]
   dailyShopItems DailyShopItem[]
   wishedBy       UserWishlistCard[]
-  duelTransfers  DuelTransfer[]  @relation("DuelTransferCard")
+  duelTransfers  DuelTransfer[]     @relation("DuelTransferCard")
   customerOrders CustomerOrder[]
 }
 
@@ -572,11 +590,27 @@ model GachaPull {
   variant      CardVariant @default(NORMAL)
   wasDuplicate Boolean     @default(false)
   dustEarned   Int         @default(0)
+  source       PullSource  @default(TOKEN)
   pulledAt     DateTime    @default(now())
 
   @@index([userId])
   @@index([pulledAt])
   @@index([cardId])
+  @@index([userId, source, pulledAt])
+}
+
+/// Inventaire de capsules d'un joueur, une ligne par type. Créditée à l'achat
+/// boutique (ShopDomain#creditCapsules), consommée au tirage astral — qui
+/// pose `pityCurrent` dans le même UPDATE que le décrément de `quantity`
+/// (IUserCapsuleRepository#consumeInTx) pour rester atomique.
+model UserCapsule {
+  userId      String
+  type        CapsuleType
+  quantity    Int         @default(0)
+  pityCurrent Int         @default(0)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, type])
 }
 
 model ShopItem {

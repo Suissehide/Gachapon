@@ -1,6 +1,10 @@
 import Boom from '@hapi/boom'
 
-import { CardRarity, type ShopItem } from '../../../generated/client'
+import {
+  CapsuleType,
+  CardRarity,
+  type ShopItem,
+} from '../../../generated/client'
 import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
@@ -15,6 +19,7 @@ import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { IShopItemRepository } from '../../types/infra/orm/repositories/shop-item.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
+import type { IUserCapsuleRepository } from '../../types/infra/orm/repositories/user-capsule.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
 import type { CombatPointsTx } from '../combat-points/combat-points.tx'
@@ -38,9 +43,15 @@ type EnergyValue = {
   combatPoints?: number
 }
 
+type CapsuleValue = {
+  capsuleType?: string
+  quantity?: number
+}
+
 export class ShopDomain implements IShopDomain {
   readonly #shopItemRepository: IShopItemRepository
   readonly #userBoostRepository: IUserBoostRepository
+  readonly #userCapsuleRepository: IUserCapsuleRepository
   readonly #postgresOrm: PostgresOrm
   readonly #achievementsDomain: AchievementsDomainInterface
   readonly #combatPointsTx: CombatPointsTx
@@ -51,6 +62,7 @@ export class ShopDomain implements IShopDomain {
   constructor({
     shopItemRepository,
     userBoostRepository,
+    userCapsuleRepository,
     postgresOrm,
     achievementsDomain,
     combatPointsTx,
@@ -60,6 +72,7 @@ export class ShopDomain implements IShopDomain {
   }: IocContainer) {
     this.#shopItemRepository = shopItemRepository
     this.#userBoostRepository = userBoostRepository
+    this.#userCapsuleRepository = userCapsuleRepository
     this.#postgresOrm = postgresOrm
     this.#achievementsDomain = achievementsDomain
     this.#combatPointsTx = combatPointsTx
@@ -137,6 +150,7 @@ export class ShopDomain implements IShopDomain {
 
           const updateData = this.#buildUpdateData(item, effectiveCost)
           await this.#applyBoostEffect(tx, userId, item)
+          await this.#creditCapsules(tx, userId, item)
 
           const newCombatPoints = await this.#creditPack(
             tx,
@@ -334,6 +348,23 @@ export class ShopDomain implements IShopDomain {
     }
   }
 
+  async #creditCapsules(
+    tx: PrimaTransactionClient,
+    userId: string,
+    item: ShopItem,
+  ): Promise<void> {
+    if (item.type !== 'CAPSULE') {
+      return
+    }
+    const value = item.value as CapsuleValue
+    await this.#userCapsuleRepository.creditInTx(
+      tx,
+      userId,
+      value.capsuleType as CapsuleType,
+      value.quantity as number,
+    )
+  }
+
   #validateRarity(rarity?: string): void {
     const validRarities = Object.values(CardRarity)
     if (rarity && !validRarities.includes(rarity as CardRarity)) {
@@ -362,6 +393,23 @@ export class ShopDomain implements IShopDomain {
       if (pc == null || !Number.isInteger(pc) || pc <= 0) {
         throw Boom.internal(errorMessage('shop.energyPackMissingCombatPoints'))
       }
+    }
+    if (item.type === 'CAPSULE') {
+      this.#validateCapsuleValue(item.value as CapsuleValue)
+    }
+  }
+
+  #validateCapsuleValue(capsuleValue: CapsuleValue): void {
+    const validTypes = Object.values(CapsuleType)
+    if (
+      !capsuleValue.capsuleType ||
+      !validTypes.includes(capsuleValue.capsuleType as CapsuleType)
+    ) {
+      throw Boom.internal(errorMessage('shop.capsuleInvalidType'))
+    }
+    const qty = capsuleValue.quantity
+    if (qty == null || !Number.isInteger(qty) || qty <= 0) {
+      throw Boom.internal(errorMessage('shop.capsuleMissingQuantity'))
     }
   }
 
