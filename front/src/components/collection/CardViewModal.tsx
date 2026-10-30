@@ -63,17 +63,26 @@ const VARIANT_LABELS: Record<string, { label: string; className: string }> = {
  * Bouton bascule : c'est la SEULE façon de retirer un vœu dans toute l'app.
  * Le désactiver quand la carte est souhaitée rendrait les emplacements
  * définitifs — plus aucun moyen de changer de carte une fois pleins.
+ *
+ * LIGHT/DARK (possédée ou non) n'est jamais vouable — le backend refuse
+ * (`wishlist.astralCardNotWishable`). La condition vit ici, pas dans
+ * `CardViewModal`, qui frôle le seuil de complexité cognitive.
  */
 function WishlistButton({
+  element,
   isWishlisted,
   loading,
   onToggle,
 }: {
+  element: CardElement | null
   isWishlisted: boolean
   loading: boolean
   onToggle: () => void
 }) {
   const { t } = useTranslation('collection')
+  if (isAstralElement(element)) {
+    return null
+  }
   return (
     <div className="mt-3 flex">
       <Button
@@ -293,6 +302,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
 
             {/* Wishlist */}
             <WishlistButton
+              element={card.element}
               isWishlisted={isWishlisted}
               loading={settingWishlist}
               onToggle={() =>
