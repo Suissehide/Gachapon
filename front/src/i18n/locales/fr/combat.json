@@ -258,6 +258,7 @@
     "FURY": "Furie",
     "atkUp": "+{{value}} % ATQ",
     "defUp": "+{{value}} % DEF",
-    "dmgUp": "+{{value}} % dégâts"
+    "dmgUp": "+{{value}} % dégâts",
+    "ultimateGauge": "Ultime : {{charge}} / {{cadence}} actions"
   }
 }

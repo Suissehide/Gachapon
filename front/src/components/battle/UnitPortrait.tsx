@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next'
 import type { UnitStatus } from '../../api/combat.api'
 import type { CardElement } from '../../constants/card.constant'
 import { currentLocale } from '../../i18n/index.ts'
-import { formatNumber } from '../../libs/utils.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import type { SceneUnit } from './types'
 
@@ -88,10 +88,13 @@ function useStrikeAnimation(
   return ref
 }
 
-const STATUS_STYLE: Record<
-  UnitStatus['key'],
-  { icon: LucideIcon; className: string }
-> = {
+/** Statut rendu en puce ; la jauge d'ultime a son propre rendu (UltimateGauge). */
+type ChipKey = Exclude<UnitStatus['key'], 'ULTIMATE'>
+type ChipStatus = UnitStatus & { key: ChipKey }
+
+const isChipStatus = (s: UnitStatus): s is ChipStatus => s.key !== 'ULTIMATE'
+
+const STATUS_STYLE: Record<ChipKey, { icon: LucideIcon; className: string }> = {
   BURN: { icon: Flame, className: 'text-orange-600' },
   POISON: { icon: Droplet, className: 'text-lime-700' },
   STUN: { icon: Zap, className: 'text-yellow-700' },
@@ -105,11 +108,11 @@ const STATUS_STYLE: Record<
   FURY: { icon: Angry, className: 'text-emerald-600' },
 }
 
-function StatusChip({ status }: { status: UnitStatus }) {
+function StatusChip({ status }: { status: ChipStatus }) {
   const { t } = useTranslation('combat')
   const locale = currentLocale()
   // Clés littérales : une clé construite échappe à check-i18n-keys.mjs.
-  const labels: Record<UnitStatus['key'], string> = {
+  const labels: Record<ChipKey, string> = {
     BURN: t('unitStatus.BURN'),
     POISON: t('unitStatus.POISON'),
     STUN: t('unitStatus.STUN'),
@@ -123,7 +126,7 @@ function StatusChip({ status }: { status: UnitStatus }) {
     FURY: t('unitStatus.FURY'),
   }
   const value = formatNumber(status.value ?? 0, locale)
-  const details: Partial<Record<UnitStatus['key'], string>> = {
+  const details: Partial<Record<ChipKey, string>> = {
     BURN: t('unitStatus.perTurn', { value }),
     POISON: t('unitStatus.perTurn', { value }),
     WEAKEN: t('unitStatus.pct', { value }),
@@ -176,7 +179,9 @@ function StatusRow({ unit }: { unit: SceneUnit }) {
   return (
     <div className="pointer-events-auto absolute right-1.5 top-1.5 z-30 flex flex-col items-end gap-1">
       {unit.alive &&
-        (unit.statuses ?? []).map((s) => <StatusChip key={s.key} status={s} />)}
+        (unit.statuses ?? [])
+          .filter(isChipStatus)
+          .map((s) => <StatusChip key={s.key} status={s} />)}
     </div>
   )
 }
@@ -269,6 +274,7 @@ export function UnitPortrait({
             style={{ width: `${hpPct}%` }}
           />
         </div>
+        <UltimateGauge unit={unit} />
         <p className="mt-1 text-center font-mono text-[11px] tabular-nums text-text-light">
           {formatNumber(Math.max(0, Math.round(unit.currentHp)), locale)}{' '}
           <span className="opacity-60">
@@ -276,6 +282,41 @@ export function UnitPortrait({
           </span>
         </p>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Jauge d'ultime : un cran par action jouée depuis le dernier ultime, sur
+ * `cadence` crans (statut `ULTIMATE` des `TURN_END`, `value` / `turns`).
+ * Absente tant qu'aucun `TURN_END` n'est passé et pour les unités sans
+ * archétype (ennemis).
+ */
+/** Crans possibles d'une jauge (cadence maximale 4), numérotés à partir de 1. */
+const GAUGE_SLOTS = [1, 2, 3, 4] as const
+
+function UltimateGauge({ unit }: { unit: SceneUnit }) {
+  const { t } = useTranslation('combat')
+  const gauge = unit.statuses?.find((s) => s.key === 'ULTIMATE')
+  if (!gauge || !unit.alive || !gauge.turns) {
+    return null
+  }
+  const cadence = gauge.turns
+  const charge = gauge.value ?? 0
+  return (
+    <div
+      className="mt-1 flex h-1.5 w-full gap-0.5"
+      title={t('unitStatus.ultimateGauge', { charge, cadence })}
+    >
+      {GAUGE_SLOTS.slice(0, cadence).map((slot) => (
+        <div
+          key={slot}
+          className={cn(
+            'flex-1 rounded-full transition-colors duration-300',
+            slot <= charge ? 'bg-primary' : 'bg-[rgba(27,23,38,0.1)]',
+          )}
+        />
+      ))}
     </div>
   )
 }

@@ -39,6 +39,17 @@ const ULTIMATE_VALUE: Record<CardArchetype, (palier: number) => number> = {
   SUPPORT: (p) => 4 + 0.8 * p,
 }
 
+/** Actions jouées entre deux ultimes, miroir de `UltimateDefinition.cadence`. */
+export const ULTIMATE_CADENCE: Record<CardArchetype, number> = {
+  MAGE: 3,
+  RANGER: 3,
+  ASSASSIN: 2,
+  FIGHTER: 3,
+  BALANCED: 3,
+  TANK: 4,
+  SUPPORT: 4,
+}
+
 export const ARCHETYPE_ICONS: Record<CardArchetype, LucideIcon> = {
   TANK: Shield,
   SUPPORT: HeartPulse,
@@ -65,6 +76,7 @@ export function describeUltimate(
   const p = clampPalierForUltimateDisplay(palier)
   return i18n.t(`archetypes:${archetype}.ultimateDescribe`, {
     value: formatPct(ULTIMATE_VALUE[archetype](p), currentLocale()),
+    cadence: ULTIMATE_CADENCE[archetype],
   })
 }
 

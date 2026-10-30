@@ -66,6 +66,7 @@ export type UnitStatus = {
     | 'FORTIFY'
     | 'BANNER'
     | 'FURY'
+    | 'ULTIMATE'
   turns?: number
   value?: number
 }
