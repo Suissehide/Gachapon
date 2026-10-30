@@ -104,6 +104,7 @@
     "duplicateRequired": "Duplicate required",
     "maxReached": "Max level and tier reached",
     "passiveLabel": "Passive",
+    "ultimateLabel": "Ultimate",
     "levelUpPending": "Working…",
     "levelUp": "Level up",
     "missingGold": "Not enough gold",

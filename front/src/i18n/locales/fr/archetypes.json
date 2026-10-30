@@ -1,0 +1,37 @@
+{
+  "TANK": {
+    "name": "Tank",
+    "ultimateName": "Mur de boucliers",
+    "ultimateDescribe": "Une action sur trois, au lieu d'attaquer, donne à chaque allié un bouclier de {{value}} % de ses PV max."
+  },
+  "SUPPORT": {
+    "name": "Soutien",
+    "ultimateName": "Prière",
+    "ultimateDescribe": "Une action sur trois, au lieu d'attaquer, soigne chaque allié de {{value}} % de ses PV max."
+  },
+  "FIGHTER": {
+    "name": "Combattant",
+    "ultimateName": "Coup de boutoir",
+    "ultimateDescribe": "Une action sur trois, porte un coup à {{value}} % de ses dégâts."
+  },
+  "BALANCED": {
+    "name": "Équilibré",
+    "ultimateName": "Assaut",
+    "ultimateDescribe": "Une action sur trois, porte un coup à {{value}} % de ses dégâts."
+  },
+  "RANGER": {
+    "name": "Tireur",
+    "ultimateName": "Tir double",
+    "ultimateDescribe": "Une action sur trois, frappe deux ennemis à {{value}} % de ses dégâts."
+  },
+  "ASSASSIN": {
+    "name": "Assassin",
+    "ultimateName": "Lames jumelles",
+    "ultimateDescribe": "Une action sur trois, frappe deux fois la même cible à {{value}} % de ses dégâts."
+  },
+  "MAGE": {
+    "name": "Mage",
+    "ultimateName": "Déluge",
+    "ultimateDescribe": "Une action sur trois, frappe tous les ennemis à {{value}} % de ses dégâts."
+  }
+}

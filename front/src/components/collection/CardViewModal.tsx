@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { describeUltimate } from '../../constants/archetypes.constant.ts'
 import type { CardVariant } from '../../constants/card.constant'
 import {
   type CardElement,
@@ -172,9 +173,11 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
       : null,
   )
 
+  // Texte de la carte : le passif, ou l'ultime pour une carte qui n'en a pas.
   const description =
     isOwned && userCard
-      ? describePassive(card.passiveKey, userCard.palier)
+      ? (describePassive(card.passiveKey, userCard.palier) ??
+        describeUltimate(card.archetype, userCard.palier))
       : null
 
   return (

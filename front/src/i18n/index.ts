@@ -5,6 +5,7 @@ import aboutEn from './locales/en/about.json'
 import achievementsEn from './locales/en/achievements.json'
 import adminEn from './locales/en/admin.json'
 import alchemyEn from './locales/en/alchemy.json'
+import archetypesEn from './locales/en/archetypes.json'
 import authEn from './locales/en/auth.json'
 import changelogEn from './locales/en/changelog.json'
 import collectionEn from './locales/en/collection.json'
@@ -42,6 +43,7 @@ import aboutFr from './locales/fr/about.json'
 import achievementsFr from './locales/fr/achievements.json'
 import adminFr from './locales/fr/admin.json'
 import alchemyFr from './locales/fr/alchemy.json'
+import archetypesFr from './locales/fr/archetypes.json'
 import authFr from './locales/fr/auth.json'
 import changelogFr from './locales/fr/changelog.json'
 import collectionFr from './locales/fr/collection.json'
@@ -358,6 +360,7 @@ void i18next.use(initReactI18next).init({
       notifications: notificationsFr,
       layout: layoutFr,
       passives: passivesFr,
+      archetypes: archetypesFr,
       achievements: achievementsFr,
       skills: skillsFr,
       teamPerks: teamPerksFr,
@@ -397,6 +400,7 @@ void i18next.use(initReactI18next).init({
       notifications: notificationsEn,
       layout: layoutEn,
       passives: passivesEn,
+      archetypes: archetypesEn,
       achievements: achievementsEn,
       skills: skillsEn,
       teamPerks: teamPerksEn,
@@ -439,6 +443,7 @@ void i18next.use(initReactI18next).init({
     'notifications',
     'layout',
     'passives',
+    'archetypes',
     'achievements',
     'skills',
     'teamPerks',

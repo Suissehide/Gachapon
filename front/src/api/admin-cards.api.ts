@@ -1,6 +1,7 @@
 import type {
   AdminCard,
   AdminCardSet,
+  CardArchetype,
   CardElement,
 } from '../constants/card.constant.ts'
 import { CARD_ROUTES } from '../constants/card.constant.ts'
@@ -111,6 +112,7 @@ export const AdminCardsApi = {
       baseSpd?: number
       passiveKey?: string | null
       element?: CardElement | null
+      archetype?: CardArchetype
     },
   ): Promise<unknown> => {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.card(id)}`, {

@@ -1,0 +1,37 @@
+{
+  "TANK": {
+    "name": "Tank",
+    "ultimateName": "Shield Wall",
+    "ultimateDescribe": "Every third action, instead of attacking, grants every ally a shield worth {{value}}% of their max HP."
+  },
+  "SUPPORT": {
+    "name": "Support",
+    "ultimateName": "Prayer",
+    "ultimateDescribe": "Every third action, instead of attacking, heals every ally for {{value}}% of their max HP."
+  },
+  "FIGHTER": {
+    "name": "Fighter",
+    "ultimateName": "Crushing Blow",
+    "ultimateDescribe": "Every third action, lands a single blow for {{value}}% of its damage."
+  },
+  "BALANCED": {
+    "name": "Balanced",
+    "ultimateName": "Onslaught",
+    "ultimateDescribe": "Every third action, lands a single blow for {{value}}% of its damage."
+  },
+  "RANGER": {
+    "name": "Ranger",
+    "ultimateName": "Twin Shot",
+    "ultimateDescribe": "Every third action, hits two enemies for {{value}}% of its damage."
+  },
+  "ASSASSIN": {
+    "name": "Assassin",
+    "ultimateName": "Twin Blades",
+    "ultimateDescribe": "Every third action, hits the same target twice for {{value}}% of its damage."
+  },
+  "MAGE": {
+    "name": "Mage",
+    "ultimateName": "Deluge",
+    "ultimateDescribe": "Every third action, hits every enemy for {{value}}% of its damage."
+  }
+}

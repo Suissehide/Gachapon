@@ -1,4 +1,4 @@
-import type { CardElement } from '../constants/card.constant.ts'
+import type { CardArchetype, CardElement } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
 import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
@@ -16,6 +16,9 @@ export type TeamUnit = {
   palier: number
   passiveKey: string | null
   passiveLabel: string | null
+  archetype: CardArchetype
+  ultimateLabel: string
+  ultimateDescription: string
   stats: { hp: number; atk: number; def: number; spd: number }
 }
 
@@ -45,6 +48,8 @@ export type SimulatorUnit = {
   passiveKey: string | null
   /** Élément du domaine (FIRE/WATER/NATURE/EARTH/LIGHT/DARK) ; null = neutre. */
   element?: string | null
+  /** Archétype (alliés) : porte l'ultime ; absent pour les ennemis. */
+  archetype?: CardArchetype | null
   palier: number
 }
 

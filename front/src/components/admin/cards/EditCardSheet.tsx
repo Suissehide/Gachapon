@@ -2,7 +2,11 @@ import { Images, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { CardElement } from '../../../constants/card.constant'
+import { ARCHETYPE_OPTIONS } from '../../../constants/archetypes.constant'
+import type {
+  CardArchetype,
+  CardElement,
+} from '../../../constants/card.constant'
 import { RARITY_OPTIONS } from '../../../constants/card.constant'
 import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminCard } from '../../../queries/useAdminCards'
@@ -24,6 +28,7 @@ export type EditCardPayload = {
   baseSpd: number
   passiveKey: string | null
   element: CardElement | null
+  archetype: CardArchetype
   imageUrl?: string | null
   imageFile?: File
 }
@@ -111,6 +116,7 @@ function EditCardForm({
       baseSpd: item.baseSpd as number | undefined,
       passiveKey: item.passiveKey ?? '',
       element: (item.element ?? '') as CardElement | '',
+      archetype: item.archetype,
       image: null as File | null,
     },
     onSubmit: ({ value }) => {
@@ -126,6 +132,7 @@ function EditCardForm({
         baseSpd: value.baseSpd ?? item.baseSpd,
         passiveKey: trimmedPassive === '' ? null : trimmedPassive,
         element: value.element === '' ? null : value.element,
+        archetype: value.archetype,
         ...resolveImageFields({
           imageRemoved,
           imageMode,
@@ -166,6 +173,14 @@ function EditCardForm({
             label={t('cards.createSheet.elementLabel')}
             options={ELEMENT_SELECT_OPTIONS}
             placeholder={t('cards.createSheet.elementPlaceholder')}
+          />
+        )}
+      </form.AppField>
+      <form.AppField name="archetype">
+        {(f) => (
+          <f.Select
+            label={t('cards.createSheet.archetypeLabel')}
+            options={ARCHETYPE_OPTIONS}
           />
         )}
       </form.AppField>

@@ -19,6 +19,12 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import {
+  ARCHETYPE_ICONS,
+  archetypeName,
+  describeUltimate,
+  ultimateName,
+} from '../../constants/archetypes.constant'
 import type { Card, CardVariant } from '../../constants/card.constant'
 import { PASSIVE_LABELS } from '../../constants/passives.constant'
 import i18n, { currentLocale } from '../../i18n/index.ts'
@@ -100,6 +106,7 @@ export function CombatPanel({
   const canAscend = atTop && !atMaxPalier && quantity > 1
 
   const passive = card.passiveKey ? PASSIVE_LABELS[card.passiveKey] : null
+  const ArchetypeIcon = ARCHETYPE_ICONS[card.archetype]
 
   // Bonus de set (2/4 pièces) inclus, pas seulement catalogue+substats — la
   // fiche de carte doit afficher les mêmes stats que le combat réel
@@ -325,6 +332,21 @@ export function CombatPanel({
           </p>
         </div>
       )}
+
+      {/* Ultime d'archétype : toute carte en a un */}
+      <div className="mt-4 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3">
+        <p className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-[rgba(27,23,38,0.45)]">
+          <ArchetypeIcon className="h-3 w-3" />{' '}
+          {t('collection:combatPanel.ultimateLabel')} ·{' '}
+          {archetypeName(card.archetype)}
+        </p>
+        <p className="mt-1 text-sm font-bold text-text">
+          {ultimateName(card.archetype)}
+        </p>
+        <p className="mt-0.5 text-[12px] text-text-light">
+          {describeUltimate(card.archetype, palier)}
+        </p>
+      </div>
     </>
   )
 }

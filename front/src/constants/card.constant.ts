@@ -118,6 +118,17 @@ export type CardSet = {
   isActive: boolean
 }
 
+export const CARD_ARCHETYPES = [
+  'TANK',
+  'SUPPORT',
+  'FIGHTER',
+  'BALANCED',
+  'RANGER',
+  'ASSASSIN',
+  'MAGE',
+] as const
+export type CardArchetype = (typeof CARD_ARCHETYPES)[number]
+
 export type Card = {
   id: string
   name: string
@@ -130,6 +141,7 @@ export type Card = {
   baseDef: number
   baseSpd: number
   passiveKey: string | null
+  archetype: CardArchetype
 }
 
 export type UserCard = {
@@ -170,6 +182,7 @@ export type AdminCard = {
   baseSpd: number
   passiveKey: string | null
   element: CardElement | null
+  archetype: CardArchetype
   set: { id: string; name: string }
 }
 

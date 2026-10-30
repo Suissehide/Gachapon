@@ -3,6 +3,7 @@ import { Images, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ARCHETYPE_OPTIONS } from '../../../constants/archetypes.constant'
 import { RARITY_OPTIONS } from '../../../constants/card.constant'
 import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminCardSet } from '../../../queries/useAdminCards'
@@ -39,6 +40,7 @@ type CardFormValues = {
   baseSpd?: number
   passiveKey: string
   element: string
+  archetype: string
   image: File | null
 }
 
@@ -58,6 +60,7 @@ function buildCardFormData(
   fd.append('setId', value.setId)
   fd.append('rarity', value.rarity)
   fd.append('dropWeight', String(value.dropWeight ?? 1))
+  fd.append('archetype', value.archetype)
   fd.append('baseHp', String(value.baseHp ?? DEFAULT_STATS.baseHp))
   fd.append('baseAtk', String(value.baseAtk ?? DEFAULT_STATS.baseAtk))
   fd.append('baseDef', String(value.baseDef ?? DEFAULT_STATS.baseDef))
@@ -152,6 +155,7 @@ function CreateCardForm({
       baseDef: DEFAULT_STATS.baseDef as number | undefined,
       baseSpd: DEFAULT_STATS.baseSpd as number | undefined,
       passiveKey: '',
+      archetype: 'BALANCED',
       element: '',
       image: null as File | null,
     },
@@ -223,6 +227,14 @@ function CreateCardForm({
             label={t('cards.createSheet.elementLabel')}
             options={ELEMENT_SELECT_OPTIONS}
             placeholder={t('cards.createSheet.elementPlaceholder')}
+          />
+        )}
+      </form.AppField>
+      <form.AppField name="archetype">
+        {(f) => (
+          <f.Select
+            label={t('cards.createSheet.archetypeLabel')}
+            options={ARCHETYPE_OPTIONS}
           />
         )}
       </form.AppField>

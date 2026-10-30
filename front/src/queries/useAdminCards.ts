@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
 import { AdminCardsApi } from '../api/admin-cards.api.ts'
-import type { CardElement } from '../constants/card.constant.ts'
+import type { CardArchetype, CardElement } from '../constants/card.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
@@ -148,6 +148,7 @@ export function useAdminUpdateCard() {
       baseSpd?: number
       passiveKey?: string | null
       element?: CardElement | null
+      archetype?: CardArchetype
     }) => AdminCardsApi.updateCard(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
     onError: (error) => {

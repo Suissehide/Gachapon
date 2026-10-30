@@ -2,6 +2,7 @@ import { Sparkles, Star, Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
+import { describeUltimate } from '../../constants/archetypes.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
@@ -130,8 +131,12 @@ export function CollectionCard({
       : null,
   )
 
+  // Texte de la carte : le passif, ou l'ultime pour une carte qui n'en a pas.
   const description =
-    isOwned && palier ? describePassive(card.passiveKey, palier) : null
+    isOwned && palier
+      ? (describePassive(card.passiveKey, palier) ??
+        describeUltimate(card.archetype, palier))
+      : null
 
   const shownLevel = isOwned ? (level ?? null) : null
 

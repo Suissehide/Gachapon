@@ -40,6 +40,7 @@
       "elementLabel": "Element",
       "elementPlaceholder": "None",
       "dropWeightLabel": "Drop weight",
+      "archetypeLabel": "Archetype",
       "passiveKeyLabel": "Passive (key, optional)",
       "uploadOption": "Upload",
       "libraryOption": "Library",
