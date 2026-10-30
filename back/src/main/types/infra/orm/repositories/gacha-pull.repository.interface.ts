@@ -1,3 +1,4 @@
+import type { PullSource } from '../../../../../generated/client'
 import type {
   CardRarity,
   CardVariant,
@@ -12,6 +13,8 @@ export type CreateGachaPullInput = {
   variant: CardVariant
   wasDuplicate: boolean
   dustEarned: number
+  /** TOKEN par défaut (colonne Prisma). */
+  source?: PullSource
 }
 
 export type RecentPullEntry = {

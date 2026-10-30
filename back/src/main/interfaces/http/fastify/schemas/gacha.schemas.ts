@@ -59,6 +59,13 @@ export const pullBatchResponseSchema = z.object({
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
 })
 
+// ── POST /pulls/astral ──────────────────────────────────────────────────────
+
+export const pullAstralResponseSchema = pullBatchResponseSchema.extend({
+  capsulesRemaining: z.number().int(),
+  astralPityCurrent: z.number().int(),
+})
+
 // ── GET /pulls/history ──────────────────────────────────────────────────────
 
 export const pullsHistoryQuerySchema = z.object({
