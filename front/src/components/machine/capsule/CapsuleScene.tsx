@@ -543,7 +543,9 @@ export function CapsuleScene({
 
       <ChargeSparks anim={anim} color={curColor} getConfig={getSparkConfig} />
 
-      {capsuleKind === 'astral' && <StarShower anim={anim} reduced={reduced} />}
+      {capsuleKind === 'astral' && !reduced && (
+        <StarShower anim={anim} reduced={reduced} />
+      )}
 
       {/* Lumière interne teintée rareté — éclaire la scène à la charge */}
       <pointLight
