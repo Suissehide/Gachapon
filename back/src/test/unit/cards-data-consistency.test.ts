@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from '@jest/globals'
 
 import { CARDS as HUMAN_CARDS } from '../../main/domain/content/cards.definitions'
+import { CARD_ARCHETYPES } from '../../main/types/domain/combat/archetype.types'
 
 // `cards-data.json` (généré depuis le classeur tcg_kit par import-cards) et
 // `prisma/seed/cards.ts` (suivi par git) décrivent tous les deux les 38
@@ -22,7 +23,14 @@ import { CARDS as HUMAN_CARDS } from '../../main/domain/content/cards.definition
 const _dirname = dirname(fileURLToPath(import.meta.url))
 const JSON_PATH = join(_dirname, '../../../scripts/import-cards/cards-data.json')
 
-type JsonCard = { id: string; atk: number; def: number; hp: number; spd: number }
+type JsonCard = {
+  id: string
+  atk: number
+  def: number
+  hp: number
+  spd: number
+  archetype: string
+}
 
 function loadHumansFromJson(): JsonCard[] | null {
   if (!existsSync(JSON_PATH)) return null
@@ -57,6 +65,30 @@ describe('cohérence cards.ts / cards-data.json (source de vérité dupliquée)'
         divergences.push(
           `${card.id} : cards.ts {hp:${card.baseHp},atk:${card.baseAtk},def:${card.baseDef},spd:${card.baseSpd}} ` +
             `≠ cards-data.json {hp:${json.hp},atk:${json.atk},def:${json.def},spd:${json.spd}}`,
+        )
+      }
+    }
+
+    expect(divergences).toEqual([])
+  })
+
+  it('chaque carte Humains porte le même archétype dans les deux sources, parmi les sept connus', () => {
+    const jsonById = new Map(humansFromJson.map((c) => [c.id, c]))
+    const divergences: string[] = []
+    const connus: readonly string[] = CARD_ARCHETYPES
+
+    for (const card of HUMAN_CARDS) {
+      const json = jsonById.get(card.id)
+      if (!json) {
+        divergences.push(`${card.id} : absent de cards-data.json`)
+        continue
+      }
+      if (!connus.includes(card.archetype)) {
+        divergences.push(`${card.id} : archétype inconnu côté cards.ts ${card.archetype}`)
+      }
+      if (card.archetype !== json.archetype) {
+        divergences.push(
+          `${card.id} : cards.ts ${card.archetype} ≠ cards-data.json ${json.archetype}`,
         )
       }
     }

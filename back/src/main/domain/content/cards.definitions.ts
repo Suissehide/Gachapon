@@ -7,6 +7,8 @@
  * `prisma/seed/cards.ts` n'y garde que l'écriture en base.
  */
 
+import type { CardArchetype } from '../../types/domain/combat/archetype.types'
+
 /**
  * Préfixe de stockage des images de cartes selon l'environnement.
  * - Prod  : `cards/humans/…`          (bucket gachapon → gachapon/cards/humans)
@@ -37,7 +39,8 @@ export const CARDS = [
     baseSpd: 95,
     element: 'EARTH',
     passiveKey: null,
-  }, // Soutien
+    archetype: 'SUPPORT',
+  },
   {
     id: 'HUM-002',
     nameFr: 'Roland le Garde',
@@ -50,7 +53,8 @@ export const CARDS = [
     baseSpd: 81,
     element: 'WATER',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-003',
     nameFr: 'Mira la Voleuse',
@@ -63,7 +67,8 @@ export const CARDS = [
     baseSpd: 123,
     element: 'WATER',
     passiveKey: null,
-  }, // Assassin
+    archetype: 'ASSASSIN',
+  },
   {
     id: 'HUM-004',
     nameFr: 'Frère Anselme',
@@ -76,7 +81,8 @@ export const CARDS = [
     baseSpd: 94,
     element: 'NATURE',
     passiveKey: null,
-  }, // Mage
+    archetype: 'MAGE',
+  },
   {
     id: 'HUM-005',
     nameFr: 'Gauthier le Forgeron',
@@ -89,7 +95,8 @@ export const CARDS = [
     baseSpd: 81,
     element: 'EARTH',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-006',
     nameFr: "Léna l'Archère",
@@ -102,7 +109,8 @@ export const CARDS = [
     baseSpd: 100,
     element: 'WATER',
     passiveKey: null,
-  }, // Tireur
+    archetype: 'RANGER',
+  },
   {
     id: 'HUM-007',
     nameFr: 'Aldric',
@@ -115,7 +123,8 @@ export const CARDS = [
     baseSpd: 75,
     element: 'FIRE',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-008',
     nameFr: 'Aveline',
@@ -128,7 +137,8 @@ export const CARDS = [
     baseSpd: 85,
     element: 'WATER',
     passiveKey: null,
-  }, // Équilibré
+    archetype: 'BALANCED',
+  },
   {
     id: 'HUM-009',
     nameFr: 'Gauvain',
@@ -141,7 +151,8 @@ export const CARDS = [
     baseSpd: 82,
     element: 'EARTH',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-010',
     nameFr: 'Tristan',
@@ -154,7 +165,8 @@ export const CARDS = [
     baseSpd: 97,
     element: 'WATER',
     passiveKey: null,
-  }, // Tireur
+    archetype: 'RANGER',
+  },
   {
     id: 'HUM-011',
     nameFr: 'Mahaut',
@@ -167,7 +179,8 @@ export const CARDS = [
     baseSpd: 102,
     element: 'FIRE',
     passiveKey: null,
-  }, // Tireur
+    archetype: 'RANGER',
+  },
   {
     id: 'HUM-012',
     nameFr: 'Lucien',
@@ -180,7 +193,8 @@ export const CARDS = [
     baseSpd: 72,
     element: 'NATURE',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-013',
     nameFr: 'Alix',
@@ -193,7 +207,8 @@ export const CARDS = [
     baseSpd: 95,
     element: 'FIRE',
     passiveKey: null,
-  }, // Équilibré
+    archetype: 'BALANCED',
+  },
   {
     id: 'HUM-014',
     nameFr: 'Thibault',
@@ -206,7 +221,8 @@ export const CARDS = [
     baseSpd: 92,
     element: 'FIRE',
     passiveKey: null,
-  }, // Équilibré
+    archetype: 'BALANCED',
+  },
   {
     id: 'HUM-015',
     nameFr: 'Enguerrand',
@@ -219,7 +235,8 @@ export const CARDS = [
     baseSpd: 95,
     element: 'EARTH',
     passiveKey: null,
-  }, // Équilibré
+    archetype: 'BALANCED',
+  },
   {
     id: 'HUM-016',
     nameFr: 'Yseult',
@@ -232,7 +249,8 @@ export const CARDS = [
     baseSpd: 110,
     element: 'NATURE',
     passiveKey: null,
-  }, // Assassin
+    archetype: 'ASSASSIN',
+  },
   {
     id: 'HUM-017',
     nameFr: 'Constant',
@@ -245,7 +263,8 @@ export const CARDS = [
     baseSpd: 76,
     element: 'WATER',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-018',
     nameFr: 'Blanche',
@@ -258,7 +277,8 @@ export const CARDS = [
     baseSpd: 91,
     element: 'FIRE',
     passiveKey: null,
-  }, // Équilibré
+    archetype: 'BALANCED',
+  },
   {
     id: 'HUM-019',
     nameFr: 'Lyra la Vive',
@@ -271,7 +291,8 @@ export const CARDS = [
     baseSpd: 94,
     element: 'FIRE',
     passiveKey: null,
-  }, // Équilibré
+    archetype: 'BALANCED',
+  },
   // UNCOMMON — dropWeight 38 chacune
   {
     id: 'HUM-020',
@@ -285,7 +306,8 @@ export const CARDS = [
     baseSpd: 81,
     element: 'EARTH',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-021',
     nameFr: 'Aymeric',
@@ -298,7 +320,8 @@ export const CARDS = [
     baseSpd: 105,
     element: 'DARK',
     passiveKey: null,
-  }, // Tireur
+    archetype: 'RANGER',
+  },
   {
     id: 'HUM-022',
     nameFr: 'Eleonore',
@@ -311,7 +334,8 @@ export const CARDS = [
     baseSpd: 98,
     element: 'DARK',
     passiveKey: null,
-  }, // Tireur
+    archetype: 'RANGER',
+  },
   {
     id: 'HUM-023',
     nameFr: 'Foulques',
@@ -324,7 +348,8 @@ export const CARDS = [
     baseSpd: 81,
     element: 'NATURE',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-024',
     nameFr: 'Mélisande',
@@ -337,7 +362,8 @@ export const CARDS = [
     baseSpd: 100,
     element: 'NATURE',
     passiveKey: null,
-  }, // Équilibré
+    archetype: 'BALANCED',
+  },
   {
     id: 'HUM-025',
     nameFr: 'Perceval',
@@ -350,7 +376,8 @@ export const CARDS = [
     baseSpd: 100,
     element: 'EARTH',
     passiveKey: null,
-  }, // Équilibré
+    archetype: 'BALANCED',
+  },
   {
     id: 'HUM-026',
     nameFr: 'Kenji le Ronin',
@@ -363,7 +390,8 @@ export const CARDS = [
     baseSpd: 119,
     element: 'EARTH',
     passiveKey: null,
-  }, // Assassin
+    archetype: 'ASSASSIN',
+  },
   {
     id: 'HUM-027',
     nameFr: 'Dame Coralie',
@@ -376,7 +404,8 @@ export const CARDS = [
     baseSpd: 88,
     element: 'WATER',
     passiveKey: null,
-  }, // Combattant
+    archetype: 'FIGHTER',
+  },
   {
     id: 'HUM-028',
     nameFr: 'Séléné au Fouet',
@@ -389,7 +418,8 @@ export const CARDS = [
     baseSpd: 115,
     element: 'WATER',
     passiveKey: null,
-  }, // Assassin
+    archetype: 'ASSASSIN',
+  },
   // RARE — dropWeight 16 chacune
   {
     id: 'HUM-029',
@@ -403,7 +433,8 @@ export const CARDS = [
     baseSpd: 88,
     element: 'EARTH',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-030',
     nameFr: 'Dame Ysolde la Paladine',
@@ -416,7 +447,8 @@ export const CARDS = [
     baseSpd: 80,
     element: 'LIGHT',
     passiveKey: null,
-  }, // Tank
+    archetype: 'TANK',
+  },
   {
     id: 'HUM-031',
     nameFr: 'Séraphine la Magicienne',
@@ -429,7 +461,8 @@ export const CARDS = [
     baseSpd: 96,
     element: 'LIGHT',
     passiveKey: null,
-  }, // Mage
+    archetype: 'MAGE',
+  },
   {
     id: 'HUM-032',
     nameFr: 'Josselin',
@@ -442,7 +475,8 @@ export const CARDS = [
     baseSpd: 93,
     element: 'FIRE',
     passiveKey: null,
-  }, // Équilibré
+    archetype: 'BALANCED',
+  },
   {
     id: 'HUM-033',
     nameFr: 'Oriane',
@@ -455,7 +489,8 @@ export const CARDS = [
     baseSpd: 135,
     element: 'NATURE',
     passiveKey: null,
-  }, // Assassin
+    archetype: 'ASSASSIN',
+  },
   {
     id: 'HUM-034',
     nameFr: 'Akira Double-Lame',
@@ -468,7 +503,8 @@ export const CARDS = [
     baseSpd: 131,
     element: 'FIRE',
     passiveKey: null,
-  }, // Assassin
+    archetype: 'ASSASSIN',
+  },
   // EPIC — dropWeight 4 chacune
   {
     id: 'HUM-035',
@@ -482,7 +518,8 @@ export const CARDS = [
     baseSpd: 96,
     element: 'FIRE',
     passiveKey: 'HAMPER',
-  }, // Mage
+    archetype: 'MAGE',
+  },
   {
     id: 'HUM-036',
     nameFr: 'Garnier',
@@ -495,7 +532,8 @@ export const CARDS = [
     baseSpd: 88,
     element: 'NATURE',
     passiveKey: 'AEGIS',
-  }, // Tank
+    archetype: 'TANK',
+  },
   // LEGENDARY — dropWeight 1 chacune
   {
     id: 'HUM-037',
@@ -509,7 +547,8 @@ export const CARDS = [
     baseSpd: 106,
     element: 'EARTH',
     passiveKey: 'STUN',
-  }, // Combattant
+    archetype: 'FIGHTER',
+  },
   {
     id: 'HUM-038',
     nameFr: 'Reine Isaure',
@@ -522,8 +561,12 @@ export const CARDS = [
     baseSpd: 107,
     element: 'WATER',
     passiveKey: 'BANNER',
-  }, // Combattant
-] as const
+    archetype: 'FIGHTER',
+  },
+] as const satisfies readonly {
+  readonly archetype: CardArchetype
+  readonly [key: string]: unknown
+}[]
 
 /**
  * Le set qui contient les 38 cartes ci-dessus.

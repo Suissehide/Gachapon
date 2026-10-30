@@ -39,6 +39,18 @@ RARETES = {
 # LEGENDARY divisés par deux le 2026-09-22). import-cards.mjs applique le même
 # barème et ignore le champ ; on l'écrit pour que le JSON soit lisible seul,
 # pas pour qu'il fasse foi.
+# Archétypes du classeur -> enum CardArchetype (archetype.types.ts). Chaque
+# archétype porte l'ultime de la carte, un archétype inconnu arrête l'export.
+ARCHETYPES = {
+    'Tank': 'TANK',
+    'Soutien': 'SUPPORT',
+    'Combattant': 'FIGHTER',
+    'Équilibré': 'BALANCED',
+    'Tireur': 'RANGER',
+    'Assassin': 'ASSASSIN',
+    'Mage': 'MAGE',
+}
+
 DROP_WEIGHT = {'COMMON': 85, 'UNCOMMON': 38, 'RARE': 16, 'EPIC': 4, 'LEGENDARY': 1}
 
 # Les colonnes Élément et Passif sont au format « Libellé (CLÉ) » ; la clé fait foi.
@@ -124,6 +136,9 @@ def main() -> None:
         if not rarete:
             raise SystemExit(f'✗ {ident} : rareté inconnue -> {ligne[col["Rareté"]]!r}')
         passif = cle(ligne[col['Passif']], 'Passif', ident)
+        archetype = ARCHETYPES.get(ligne[col['Archétype']])
+        if not archetype:
+            raise SystemExit(f"✗ {ident} : archétype inconnu -> {ligne[col['Archétype']]!r}")
         if passif and passif not in passifs:
             raise SystemExit(f'✗ {ident} : passif absent de passives.ts -> {passif}')
         cartes.setdefault(onglet, []).append({
@@ -138,6 +153,7 @@ def main() -> None:
             'folder': slug,
             'dropWeight': DROP_WEIGHT[rarete],
             'element': cle(ligne[col['Élément']], 'Élément', ident),
+            'archetype': archetype,
         })
 
     # Ordre de families.json plutôt que celui du classeur : deux régénérations

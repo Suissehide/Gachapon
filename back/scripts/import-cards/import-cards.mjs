@@ -222,12 +222,13 @@ async function createCard(setId, card) {
     form.append('baseSpd', String(card.spd))
     if (card.passiveKey) form.append('passiveKey', card.passiveKey)
     if (card.element) form.append('element', card.element)
+    form.append('archetype', card.archetype)
     form.append('imageUrl', key)
     return form
   }
 
   if (DRY_RUN) {
-    console.log(`    [dry-run] ${card.id} ${card.name} (${card.rarity}) → ${key}${card.passiveKey ? ` [${card.passiveKey}]` : ''}`)
+    console.log(`    [dry-run] ${card.id} ${card.name} (${card.rarity}, ${card.archetype}) → ${key}${card.passiveKey ? ` [${card.passiveKey}]` : ''}`)
     return 'created'
   }
   await api('POST', '/admin/cards', { formFactory: buildForm })
