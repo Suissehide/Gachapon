@@ -24,6 +24,7 @@ describe('fenêtre des paris : les tirages astraux restent invisibles', () => {
   let baselineActiveSetIds: string[]
   let mixedSetId: string
   let pureRareSetId: string
+  let originalPullWindow: number
 
   const suffix = Date.now()
   const password = 'Password123!'
@@ -95,6 +96,13 @@ describe('fenêtre des paris : les tirages astraux restent invisibles', () => {
       data: { teamId, userId: userIdB, role: 'MEMBER' },
     })
 
+    // Capturé AVANT la modification : `economy-config.e2e.test.ts` lit ce
+    // réglage et attend sa valeur par défaut (10), partagée entre fichiers
+    // e2e sous --runInBand — sans restauration, cette suite le laisserait
+    // à 3 pour tout le reste du run.
+    ;({ 'bet.pullWindow': originalPullWindow } = await configService.getMany(
+      'bet.pullWindow',
+    ))
     await configService.set('bet.pullWindow', PULL_WINDOW)
     await configService.set('bet.minStake', 50)
     await configService.set('bet.maxStake', 2000)
@@ -186,6 +194,7 @@ describe('fenêtre des paris : les tirages astraux restent invisibles', () => {
   })
 
   afterAll(async () => {
+    await configService.set('bet.pullWindow', originalPullWindow)
     await prisma.cardSet.updateMany({ data: { isActive: false } })
     if (baselineActiveSetIds.length > 0) {
       await prisma.cardSet.updateMany({
