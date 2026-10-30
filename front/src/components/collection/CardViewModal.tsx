@@ -1,4 +1,5 @@
-import { Recycle, Star, X } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { Recycle, Sparkles, Star, X } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +10,7 @@ import {
   ELEMENT_COLOR,
   ELEMENT_ICON,
   ELEMENT_LABELS,
+  isAstralElement,
 } from '../../constants/card.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import i18n from '../../i18n/index.ts'
@@ -89,6 +91,38 @@ function WishlistButton({
           ? t('collection:detail.removeWish')
           : t('collection:detail.setWish')}
       </Button>
+    </div>
+  )
+}
+
+/**
+ * LIGHT/DARK non possédée : seule source, la capsule astrale. La condition
+ * vit ici (pas dans `CardViewModal`, qui frôle le seuil de complexité
+ * cognitive), d'où le `null` interne plutôt qu'un `&&` à l'appel.
+ */
+function AstralHint({
+  isOwned,
+  element,
+}: {
+  isOwned: boolean
+  element: CardElement | null
+}) {
+  const { t } = useTranslation('collection')
+  if (isOwned || !isAstralElement(element)) {
+    return null
+  }
+  return (
+    <div className="mt-3 flex items-center gap-2 rounded-[11px] border border-[color-mix(in_oklab,var(--astral)_35%,transparent)] bg-[color-mix(in_oklab,var(--astral)_10%,transparent)] px-3 py-2 text-[13px] text-text">
+      <Sparkles className="h-4 w-4 shrink-0 text-astral" />
+      <span>
+        {t('collection:detail.astralHint')}{' '}
+        <Link
+          to="/shop"
+          className="font-semibold text-astral underline-offset-2 hover:underline"
+        >
+          {t('collection:detail.astralHintLink')}
+        </Link>
+      </span>
     </div>
   )
 }
@@ -265,6 +299,8 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
                 toggleWishlist({ cardId: card.id, wished: isWishlisted })
               }
             />
+
+            <AstralHint isOwned={isOwned} element={card.element} />
 
             {/* Meta — Owned + inline recycle */}
             {isOwned && (

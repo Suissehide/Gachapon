@@ -64,7 +64,9 @@
     "removeWish": "Remove wish",
     "setWish": "Set as wish",
     "ownedLabel": "Owned",
-    "recycle": "Recycle"
+    "recycle": "Recycle",
+    "astralHint": "Found in the astral capsule.",
+    "astralHintLink": "Go to the shop"
   },
   "recycleModal": {
     "title": "Recycle cards",
