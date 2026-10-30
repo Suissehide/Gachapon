@@ -1,5 +1,3 @@
-import type { PrimaTransactionClient } from '../../infra/orm/client'
-
 /** Vue du monstre errant actif, pour `GET /campaign/wanderer` (tâche 3 : `fightWanderer`). */
 export type WandererView = {
   stageId: string
@@ -15,14 +13,8 @@ export type WandererView = {
 
 export interface IWanderingMonsterDomain {
   /**
-   * Planifie l'apparition du jour (UTC) du joueur, s'il a au moins un étage
-   * battu. Idempotent : une seule ligne par (userId, day).
+   * Le monstre actif du joueur à `now` (fenêtre ouverte, non vaincu), ou
+   * `null`. Planifie au passage le retour suivant si le dernier est terminé.
    */
-  scheduleInTx(
-    tx: PrimaTransactionClient,
-    userId: string,
-    now: Date,
-  ): Promise<void>
-  /** Le monstre actif du joueur à `now` (fenêtre ouverte, non vaincu), ou `null`. */
   findActive(userId: string, now: Date): Promise<WandererView | null>
 }

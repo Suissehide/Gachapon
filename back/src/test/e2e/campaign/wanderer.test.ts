@@ -5,7 +5,6 @@ import { buildTestApp } from '../../helpers/build-test-app'
 import { setCombatTeam } from '../../helpers/combat-team-fixture'
 import { randomTestIpv6 } from '../../helpers/guest'
 
-const DAY = 24 * 60 * 60 * 1000
 const MINUTE = 60 * 1000
 
 describe('GET /campaign/wanderer', () => {
@@ -43,19 +42,10 @@ describe('GET /campaign/wanderer', () => {
     }
   }
 
-  const setLastLoginYesterday = (userId: string) =>
-    prisma.user.update({
-      where: { id: userId },
-      data: { lastLoginAt: new Date(Date.now() - 1 * DAY) },
-    })
-
   const setProgress = (userId: string, highestIndex: number) =>
     prisma.userCampaignProgress.create({
       data: { userId, highestChapter: chapter, highestIndex },
     })
-
-  const me = (cookie: string) =>
-    app.inject({ method: 'GET', url: '/auth/me', headers: { cookie } })
 
   const wanderer = (cookie?: string) =>
     app.inject({
@@ -100,7 +90,6 @@ describe('GET /campaign/wanderer', () => {
     prisma.wanderingMonster.create({
       data: {
         userId,
-        day: new Date().toISOString().slice(0, 10),
         stageId,
         appearsAt,
         expiresAt,
@@ -275,18 +264,16 @@ describe('GET /campaign/wanderer', () => {
     await app.close()
   })
 
-  it('planifie une apparition du jour quand 3 étages du chapitre sont battus', async () => {
+  it('planifie un passage de 3 h quand 3 étages du chapitre sont battus', async () => {
     const u = await registerUser()
-    await setLastLoginYesterday(u.id)
     await setProgress(u.id, 3)
 
     const before = new Date()
-    const res = await me(u.cookie)
+    const res = await wanderer(u.cookie)
     expect(res.statusCode).toBe(200)
 
     const row = await findRow(u.id)
     expect(row).not.toBeNull()
-    expect(row.day).toBe(new Date().toISOString().slice(0, 10))
 
     const stage = await prisma.campaignStage.findUnique({
       where: { id: row.stageId },
@@ -300,18 +287,15 @@ describe('GET /campaign/wanderer', () => {
     expect(delayMinutes).toBeGreaterThanOrEqual(60)
     expect(delayMinutes).toBeLessThanOrEqual(360)
 
-    const endOfDay = new Date(before)
-    endOfDay.setUTCHours(24, 0, 0, 0)
-    expect(row.expiresAt.getTime()).toBe(
-      Math.max(endOfDay.getTime(), row.appearsAt.getTime() + 180 * MINUTE),
+    expect(row.expiresAt.getTime() - row.appearsAt.getTime()).toBe(
+      180 * MINUTE,
     )
   })
 
   it('ne renvoie rien avant appearsAt', async () => {
     const u = await registerUser()
-    await setLastLoginYesterday(u.id)
     await setProgress(u.id, 3)
-    await me(u.cookie)
+    await wanderer(u.cookie)
 
     const res = await wanderer(u.cookie)
     expect(res.statusCode).toBe(200)
@@ -320,9 +304,8 @@ describe('GET /campaign/wanderer', () => {
 
   it('renvoie la vue une fois appearsAt passé, cohérente avec la ligne', async () => {
     const u = await registerUser()
-    await setLastLoginYesterday(u.id)
     await setProgress(u.id, 3)
-    await me(u.cookie)
+    await wanderer(u.cookie)
     const row = await findRow(u.id)
     await prisma.wanderingMonster.update({
       where: { id: row.id },
@@ -339,9 +322,8 @@ describe('GET /campaign/wanderer', () => {
 
   it('ne renvoie rien après expiresAt', async () => {
     const u = await registerUser()
-    await setLastLoginYesterday(u.id)
     await setProgress(u.id, 3)
-    await me(u.cookie)
+    await wanderer(u.cookie)
     const row = await findRow(u.id)
     await prisma.wanderingMonster.update({
       where: { id: row.id },
@@ -357,9 +339,8 @@ describe('GET /campaign/wanderer', () => {
 
   it('ne renvoie rien si defeatedAt est renseigné', async () => {
     const u = await registerUser()
-    await setLastLoginYesterday(u.id)
     await setProgress(u.id, 3)
-    await me(u.cookie)
+    await wanderer(u.cookie)
     const row = await findRow(u.id)
     await prisma.wanderingMonster.update({
       where: { id: row.id },
@@ -373,14 +354,13 @@ describe('GET /campaign/wanderer', () => {
     expect(res.json()).toEqual({ wanderer: null })
   })
 
-  it('un deuxième /auth/me le même jour ne crée qu’une seule ligne', async () => {
+  it('des lectures répétées ne planifient qu’un passage', async () => {
     const u = await registerUser()
-    await setLastLoginYesterday(u.id)
     await setProgress(u.id, 3)
-    await me(u.cookie)
+    await Promise.all([wanderer(u.cookie), wanderer(u.cookie)])
     const first = await findRow(u.id)
 
-    await me(u.cookie)
+    await wanderer(u.cookie)
     const rows = await prisma.wanderingMonster.findMany({
       where: { userId: u.id },
     })
@@ -388,10 +368,36 @@ describe('GET /campaign/wanderer', () => {
     expect(rows[0].id).toBe(first.id)
   })
 
+  it('revient après la défaite du passage précédent', async () => {
+    const u = await registerUser()
+    await setProgress(u.id, 3)
+    await wanderer(u.cookie)
+    const first = await findRow(u.id)
+    const defeatedAt = new Date(Date.now() - 1 * MINUTE)
+    await prisma.wanderingMonster.update({
+      where: { id: first.id },
+      data: { appearsAt: new Date(Date.now() - 2 * MINUTE), defeatedAt },
+    })
+
+    await wanderer(u.cookie)
+    const next = await prisma.wanderingMonster.findFirst({
+      where: { userId: u.id, id: { not: first.id } },
+    })
+    expect(next).not.toBeNull()
+    const delayMinutes = Math.round(
+      (next.appearsAt.getTime() - defeatedAt.getTime()) / MINUTE,
+    )
+    expect(delayMinutes).toBeGreaterThanOrEqual(60)
+    expect(delayMinutes).toBeLessThanOrEqual(360)
+    expect(next.expiresAt.getTime() - next.appearsAt.getTime()).toBe(
+      180 * MINUTE,
+    )
+  })
+
   it('un compte neuf sans progression n’a aucune ligne', async () => {
     const u = await registerUser()
 
-    const res = await me(u.cookie)
+    const res = await wanderer(u.cookie)
     expect(res.statusCode).toBe(200)
     const row = await findRow(u.id)
     expect(row).toBeNull()

@@ -208,13 +208,13 @@
       "info": "Sur une étape déjà gagnée, <strong>Combat multiple</strong> enchaîne plusieurs combats d'un coup (×1 ou ×5), contre l'énergie correspondante."
     },
     "errant": {
-      "intro": "Chaque jour, un <strong>monstre errant</strong> surgit sur un étage déjà battu de ton chapitre de campagne le plus avancé. Il reste <strong>jusqu'à la fin de la journée</strong>, puis repart.",
+      "intro": "Un <strong>monstre errant</strong> surgit sur un étage déjà battu de ton chapitre de campagne le plus avancé. Il reste <strong>trois heures</strong>, puis repart.",
       "list": {
-        "i1": "Il apparaît à un moment différent chaque jour, directement sur la carte de campagne.",
+        "i1": "Il revient une à six heures après son départ ou sa défaite, plusieurs fois par jour, directement sur la carte de campagne.",
         "i2": "Le combat est <strong>gratuit</strong>, sans énergie, et les tentatives sont illimitées tant qu'il est là.",
         "i3": "La victoire lâche un <strong>butin surprise</strong> : or, poussière, jetons ou carte."
       },
-      "tip": "Passe voir la carte de campagne une fois par jour pour ne pas le manquer."
+      "tip": "Passe voir la carte de campagne au fil de la journée pour ne pas le manquer."
     },
     "elements": {
       "intro": "Chaque carte et chaque monstre a un <strong>élément</strong>. Attaquer avec l'avantage fait plus de dégâts, attaquer avec le désavantage en fait moins.",

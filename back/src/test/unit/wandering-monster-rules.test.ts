@@ -4,31 +4,37 @@ import {
   pickLootKind,
   pickMonsterStage,
   pickSpawnDelayMinutes,
-  wandererExpiresAt,
+  nextWandererAppearsAt,
   soloWandererSpec,
 } from '../../main/domain/campaign/wandering-monster-rules'
 import { enemyTeamSchema } from '../../main/domain/campaign/campaign.domain'
 import { enemySpecSchema } from '../../main/domain/combat/sim-units'
 
-describe('wandererExpiresAt', () => {
-  it("reste jusqu'à minuit UTC", () => {
-    expect(
-      wandererExpiresAt(
-        new Date('2026-10-26T08:00:00Z'),
-        new Date('2026-10-26T10:00:00Z'),
-        180,
-      ).toISOString(),
-    ).toBe('2026-10-27T00:00:00.000Z')
+describe('nextWandererAppearsAt', () => {
+  const now = new Date('2026-10-30T12:00:00Z')
+
+  it('premier passage : le délai part de maintenant', () => {
+    expect(nextWandererAppearsAt(null, now, 60, 180).toISOString()).toBe(
+      '2026-10-30T13:00:00.000Z',
+    )
   })
 
-  it('apparu tard, garde la durée plancher', () => {
+  it('le délai part de la fin du passage précédent', () => {
     expect(
-      wandererExpiresAt(
-        new Date('2026-10-26T22:00:00Z'),
-        new Date('2026-10-27T02:00:00Z'),
-        180,
-      ).toISOString(),
-    ).toBe('2026-10-27T05:00:00.000Z')
+      nextWandererAppearsAt(new Date('2026-10-30T11:00:00Z'), now, 120, 180).toISOString(),
+    ).toBe('2026-10-30T13:00:00.000Z')
+  })
+
+  it('apparaît tout de suite si sa fenêtre est encore ouverte', () => {
+    expect(
+      nextWandererAppearsAt(new Date('2026-10-30T09:00:00Z'), now, 120, 180).toISOString(),
+    ).toBe('2026-10-30T11:00:00.000Z')
+  })
+
+  it('fenêtre écoulée en absence : repart de maintenant', () => {
+    expect(
+      nextWandererAppearsAt(new Date('2026-10-29T09:00:00Z'), now, 120, 180).toISOString(),
+    ).toBe('2026-10-30T14:00:00.000Z')
   })
 })
 

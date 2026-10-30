@@ -848,14 +848,13 @@ model CampaignStage {
   @@unique([chapter, index])
 }
 
-/// Apparition quotidienne du monstre errant (une par jour UTC et par joueur).
-/// `day` = jour UTC de la planification, `YYYY-MM-DD` ; `stageId` est un étage
-/// déjà battu du chapitre le plus avancé du joueur à l'instant du tirage.
+/// Un passage du monstre errant ; le suivant est planifié quand celui-ci se
+/// termine. `stageId` est un étage déjà battu du chapitre le plus avancé du
+/// joueur à l'instant du tirage.
 model WanderingMonster {
   id         String        @id @default(uuid())
   userId     String
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  day        String
   stageId    String
   stage      CampaignStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
   appearsAt  DateTime
@@ -863,8 +862,8 @@ model WanderingMonster {
   defeatedAt DateTime?
   createdAt  DateTime      @default(now())
 
-  @@unique([userId, day])
   @@index([userId, expiresAt])
+  @@index([userId, appearsAt])
 }
 
 model UserCampaignProgress {

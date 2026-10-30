@@ -208,13 +208,13 @@
       "info": "On a stage you've already won, <strong>Multiple battle</strong> chains several fights at once (×1 or ×5) for the matching energy."
     },
     "errant": {
-      "intro": "Every day, a <strong>wandering monster</strong> shows up on an already-cleared stage of your furthest campaign chapter. It stays <strong>until the end of the day</strong>, then leaves.",
+      "intro": "A <strong>wandering monster</strong> shows up on an already-cleared stage of your furthest campaign chapter. It stays <strong>three hours</strong>, then leaves.",
       "list": {
-        "i1": "It appears at a different time each day, right on the campaign map.",
+        "i1": "It comes back one to six hours after it leaves or is defeated, several times a day, right on the campaign map.",
         "i2": "The fight is <strong>free</strong>, with no energy cost, and attempts are unlimited while it is there.",
         "i3": "Victory drops <strong>surprise loot</strong>: gold, dust, tokens or a card."
       },
-      "tip": "Check the campaign map once a day so you don't miss it."
+      "tip": "Check the campaign map throughout the day so you don't miss it."
     },
     "elements": {
       "intro": "Every card and every monster has an <strong>element</strong>. Attacking with the advantage deals more damage; attacking at a disadvantage deals less.",
