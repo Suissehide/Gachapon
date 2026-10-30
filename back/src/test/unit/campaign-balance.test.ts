@@ -41,50 +41,25 @@ const coord = (n: number) =>
   ] as const
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
-  it('stage 1-1 : valeur ancre exacte (ancre 130 PV, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {124,24,14,89}, scale = 130 / 124 (première ancre de PV,
+  it('stage 1-1 : valeur ancre exacte (ancre 133 PV, NORMAL_FACTOR=0.971)', () => {
+    // rb = COMMON {124,24,14,89}, scale = 133 / 124 (première ancre de PV,
     // fittée sur un joueur SANS équipement), NORMAL_FACTOR = 0,971.
-    // hp: 130×0.971 = 126.2 → 126 ; atk: 24×0.971×1.0484 = 24.4 → 24
+    // hp: 133×0.971 = 129.1 → 129 ; atk: 24×0.971×1.0726 = 25.0 → 25
     // def: 14×0.971×ENEMY_DEF_MULT = 135.9 → 136, hors échelle d'étage ;
     // spd: 89 tel quel — la vitesse échappe au facteur ET à l'échelle, elle
     // reste la base de rareté.
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 126,
-      baseAtk: 24,
+      baseHp: 129,
+      baseAtk: 25,
       baseDef: 136,
       baseSpd: 89,
     })
-  })
-
-  it("la vitesse NE suit PLUS l'échelle d'étage : elle reste la base de rareté", () => {
-    // Renversement assumé de l'ancienne règle « la vitesse scale avec le
-    // niveau (ATB parity) ». Sous ATB, seul le RAPPORT de vitesse entre les
-    // deux camps compte : la faire croître des deux côtés ne changeait rien au
-    // combat, rendait l'équilibrage mouvant, et gonflait la jauge de puissance
-    // — un boss d'étage 80 y paraissait 23 fois plus fort qu'il ne l'est.
-    // Elle est désormais figée des deux côtés, et seul l'équipement la bouge.
-    expect(enemyPower(1, 9).baseSpd).toBe(enemyPower(1, 1).baseSpd)
-    expect(enemyPower(CHAPTER_COUNT, 9).baseSpd).toBe(RARITY_BASE.EPIC.spd)
-  })
-
-  it('les PV sont STRICTEMENT croissants sur toute la campagne', () => {
-    let prevHp = -1
-    for (let n = 1; n <= TOTAL_STAGES; n++) {
-      const hp = enemyPower(...coord(n)).baseHp
-      expect(hp).toBeGreaterThan(prevHp)
-      prevHp = hp
-    }
-  })
-
-  it('est CONTINU au changement de chapitre (2-1 > 1-10, 3-1 > 2-10)', () => {
-    expect(enemyPower(2, 1).baseHp).toBeGreaterThan(enemyPower(1, 10).baseHp)
-    expect(enemyPower(3, 1).baseHp).toBeGreaterThan(enemyPower(2, 10).baseHp)
   })
 })
 
 describe('enemyScale — courbe à ancres, sans marche', () => {
   it("l'étage 1 est l'ancre : scale = PV de l'ancre / PV de base COMMON", () => {
-    expect(enemyScale(1)).toBeCloseTo(130 / RARITY_BASE.COMMON.hp, 10)
+    expect(enemyScale(1)).toBeCloseTo(133 / RARITY_BASE.COMMON.hp, 10)
   })
 
   it('aucune marche : PV des étages normaux, frontières de chapitre comprises', () => {

@@ -189,8 +189,9 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // rarement. La carte épique du palier 100 % ne vient plus qu'aux niveaux
   // difficiles (RAID_EPIC_CARD_MIN_LEVEL, raid.definitions.ts).
   // Calé sur les dégâts de l'équipe de référence (épiques palier 5,
-  // équipement réel du harnais balance-calibration.ts).
-  'raid.baseHpPerMember': 153000,
+  // équipement réel du harnais balance-calibration.ts), ultimes d'archétype
+  // compris : ils ajoutent ~5,5 % de dégâts au boss (scripts/balance-sim.ts).
+  'raid.baseHpPerMember': 161000,
   // Effectif MINIMUM facturé dans les PV du boss, même pour une équipe plus
   // petite : sans lui, monter une équipe à un joueur donnait un boss à sa
   // taille et les quatre paliers toutes les semaines.

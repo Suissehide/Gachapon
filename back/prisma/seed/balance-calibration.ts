@@ -49,8 +49,8 @@ import { buildEquipmentCatalog } from '../../src/main/domain/content/equipment.d
 import {
   TOWER_FLOOR_COUNT,
   towerAoeUnitCount,
-  towerFloorScale,
   towerEnemyStatsAtScale,
+  towerFloorScale,
 } from '../../src/main/domain/content/tower.definitions'
 import {
   EQUIP_SUBSTAT_MILESTONE,
@@ -280,6 +280,14 @@ export function gearTier(tier: number): GearTier {
   return gear
 }
 
+/**
+ * Archétypes du joueur de référence : la composition « mixte » du banc des
+ * passifs. Ses stats restent la ligne moyenne de rareté (RARITY_BASE), seuls
+ * les ultimes s'ajoutent — la bande d'équilibre des ultimes garantit que la
+ * composition pèse peu sur la mesure.
+ */
+const REFERENCE_ARCHETYPES = ['MAGE', 'FIGHTER', 'SUPPORT'] as const
+
 export function referenceTeam(
   profile: ReferenceProfile,
   opts: { element: string | null; seed: number },
@@ -333,6 +341,7 @@ export function referenceTeam(
       ...stats,
       attackPattern: 'BASIC' as const,
       passiveKey: null,
+      archetype: REFERENCE_ARCHETYPES[idx],
       element: opts.element,
       palier,
     }

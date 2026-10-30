@@ -7,9 +7,7 @@ import {
   type SimulatorUnit,
   simulateBattle,
 } from '../src/main/domain/combat/battle-simulator.domain'
-import {
-  computeFinalStats,
-} from '../src/main/domain/combat/combat-stats.domain'
+import { computeFinalStats } from '../src/main/domain/combat/combat-stats.domain'
 import {
   ELEMENTS,
   type Element,
@@ -110,6 +108,9 @@ const GEAR_PROFILES: Record<string, GearProfile> = {
 const GEAR: GearProfile =
   GEAR_PROFILES[process.env.SIM_GEAR ?? 'none'] ?? GEAR_PROFILES.none
 
+// Mêmes archétypes que le joueur de référence de balance-calibration.ts.
+const REFERENCE_ARCHETYPES = ['MAGE', 'FIGHTER', 'SUPPORT'] as const
+
 function playerTeam(opts: {
   level: number
   palier: number
@@ -144,6 +145,7 @@ function playerTeam(opts: {
       lifesteal: stats.lifesteal,
       attackPattern: 'BASIC' as AttackPattern,
       passiveKey: opts.passiveKey ?? null,
+      archetype: REFERENCE_ARCHETYPES[idx % 3],
       palier: opts.palier,
     }
   })
