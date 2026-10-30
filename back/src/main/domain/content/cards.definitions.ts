@@ -48,7 +48,7 @@ export const CARDS = [
     baseAtk: 15,
     baseDef: 38,
     baseSpd: 81,
-    element: 'DARK',
+    element: 'WATER',
     passiveKey: null,
   }, // Tank
   {
@@ -74,7 +74,7 @@ export const CARDS = [
     baseAtk: 44,
     baseDef: 5,
     baseSpd: 94,
-    element: 'LIGHT',
+    element: 'NATURE',
     passiveKey: null,
   }, // Mage
   {
@@ -113,7 +113,7 @@ export const CARDS = [
     baseAtk: 17,
     baseDef: 38,
     baseSpd: 75,
-    element: 'LIGHT',
+    element: 'FIRE',
     passiveKey: null,
   }, // Tank
   {
@@ -139,7 +139,7 @@ export const CARDS = [
     baseAtk: 15,
     baseDef: 34,
     baseSpd: 82,
-    element: 'DARK',
+    element: 'EARTH',
     passiveKey: null,
   }, // Tank
   {
@@ -152,7 +152,7 @@ export const CARDS = [
     baseAtk: 38,
     baseDef: 8,
     baseSpd: 97,
-    element: 'LIGHT',
+    element: 'WATER',
     passiveKey: null,
   }, // Tireur
   {
@@ -204,7 +204,7 @@ export const CARDS = [
     baseAtk: 25,
     baseDef: 14,
     baseSpd: 92,
-    element: 'DARK',
+    element: 'FIRE',
     passiveKey: null,
   }, // Équilibré
   {
@@ -217,7 +217,7 @@ export const CARDS = [
     baseAtk: 20,
     baseDef: 14,
     baseSpd: 95,
-    element: 'LIGHT',
+    element: 'EARTH',
     passiveKey: null,
   }, // Équilibré
   {
@@ -243,7 +243,7 @@ export const CARDS = [
     baseAtk: 15,
     baseDef: 34,
     baseSpd: 76,
-    element: 'LIGHT',
+    element: 'WATER',
     passiveKey: null,
   }, // Tank
   {
@@ -256,7 +256,7 @@ export const CARDS = [
     baseAtk: 24,
     baseDef: 14,
     baseSpd: 91,
-    element: 'DARK',
+    element: 'FIRE',
     passiveKey: null,
   }, // Équilibré
   {
@@ -414,7 +414,7 @@ export const CARDS = [
     baseAtk: 30,
     baseDef: 59,
     baseSpd: 80,
-    element: 'DARK',
+    element: 'LIGHT',
     passiveKey: null,
   }, // Tank
   {
@@ -427,7 +427,7 @@ export const CARDS = [
     baseAtk: 77,
     baseDef: 9,
     baseSpd: 96,
-    element: 'DARK',
+    element: 'LIGHT',
     passiveKey: null,
   }, // Mage
   {
@@ -507,7 +507,7 @@ export const CARDS = [
     baseAtk: 115,
     baseDef: 60,
     baseSpd: 106,
-    element: 'LIGHT',
+    element: 'EARTH',
     passiveKey: 'STUN',
   }, // Combattant
   {
