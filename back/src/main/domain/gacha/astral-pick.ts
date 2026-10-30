@@ -57,7 +57,9 @@ export function pickAstralCard(
     ...RARITIES.slice(drawnIdx + 1),
   ]
   for (const rarity of order) {
-    const candidates = astralPool.filter((c) => c.rarity === rarity)
+    const candidates = astralPool.filter(
+      (c) => c.rarity === rarity && c.dropWeight > 0,
+    )
     const card =
       candidates[
         weightedIndex(

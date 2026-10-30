@@ -94,4 +94,17 @@ describe('pickAstralCard', () => {
   it('lève si le pool astral est vide', () => {
     expect(() => pickAstralCard(normal, [], { ...base })).toThrow()
   })
+
+  // Revue finale #4 : dropWeight 0 sur toutes les cartes de la rareté tirée
+  // ne doit jamais être rendu — on descend à la rareté suivante.
+  it('ignore une rareté dont toutes les cartes astrales ont dropWeight 0', () => {
+    const n = [makeCard('nC', 'COMMON', 50), makeCard('nE', 'EPIC', 50)]
+    const a = [
+      makeCard('L0', 'COMMON', 0, 'LIGHT'),
+      makeCard('D0', 'COMMON', 0, 'DARK'),
+      makeCard('R', 'RARE', 10, 'DARK'),
+    ]
+    const card = pickAstralCard(n, a, { ...base, rng: constRng(0.001) })
+    expect(card.id).toBe('R')
+  })
 })
