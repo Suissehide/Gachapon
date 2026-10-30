@@ -201,7 +201,7 @@
         "i1": "You fight with a team of <strong>up to three cards</strong>. Bosses take on your three cards alone.",
         "i2": "The <strong>preparation</strong> screen shows the enemies, the rewards, the energy cost and a verdict: <pill>Advantage</pill> <pill>Balanced</pill> <pill>Risky</pill>.",
         "i3": "Battles play out automatically: speed (SPD) fills each card's action gauge. If time runs out, it's a <strong>draw</strong>, and the energy is spent anyway.",
-        "i4": "Each card has eight stats: HP, ATK, DEF, SPD, crit rate, crit damage, armor penetration and lifesteal. On top of that come its passive, its element and its equipment.",
+        "i4": "Each card has eight stats: HP, ATK, DEF, SPD, crit rate, crit damage, armor penetration and lifesteal. On top of that come its archetype and its ultimate, its passive for epics and legendaries, its element and its equipment.",
         "i5": "You have a separate team for the campaign, each of the four towers and the raid. Any mode you haven't set up uses your campaign team."
       },
       "firstClear": "Your <strong>first clear</strong> of a stage gives guaranteed rewards (gold, dust, XP, sometimes a piece of equipment or a card). Replaying a stage you've already won gives repeatable rewards, with a chance of drops.",
@@ -254,7 +254,7 @@
         },
         "i2": {
           "title": "Tier & ascension",
-          "text": "There are 7 tiers of 10 levels. At the top of a tier, <strong>ascension</strong> uses one duplicate of the card and raises its level cap. Its <strong>passive</strong> gets stronger up to tier 6; after that, only stats keep growing."
+          "text": "There are 7 tiers of 10 levels. At the top of a tier, <strong>ascension</strong> uses one duplicate of the card and raises its level cap. Its <strong>ultimate</strong> and its <strong>passive</strong> get stronger up to tier 6; after that, only stats keep growing."
         }
       },
       "tip": "After a loss: rethink your team's lineup and elements, or level up your cards before going back."

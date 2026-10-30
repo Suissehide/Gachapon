@@ -201,7 +201,7 @@
         "i1": "Tu combats avec une équipe de <strong>trois cartes maximum</strong>. Les boss affrontent seuls tes trois cartes.",
         "i2": "L'écran de <strong>préparation</strong> montre les adversaires, les récompenses, le coût en énergie et un verdict : <pill>Avantage</pill> <pill>Équilibré</pill> <pill>Risqué</pill>.",
         "i3": "Le combat se déroule automatiquement : la vitesse (VIT) remplit la jauge d'action de chaque carte. Si le temps imparti s'écoule, c'est un <strong>match nul</strong>, et l'énergie est quand même dépensée.",
-        "i4": "Chaque carte a huit stats : PV, ATQ, DEF, VIT, chance et dégâts critiques, pénétration d'armure et vol de vie. S'y ajoutent son passif, son élément et son équipement.",
+        "i4": "Chaque carte a huit stats : PV, ATQ, DEF, VIT, chance et dégâts critiques, pénétration d'armure et vol de vie. S'y ajoutent son archétype et son ultime, son passif pour les épiques et légendaires, son élément et son équipement.",
         "i5": "Tu as une équipe séparée pour la campagne, chacune des quatre tours et le raid. Un mode que tu n'as pas configuré reprend ton équipe de campagne."
       },
       "firstClear": "Le <strong>premier passage</strong> d'une étape donne des récompenses garanties (or, poussière, XP, parfois une pièce d'équipement ou une carte). Rejouer une étape déjà gagnée rapporte des récompenses répétables, avec des chances de drop.",
@@ -254,7 +254,7 @@
         },
         "i2": {
           "title": "Palier & ascension",
-          "text": "Il y a 7 paliers de 10 niveaux. Au sommet d'un palier, <strong>l'ascension</strong> consomme un doublon de la carte et relève son plafond de niveau. Son <strong>passif</strong> se renforce jusqu'au palier 6 ; ensuite, seules les stats progressent."
+          "text": "Il y a 7 paliers de 10 niveaux. Au sommet d'un palier, <strong>l'ascension</strong> consomme un doublon de la carte et relève son plafond de niveau. Son <strong>ultime</strong> et son <strong>passif</strong> se renforcent jusqu'au palier 6 ; ensuite, seules les stats progressent."
         }
       },
       "tip": "Après une défaite : revois la composition et les éléments de ton équipe, ou monte tes cartes avant d'y retourner."
