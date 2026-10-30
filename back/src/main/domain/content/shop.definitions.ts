@@ -122,8 +122,8 @@ export const SHOP_ITEMS = [
     nameFr: '10 capsules astrales',
     nameEn: '10 astral capsules',
     descriptionFr:
-      'Une carte Lumière ou Ténèbres. Rareté tirée comme un tirage normal.',
-    descriptionEn: 'One Light or Dark card. Rarity rolled like a normal pull.',
+      'Dix cartes Lumière ou Ténèbres. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'Ten Light or Dark cards. Rarity rolled like a normal pull.',
     type: 'CAPSULE' as const,
     cost: 4000,
     currency: 'DUST' as const,

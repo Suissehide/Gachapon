@@ -19,9 +19,12 @@ DELETE FROM "CustomerOrder"
 WHERE "status" = 'OPEN'
   AND (
     "clientCardId" IN (SELECT "id" FROM "Card" WHERE "element" IN ('LIGHT', 'DARK'))
-    OR EXISTS (
-      SELECT 1 FROM jsonb_array_elements("lines") AS line
-      WHERE line->>'element' IN ('LIGHT', 'DARK')
+    OR (
+      jsonb_typeof("lines") = 'array'
+      AND EXISTS (
+        SELECT 1 FROM jsonb_array_elements("lines") AS line
+        WHERE line->>'element' IN ('LIGHT', 'DARK')
+      )
     )
   );
 
@@ -45,8 +48,8 @@ SELECT
   gen_random_uuid()::text,
   '10 capsules astrales',
   '10 astral capsules',
-  'Une carte Lumière ou Ténèbres. Rareté tirée comme un tirage normal.',
-  'One Light or Dark card. Rarity rolled like a normal pull.',
+  'Dix cartes Lumière ou Ténèbres. Rareté tirée comme un tirage normal.',
+  'Ten Light or Dark cards. Rarity rolled like a normal pull.',
   'CAPSULE',
   4000,
   'DUST',
