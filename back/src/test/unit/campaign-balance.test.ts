@@ -55,6 +55,31 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', 
       baseSpd: 89,
     })
   })
+
+  it("la vitesse NE suit PLUS l'échelle d'étage : elle reste la base de rareté", () => {
+    // Renversement assumé de l'ancienne règle « la vitesse scale avec le
+    // niveau (ATB parity) ». Sous ATB, seul le RAPPORT de vitesse entre les
+    // deux camps compte : la faire croître des deux côtés ne changeait rien au
+    // combat, rendait l'équilibrage mouvant, et gonflait la jauge de puissance
+    // — un boss d'étage 80 y paraissait 23 fois plus fort qu'il ne l'est.
+    // Elle est désormais figée des deux côtés, et seul l'équipement la bouge.
+    expect(enemyPower(1, 9).baseSpd).toBe(enemyPower(1, 1).baseSpd)
+    expect(enemyPower(CHAPTER_COUNT, 9).baseSpd).toBe(RARITY_BASE.EPIC.spd)
+  })
+
+  it('les PV sont STRICTEMENT croissants sur toute la campagne', () => {
+    let prevHp = -1
+    for (let n = 1; n <= TOTAL_STAGES; n++) {
+      const hp = enemyPower(...coord(n)).baseHp
+      expect(hp).toBeGreaterThan(prevHp)
+      prevHp = hp
+    }
+  })
+
+  it('est CONTINU au changement de chapitre (2-1 > 1-10, 3-1 > 2-10)', () => {
+    expect(enemyPower(2, 1).baseHp).toBeGreaterThan(enemyPower(1, 10).baseHp)
+    expect(enemyPower(3, 1).baseHp).toBeGreaterThan(enemyPower(2, 10).baseHp)
+  })
 })
 
 describe('enemyScale — courbe à ancres, sans marche', () => {

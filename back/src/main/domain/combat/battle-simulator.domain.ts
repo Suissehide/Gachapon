@@ -1305,6 +1305,35 @@ function performUnitAction(
     ? ultimate.compute(attacker.palier).valuePct / 100
     : patternDamageMultiplier(pattern)
   const strikes = pattern === 'MONO_DOUBLE' ? 2 : 1
+  performStrikes(
+    {
+      attacker,
+      units,
+      prng,
+      log,
+      rules,
+      ultimate: ultimate?.archetype ?? null,
+    },
+    pattern,
+    patternMultiplier,
+    strikes,
+  )
+}
+
+/**
+ * Les coups d'une action : un seul, ou deux pour `MONO_DOUBLE`. L'ultime à
+ * deux coups (Assassin) frappe DEUX FOIS LA MÊME CIBLE : le second coup
+ * garde la cible du premier tant qu'elle est vivante, sans nouveau tirage.
+ * Le « double coup » des ennemis, lui, re-tire à chaque coup.
+ */
+function performStrikes(
+  ctx: Omit<StrikeContext, 'targets' | 'patternMultiplier'>,
+  pattern: AttackPattern,
+  patternMultiplier: number,
+  strikes: number,
+): void {
+  const { attacker, units, prng, log } = ctx
+  let locked: BattleUnit | null = null
   for (let s = 0; s < strikes; s++) {
     if (!attacker.alive) {
       return
@@ -1313,20 +1342,16 @@ function performUnitAction(
     if (enemies.length === 0) {
       return
     }
-    const targets = selectTargets(attacker, enemies, units, prng, log, pattern)
+    const targets: BattleUnit[] = locked?.alive
+      ? [locked]
+      : selectTargets(attacker, enemies, units, prng, log, pattern)
     if (targets.length === 0) {
       return
     }
-    performStrike({
-      attacker,
-      units,
-      targets,
-      prng,
-      log,
-      patternMultiplier,
-      rules,
-      ultimate: ultimate?.archetype ?? null,
-    })
+    if (ctx.ultimate && strikes > 1) {
+      locked = targets[0] ?? null
+    }
+    performStrike({ ...ctx, targets, patternMultiplier })
   }
 }
 

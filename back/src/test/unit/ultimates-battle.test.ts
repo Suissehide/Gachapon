@@ -91,6 +91,25 @@ describe('ultime en combat', () => {
     expect(attacks[4]?.ultimate).toBeUndefined()
   })
 
+  it('ASSASSIN face à trois ennemis : les deux coups de l ultime visent la même cible', () => {
+    // Trois ennemis à PV énormes et vitesse nulle : seul A0 agit, et sur 20
+    // graines le tirage de cible aurait toutes les chances de diverger si le
+    // second coup re-tirait une cible.
+    for (let k = 0; k < 20; k++) {
+      const { log } = simulateBattle({
+        teamA: [unit('A0', { archetype: 'ASSASSIN' })],
+        teamB: [unit('B0', { spd: 1 }), unit('B1', { spd: 1 }), unit('B2', { spd: 1 })],
+        seed: `assassin-${k}`,
+        timeoutTurns: 12,
+      })
+      const ults = attacksOf(log, 'A0').filter((e) => e.ultimate === 'ASSASSIN')
+      expect(ults.length).toBeGreaterThanOrEqual(2)
+      for (let i = 0; i + 1 < ults.length; i += 2) {
+        expect(ults[i + 1]?.targetIds).toEqual(ults[i]?.targetIds)
+      }
+    }
+  })
+
   it('RANGER face à un seul ennemi : une cible, toujours marqué ultime', () => {
     const { log } = run([unit('A0', { archetype: 'RANGER' })], [unit('B0')])
     const third = attacksOf(log, 'A0')[2]
