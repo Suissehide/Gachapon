@@ -12,6 +12,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 
 import { useCanvasContextRecovery } from '../../hooks/useCanvasContextRecovery.ts'
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion.ts'
+import type { CapsuleKind } from './capsule/capsuleConfig'
 import type { GashaponMachineHandle } from './type/GashaponMachine'
 import { GashaponMachine } from './type/GashaponMachine'
 
@@ -50,7 +51,10 @@ function CameraRig({
   return null
 }
 
-export const MachineStage = forwardRef<MachineStageHandle, object>((_, ref) => {
+export const MachineStage = forwardRef<
+  MachineStageHandle,
+  { capsuleKind?: CapsuleKind }
+>(({ capsuleKind = 'classic' }, ref) => {
   const machineRef = useRef<GashaponMachineHandle>(null)
   const controlsRef = useRef<OrbitControlsImpl>(null)
   const { canvasKey, canvasRef } = useCanvasContextRecovery()
@@ -121,7 +125,7 @@ export const MachineStage = forwardRef<MachineStageHandle, object>((_, ref) => {
       <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
       <pointLight position={[-3, 3, 3]} intensity={0.6} color="#f59e0b" />
       <pointLight position={[2.5, -1, 3]} intensity={0.35} color="#8ea2ff" />
-      <GashaponMachine ref={machineRef} />
+      <GashaponMachine ref={machineRef} capsuleKind={capsuleKind} />
       <CameraRig cam={cam} active={rigActive} />
       <OrbitControls
         ref={controlsRef}

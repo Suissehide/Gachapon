@@ -2,6 +2,57 @@ import type { CardRarity } from '../../../constants/card.constant'
 import type { PullBatchResult } from '../../../queries/useGacha'
 import { resolveEffectKey } from '../reveal/rarityConfig'
 
+// Enveloppe des capsules affichées : gacha classique ou capsule astrale
+// (nébuleuse jour / nuit). Ne change que l'habillage, jamais la chorégraphie.
+export type CapsuleKind = 'classic' | 'astral'
+
+// Rayon des mini-capsules des machines (globe du gashapon, bac de la pince).
+export const MINI_CAPSULE_RADIUS = 0.11
+
+export type AstralPalette = {
+  daySky: string
+  dayHaze: string
+  dayCloud: string
+  dayEmber: string
+  nightDeep: string
+  nightViolet: string
+  nightPink: string
+  nightBlue: string
+  gold: string
+  goldDeep: string
+}
+
+let astralPaletteCache: AstralPalette | null = null
+
+// Couleurs de la capsule astrale, lues une fois dans les jetons `--astral-*`
+// de `_colors.css` (thème unique, pas de variante sombre) : three.js veut des
+// couleurs concrètes, la source reste la feuille de style.
+export function astralPalette(): AstralPalette {
+  if (astralPaletteCache) {
+    return astralPaletteCache
+  }
+  const css = getComputedStyle(document.documentElement)
+  const read = (name: string) => css.getPropertyValue(name).trim()
+  astralPaletteCache = {
+    daySky: read('--astral-day-sky'),
+    dayHaze: read('--astral-day-haze'),
+    dayCloud: read('--astral-day-cloud'),
+    dayEmber: read('--astral-day-ember'),
+    nightDeep: read('--astral-night-deep'),
+    nightViolet: read('--astral-night-violet'),
+    nightPink: read('--astral-night-pink'),
+    nightBlue: read('--astral-night-blue'),
+    gold: read('--astral-gold'),
+    goldDeep: read('--astral-gold-deep'),
+  }
+  return astralPaletteCache
+}
+
+// Lumière interne d'une machine : violette quand elle distribue de l'astral.
+export function machineLightColor(kind: CapsuleKind, classic: string): string {
+  return kind === 'astral' ? astralPalette().nightViolet : classic
+}
+
 // Palier de tease de la capsule : la capsule « annonce » la MEILLEURE rareté
 // du lot avant de s'ouvrir, sans jamais spoiler la carte précise.
 //   0 COMMON · 1 UNCOMMON · 2 RARE · 3 EPIC · 4 BRILLIANT · 5 LEGENDARY

@@ -13,6 +13,7 @@ import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion.
 import { CapsuleScene } from './CapsuleScene'
 import {
   type CapsuleAnim,
+  type CapsuleKind,
   type CapsuleTuning,
   createCapsuleAnim,
   type TeaseTier,
@@ -86,9 +87,14 @@ function PostFX({
 type Props = {
   teaseTier: TeaseTier | null
   onBurst: () => void
+  capsuleKind?: CapsuleKind
 }
 
-export function CapsuleStage({ teaseTier, onBurst }: Props) {
+export function CapsuleStage({
+  teaseTier,
+  onBurst,
+  capsuleKind = 'classic',
+}: Props) {
   const { canvasKey, canvasRef } = useCanvasContextRecovery()
   const reduced = usePrefersReducedMotion()
   const anim = useMemo(createCapsuleAnim, [])
@@ -126,6 +132,7 @@ export function CapsuleStage({ teaseTier, onBurst }: Props) {
           onBurst={onBurst}
           reduced={reduced}
           tuning={tuning}
+          capsuleKind={capsuleKind}
         />
         <PostFX
           anim={anim}

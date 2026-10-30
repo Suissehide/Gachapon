@@ -18,7 +18,13 @@ import {
 import * as THREE from 'three'
 
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion.ts'
+import { AstralCapsuleVisual } from '../capsule/AstralCapsuleVisual'
 import { capsuleAudio } from '../capsule/capsuleAudio'
+import {
+  type CapsuleKind,
+  MINI_CAPSULE_RADIUS,
+  machineLightColor,
+} from '../capsule/capsuleConfig'
 
 export type GashaponMachineHandle = {
   startAnimation: () => Promise<void>
@@ -35,7 +41,7 @@ const BALL_COLORS = [
   '#00b4d8',
 ]
 
-const CAPSULE_RADIUS = 0.11
+const CAPSULE_RADIUS = MINI_CAPSULE_RADIUS
 
 // Globe center Y in world space
 const GLOBE_Y = 0.55
@@ -134,10 +140,12 @@ function MiniCapsuleVisual({
 // Physics-driven capsule with ref for jiggle impulses
 function PhysicsCapsule({
   color,
+  kind,
   startPos,
   rigidBodyRef,
 }: {
   color: string
+  kind: CapsuleKind
   startPos: [number, number, number]
   rigidBodyRef: (el: RapierRigidBody | null) => void
 }) {
@@ -164,7 +172,11 @@ function PhysicsCapsule({
       lockRotations={true}
     >
       <BallCollider args={[CAPSULE_RADIUS]} />
-      <MiniCapsuleVisual color={color} />
+      {kind === 'astral' ? (
+        <AstralCapsuleVisual />
+      ) : (
+        <MiniCapsuleVisual color={color} />
+      )}
     </RigidBody>
   )
 }
@@ -182,9 +194,11 @@ function GlobeFloorCollider() {
 function DispensedPhysicsCapsule({
   visible,
   color,
+  kind,
 }: {
   visible: boolean
   color: string
+  kind: CapsuleKind
 }) {
   if (!visible) {
     return null
@@ -202,7 +216,11 @@ function DispensedPhysicsCapsule({
       angularDamping={0.5}
     >
       <BallCollider args={[CAPSULE_RADIUS]} />
-      <MiniCapsuleVisual color={color} glow />
+      {kind === 'astral' ? (
+        <AstralCapsuleVisual glow />
+      ) : (
+        <MiniCapsuleVisual color={color} glow />
+      )}
     </RigidBody>
   )
 }
@@ -324,11 +342,13 @@ function PhysicsWorld({
   showDispensed,
   dispensedColor,
   anim,
+  kind,
 }: {
   capsules: { id: string; pos: [number, number, number]; color: string }[]
   showDispensed: boolean
   dispensedColor: string
   anim: MachineAnim
+  kind: CapsuleKind
 }) {
   const bodiesRef = useRef<(RapierRigidBody | null)[]>([])
 
@@ -340,13 +360,18 @@ function PhysicsWorld({
         <PhysicsCapsule
           key={c.id}
           color={c.color}
+          kind={kind}
           startPos={c.pos}
           rigidBodyRef={(el) => {
             bodiesRef.current[i] = el
           }}
         />
       ))}
-      <DispensedPhysicsCapsule visible={showDispensed} color={dispensedColor} />
+      <DispensedPhysicsCapsule
+        visible={showDispensed}
+        color={dispensedColor}
+        kind={kind}
+      />
       <CapsuleStirrer bodies={bodiesRef} anim={anim} />
     </Physics>
   )
@@ -435,7 +460,10 @@ function Dial({ anim }: { anim: MachineAnim }) {
   )
 }
 
-export const GashaponMachine = forwardRef<GashaponMachineHandle>((_, ref) => {
+export const GashaponMachine = forwardRef<
+  GashaponMachineHandle,
+  { capsuleKind?: CapsuleKind }
+>(({ capsuleKind = 'classic' }, ref) => {
   const [showDispensed, setShowDispensed] = useState(false)
   const [dispensedColor, setDispensedColor] = useState(BALL_COLORS[3])
   const anim = useMemo(createMachineAnim, [])
@@ -685,13 +713,14 @@ export const GashaponMachine = forwardRef<GashaponMachineHandle>((_, ref) => {
         showDispensed={showDispensed}
         dispensedColor={dispensedColor}
         anim={anim}
+        kind={capsuleKind}
       />
 
       {/* ── INTERNAL LIGHT — pulse pendant le brassage ── */}
       <pointLight
         ref={lightRef}
         position={[0, 0.5, 0]}
-        color="#f59e0b"
+        color={machineLightColor(capsuleKind, '#f59e0b')}
         intensity={0.6}
         distance={2}
       />

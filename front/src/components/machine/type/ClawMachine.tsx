@@ -16,6 +16,13 @@ import {
 } from 'react'
 import * as THREE from 'three'
 
+import { AstralCapsuleVisual } from '../capsule/AstralCapsuleVisual'
+import {
+  type CapsuleKind,
+  MINI_CAPSULE_RADIUS,
+  machineLightColor,
+} from '../capsule/capsuleConfig'
+
 export type ClawMachineHandle = {
   startAnimation: () => Promise<void>
 }
@@ -31,7 +38,7 @@ const BALL_COLORS = [
   '#00b4d8',
 ]
 
-const CAPSULE_RADIUS = 0.11
+const CAPSULE_RADIUS = MINI_CAPSULE_RADIUS
 
 // Dimensions de la zone de jeu
 const BOX_W = 1.2
@@ -49,7 +56,16 @@ const CLAW_BOTTOM_Y = BOX_Y - BOX_H / 2 + 0.25
 const CLAW_SPEED = 0.8
 
 // Mini gacha capsule visual — same as GashaponMachine
-function MiniCapsuleVisual({ color }: { color: string }) {
+function MiniCapsuleVisual({
+  color,
+  kind,
+}: {
+  color: string
+  kind: CapsuleKind
+}) {
+  if (kind === 'astral') {
+    return <AstralCapsuleVisual />
+  }
   const r = CAPSULE_RADIUS
   return (
     <group>
@@ -94,10 +110,12 @@ function MiniCapsuleVisual({ color }: { color: string }) {
 // Physics capsule
 function PhysicsCapsule({
   color,
+  kind,
   startPos,
   rigidBodyRef,
 }: {
   color: string
+  kind: CapsuleKind
   startPos: [number, number, number]
   rigidBodyRef: (el: RapierRigidBody | null) => void
 }) {
@@ -123,7 +141,7 @@ function PhysicsCapsule({
       lockRotations
     >
       <BallCollider args={[CAPSULE_RADIUS]} />
-      <MiniCapsuleVisual color={color} />
+      <MiniCapsuleVisual color={color} kind={kind} />
     </RigidBody>
   )
 }
@@ -136,7 +154,13 @@ function BoxFloorCollider() {
   )
 }
 
-function DispensedPhysicsCapsule({ visible }: { visible: boolean }) {
+function DispensedPhysicsCapsule({
+  visible,
+  kind,
+}: {
+  visible: boolean
+  kind: CapsuleKind
+}) {
   if (!visible) {
     return null
   }
@@ -151,7 +175,7 @@ function DispensedPhysicsCapsule({ visible }: { visible: boolean }) {
       angularDamping={0.5}
     >
       <BallCollider args={[CAPSULE_RADIUS]} />
-      <MiniCapsuleVisual color="#f4a261" />
+      <MiniCapsuleVisual color="#f4a261" kind={kind} />
     </RigidBody>
   )
 }
@@ -259,9 +283,11 @@ function CameraJiggle({
 function PhysicsWorld({
   capsules,
   showDispensed,
+  kind,
 }: {
-  capsules: { pos: [number, number, number]; color: string }[]
+  capsules: { id: string; pos: [number, number, number]; color: string }[]
   showDispensed: boolean
+  kind: CapsuleKind
 }) {
   const bodiesRef = useRef<(RapierRigidBody | null)[]>([])
   return (
@@ -270,15 +296,16 @@ function PhysicsWorld({
       <DispensingRampCollider />
       {capsules.map((c, i) => (
         <PhysicsCapsule
-          key={i}
+          key={c.id}
           color={c.color}
+          kind={kind}
           startPos={c.pos}
           rigidBodyRef={(el) => {
             bodiesRef.current[i] = el
           }}
         />
       ))}
-      <DispensedPhysicsCapsule visible={showDispensed} />
+      <DispensedPhysicsCapsule visible={showDispensed} kind={kind} />
       <CameraJiggle bodies={bodiesRef} />
     </Physics>
   )
@@ -291,12 +318,14 @@ function ClawArm({
   posY,
   posZ,
   showBall,
+  kind,
 }: {
   open: boolean
   posX: number
   posY: number
   posZ: number
   showBall: boolean
+  kind: CapsuleKind
 }) {
   const armAngle = open ? 0.55 : 0.05
   const cableLen = BOX_Y + BOX_H / 2 - posY + 0.05
@@ -388,7 +417,7 @@ function ClawArm({
       {/* Grabbed ball — visible when claw is holding a capsule */}
       {showBall && (
         <group position={[0, -0.28, 0]}>
-          <MiniCapsuleVisual color="#f4a261" />
+          <MiniCapsuleVisual color="#f4a261" kind={kind} />
         </group>
       )}
     </group>
@@ -449,7 +478,10 @@ type ClawPhase =
   | 'ascending'
   | 'dispensing'
 
-export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
+export const ClawMachine = forwardRef<
+  ClawMachineHandle,
+  { capsuleKind?: CapsuleKind }
+>(({ capsuleKind = 'classic' }, ref) => {
   const [showDispensed, setShowDispensed] = useState(false)
   const [showGrabbedBall, setShowGrabbedBall] = useState(false)
   const [clawOpen, setClawOpen] = useState(true)
@@ -597,11 +629,16 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
   }
 
   const capsules = useMemo(() => {
-    const items: { pos: [number, number, number]; color: string }[] = []
+    const items: {
+      id: string
+      pos: [number, number, number]
+      color: string
+    }[] = []
     for (let i = 0; i < 20; i++) {
       const x = (Math.random() - 0.5) * (BOX_W - 0.3)
       const z = (Math.random() - 0.5) * (BOX_D - 0.3)
       items.push({
+        id: `capsule-${i}`,
         pos: [x, BOX_Y + 0.1 + i * 0.06, z],
         color: BALL_COLORS[i % BALL_COLORS.length],
       })
@@ -752,6 +789,7 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
         posY={clawPos.y}
         posZ={clawPos.z}
         showBall={showGrabbedBall}
+        kind={capsuleKind}
       />
 
       {/* ── Positioning indicator ── */}
@@ -771,12 +809,16 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
       )}
 
       {/* ── PHYSICS ── */}
-      <PhysicsWorld capsules={capsules} showDispensed={showDispensed} />
+      <PhysicsWorld
+        capsules={capsules}
+        showDispensed={showDispensed}
+        kind={capsuleKind}
+      />
 
       {/* ── LIGHTS ── */}
       <pointLight
         position={[0, BOX_Y + 0.3, 0]}
-        color="#4ecdc4"
+        color={machineLightColor(capsuleKind, '#4ecdc4')}
         intensity={0.8}
         distance={2}
       />

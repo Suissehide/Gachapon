@@ -103,6 +103,21 @@
      dans la boutique. */
   --astral: #6366f1;
 
+  /* Capsule astrale en 3D (maquette capsule-astrale-v3) : lus à l'exécution
+     par `astralPalette()` (capsuleConfig.ts) pour les matériaux three.js —
+     pas d'utilitaire Tailwind, seul le canvas les consomme. Dessus : nébuleuse
+     de jour ; dessous : nébuleuse de nuit ; or de la bande et de l'anneau. */
+  --astral-day-sky: #7dd3fc;
+  --astral-day-haze: #fde68a;
+  --astral-day-cloud: #fff7e6;
+  --astral-day-ember: #fb923c;
+  --astral-night-deep: #1e1036;
+  --astral-night-violet: #7c3aed;
+  --astral-night-pink: #ec4899;
+  --astral-night-blue: #38bdf8;
+  --astral-gold: #fde047;
+  --astral-gold-deep: #f59e0b;
+
   /* Palette des duels et paris — handoff `docs/design_handoff_duels`
      (`equipe-duels.css`). Le duel emprunte l'ambre déjà tokenisé ; le pari,
      lui, n'avait aucune teinte : c'est le seul bloc de la fiche d'équipe qui
