@@ -1,4 +1,5 @@
 import type { IocContainer } from '../../../types/application/ioc'
+import type { CardArchetype } from '../../../types/domain/combat/archetype.types'
 import type {
   CardElement,
   CardRarity,
@@ -98,6 +99,7 @@ export class CardRepository implements ICardRepository {
     baseSpd?: number
     passiveKey?: string | null
     element?: CardElement | null
+    archetype: CardArchetype
   }): Promise<CardWithSet> {
     return this.#prisma.card.create({
       data,
@@ -120,6 +122,7 @@ export class CardRepository implements ICardRepository {
       baseSpd: number
       passiveKey: string | null
       element: CardElement | null
+      archetype: CardArchetype
     }>,
   ): Promise<CardWithSet> {
     return this.#prisma.card.update({

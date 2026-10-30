@@ -32,6 +32,7 @@ export async function seedCards(
         baseSpd: card.baseSpd,
         passiveKey: card.passiveKey ?? null,
         element: card.element ?? null,
+        archetype: card.archetype,
       },
     })
   }

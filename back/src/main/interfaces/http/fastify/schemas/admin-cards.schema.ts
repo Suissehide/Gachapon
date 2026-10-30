@@ -1,5 +1,7 @@
 import { z } from 'zod/v4'
 
+import { CARD_ARCHETYPES } from '../../../../types/domain/combat/archetype.types'
+
 export const cardRarityEnum = z.enum([
   'COMMON',
   'UNCOMMON',
@@ -16,6 +18,8 @@ export const cardElementEnum = z.enum([
   'LIGHT',
   'DARK',
 ])
+
+export const cardArchetypeEnum = z.enum(CARD_ARCHETYPES)
 
 export const adminCardsQuerySchema = z.object({
   setId: z.string().uuid().optional(),
@@ -36,6 +40,7 @@ export const adminCardFieldsSchema = z.object({
   baseSpd: z.coerce.number().int().nonnegative().optional(),
   passiveKey: z.string().min(1).nullable().optional(),
   element: cardElementEnum.nullish(),
+  archetype: cardArchetypeEnum,
 })
 
 export const adminCardUpdateBodySchema = z.object({
@@ -51,4 +56,5 @@ export const adminCardUpdateBodySchema = z.object({
   baseSpd: z.number().int().nonnegative().optional(),
   passiveKey: z.string().min(1).nullable().optional(),
   element: cardElementEnum.nullish(),
+  archetype: cardArchetypeEnum.optional(),
 })

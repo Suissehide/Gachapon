@@ -61,6 +61,19 @@ enum CardElement {
   DARK
 }
 
+/// Archétype du classeur de production : détermine l'ultime de la carte
+/// (domain/combat/ultimates.ts). Le défaut sert de repli aux cartes créées
+/// hors du pipeline d'import ; la route admin exige le champ.
+enum CardArchetype {
+  TANK
+  SUPPORT
+  FIGHTER
+  BALANCED
+  RANGER
+  ASSASSIN
+  MAGE
+}
+
 enum ShopItemType {
   TOKEN_PACK
   ENERGY_PACK
@@ -481,6 +494,7 @@ model Card {
   baseSpd    Int          @default(100)
   passiveKey String?
   element    CardElement?
+  archetype  CardArchetype @default(BALANCED)
 
   userCards      UserCard[]
   gachaPulls     GachaPull[]

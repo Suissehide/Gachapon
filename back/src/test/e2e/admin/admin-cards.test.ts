@@ -77,6 +77,7 @@ describe('Admin cards routes', () => {
     form.append('setId', setId)
     form.append('rarity', 'COMMON')
     form.append('dropWeight', '10')
+    form.append('archetype', 'MAGE')
     const minimalPng = Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
       'base64',
@@ -94,7 +95,36 @@ describe('Admin cards routes', () => {
     if (res.statusCode === 201) {
       expect(res.json()).toHaveProperty('id')
       expect(res.json()).toHaveProperty('imageUrl')
+      expect(res.json().archetype).toBe('MAGE')
     }
+  })
+
+  it('POST /admin/cards — 400 sans archétype', async () => {
+    const FormData = (await import('form-data')).default
+    const form = new FormData()
+    form.append('nameFr', `SansArchetype${suffix}`)
+    form.append('nameEn', `SansArchetype${suffix}`)
+    form.append('setId', setId)
+    form.append('rarity', 'COMMON')
+    form.append('dropWeight', '10')
+    form.append('imageUrl', 'http://localhost:9000/gachapon/cards/test.png')
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/cards',
+      headers: { ...form.getHeaders(), cookie: adminCookies },
+      payload: form.getBuffer(),
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('PATCH /admin/cards/:id — accepte archetype dans le schéma (404 carte inexistante)', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: `/admin/cards/00000000-0000-0000-0000-000000000000`,
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { archetype: 'TANK' },
+    })
+    expect(res.statusCode).toBe(404)
   })
 
   it('PATCH /admin/cards/:id — accepte imageUrl dans le schéma (400 ou 404 acceptable)', async () => {

@@ -1,3 +1,4 @@
+import type { CardArchetype } from '../../../domain/combat/archetype.types'
 import type {
   CardElement,
   CardRarity,
@@ -37,6 +38,7 @@ export interface ICardRepository {
     baseSpd?: number
     passiveKey?: string | null
     element?: CardElement | null
+    archetype: CardArchetype
   }): Promise<CardWithSet>
   update(
     id: string,
@@ -53,6 +55,7 @@ export interface ICardRepository {
       baseSpd: number
       passiveKey: string | null
       element: CardElement | null
+      archetype: CardArchetype
     }>,
   ): Promise<CardWithSet>
   delete(id: string): Promise<void>
