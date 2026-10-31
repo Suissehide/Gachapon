@@ -49,7 +49,7 @@ describe('Capsule astrale — achat en boutique', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const item = await postgresOrm.prisma.shopItem.findFirst({
-      where: { nameFr: '10 capsules astrales' },
+      where: { nameFr: '10 jetons astraux' },
     })
     expect(item).not.toBeNull()
     expect(item.cost).toBe(4000)
@@ -87,7 +87,7 @@ describe('Capsule astrale — achat en boutique', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const item = await postgresOrm.prisma.shopItem.findFirst({
-      where: { nameFr: 'Capsule astrale' },
+      where: { nameFr: 'Jeton astral' },
     })
     expect(item).not.toBeNull()
     expect(item.cost).toBe(400)
@@ -144,10 +144,10 @@ describe('Capsule astrale — achat en boutique', () => {
     })
   })
 
-  it('POST /shop/:id/buy — « 10 capsules Feu » (1500) crédite 10 capsules FIRE', async () => {
+  it('POST /shop/:id/buy — « 10 jetons Feu » (1500) crédite 10 capsules FIRE', async () => {
     const { postgresOrm } = (app as any).iocContainer
     const item = await postgresOrm.prisma.shopItem.findFirst({
-      where: { nameFr: '10 capsules Feu' },
+      where: { nameFr: '10 jetons Feu' },
     })
     expect(item.cost).toBe(1500)
     await postgresOrm.prisma.user.update({

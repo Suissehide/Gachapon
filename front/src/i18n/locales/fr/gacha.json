@@ -76,10 +76,10 @@
     "pullingTitle": "Tirage en cours…",
     "serverNotResponding": "Le serveur ne répond pas.",
     "pull": "Tirer",
-    "chooseCapsule": "Tirer — choisir la capsule",
+    "chooseCapsule": "Tirer — choisir le jeton",
     "capsuleNames": {
       "classic": "Classique",
-      "astral": "Astrale",
+      "astral": "Astral",
       "comet": "Comète",
       "fire": "Feu",
       "water": "Eau",
@@ -89,8 +89,8 @@
     "buyInShop": "Acheter en boutique",
     "tokenBalance_one": "{{count}} jeton",
     "tokenBalance_other": "{{count}} jetons",
-    "capsuleBalance_one": "{{count}} capsule",
-    "capsuleBalance_other": "{{count}} capsules"
+    "capsuleBalance_one": "{{count}} jeton",
+    "capsuleBalance_other": "{{count}} jetons"
   },
   "tutorial": {
     "stepCounter": "Étape {{current}} sur {{total}}",

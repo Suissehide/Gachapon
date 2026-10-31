@@ -105,11 +105,11 @@ export const SHOP_ITEMS = [
     currency: 'DUST' as const,
     value: { multiplier: 2, rarity: 'EPIC', pulls: 10 },
   },
-  // Capsules astrales — seule voie d'accès aux cartes LUMIÈRE/TÉNÈBRES,
+  // Jetons astraux — seule voie d'accès aux cartes LUMIÈRE/TÉNÈBRES,
   // exclues du tirage normal (card-pools.ts#ASTRAL_ELEMENTS).
   {
-    nameFr: 'Capsule astrale',
-    nameEn: 'Astral capsule',
+    nameFr: 'Jeton astral',
+    nameEn: 'Astral token',
     descriptionFr:
       'Une carte Lumière ou Ténèbres. Rareté tirée comme un tirage normal.',
     descriptionEn: 'One Light or Dark card. Rarity rolled like a normal pull.',
@@ -119,8 +119,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'ASTRAL', quantity: 1 },
   },
   {
-    nameFr: '10 capsules astrales',
-    nameEn: '10 astral capsules',
+    nameFr: '10 jetons astraux',
+    nameEn: '10 astral tokens',
     descriptionFr:
       'Dix cartes Lumière ou Ténèbres. Rareté tirée comme un tirage normal.',
     descriptionEn: 'Ten Light or Dark cards. Rarity rolled like a normal pull.',
@@ -129,11 +129,11 @@ export const SHOP_ITEMS = [
     currency: 'DUST' as const,
     value: { capsuleType: 'ASTRAL', quantity: 10 },
   },
-  // Capsules élémentaires — une carte de l'élément acheté, au même tirage de
+  // Jetons élémentaires — une carte de l'élément acheté, au même tirage de
   // rareté que le gacha normal.
   {
-    nameFr: 'Capsule Feu',
-    nameEn: 'Fire capsule',
+    nameFr: 'Jeton Feu',
+    nameEn: 'Fire token',
     descriptionFr: 'Une carte Feu. Rareté tirée comme un tirage normal.',
     descriptionEn: 'One Fire card. Rarity rolled like a normal pull.',
     type: 'CAPSULE' as const,
@@ -142,8 +142,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'FIRE', quantity: 1 },
   },
   {
-    nameFr: '10 capsules Feu',
-    nameEn: '10 Fire capsules',
+    nameFr: '10 jetons Feu',
+    nameEn: '10 Fire tokens',
     descriptionFr: 'Dix cartes Feu. Rareté tirée comme un tirage normal.',
     descriptionEn: 'Ten Fire cards. Rarity rolled like a normal pull.',
     type: 'CAPSULE' as const,
@@ -152,8 +152,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'FIRE', quantity: 10 },
   },
   {
-    nameFr: 'Capsule Eau',
-    nameEn: 'Water capsule',
+    nameFr: 'Jeton Eau',
+    nameEn: 'Water token',
     descriptionFr: 'Une carte Eau. Rareté tirée comme un tirage normal.',
     descriptionEn: 'One Water card. Rarity rolled like a normal pull.',
     type: 'CAPSULE' as const,
@@ -162,8 +162,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'WATER', quantity: 1 },
   },
   {
-    nameFr: '10 capsules Eau',
-    nameEn: '10 Water capsules',
+    nameFr: '10 jetons Eau',
+    nameEn: '10 Water tokens',
     descriptionFr: 'Dix cartes Eau. Rareté tirée comme un tirage normal.',
     descriptionEn: 'Ten Water cards. Rarity rolled like a normal pull.',
     type: 'CAPSULE' as const,
@@ -172,8 +172,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'WATER', quantity: 10 },
   },
   {
-    nameFr: 'Capsule Nature',
-    nameEn: 'Nature capsule',
+    nameFr: 'Jeton Nature',
+    nameEn: 'Nature token',
     descriptionFr: 'Une carte Nature. Rareté tirée comme un tirage normal.',
     descriptionEn: 'One Nature card. Rarity rolled like a normal pull.',
     type: 'CAPSULE' as const,
@@ -182,8 +182,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'NATURE', quantity: 1 },
   },
   {
-    nameFr: '10 capsules Nature',
-    nameEn: '10 Nature capsules',
+    nameFr: '10 jetons Nature',
+    nameEn: '10 Nature tokens',
     descriptionFr: 'Dix cartes Nature. Rareté tirée comme un tirage normal.',
     descriptionEn: 'Ten Nature cards. Rarity rolled like a normal pull.',
     type: 'CAPSULE' as const,
@@ -192,8 +192,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'NATURE', quantity: 10 },
   },
   {
-    nameFr: 'Capsule Terre',
-    nameEn: 'Earth capsule',
+    nameFr: 'Jeton Terre',
+    nameEn: 'Earth token',
     descriptionFr: 'Une carte Terre. Rareté tirée comme un tirage normal.',
     descriptionEn: 'One Earth card. Rarity rolled like a normal pull.',
     type: 'CAPSULE' as const,
@@ -202,8 +202,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'EARTH', quantity: 1 },
   },
   {
-    nameFr: '10 capsules Terre',
-    nameEn: '10 Earth capsules',
+    nameFr: '10 jetons Terre',
+    nameEn: '10 Earth tokens',
     descriptionFr: 'Dix cartes Terre. Rareté tirée comme un tirage normal.',
     descriptionEn: 'Ten Earth cards. Rarity rolled like a normal pull.',
     type: 'CAPSULE' as const,
@@ -211,11 +211,11 @@ export const SHOP_ITEMS = [
     currency: 'DUST' as const,
     value: { capsuleType: 'EARTH', quantity: 10 },
   },
-  // Capsule Comète — une carte parmi 15 (3 par rareté), liste commune
+  // Jeton Comète — une carte parmi 15 (3 par rareté), liste commune
   // à tous les joueurs, renouvelée chaque lundi (card-pools.ts#cometCapsuleCards).
   {
-    nameFr: 'Capsule Comète',
-    nameEn: 'Comet capsule',
+    nameFr: 'Jeton Comète',
+    nameEn: 'Comet token',
     descriptionFr:
       'Une carte parmi les 15 de la sélection de la semaine. Rareté tirée comme un tirage normal.',
     descriptionEn:
@@ -226,8 +226,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'COMET', quantity: 1 },
   },
   {
-    nameFr: '10 capsules Comète',
-    nameEn: '10 Comet capsules',
+    nameFr: '10 jetons Comète',
+    nameEn: '10 Comet tokens',
     descriptionFr:
       'Dix cartes parmi les 15 de la sélection de la semaine. Rareté tirée comme un tirage normal.',
     descriptionEn:

@@ -96,7 +96,7 @@ export const FR_MESSAGES = {
   // --- gacha ---
   'gacha.noActiveCards': 'Aucune carte active dans un set',
   'gacha.notEnoughTokens': 'Jetons insuffisants',
-  'gacha.notEnoughCapsules': "Tu n'as pas assez de capsules.",
+  'gacha.notEnoughCapsules': "Tu n'as pas assez de jetons.",
 
   // --- shop / daily-shop / wishlist ---
   'shop.itemNotFound': 'Article introuvable',
@@ -128,7 +128,7 @@ export const FR_MESSAGES = {
   'wishlist.cardNotInWishlist':
     'Cette carte n’est pas dans ta liste de souhaits',
   'wishlist.astralCardNotWishable':
-    'Les cartes Lumière et Ténèbres ne peuvent pas faire l’objet d’un vœu — elles viennent de la capsule astrale',
+    'Les cartes Lumière et Ténèbres ne peuvent pas faire l’objet d’un vœu — elles viennent du jeton astral',
   'shop.shopItemNotFound': 'Article de boutique introuvable',
 
   // --- team ---

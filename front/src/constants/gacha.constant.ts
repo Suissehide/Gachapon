@@ -99,16 +99,18 @@ export type CapsulePullResult = PullBatchResult & {
   capsulePityCurrent: number
 }
 
+export type CometCard = {
+  id: string
+  name: string
+  imageUrl: string | null
+  rarity: CardRarity
+  element: CardElement | null
+  set: { id: string; name: string }
+}
+
 export type CometCapsule = {
-  endsAt: string
-  cards: {
-    id: string
-    name: string
-    imageUrl: string | null
-    rarity: CardRarity
-    element: CardElement | null
-    set: { id: string; name: string }
-  }[]
+  current: { endsAt: string; cards: CometCard[] }
+  next: { startsAt: string; cards: CometCard[] }
 }
 
 // Routes

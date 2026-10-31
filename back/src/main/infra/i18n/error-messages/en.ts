@@ -80,7 +80,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   // --- gacha ---
   'gacha.noActiveCards': 'No active cards in any set',
   'gacha.notEnoughTokens': 'Not enough tokens',
-  'gacha.notEnoughCapsules': "You don't have enough capsules.",
+  'gacha.notEnoughCapsules': "You don't have enough tokens.",
 
   // --- shop / daily-shop / wishlist ---
   'shop.itemNotFound': 'Item not found',
@@ -107,7 +107,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'wishlist.full': 'Wishlist full ({{slots}} slots)',
   'wishlist.cardNotInWishlist': 'Card is not in your wishlist',
   'wishlist.astralCardNotWishable':
-    'Light and Dark cards cannot be wished — they come from the astral capsule',
+    'Light and Dark cards cannot be wished — they come from the astral token',
   'shop.shopItemNotFound': 'Shop item not found',
 
   // --- team ---

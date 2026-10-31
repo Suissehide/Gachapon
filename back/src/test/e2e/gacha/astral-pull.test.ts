@@ -102,7 +102,7 @@ describe('POST /pulls/capsules/ASTRAL', () => {
     await setCapsules(3)
     const res = await pullAstral(10)
     expect(res.statusCode).toBe(402)
-    expect(res.json().message).toContain('enough capsules')
+    expect(res.json().message).toContain('enough tokens')
     expect((await getCapsule()).quantity).toBe(3)
     expect(await prisma.gachaPull.count({ where: { userId } })).toBe(0)
   })

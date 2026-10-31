@@ -76,7 +76,7 @@
     "pullingTitle": "Pull in progress…",
     "serverNotResponding": "The server is not responding.",
     "pull": "Pull",
-    "chooseCapsule": "Pull — choose the capsule",
+    "chooseCapsule": "Pull — choose the token",
     "capsuleNames": {
       "classic": "Classic",
       "astral": "Astral",
@@ -89,8 +89,8 @@
     "buyInShop": "Buy in the shop",
     "tokenBalance_one": "{{count}} token",
     "tokenBalance_other": "{{count}} tokens",
-    "capsuleBalance_one": "{{count}} capsule",
-    "capsuleBalance_other": "{{count}} capsules"
+    "capsuleBalance_one": "{{count}} token",
+    "capsuleBalance_other": "{{count}} tokens"
   },
   "tutorial": {
     "stepCounter": "Step {{current}} of {{total}}",

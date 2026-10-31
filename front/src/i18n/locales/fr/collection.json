@@ -65,7 +65,7 @@
     "setWish": "Définir comme vœu",
     "ownedLabel": "Possédées",
     "recycle": "Recycler",
-    "astralHint": "S'obtient dans la capsule astrale.",
+    "astralHint": "S'obtient avec le jeton astral.",
     "astralHintLink": "Voir la boutique"
   },
   "recycleModal": {

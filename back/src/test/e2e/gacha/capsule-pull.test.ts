@@ -130,7 +130,10 @@ describe('POST /pulls/capsules/:type (élémentaire, Comète)', () => {
   it('capsule Comète : cartes de la sélection publique, jamais LIGHT/DARK', async () => {
     const comet = await app.inject({ method: 'GET', url: '/capsules/comet' })
     expect(comet.statusCode).toBe(200)
-    const { cards, endsAt } = comet.json()
+    const { current, next } = comet.json()
+    const { cards, endsAt } = current
+    expect(next.startsAt).toBe(endsAt)
+    expect(next.cards.length).toBeGreaterThan(0)
     expect(cards.length).toBeGreaterThan(0)
     expect(cards.length).toBeLessThanOrEqual(15)
     expect(new Date(endsAt).getUTCDay()).toBe(1)
