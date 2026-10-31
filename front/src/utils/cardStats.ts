@@ -301,6 +301,18 @@ export function computeCardSetBonuses(
  * + bonus d'équipement (catalogue + substats) + bonus de set. `critRate` est
  * capé à 100, comme côté back.
  */
+/** Miroir de `stackArmorPen` côté back : 1 − Π(1 − pᵢ). */
+function stackArmorPen(sources: number[]): number {
+  return (
+    100 *
+    (1 -
+      sources.reduce(
+        (reste, p) => reste * (1 - Math.max(0, Math.min(100, p)) / 100),
+        1,
+      ))
+  )
+}
+
 export function cardStuffStats(
   items: {
     equippedOnId: string | null
@@ -317,8 +329,12 @@ export function cardStuffStats(
 ): StuffStatBonuses {
   const equippedHere = items.filter((i) => i.equippedOnId === userCardId)
   const acc = emptyStuffStatBonuses()
+  // La péné se cumule par source (voir stackArmorPen) : on garde chaque apport.
+  const penSources = [baseline.armorPen]
   for (const item of equippedHere) {
+    const avant = acc.armorPen
     accumulateItemStuffBonuses(acc, item, equipLevelScale)
+    penSources.push(acc.armorPen - avant)
   }
   const setBonuses = computeCardSetBonuses(
     equippedHere.map((i) => i.setKey),
@@ -326,14 +342,16 @@ export function cardStuffStats(
   )
   for (const [key, value] of Object.entries(setBonuses)) {
     const stat = parseStuffBonusKey(key)
-    if (stat) {
+    if (stat === 'armorPen') {
+      penSources.push(value)
+    } else if (stat) {
       acc[stat] += value
     }
   }
   return {
     critRate: Math.min(100, baseline.critRate + acc.critRate),
     critDmg: baseline.critDmg + acc.critDmg,
-    armorPen: baseline.armorPen + acc.armorPen,
+    armorPen: stackArmorPen(penSources),
     lifesteal: baseline.lifesteal + acc.lifesteal,
   }
 }

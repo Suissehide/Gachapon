@@ -164,7 +164,7 @@ const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
   defPct: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },
   critRatePct: { COMMON: 6, UNCOMMON: 9, RARE: 14, EPIC: 21, LEGENDARY: 32 },
   critDmgPct: { COMMON: 12, UNCOMMON: 19, RARE: 30, EPIC: 46, LEGENDARY: 70 },
-  armorPenPct: { COMMON: 7, UNCOMMON: 11, RARE: 17, EPIC: 26, LEGENDARY: 40 },
+  armorPenPct: { COMMON: 8, UNCOMMON: 12, RARE: 19, EPIC: 29, LEGENDARY: 45 },
 }
 
 const RARITY_DROP_WEIGHT: Record<CardRarity, number> = {

@@ -24,6 +24,22 @@ export interface CombatStats {
   lifesteal: number
 }
 
+/**
+ * Pénétration d'armure à la LoL : chaque source (pièce, set, baseline)
+ * s'applique sur la DEF restante, 1 − Π(1 − pᵢ). Le total tend vers 100 %
+ * sans l'atteindre, donc aucun surplus n'est perdu.
+ */
+export function stackArmorPen(sources: number[]): number {
+  return (
+    100 *
+    (1 -
+      sources.reduce(
+        (reste, p) => reste * (1 - Math.max(0, Math.min(100, p)) / 100),
+        1,
+      ))
+  )
+}
+
 export interface EquipmentBonuses {
   hpFlat?: number
   hpPct?: number
@@ -200,7 +216,10 @@ export function computeFinalStats(input: CombatStatsInput): CombatStats {
     spd: Math.round(spd),
     critRate: Math.min(100, baseStats.critRate + somme('critRatePct')),
     critDmg: baseStats.critDmg + somme('critDmgPct'),
-    armorPen: baseStats.armorPen + somme('armorPenPct'),
+    armorPen: stackArmorPen([
+      baseStats.armorPen,
+      ...equipment.map((e) => e.armorPenPct ?? 0),
+    ]),
     lifesteal: baseStats.lifesteal + somme('lifestealPct'),
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 
-import { computeFinalStats, damageReduction } from '../../main/domain/combat/combat-stats.domain'
+import { computeFinalStats, damageReduction, stackArmorPen } from '../../main/domain/combat/combat-stats.domain'
 import { buildEquipmentCatalog } from '../../main/domain/content/equipment.definitions'
 import {
   EQUIP_MAX_LEVEL,
@@ -245,14 +245,22 @@ describe('combat-stats: nouvelles stats', () => {
     expect(s.critRate).toBe(100)
   })
 
-  it('ne cape ni critDmg ni armorPen ni lifesteal', () => {
+  it('ne cape ni critDmg ni lifesteal', () => {
     const s = computeFinalStats({
       ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
-      equipment: [{ critDmgPct: 500, armorPenPct: 150, lifestealPct: 120 }],
+      equipment: [{ critDmgPct: 500, lifestealPct: 120 }],
     })
     expect(s.critDmg).toBe(650)
-    expect(s.armorPen).toBe(150)
     expect(s.lifesteal).toBe(120)
+  })
+
+  it('cumule armorPen par source, sur la DEF restante', () => {
+    const s = computeFinalStats({
+      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      equipment: [{ armorPenPct: 60 }, { armorPenPct: 60 }],
+    })
+    expect(s.armorPen).toBeCloseTo(stackArmorPen([BASES_COMBAT.armorPen, 60, 60]))
+    expect(s.armorPen).toBeLessThan(100)
   })
 })
 
@@ -367,5 +375,14 @@ describe('défense : repères de fin de jeu', () => {
     const autres = Array.from({ length: 4 }, () => ({ defPct: 12 }))
     const def = defTank('HOLOGRAPHIC', [principale(), principale(), principale(), ...autres])
     expect(damageReduction(def, DEFENSE_K)).toBeLessThanOrEqual(0.8)
+  })
+})
+
+describe('stackArmorPen', () => {
+  it('cumule chaque source sur la DEF restante, sans jamais dépasser 100', () => {
+    expect(stackArmorPen([])).toBe(0)
+    expect(stackArmorPen([40])).toBeCloseTo(40)
+    expect(stackArmorPen([40, 25])).toBeCloseTo(55)
+    expect(stackArmorPen(Array.from({ length: 10 }, () => 40))).toBeLessThan(100)
   })
 })
