@@ -76,8 +76,12 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
   },
   HASTE: {
     name: i18n.t('passives:HASTE.name'),
-    // La cadence est fixe (toutes les 3 actions), plus de palier.
-    describe: () => i18n.t('passives:HASTE.describe'),
+    describe: (palier) => {
+      const p = clampPalierForPassiveDisplay(palier)
+      return i18n.t('passives:HASTE.describe', {
+        value: p >= 5 ? 3 : p >= 3 ? 4 : 5,
+      })
+    },
   },
   FORTIFY: {
     name: i18n.t('passives:FORTIFY.name'),
@@ -109,9 +113,10 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
   },
   CRIT: {
     name: i18n.t('passives:CRIT.name'),
-    // La magnitude du critique appartient désormais aux stats (critRate/critDmg) :
-    // ce passif ne dépend plus du palier, il apporte la certitude.
-    describe: () => i18n.t('passives:CRIT.describe'),
+    describe: (palier) => {
+      const p = clampPalierForPassiveDisplay(palier)
+      return i18n.t('passives:CRIT.describe', { value: 10 * p })
+    },
   },
   HAMPER: {
     name: i18n.t('passives:HAMPER.name'),
@@ -139,7 +144,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:REGEN.describe', {
-        value: formatPct((2 + p) / 2, currentLocale()),
+        value: formatPct(((2 + p) * 3) / 2, currentLocale()),
       })
     },
   },
@@ -148,7 +153,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:BLESSING.describe', {
-        value: formatPct(((3 + p) * 2) / 5, currentLocale()),
+        value: formatPct(((3 + p) * 6) / 5, currentLocale()),
       })
     },
   },
@@ -157,7 +162,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:SANCTUARY.describe', {
-        value: formatPct(((3 + 2 * p) * 2) / 25, currentLocale()),
+        value: formatPct(((3 + 2 * p) * 6) / 25, currentLocale()),
       })
     },
   },

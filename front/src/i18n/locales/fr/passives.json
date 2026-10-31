@@ -29,7 +29,7 @@
   },
   "HASTE": {
     "name": "Célérité",
-    "describe": "Toutes les 3 actions, il rejoue immédiatement."
+    "describe": "Toutes les {{value}} actions, il rejoue immédiatement."
   },
   "FORTIFY": {
     "name": "Fortification",
@@ -49,7 +49,7 @@
   },
   "CRIT": {
     "name": "Précision",
-    "describe": "Toutes les 2 attaques, inflige un coup critique garanti."
+    "describe": "Toutes les 2 attaques, inflige un coup critique garanti avec +{{value}} % de dégâts critiques."
   },
   "HAMPER": {
     "name": "Entrave",
@@ -65,15 +65,15 @@
   },
   "REGEN": {
     "name": "Régénération",
-    "describe": "Soigne {{value}} % des PV max en fin de tour."
+    "describe": "Toutes les 3 actions, soigne {{value}} % de ses PV max."
   },
   "BLESSING": {
     "name": "Bénédiction",
-    "describe": "Soigne l'allié le plus faible de {{value}} % de ses PV max en fin de tour."
+    "describe": "Toutes les 3 actions, soigne l'allié le plus faible de {{value}} % de ses PV max."
   },
   "SANCTUARY": {
     "name": "Sanctuaire",
-    "describe": "Soigne toute l'équipe de {{value}} % des PV max en fin de tour."
+    "describe": "Toutes les 3 actions, soigne toute l'équipe de {{value}} % des PV max."
   },
   "BURN": {
     "name": "Brûlure",

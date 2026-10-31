@@ -37,11 +37,9 @@ describe('passives', () => {
     })
   })
   describe('CRIT', () => {
-    // Tâche 9 : la magnitude (chance de critique) est cédée à critRate/critDmg.
-    // Le passif ne porte plus que la cadence, fixe, indépendante du palier.
-    it('cadence fixe de 2 actions, quel que soit le palier', () => {
-      expect(PASSIVES.CRIT.compute(1).valuePct).toBe(2)
-      expect(PASSIVES.CRIT.compute(6).valuePct).toBe(2)
+    it('+10 % de dégâts critiques à P1, +60 % à P6 sur le critique garanti', () => {
+      expect(PASSIVES.CRIT.compute(1).valuePct).toBe(10)
+      expect(PASSIVES.CRIT.compute(6).valuePct).toBe(60)
     })
   })
   describe('HAMPER', () => {
@@ -83,7 +81,6 @@ describe('passives', () => {
 
   // Tâche 10 : VIGOR, HASTE, FORTIFY et EMPOWER dupliquaient un bonus
   // d'équipement (+X % PV/VIT/DEF/ATQ figé). Ils deviennent dynamiques ;
-  // seul HASTE garde une magnitude fixe (cadence, indépendante du palier).
   describe('VIGOR', () => {
     it('24% at P1, 44% at P6 (part des PV max rendue)', () => {
       expect(PASSIVES.VIGOR.compute(1).valuePct).toBe(24)
@@ -91,8 +88,9 @@ describe('passives', () => {
     })
   })
   describe('HASTE', () => {
-    it('cadence fixe de 2 actions, quel que soit le palier', () => {
-      expect(PASSIVES.HASTE.compute(1).valuePct).toBe(3)
+    it('cadence de 5 actions à P1-2, 4 à P3-4, 3 à P5-6', () => {
+      expect(PASSIVES.HASTE.compute(1).valuePct).toBe(5)
+      expect(PASSIVES.HASTE.compute(3).valuePct).toBe(4)
       expect(PASSIVES.HASTE.compute(6).valuePct).toBe(3)
     })
   })
@@ -110,15 +108,15 @@ describe('passives', () => {
   })
 
   describe('BLESSING', () => {
-    it('1.6% at P1, 3.6% at P6', () => {
-      expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(1.6)
-      expect(PASSIVES.BLESSING.compute(6).valuePct).toBe(3.6)
+    it('4.8% at P1, 10.8% at P6', () => {
+      expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(4.8)
+      expect(PASSIVES.BLESSING.compute(6).valuePct).toBe(10.8)
     })
   })
   describe('SANCTUARY', () => {
-    it('0.4% at P1, 1.2% at P6', () => {
-      expect(PASSIVES.SANCTUARY.compute(1).valuePct).toBe(0.4)
-      expect(PASSIVES.SANCTUARY.compute(6).valuePct).toBe(1.2)
+    it('1.2% at P1, 3.6% at P6', () => {
+      expect(PASSIVES.SANCTUARY.compute(1).valuePct).toBe(1.2)
+      expect(PASSIVES.SANCTUARY.compute(6).valuePct).toBe(3.6)
     })
   })
   describe('BURN', () => {
@@ -183,12 +181,10 @@ describe('passives', () => {
         expect(PASSIVES.AEGIS.describe(3)).toContain('17 %')
       })
     })
-    // Tâche 9 : CRIT n'a plus de magnitude palier-dépendante — son
-    // describe() est un texte fixe.
-    it('CRIT décrit un comportement fixe, sans pourcentage de palier', () => {
+    it('CRIT décrit la cadence et le bonus de dégâts critiques', () => {
       runWithLocale('FR', () => {
         expect(PASSIVES.CRIT.describe(1)).toBe(
-          'Toutes les 2 attaques, inflige un coup critique garanti',
+          'Toutes les 2 attaques, inflige un coup critique garanti avec +10 % de dégâts critiques',
         )
       })
     })
@@ -216,7 +212,7 @@ describe('passives', () => {
     it('EN explicite sous runWithLocale', () => {
       runWithLocale('EN', () => {
         expect(PASSIVES.CRIT.describe(1)).toBe(
-          'Every 2 attacks, deals a guaranteed critical hit',
+          'Every 2 attacks, deals a guaranteed critical hit with +10% critical damage',
         )
       })
     })

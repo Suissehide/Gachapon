@@ -20,6 +20,11 @@ export interface PassiveTextDefinition {
 }
 
 /** Valeur à une décimale au plus, avec la virgule en français (soins, poison). */
+/** HASTE : cadence (en actions) selon le palier. */
+export function hasteCadence(p: number): number {
+  return p >= 5 ? 3 : p >= 3 ? 4 : 5
+}
+
 function pct(value: number, lang: 'fr' | 'en'): string {
   const rounded = Math.round(value * 10) / 10
   return lang === 'fr' ? String(rounded).replace('.', ',') : String(rounded)
@@ -81,8 +86,10 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   HASTE: {
     labelFr: 'Célérité',
     labelEn: 'Haste',
-    describeFr: () => 'Toutes les 3 actions, il rejoue immédiatement',
-    describeEn: () => 'Every 3 actions, it acts again immediately',
+    describeFr: (p) =>
+      `Toutes les ${hasteCadence(p)} actions, il rejoue immédiatement`,
+    describeEn: (p) =>
+      `Every ${hasteCadence(p)} actions, it acts again immediately`,
   },
   FORTIFY: {
     labelFr: 'Fortification',
@@ -119,8 +126,10 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   CRIT: {
     labelFr: 'Précision',
     labelEn: 'Precision',
-    describeFr: () => 'Toutes les 2 attaques, inflige un coup critique garanti',
-    describeEn: () => 'Every 2 attacks, deals a guaranteed critical hit',
+    describeFr: (p) =>
+      `Toutes les 2 attaques, inflige un coup critique garanti avec +${10 * p} % de dégâts critiques`,
+    describeEn: (p) =>
+      `Every 2 attacks, deals a guaranteed critical hit with +${10 * p}% critical damage`,
   },
   HAMPER: {
     labelFr: 'Entrave',
@@ -150,9 +159,9 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Régénération',
     labelEn: 'Regeneration',
     describeFr: (p) =>
-      `Soigne ${pct((2 + p) / 2, 'fr')} % des PV max en fin de tour`,
+      `Toutes les 3 actions, soigne ${pct(((2 + p) * 3) / 2, 'fr')} % de ses PV max`,
     describeEn: (p) =>
-      `Heals ${pct((2 + p) / 2, 'en')}% of max HP at the end of the turn`,
+      `Every 3 actions, heals ${pct(((2 + p) * 3) / 2, 'en')}% of its max HP`,
   },
 
   // -------------------------------------------------------------------------
@@ -162,17 +171,17 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Bénédiction',
     labelEn: 'Blessing',
     describeFr: (p) =>
-      `Soigne l'allié le plus faible de ${pct(((3 + p) * 2) / 5, 'fr')} % de ses PV max en fin de tour`,
+      `Toutes les 3 actions, soigne l'allié le plus faible de ${pct(((3 + p) * 6) / 5, 'fr')} % de ses PV max`,
     describeEn: (p) =>
-      `Heals the weakest ally for ${pct(((3 + p) * 2) / 5, 'en')}% of their max HP at the end of the turn`,
+      `Every 3 actions, heals the weakest ally for ${pct(((3 + p) * 6) / 5, 'en')}% of their max HP`,
   },
   SANCTUARY: {
     labelFr: 'Sanctuaire',
     labelEn: 'Sanctuary',
     describeFr: (p) =>
-      `Soigne toute l'équipe de ${pct(((3 + 2 * p) * 2) / 25, 'fr')} % des PV max en fin de tour`,
+      `Toutes les 3 actions, soigne toute l'équipe de ${pct(((3 + 2 * p) * 6) / 25, 'fr')} % des PV max`,
     describeEn: (p) =>
-      `Heals the whole team for ${pct(((3 + 2 * p) * 2) / 25, 'en')}% of max HP at the end of the turn`,
+      `Every 3 actions, heals the whole team for ${pct(((3 + 2 * p) * 6) / 25, 'en')}% of max HP`,
   },
 
   BURN: {

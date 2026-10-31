@@ -1,6 +1,6 @@
 import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { CardRarity } from '../../types/domain/gacha/gacha.types'
-import { PASSIVE_TEXT } from '../content/passives.definitions'
+import { hasteCadence, PASSIVE_TEXT } from '../content/passives.definitions'
 
 export type PassiveKey =
   | 'TAUNT'
@@ -54,6 +54,12 @@ export interface PassiveDefinition {
   /** Human-readable description (uses palier-resolved value), dans la locale de la requête courante. */
   describe(palier: number): string
 }
+
+/** Les soins de passif (REGEN, BLESSING, SANCTUARY) partent une action sur trois. */
+export const PASSIVE_HEAL_CADENCE = 3
+
+/** CRIT : un critique garanti toutes les deux actions. */
+export const CRIT_CADENCE = 2
 
 export function clampPalier(palier: number): number {
   if (palier < 1) {
@@ -201,11 +207,11 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     get label() {
       return localizedLabel('HASTE')
     },
-    compute() {
-      return { valuePct: 3 } // cadence, en nombre d'actions
+    compute(palier) {
+      return { valuePct: hasteCadence(clampPalier(palier)) } // cadence, en nombre d'actions
     },
-    describe() {
-      return localizedDescribe('HASTE', 0)
+    describe(palier) {
+      return localizedDescribe('HASTE', clampPalier(palier))
     },
   },
   FORTIFY: {
@@ -274,13 +280,14 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     get label() {
       return localizedLabel('CRIT')
     },
-    // La magnitude du critique appartient désormais aux stats (critRate/critDmg).
-    // Le passif apporte ce qu'aucun équipement ne peut donner : la certitude.
-    compute() {
-      return { valuePct: 2 } // cadence, en nombre d'actions
+    // Un critique garanti toutes les CRIT_CADENCE actions, amplifié de
+    // valuePct points de dégâts critiques.
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 10 * p }
     },
-    describe() {
-      return localizedDescribe('CRIT', 0)
+    describe(palier) {
+      return localizedDescribe('CRIT', clampPalier(palier))
     },
   },
   // Famille jauge / vitesse (remplace PIERCE, « premier coup sans DEF »).
@@ -329,7 +336,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
   },
 
-  // Passif de soin (appliqué en fin de tour)
+  // Passif de soin (une action sur PASSIVE_HEAL_CADENCE)
   REGEN: {
     key: 'REGEN',
     rarityHint: 'EPIC',
@@ -338,7 +345,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: (2 + p) / 2 }
+      return { valuePct: ((2 + p) * 3) / 2 }
     },
     describe(palier) {
       return localizedDescribe('REGEN', clampPalier(palier))
@@ -349,7 +356,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   // Passifs de famille — soin d'allié, dégâts sur la durée, jauge d'allié
   // -------------------------------------------------------------------------
 
-  // Passifs de soin d'allié (appliqués en fin de tour)
+  // Passifs de soin d'allié (une action sur PASSIVE_HEAL_CADENCE)
   BLESSING: {
     key: 'BLESSING',
     rarityHint: 'LEGENDARY',
@@ -358,7 +365,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: ((3 + p) * 2) / 5 }
+      return { valuePct: ((3 + p) * 6) / 5 }
     },
     describe(palier) {
       return localizedDescribe('BLESSING', clampPalier(palier))
@@ -372,7 +379,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: ((3 + 2 * p) * 2) / 25 }
+      return { valuePct: ((3 + 2 * p) * 6) / 25 }
     },
     describe(palier) {
       return localizedDescribe('SANCTUARY', clampPalier(palier))

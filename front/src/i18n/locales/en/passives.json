@@ -29,7 +29,7 @@
   },
   "HASTE": {
     "name": "Haste",
-    "describe": "Every 3 actions, it acts again immediately."
+    "describe": "Every {{value}} actions, it acts again immediately."
   },
   "FORTIFY": {
     "name": "Fortification",
@@ -49,7 +49,7 @@
   },
   "CRIT": {
     "name": "Precision",
-    "describe": "Every 2 attacks, deals a guaranteed critical hit."
+    "describe": "Every 2 attacks, deals a guaranteed critical hit with +{{value}}% critical damage."
   },
   "HAMPER": {
     "name": "Shackle",
@@ -65,15 +65,15 @@
   },
   "REGEN": {
     "name": "Regeneration",
-    "describe": "Heals {{value}}% of max HP at the end of the turn."
+    "describe": "Every 3 actions, heals {{value}}% of its max HP."
   },
   "BLESSING": {
     "name": "Blessing",
-    "describe": "Heals the weakest ally for {{value}}% of their max HP at the end of the turn."
+    "describe": "Every 3 actions, heals the weakest ally for {{value}}% of their max HP."
   },
   "SANCTUARY": {
     "name": "Sanctuary",
-    "describe": "Heals the whole team for {{value}}% of max HP at the end of the turn."
+    "describe": "Every 3 actions, heals the whole team for {{value}}% of max HP."
   },
   "BURN": {
     "name": "Burn",

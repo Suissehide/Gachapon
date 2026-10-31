@@ -1,7 +1,12 @@
 import type { CardArchetype } from '../../types/domain/combat/archetype.types'
 import { damageReduction } from './combat-stats.domain'
 import { elementMultiplier, elementRelation } from './element'
-import { PASSIVES, type PassiveKey } from './passives'
+import {
+  CRIT_CADENCE,
+  PASSIVE_HEAL_CADENCE,
+  PASSIVES,
+  type PassiveKey,
+} from './passives'
 import {
   ULTIMATE_SHIELD_CAP_PCT,
   ULTIMATES,
@@ -650,17 +655,17 @@ function resolveEffectiveDef(attacker: BattleUnit, target: BattleUnit): number {
 /**
  * Critique — le tirage prng() garde sa position historique dans la séquence
  * et s'exécute systématiquement, même quand CRIT force déjà le critique par
- * cadence (une attaque sur trois) : sinon la séquence PRNG diverge selon que
+ * cadence (une attaque sur CRIT_CADENCE) : sinon la séquence PRNG diverge selon que
  * l'unité porte le passif ou non, et le déterminisme à seed égal casse.
  */
 function resolveCrit(
   attacker: BattleUnit,
   prng: () => number,
   log: LogEntry[],
-): boolean {
+): { crit: boolean; mult: number } {
   const cadenceCrit =
     attacker.passiveKey === 'CRIT' &&
-    (attacker.attackCount + 1) % attacker.passiveValuePct === 0
+    (attacker.attackCount + 1) % CRIT_CADENCE === 0
   const tirageCrit = prng() < attacker.critRate / 100
   if (cadenceCrit) {
     log.push({
@@ -670,7 +675,11 @@ function resolveCrit(
       payload: {},
     })
   }
-  return cadenceCrit || tirageCrit
+  if (!(cadenceCrit || tirageCrit)) {
+    return { crit: false, mult: 1 }
+  }
+  const bonus = cadenceCrit ? attacker.passiveValuePct : 0
+  return { crit: true, mult: (attacker.critDmg + bonus) / 100 }
 }
 
 /**
@@ -853,10 +862,8 @@ function resolveAttackOnTarget(
     patternMultiplier,
   )
 
-  const crit = resolveCrit(attacker, prng, log)
-  if (crit) {
-    raw *= attacker.critDmg / 100
-  }
+  const { crit, mult } = resolveCrit(attacker, prng, log)
+  raw *= mult
 
   raw = applyPassiveDamageModifiers(attacker, target, raw, log)
   if (attire) {
@@ -1731,6 +1738,7 @@ function runActorTurn(
   rules: DamageRules,
 ): void {
   applyDotsToUnit(actor, log)
+  const acted = actor.alive && !actor.stunned
   if (actor.alive && actor.stunned) {
     // STUN — l'action est perdue ; insensible jusqu'à la prochaine jouée.
     actor.stunned = false
@@ -1751,7 +1759,9 @@ function runActorTurn(
     applyHasteBonusTurn(actor, log)
     applyMomentum(actor, units, log)
   }
-  if (actor.alive) {
+  // Soins de passif : une action jouée sur PASSIVE_HEAL_CADENCE, jamais
+  // sur une action perdue à l'étourdissement.
+  if (actor.alive && acted && actor.attackCount % PASSIVE_HEAL_CADENCE === 0) {
     applyRegenToUnit(actor, log)
     applyBlessingFromUnit(actor, units, log)
     applySanctuaryFromUnit(actor, units, log)

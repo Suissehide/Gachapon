@@ -937,7 +937,7 @@ describe('simulateBattle', () => {
       ])
     })
 
-    it('BLESSING soigne un allié blessé en fin de tour', () => {
+    it('BLESSING soigne un allié blessé une action sur trois', () => {
       // ATB: A0 (spd=100, BLESSING) must get a turn after B0 damages A1.
       const result = simulateBattle({
         teamA: [
@@ -947,18 +947,18 @@ describe('simulateBattle', () => {
             spd: 100,
             passiveKey: 'BLESSING',
           }),
-          makeUnit('A1', { hp: 1000, atk: 1, def: 0, spd: 100 }),
+          makeUnit('A1', { hp: 20000, atk: 1, def: 0, spd: 100 }),
         ],
         teamB: [makeUnit('B0', { hp: 100000, atk: 200, def: 0, spd: 500 })],
         seed: 'blessing-test',
-        timeoutTurns: 2,
+        timeoutTurns: 4,
       })
       const entries = passiveEntries(result.log, 'BLESSING')
       expect(entries.length).toBeGreaterThan(0)
       expect(entries[0]?.payload.healed).toBeGreaterThan(0)
     })
 
-    it('SANCTUARY soigne toute l’équipe en fin de tour', () => {
+    it('SANCTUARY soigne toute l’équipe une action sur trois', () => {
       const result = simulateBattle({
         // ATB: A0 (spd=100, SANCTUARY) must get a turn after B0 damages A1.
         teamA: [
@@ -968,15 +968,27 @@ describe('simulateBattle', () => {
             spd: 100,
             passiveKey: 'SANCTUARY',
           }),
-          makeUnit('A1', { hp: 1000, atk: 1, def: 0, spd: 100 }),
+          makeUnit('A1', { hp: 20000, atk: 1, def: 0, spd: 100 }),
         ],
         teamB: [makeUnit('B0', { hp: 100000, atk: 200, def: 0, spd: 500 })],
         seed: 'sanctuary-test',
-        timeoutTurns: 2,
+        timeoutTurns: 4,
       })
       const entries = passiveEntries(result.log, 'SANCTUARY')
       expect(entries.length).toBeGreaterThan(0)
       expect(entries[0]?.payload.healed).toBeGreaterThan(0)
+    })
+
+    it('les soins de passif ne partent qu’à la 3e action du porteur', () => {
+      const { log } = simulateBattle({
+        teamA: [makeUnit('A0', { hp: 2000, atk: 1, spd: 100, passiveKey: 'REGEN' })],
+        teamB: [makeUnit('B0', { hp: 100000, atk: 200, def: 0, spd: 100 })],
+        seed: 'heal-cadence',
+        timeoutTurns: 4,
+      })
+      const actionsA0 = log.filter((e) => e.type === 'ATTACK' && e.attackerId === 'A0')
+      const firstHeal = log.findIndex((e) => e.type === 'PASSIVE' && e.passive === 'REGEN')
+      expect(firstHeal).toBeGreaterThan(log.indexOf(actionsA0[2] as (typeof log)[number]))
     })
 
     it('le journal suffit à suivre les PV : aucune mort alors que le replay affiche encore des PV', () => {
