@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import gsap from 'gsap'
 import { RotateCcw, Sparkles } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
@@ -41,15 +40,6 @@ function CapsuleLabPage() {
   const [speed, setSpeed] = useState<Speed>('0.25')
   const [tier, setTier] = useState<TierKey>('legendary')
   const [run, setRun] = useState(0)
-
-  // Appliqué après le montage de la scène : ses effets passent avant ceux de
-  // la page. Remis à la normale en quittant le labo.
-  useEffect(() => {
-    gsap.globalTimeline.timeScale(Number(speed))
-    return () => {
-      gsap.globalTimeline.timeScale(1)
-    }
-  }, [speed])
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -112,6 +102,7 @@ function CapsuleLabPage() {
           capsuleKind={kind}
           teaseTier={TIERS.indexOf(tier) as TeaseTier}
           onBurst={() => undefined}
+          timeScale={Number(speed)}
         />
       </div>
     </div>

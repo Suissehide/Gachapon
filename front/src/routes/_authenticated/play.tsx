@@ -38,6 +38,7 @@ import { WagerBanner } from '../../components/play/WagerBanner.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { InfoButton } from '../../components/shared/InfoButton.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
+import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import type {
   AstralPullResult,
@@ -148,23 +149,40 @@ function advanceSnapshot(
   }
 }
 
-// Boutons flottants : son, revoir le tutoriel, sauter les animations
+// Ralentis proposés en dev pour régler l'animation de la capsule à l'œil.
+const DEV_TIME_SCALES = ['0.1', '0.25', '0.5', '1'] as const
+type DevTimeScale = (typeof DEV_TIME_SCALES)[number]
+
+// Boutons flottants : son, revoir le tutoriel, sauter les animations (et le
+// ralenti, en dev seulement)
 function PlayFloatingControls({
   soundOn,
   onToggleSound,
   skipAnimations,
   onToggleSkip,
   onOpenTutorial,
+  timeScale,
+  onTimeScaleChange,
 }: {
   soundOn: boolean
   onToggleSound: () => void
   skipAnimations: boolean
   onToggleSkip: () => void
   onOpenTutorial: () => void
+  timeScale: DevTimeScale
+  onTimeScaleChange: (scale: DevTimeScale) => void
 }) {
   const { t } = useTranslation('gacha')
   return (
     <div className="fixed bottom-4 right-4 z-5 flex items-center gap-2 sm:bottom-5 sm:right-5">
+      {import.meta.env.DEV && (
+        <SegmentedControl<DevTimeScale>
+          options={DEV_TIME_SCALES.map((s) => ({ value: s, label: `×${s}` }))}
+          value={timeScale}
+          onChange={onTimeScaleChange}
+          className="shadow-md"
+        />
+      )}
       <button
         type="button"
         aria-label={
@@ -223,6 +241,7 @@ function PullCycleOverlay({
   phase,
   capsuleKind,
   teaseTier,
+  timeScale,
   result,
   soundOn,
   onToggleSound,
@@ -236,6 +255,7 @@ function PullCycleOverlay({
   phase: Phase
   capsuleKind: CapsuleKind
   teaseTier: TeaseTier | null
+  timeScale: number
   result: PullResult | null
   soundOn: boolean
   onToggleSound: () => void
@@ -293,6 +313,7 @@ function PullCycleOverlay({
             teaseTier={teaseTier}
             onBurst={onCapsuleBurst}
             capsuleKind={capsuleKind}
+            timeScale={timeScale}
           />
         </div>
       )}
@@ -391,6 +412,11 @@ function Play() {
 
   // Son du tirage : off par défaut, persistant. Le moteur audio est un
   // singleton — on synchronise juste son état muet.
+  const [devTimeScale, setDevTimeScale] = useStoredState<DevTimeScale>(
+    'play.devTimeScale',
+    '1',
+    DEV_TIME_SCALES,
+  )
   const [soundOn, setSoundOn] = useStoredState<'true' | 'false'>(
     'play.soundOn',
     'false',
@@ -857,6 +883,8 @@ function Play() {
         skipAnimations={skipAnimations}
         onToggleSkip={() => setSkipAnimations((s) => !s)}
         onOpenTutorial={() => setTutorialOpen(true)}
+        timeScale={devTimeScale}
+        onTimeScaleChange={setDevTimeScale}
       />
 
       {/* ── Fullscreen pull-cycle overlay ─────────────────────────────────
@@ -869,6 +897,7 @@ function Play() {
           phase={phase}
           capsuleKind={capsuleKind}
           teaseTier={teaseTier}
+          timeScale={import.meta.env.DEV ? Number(devTimeScale) : 1}
           result={result}
           soundOn={soundOn === 'true'}
           onToggleSound={toggleSound}

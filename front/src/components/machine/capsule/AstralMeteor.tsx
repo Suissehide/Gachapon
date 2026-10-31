@@ -5,10 +5,12 @@ import * as THREE from 'three'
 
 import { astralPalette, type CapsuleAnim } from './capsuleConfig'
 
-// Trajet de l'étoile : courbe de Bézier du fond du ciel (en haut à gauche)
-// jusqu'au centre. `anim.fall` va de 1 (départ) à 0 (arrivée).
-const START = new THREE.Vector3(-6.5, 4.4, -7)
-const CONTROL = new THREE.Vector3(-1.6, 3.8, -3)
+// Trajet de l'étoile : courbe de Bézier qui entre par le haut à gauche, hors
+// cadre, et finit au centre. `anim.fall` va de 1 (départ) à 0 (arrivée) ;
+// au-delà de 1 la courbe se prolonge, ce qui donne sa longueur à la traînée
+// dès l'entrée dans le cadre.
+const START = new THREE.Vector3(-11, 6.5, -5)
+const CONTROL = new THREE.Vector3(-2.5, 4.6, -2.5)
 const END = new THREE.Vector3(0, 0, 0.6)
 
 function meteorPosition(fall: number, out: THREE.Vector3) {
@@ -24,10 +26,10 @@ function meteorPosition(fall: number, out: THREE.Vector3) {
 // sur le trajet (et non sur les images passées) : sa longueur ne dépend pas
 // de la cadence. Le plan reste face caméra (décalage perpendiculaire en x/y).
 const TAIL_POINTS = 32
-const TAIL_SPAN = 0.5
+const TAIL_SPAN = 0.45
 const TAIL_BANDS = [
-  { width: 1.25, core: false },
-  { width: 0.32, core: true },
+  { width: 1.8, core: false },
+  { width: 0.45, core: true },
 ]
 
 function createRibbonGeometry() {
@@ -76,7 +78,8 @@ function writeRibbon(
   geometry.computeBoundingSphere()
 }
 
-const DUST_COUNT = 140
+const DUST_COUNT = 220
+const BURST_COUNT = 90
 const DUST_LIFE = 1.1
 
 const planeVert = /* glsl */ `
@@ -107,6 +110,7 @@ const orbFrag = /* glsl */ `
     vec3 col = mix(uViolet, uGold, smoothstep(0.9, 0.2, r));
     col = mix(col, vec3(1.0), clamp(core * 1.4 + glow * 0.6 + spikes, 0.0, 1.0));
     float a = clamp(core + glow * 0.9 + halo + spikes * 0.7, 0.0, 1.0);
+    a *= smoothstep(1.0, 0.75, r);
     gl_FragColor = vec4(col, a * uOpacity);
   }
 `
@@ -120,11 +124,12 @@ const tailFrag = /* glsl */ `
   uniform float uOpacity;
   varying vec2 vUv;
   void main() {
-    float across = 1.0 - pow(abs(vUv.y * 2.0 - 1.0), 2.0);
-    float along = pow(1.0 - vUv.x, 1.4);
+    float x = vUv.y * 2.0 - 1.0;
+    float across = exp(-x * x * mix(5.0, 9.0, uCore));
+    float along = pow(1.0 - vUv.x, 1.6);
     vec3 col = mix(uViolet, uGold, smoothstep(1.0, 0.35, vUv.x));
     col = mix(col, vec3(1.0), smoothstep(0.35, 0.0, vUv.x) * 0.9 + uCore * 0.6);
-    float a = across * along * mix(0.55, 1.0, uCore) * uOpacity;
+    float a = across * along * mix(0.45, 0.9, uCore) * uOpacity;
     gl_FragColor = vec4(col, a);
   }
 `
@@ -175,7 +180,7 @@ const waveFrag = /* glsl */ `
     float radius = 0.12 + uImpact * 0.85;
     float band = exp(-pow((r - radius) * 14.0, 2.0));
     float inner = exp(-r * r * 6.0) * (1.0 - uImpact) * 0.5;
-    float a = (band + inner) * (1.0 - uImpact);
+    float a = (band + inner) * (1.0 - uImpact) * step(0.001, uImpact);
     gl_FragColor = vec4(mix(vec3(1.0), uGold, 0.5), a);
   }
 `
@@ -189,15 +194,16 @@ const ADDITIVE = {
 
 /**
  * L'étoile filante qui apporte la capsule astrale : une boule de lumière
- * tombe du fond du ciel en arc, avec sa traînée et sa poussière dorée. À
- * l'arrivée (`anim.flash`) un flash blanc couvre l'écran pendant que la
- * capsule apparaît derrière, puis une onde de lumière s'élargit
- * (`anim.impact`).
+ * entre par le haut à gauche, plonge en arc en vibrant de plus en plus, avec
+ * sa traînée et sa poussière dorée. À l'arrivée (`anim.flash`) un flash blanc
+ * couvre l'écran, une gerbe d'étincelles explose et une onde de lumière
+ * s'élargit (`anim.impact`).
  */
 export function AstralMeteor({ anim }: { anim: CapsuleAnim }) {
   const headRef = useRef<THREE.Group>(null)
   const tailRef = useRef<THREE.Group>(null)
   const pos = useMemo(() => new THREE.Vector3(), [])
+  const burstDone = useRef(false)
 
   const colors = useMemo(() => {
     const p = astralPalette()
@@ -260,20 +266,31 @@ export function AstralMeteor({ anim }: { anim: CapsuleAnim }) {
     }
     const flying = anim.fall > 0.001
     meteorPosition(anim.fall, pos)
-    head.position.copy(pos)
+    // La boule vibre de plus en plus en approchant.
+    const shiver = (1 - anim.fall) ** 2 * 0.06
+    const t = clock.elapsedTime
+    head.position.set(
+      pos.x + Math.sin(t * 61) * shiver,
+      pos.y + Math.sin(t * 53 + 1.7) * shiver,
+      pos.z,
+    )
     head.visible = flying
     const scale = 0.7 + (1 - anim.fall) * 1.1
     head.scale.setScalar(scale)
     // La boule s'allume au départ, puis brille de plus en plus en approchant.
     const glow = Math.min(1, (1 - anim.fall) * 5)
     uniforms.orb.uOpacity.value = glow
-    uniforms.orb.uTime.value = clock.elapsedTime
+    uniforms.orb.uTime.value = t
     for (const u of uniforms.tails) {
       u.uOpacity.value = glow
     }
 
     updateTail(tailRef.current, ribbons, tailPoints, anim.fall, scale)
     emitDust(dust, flying, pos, delta)
+    if (anim.impact > 0 && !burstDone.current) {
+      burstDone.current = true
+      explodeDust(dust)
+    }
     uniforms.flash.uFlash.value = anim.flash
     uniforms.wave.uImpact.value = anim.impact
   })
@@ -368,7 +385,7 @@ function updateTail(
     return
   }
   for (const [i, p] of points.entries()) {
-    meteorPosition(Math.min(1, fall + (TAIL_SPAN * i) / (TAIL_POINTS - 1)), p)
+    meteorPosition(fall + (TAIL_SPAN * i) / (TAIL_POINTS - 1), p)
   }
   for (const [i, band] of TAIL_BANDS.entries()) {
     writeRibbon(ribbons[i], points, band.width * scale)
@@ -379,6 +396,27 @@ type Dust = {
   geometry: THREE.BufferGeometry
   velocity: Float32Array
   next: number
+}
+
+// Explosion de l'impact : une gerbe d'étincelles part du centre dans toutes
+// les directions, sous le flash.
+function explodeDust(dust: Dust) {
+  const g = dust.geometry.attributes
+  const position = g.position as THREE.BufferAttribute
+  const life = g.aLife as THREE.BufferAttribute
+  const size = g.aSize as THREE.BufferAttribute
+  for (let k = 0; k < BURST_COUNT; k++) {
+    const i = dust.next
+    dust.next = (dust.next + 1) % DUST_COUNT
+    const a = Math.random() * Math.PI * 2
+    const speed = 2.5 + Math.random() * 4
+    position.setXYZ(i, END.x, END.y, END.z)
+    dust.velocity[i * 3] = Math.cos(a) * speed
+    dust.velocity[i * 3 + 1] = Math.sin(a) * speed
+    dust.velocity[i * 3 + 2] = (Math.random() - 0.5) * 2
+    life.setX(i, 1)
+    size.setX(i, 16 + Math.random() * 26)
+  }
 }
 
 // Poussière dorée semée par la tête pendant le vol : elle dérive doucement
@@ -415,6 +453,10 @@ function emitDust(
     if (l <= 0) {
       continue
     }
+    const drag = Math.exp(-delta * 2.2)
+    dust.velocity[i * 3] *= drag
+    dust.velocity[i * 3 + 1] *= drag
+    dust.velocity[i * 3 + 2] *= drag
     position.setXYZ(
       i,
       position.getX(i) + dust.velocity[i * 3] * delta,
