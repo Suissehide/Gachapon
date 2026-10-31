@@ -44,7 +44,8 @@ export function createAstralMaterial(): AstralMaterial {
   return material as AstralMaterial
 }
 
-// Bande or au joint des deux hémisphères
+// Liseré nacré au joint des deux hémisphères : il fait le lien entre le ciel
+// de jour et la nuit violette sans trancher comme un trait d'or.
 export function AstralBand({
   radius,
   segments,
@@ -57,20 +58,20 @@ export function AstralBand({
     <mesh>
       <cylinderGeometry
         args={[
-          radius * 1.015,
-          radius * 1.015,
-          radius * 0.14,
+          radius * 1.012,
+          radius * 1.012,
+          radius * 0.09,
           segments,
           1,
           true,
         ]}
       />
       <meshStandardMaterial
-        color={p.gold}
-        emissive={p.goldDeep}
-        emissiveIntensity={0.35}
-        roughness={0.35}
-        metalness={0.3}
+        color={p.pearl}
+        emissive={p.pearl}
+        emissiveIntensity={0.45}
+        roughness={0.3}
+        metalness={0.25}
         side={THREE.DoubleSide}
       />
     </mesh>

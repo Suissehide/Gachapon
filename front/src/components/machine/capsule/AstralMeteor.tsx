@@ -27,10 +27,7 @@ function meteorPosition(fall: number, out: THREE.Vector3) {
 // de la cadence. Le plan reste face caméra (décalage perpendiculaire en x/y).
 const TAIL_POINTS = 32
 const TAIL_SPAN = 0.45
-const TAIL_BANDS = [
-  { width: 1.8, core: false },
-  { width: 0.45, core: true },
-]
+const TAIL_BANDS = [{ width: 1.8, core: false }]
 
 function createRibbonGeometry() {
   const geometry = new THREE.BufferGeometry()
@@ -297,7 +294,7 @@ export function AstralMeteor({ anim }: { anim: CapsuleAnim }) {
 
   return (
     <>
-      {/* Traînée : halo large puis cœur fin et vif */}
+      {/* Traînée lumineuse */}
       <group ref={tailRef} visible={false}>
         {TAIL_BANDS.map((band, i) => (
           <mesh

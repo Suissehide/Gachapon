@@ -107,7 +107,8 @@
      par `astralPalette()` (capsuleConfig.ts) pour les matériaux three.js ;
      seuls les deux violets de nuit sont aussi mappés en utilitaires (bouton
      « Tirer » de /play). Dessus : nébuleuse de jour ; dessous : nébuleuse
-     de nuit ; or de la bande et de l'anneau. */
+     de nuit ; or de l'étoile filante ; nacre du liseré qui sépare jour et
+     nuit. */
   --astral-day-sky: #7dd3fc;
   --astral-day-haze: #fde68a;
   --astral-day-cloud: #fff7e6;
@@ -118,6 +119,7 @@
   --astral-night-blue: #38bdf8;
   --astral-gold: #fde047;
   --astral-gold-deep: #f59e0b;
+  --astral-pearl: #ede9fe;
 
   /* Palette des duels et paris — handoff `docs/design_handoff_duels`
      (`equipe-duels.css`). Le duel emprunte l'ambre déjà tokenisé ; le pari,

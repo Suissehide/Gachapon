@@ -20,6 +20,7 @@ export type AstralPalette = {
   nightBlue: string
   gold: string
   goldDeep: string
+  pearl: string
 }
 
 let astralPaletteCache: AstralPalette | null = null
@@ -44,6 +45,7 @@ export function astralPalette(): AstralPalette {
     nightBlue: read('--astral-night-blue'),
     gold: read('--astral-gold'),
     goldDeep: read('--astral-gold-deep'),
+    pearl: read('--astral-pearl'),
   }
   return astralPaletteCache
 }
