@@ -330,22 +330,22 @@ h6 {
   }
 }
 
-/* Spatial movement: circular path (start = end → seamless loop) */
+/* Spatial movement: circular path (start = end → seamless loop). The layers
+ * are larger than the card and slide by transform (composited, no repaint):
+ * holoDrift moves a 300 % layer, holoSweep a 160 % one. */
 @keyframes holoDrift {
-  0% {
-    background-position: 50% 0%;
+  0%,
+  100% {
+    transform: translate(-33.33%, 0);
   }
   25% {
-    background-position: 100% 50%;
+    transform: translate(-66.67%, -33.33%);
   }
   50% {
-    background-position: 50% 100%;
+    transform: translate(-33.33%, -66.67%);
   }
   75% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 50% 0%;
+    transform: translate(0, -33.33%);
   }
 }
 /* Aura des cartes Lumière / Ténèbres (ElementAuraOverlay.tsx) */
@@ -395,20 +395,18 @@ h6 {
 }
 
 @keyframes holoSweep {
-  0% {
-    background-position: 50% 100%;
+  0%,
+  100% {
+    transform: translate(-18.75%, -37.5%);
   }
   25% {
-    background-position: 0% 50%;
+    transform: translate(0, -18.75%);
   }
   50% {
-    background-position: 50% 0%;
+    transform: translate(-18.75%, 0);
   }
   75% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 50% 100%;
+    transform: translate(-37.5%, -18.75%);
   }
 }
 

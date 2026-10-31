@@ -66,7 +66,7 @@ export function HoloOverlay({ active }: Props) {
 
       {/* Prismatic gradient — idle: hue cycles infinitely + circular spatial drift, hover: mouse-driven via CSS vars */}
       <div
-        className={`pointer-events-none absolute inset-0 z-[3] mix-blend-color-dodge [background-size:300%_300%] ${
+        className={`pointer-events-none absolute top-0 left-0 z-[3] h-[300%] w-[300%] mix-blend-color-dodge ${
           active
             ? '[animation:none] opacity-[0.88] [filter:brightness(0.66)_contrast(1.33)]'
             : 'opacity-[0.85] [animation:holoColor_5s_linear_infinite,holoDrift_12s_linear_infinite]'
@@ -76,8 +76,8 @@ export function HoloOverlay({ active }: Props) {
             'linear-gradient(115deg, transparent 0%, rgb(0,231,255) 25%, transparent 47%, transparent 53%, rgb(255,0,231) 75%, transparent 100%)',
           ...(active
             ? {
-                backgroundPosition:
-                  'calc(var(--holo-lp, 50) * 1%) calc(var(--holo-tp, 50) * 1%)',
+                transform:
+                  'translate(calc(var(--holo-lp, 50) * -0.6667%), calc(var(--holo-tp, 50) * -0.6667%))',
               }
             : {}),
         }}
@@ -85,7 +85,7 @@ export function HoloOverlay({ active }: Props) {
 
       {/* Sparkles + holo texture + rainbow — idle: offset hue cycle + counter-drift, hover: mouse-driven via CSS vars */}
       <div
-        className={`pointer-events-none absolute inset-0 z-[4] mix-blend-color-dodge bg-blend-overlay [background-size:160%] ${
+        className={`pointer-events-none absolute top-0 left-0 z-[4] h-[160%] w-[160%] mix-blend-color-dodge bg-blend-overlay [background-size:100%] ${
           active
             ? '[animation:none] [filter:brightness(1)_contrast(1)]'
             : 'opacity-[0.7] [animation:holoColorReverse_7s_linear_infinite,holoSweep_25s_linear_infinite]'
@@ -94,8 +94,8 @@ export function HoloOverlay({ active }: Props) {
           backgroundImage: `url('${sparklesGif}'), url('${holoTexture}'), linear-gradient(125deg, rgba(255,0,132,0.31) 15%, rgba(252,164,0,0.25) 30%, rgba(255,255,0,0.19) 40%, rgba(0,255,138,0.13) 60%, rgba(0,207,255,0.25) 70%, rgba(204,76,250,0.31) 85%)`,
           ...(active
             ? {
-                backgroundPosition:
-                  'calc(var(--holo-px, 50) * 1%) calc(var(--holo-py, 50) * 1%)',
+                transform:
+                  'translate(calc(var(--holo-px, 50) * -0.375%), calc(var(--holo-py, 50) * -0.375%))',
                 opacity: 'var(--holo-opc, 0.5)' as unknown as number,
               }
             : {}),
