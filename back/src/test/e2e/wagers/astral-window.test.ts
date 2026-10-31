@@ -226,7 +226,7 @@ describe('fenêtre des paris : les tirages astraux restent invisibles', () => {
     for (let i = 0; i < PULL_WINDOW; i++) {
       const res = await app.inject({
         method: 'POST',
-        url: '/pulls/astral',
+        url: '/pulls/capsules/ASTRAL',
         headers: { cookie: cookiesB },
         payload: { count: 1 },
       })
@@ -288,5 +288,56 @@ describe('fenêtre des paris : les tirages astraux restent invisibles', () => {
     expect(row?.settledAt).not.toBeNull()
     const entry = await entryOf(betId, userIdA)
     expect(entry.payout).toBeGreaterThan(0)
+  })
+
+  it('un tirage de capsule élémentaire de B entre dans la fenêtre et règle le pari', async () => {
+    // Capsule non astrale = garantie partagée avec les jetons : elle doit
+    // compter dans la fenêtre, sinon elle avancerait la garantie gelée par la
+    // cote sans être vue par le pari.
+    await prisma.card.create({
+      data: {
+        nameFr: `AWFireRare${suffix}`,
+        nameEn: `AWFireRare${suffix}`,
+        rarity: 'RARE',
+        element: 'FIRE',
+        dropWeight: 1,
+        setId: mixedSetId,
+      },
+    })
+    // Seule carte FIRE du catalogue : la capsule Feu rend à coup sûr cette
+    // RARE, alors que la cote reste incertaine sur le pool mixte.
+    await activateOnly(mixedSetId)
+    await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+    const placed = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/bets`,
+      headers: { cookie: cookiesA },
+      payload: { targetId: userIdB, minRarity: 'RARE', stake: 200 },
+    })
+    expect(placed.statusCode).toBe(201)
+    const fireBetId = placed.json().id
+
+    await prisma.userCapsule.upsert({
+      where: { userId_type: { userId: userIdB, type: 'FIRE' } },
+      create: { userId: userIdB, type: 'FIRE', quantity: 1 },
+      update: { quantity: 1 },
+    })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pulls/capsules/FIRE',
+      headers: { cookie: cookiesB },
+      payload: { count: 1 },
+    })
+    expect(res.statusCode).toBe(201)
+    expect(res.json().pulls[0].card.rarity).toBe('RARE')
+
+    const start = Date.now()
+    let row = await prisma.bet.findUnique({ where: { id: fireBetId } })
+    while (row?.status === 'ACTIVE' && Date.now() - start < 5000) {
+      await new Promise((r) => setTimeout(r, 25))
+      row = await prisma.bet.findUnique({ where: { id: fireBetId } })
+    }
+    expect(row?.status).toBe('WON')
+    expect(row?.pullsSeen).toBe(1)
   })
 })

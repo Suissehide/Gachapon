@@ -96,7 +96,7 @@ export const FR_MESSAGES = {
   // --- gacha ---
   'gacha.noActiveCards': 'Aucune carte active dans un set',
   'gacha.notEnoughTokens': 'Jetons insuffisants',
-  'gacha.notEnoughCapsules': "Tu n'as pas assez de capsules astrales.",
+  'gacha.notEnoughCapsules': "Tu n'as pas assez de capsules.",
 
   // --- shop / daily-shop / wishlist ---
   'shop.itemNotFound': 'Article introuvable',

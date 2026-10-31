@@ -41,9 +41,9 @@ type Props = {
   // Pull context — omit for non-pull reveals (e.g. a claimed reward card),
   // which then show a plain "Fermer" button instead of the pull-again bar.
   tokensRemaining?: number
-  // Tirage astral : `tokensRemaining` porte alors le stock de capsules
-  // astrales, qui gate aussi « Retirer ».
-  astral?: boolean
+  // Tirage de capsule : `tokensRemaining` porte alors le stock de capsules,
+  // qui gate aussi « Retirer ».
+  fromCapsules?: boolean
   onPullAgain?: (count: number) => void
   // Fired the first time a given card is flipped (index into `results`). Lets
   // the caller reveal that card's achievements exactly when it's turned over.
@@ -64,7 +64,7 @@ type ActiveEffect = {
 export function RevealGrid({
   results,
   tokensRemaining,
-  astral = false,
+  fromCapsules = false,
   onClose,
   onPullAgain,
   onCardRevealed,
@@ -371,14 +371,14 @@ export function RevealGrid({
             {showPullAgain ? (
               <>
                 <div className="flex items-center gap-2">
-                  {astral ? (
+                  {fromCapsules ? (
                     <Sparkles className="h-5 w-5 text-amber-400" />
                   ) : (
                     <Ticket className="h-5 w-5 text-amber-400" />
                   )}
                   <div>
                     <div className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white/50">
-                      {astral
+                      {fromCapsules
                         ? t('machine:grid.capsulesRemaining')
                         : t('machine:grid.tokensRemaining')}
                     </div>

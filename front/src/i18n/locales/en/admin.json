@@ -707,8 +707,6 @@
     "title": "Capsule lab",
     "subtitle": "Replay the capsule arriving and opening, in slow motion if needed.",
     "capsule": "Capsule",
-    "classic": "Classic",
-    "astral": "Astral",
     "speed": "Speed",
     "tier": "Announced rarity",
     "replay": "Replay",

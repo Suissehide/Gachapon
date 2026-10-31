@@ -14,6 +14,8 @@ import {
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { CapsuleKind } from '../../components/machine/capsule/capsuleConfig'
+import { CapsuleSwatch } from '../../components/shared/CapsuleSwatch'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { PageShell } from '../../components/shared/PageShell'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
@@ -25,6 +27,7 @@ import { useToast } from '../../hooks/useToast'
 import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
+import { useCometCapsule } from '../../queries/useGacha'
 import type { ShopItem } from '../../queries/useShop'
 import {
   useBuyItem,
@@ -68,45 +71,93 @@ function useCountdown() {
 
 // ── Wishlist countdown hook ─────────────────────────────────────────────────
 
-// ── Shop item type config ───────────────────────────────────────────────────
+// ── Shop sections ───────────────────────────────────────────────────────────
 
-const TYPE_CONFIG: Record<
-  string,
-  { label: string; icon: React.ReactNode; color: string }
-> = {
-  TOKEN_PACK: {
+type ShopSection = {
+  key: string
+  label: string
+  icon: React.ReactNode
+  color: string
+  matches: (item: ShopItem) => boolean
+}
+
+const capsuleTypeOfItem = (item: ShopItem) =>
+  item.type === 'CAPSULE'
+    ? (item.value as { capsuleType?: string } | null)?.capsuleType
+    : undefined
+
+const ELEMENT_CAPSULE_TYPES = ['FIRE', 'WATER', 'NATURE', 'EARTH']
+
+// Capsule affichée sur une carte d'article : son type, ou la classique pour
+// un pack de jetons.
+function itemCapsuleKind(item: ShopItem): CapsuleKind | null {
+  if (item.type === 'TOKEN_PACK') {
+    return 'classic'
+  }
+  const type = capsuleTypeOfItem(item)
+  return type ? (type.toLowerCase() as CapsuleKind) : null
+}
+
+const SECTIONS: ShopSection[] = [
+  {
+    key: 'TOKEN_PACK',
     label: i18n.t('shop:typeLabels.TOKEN_PACK'),
-    icon: <Zap className="h-4 w-4 text-primary" />,
+    icon: <CapsuleSwatch kind="classic" />,
     color: 'border-primary/30 bg-primary/5',
+    matches: (i) => i.type === 'TOKEN_PACK',
   },
-  ENERGY_PACK: {
+  {
+    key: 'CAPSULE_ASTRAL',
+    label: i18n.t('shop:typeLabels.CAPSULE_ASTRAL'),
+    icon: <CapsuleSwatch kind="astral" />,
+    color: 'border-astral/30 bg-astral/5',
+    matches: (i) => capsuleTypeOfItem(i) === 'ASTRAL',
+  },
+  {
+    key: 'CAPSULE_COMET',
+    label: i18n.t('shop:typeLabels.CAPSULE_COMET'),
+    icon: <CapsuleSwatch kind="comet" />,
+    color: 'border-border bg-surface-2/40',
+    matches: (i) => capsuleTypeOfItem(i) === 'COMET',
+  },
+  {
+    key: 'CAPSULE_ELEMENT',
+    label: i18n.t('shop:typeLabels.CAPSULE_ELEMENT'),
+    icon: <CapsuleSwatch kind="elemental" />,
+    color: 'border-border bg-surface-2/40',
+    matches: (i) => ELEMENT_CAPSULE_TYPES.includes(capsuleTypeOfItem(i) ?? ''),
+  },
+  {
+    key: 'ENERGY_PACK',
     // Zap violet = identité visuelle de l'énergie sur la page campagne
     // (campaign.tsx utilise Zap text-violet-500 pour le coût en PC).
     label: i18n.t('shop:typeLabels.ENERGY_PACK'),
     icon: <Zap className="h-4 w-4 text-violet-500" />,
     color: 'border-violet-500/30 bg-violet-500/5',
+    matches: (i) => i.type === 'ENERGY_PACK',
   },
-  BOOST: {
+  {
+    key: 'BOOST',
     label: i18n.t('shop:typeLabels.BOOST'),
     icon: <Sparkles className="h-4 w-4 text-secondary" />,
     color: 'border-secondary/30 bg-secondary/5',
+    matches: (i) => i.type === 'BOOST',
   },
-  COSMETIC: {
+  {
+    key: 'COSMETIC',
     label: i18n.t('shop:typeLabels.COSMETIC'),
     icon: <Package className="h-4 w-4 text-accent" />,
     color: 'border-accent/30 bg-accent/5',
+    matches: (i) => i.type === 'COSMETIC',
   },
-  MACHINE: {
+  {
+    key: 'MACHINE',
     label: i18n.t('shop:typeLabels.MACHINE'),
     icon: <Cog className="h-4 w-4 text-primary" />,
     color: 'border-primary/30 bg-primary/5',
+    matches: (i) => i.type === 'MACHINE',
   },
-  CAPSULE: {
-    label: i18n.t('shop:typeLabels.CAPSULE'),
-    icon: <Sparkles className="h-4 w-4 text-astral" />,
-    color: 'border-astral/30 bg-astral/5',
-  },
-}
+]
 
 // ── Main page ───────────────────────────────────────────────────────────────
 
@@ -204,10 +255,15 @@ function ShopPage() {
     })
   }
 
-  const grouped = Object.entries(TYPE_CONFIG).map(([type, config]) => ({
-    type,
-    config,
-    items: shopItems.filter((i) => i.type === type),
+  // Capsules élémentaires dans l'ordre des éléments (Feu, Eau, Nature,
+  // Terre), puis ×1 avant ×10.
+  const elementRank = (item: ShopItem) =>
+    ELEMENT_CAPSULE_TYPES.indexOf(capsuleTypeOfItem(item) ?? '')
+  const grouped = SECTIONS.map((section) => ({
+    section,
+    items: shopItems
+      .filter(section.matches)
+      .sort((a, b) => elementRank(a) - elementRank(b) || a.cost - b.cost),
   }))
 
   return (
@@ -283,19 +339,20 @@ function ShopPage() {
       ) : (
         grouped
           .filter((g) => g.items.length > 0)
-          .map(({ type, config, items: typeItems }) => (
-            <Card key={type} className="p-6">
-              <div className="mb-4 flex items-baseline justify-between">
+          .map(({ section, items: typeItems }) => (
+            <Card key={section.key} className="p-6">
+              <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {config.icon}
+                  {section.icon}
                   <CardTitle className="text-sm uppercase tracking-wider">
-                    {config.label}
+                    {section.label}
                   </CardTitle>
                 </div>
                 <span className="font-mono text-[11px] text-text-light">
                   {t('shop:sections.itemCount', { count: typeItems.length })}
                 </span>
               </div>
+              {section.key === 'CAPSULE_COMET' && <CometSelection />}
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {typeItems.map((item) => {
                   const machineId =
@@ -311,7 +368,7 @@ function ShopPage() {
                       item={item}
                       dust={dust}
                       gold={gold}
-                      colorClass={config.color}
+                      colorClass={section.color}
                       buying={buyingShopId === item.id}
                       justBought={justBoughtShopId === item.id}
                       owned={owned}
@@ -327,6 +384,69 @@ function ShopPage() {
           ))
       )}
     </PageShell>
+  )
+}
+
+// ── Comet capsule selection ─────────────────────────────────────────────────
+
+function timeLeftParts(endsAt: string, now: number) {
+  const diff = Math.max(0, Date.parse(endsAt) - now)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return {
+    d: Math.floor(diff / 86_400_000),
+    h: pad(Math.floor((diff % 86_400_000) / 3_600_000)),
+    m: pad(Math.floor((diff % 3_600_000) / 60_000)),
+  }
+}
+
+// Les 15 cartes que la capsule Comète peut donner, et le compte à
+// rebours jusqu'à la prochaine sélection.
+function CometSelection() {
+  const { t } = useTranslation('shop')
+  const { data, refetch } = useCometCapsule()
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+  useEffect(() => {
+    if (data && Date.parse(data.endsAt) <= now) {
+      void refetch()
+    }
+  }, [data, now, refetch])
+
+  if (!data) {
+    return null
+  }
+  const left = timeLeftParts(data.endsAt, now)
+  return (
+    <div className="mb-4 flex flex-col gap-3">
+      <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-text-light">
+        <span>{t('shop:sections.cometRefreshIn')}</span>
+        <span className="font-bold tabular-nums text-text">
+          {left.d > 0
+            ? t('shop:sections.timeLeftDays', left)
+            : t('shop:sections.timeLeftHours', left)}
+        </span>
+      </div>
+      <div className="flex flex-wrap justify-center gap-2">
+        {data.cards.map((card) => (
+          <div key={card.id} className="w-[76px] sm:w-[88px]">
+            <CardDisplay
+              rarity={card.rarity}
+              name={card.name}
+              setName={card.set.name}
+              imageUrl={card.imageUrl}
+              variant={null}
+              element={card.element}
+              isOwned
+              compact
+            />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -626,13 +746,17 @@ function StaticShopCard({
     item.type === 'MACHINE' ||
     item.type === 'BOOST' ||
     item.type === 'CAPSULE'
+  const capsuleKind = itemCapsuleKind(item)
   const pulls = item.activeBoost?.pullsRemaining ?? 0
   const isBoostActive = item.type === 'BOOST' && pulls > 0
 
   return (
     <div className={`rounded-xl border p-4 ${colorClass} flex flex-col gap-3`}>
       <div>
-        <h3 className="font-bold text-text">{item.name}</h3>
+        <h3 className="flex items-center gap-2 font-bold text-text">
+          {capsuleKind && <CapsuleSwatch kind={capsuleKind} />}
+          {item.name}
+        </h3>
         <p className="mt-0.5 text-xs leading-relaxed text-text-light">
           {item.description}
         </p>

@@ -77,8 +77,15 @@
     "serverNotResponding": "The server is not responding.",
     "pull": "Pull",
     "chooseCapsule": "Pull — choose the capsule",
-    "capsuleClassic": "Classic",
-    "capsuleAstral": "Astral",
+    "capsuleNames": {
+      "classic": "Classic",
+      "astral": "Astral",
+      "comet": "Comet",
+      "fire": "Fire",
+      "water": "Water",
+      "nature": "Nature",
+      "earth": "Earth"
+    },
     "buyInShop": "Buy in the shop",
     "tokenBalance_one": "{{count}} token",
     "tokenBalance_other": "{{count}} tokens",

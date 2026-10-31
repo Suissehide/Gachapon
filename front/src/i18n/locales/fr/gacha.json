@@ -77,8 +77,15 @@
     "serverNotResponding": "Le serveur ne répond pas.",
     "pull": "Tirer",
     "chooseCapsule": "Tirer — choisir la capsule",
-    "capsuleClassic": "Classique",
-    "capsuleAstral": "Astrale",
+    "capsuleNames": {
+      "classic": "Classique",
+      "astral": "Astrale",
+      "comet": "Comète",
+      "fire": "Feu",
+      "water": "Eau",
+      "nature": "Nature",
+      "earth": "Terre"
+    },
     "buyInShop": "Acheter en boutique",
     "tokenBalance_one": "{{count}} jeton",
     "tokenBalance_other": "{{count}} jetons",

@@ -5,9 +5,10 @@ import { useTranslation } from 'react-i18next'
 
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { CapsuleStage } from '../../components/machine/capsule/CapsuleStage'
-import type {
-  CapsuleKind,
-  TeaseTier,
+import {
+  CAPSULE_KINDS,
+  type CapsuleKind,
+  type TeaseTier,
 } from '../../components/machine/capsule/capsuleConfig'
 import { Button } from '../../components/ui/button.tsx'
 import { Label } from '../../components/ui/label.tsx'
@@ -35,7 +36,7 @@ type TierKey = (typeof TIERS)[number]
 // Rejoue la séquence de la capsule (arrivée, charge, ouverture) sans tirer
 // de carte, avec un ralenti sur toute la chorégraphie gsap.
 function CapsuleLabPage() {
-  const { t } = useTranslation('admin')
+  const { t } = useTranslation(['admin', 'gacha'])
   const [kind, setKind] = useState<CapsuleKind>('astral')
   const [speed, setSpeed] = useState<Speed>('0.25')
   const [tier, setTier] = useState<TierKey>('legendary')
@@ -60,10 +61,10 @@ function CapsuleLabPage() {
         <div className="flex flex-col gap-1.5">
           <Label>{t('capsuleLab.capsule')}</Label>
           <SegmentedControl<CapsuleKind>
-            options={[
-              { value: 'classic', label: t('capsuleLab.classic') },
-              { value: 'astral', label: t('capsuleLab.astral') },
-            ]}
+            options={CAPSULE_KINDS.map((k) => ({
+              value: k,
+              label: t(`gacha:page.capsuleNames.${k}`),
+            }))}
             value={kind}
             onChange={(k) => {
               setKind(k)

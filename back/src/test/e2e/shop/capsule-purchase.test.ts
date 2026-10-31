@@ -75,9 +75,12 @@ describe('Capsule astrale — achat en boutique', () => {
     })
     expect(capsulesRes.statusCode).toBe(200)
     const body = capsulesRes.json()
-    expect(body.capsules).toEqual([
-      { type: 'ASTRAL', quantity: 10, pityCurrent: 0, pityThreshold: 300 },
-    ])
+    expect(body.capsules).toContainEqual({
+      type: 'ASTRAL',
+      quantity: 10,
+      pityCurrent: 0,
+      pityThreshold: 300,
+    })
   })
 
   it('POST /shop/:id/buy — ×1 avec 399 de poussière → 402 economy.notEnoughDust', async () => {
@@ -133,8 +136,42 @@ describe('Capsule astrale — achat en boutique', () => {
       headers: { cookie: freshCookies },
     })
     expect(res.statusCode).toBe(200)
-    expect(res.json().capsules).toEqual([
-      { type: 'ASTRAL', quantity: 0, pityCurrent: 0, pityThreshold: 300 },
-    ])
+    expect(res.json().capsules).toContainEqual({
+      type: 'ASTRAL',
+      quantity: 0,
+      pityCurrent: 0,
+      pityThreshold: 300,
+    })
+  })
+
+  it('POST /shop/:id/buy — « 10 capsules Feu » (1500) crédite 10 capsules FIRE', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const item = await postgresOrm.prisma.shopItem.findFirst({
+      where: { nameFr: '10 capsules Feu' },
+    })
+    expect(item.cost).toBe(1500)
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: 1500 },
+    })
+    const buyRes = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(buyRes.statusCode).toBe(200)
+    const fire = await postgresOrm.prisma.userCapsule.findUnique({
+      where: { userId_type: { userId, type: 'FIRE' } },
+    })
+    expect(fire.quantity).toBe(10)
+  })
+
+  it('les capsules Comète sont en boutique à 250 / 2500', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const items = await postgresOrm.prisma.shopItem.findMany({
+      where: { value: { path: ['capsuleType'], equals: 'COMET' } },
+      orderBy: { cost: 'asc' },
+    })
+    expect(items.map((i: { cost: number }) => i.cost)).toEqual([250, 2500])
   })
 })

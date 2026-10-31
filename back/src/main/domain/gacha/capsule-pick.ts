@@ -16,15 +16,15 @@ function weightedIndex(weights: readonly number[], roll: number): number {
 }
 
 /**
- * Carte d'un tirage astral. La rareté est tirée aux poids du pool NORMAL
- * (Chance comprise), puis la carte parmi les LIGHT/DARK de cette rareté au
- * `dropWeight` : tirer au poids sur le seul sous-pool astral fausserait les
- * taux. Rareté sans carte astrale → rareté inférieure (puis supérieure en
- * dernier recours). `forceLegendary` (pitié) prime sur `minRarity` (boule d'or).
+ * Carte d'un tirage de capsule. La rareté est tirée aux poids du pool NORMAL
+ * (Chance comprise), puis la carte parmi celles de la capsule à cette rareté
+ * au `dropWeight` : tirer au poids sur le seul sous-pool fausserait les taux.
+ * Rareté absente du sous-pool → rareté inférieure (puis supérieure en dernier
+ * recours). `forceLegendary` (pitié) prime sur `minRarity` (boule d'or).
  */
-export function pickAstralCard(
+export function pickCapsuleCard(
   normalPool: CardWithSet[],
-  astralPool: CardWithSet[],
+  capsulePool: CardWithSet[],
   opts: {
     luckMultiplier: number
     forceLegendary: boolean
@@ -32,8 +32,8 @@ export function pickAstralCard(
     rng?: () => number
   },
 ): CardWithSet {
-  if (astralPool.length === 0) {
-    throw new Error('No astral cards to pick from')
+  if (capsulePool.length === 0) {
+    throw new Error('No capsule cards to pick from')
   }
   const rng = opts.rng ?? Math.random
   const minIdx = opts.forceLegendary
@@ -57,7 +57,7 @@ export function pickAstralCard(
     ...RARITIES.slice(drawnIdx + 1),
   ]
   for (const rarity of order) {
-    const candidates = astralPool.filter(
+    const candidates = capsulePool.filter(
       (c) => c.rarity === rarity && c.dropWeight > 0,
     )
     const card =
@@ -71,5 +71,5 @@ export function pickAstralCard(
       return card
     }
   }
-  throw new Error('No astral cards to pick from')
+  throw new Error('No capsule cards to pick from')
 }

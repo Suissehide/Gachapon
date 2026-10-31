@@ -19,6 +19,7 @@ import * as THREE from 'three'
 import { AstralCapsuleVisual } from '../capsule/AstralCapsuleVisual'
 import {
   type CapsuleKind,
+  capsuleTint,
   MINI_CAPSULE_RADIUS,
   machineLightColor,
 } from '../capsule/capsuleConfig'
@@ -66,6 +67,7 @@ function MiniCapsuleVisual({
   if (kind === 'astral') {
     return <AstralCapsuleVisual />
   }
+  const tint = capsuleTint(kind) ?? color
   const r = CAPSULE_RADIUS
   return (
     <group>
@@ -86,7 +88,7 @@ function MiniCapsuleVisual({
           args={[r, 16, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]}
         />
         <meshStandardMaterial
-          color={color}
+          color={tint}
           roughness={0.85}
           metalness={0}
           side={THREE.DoubleSide}
@@ -97,7 +99,7 @@ function MiniCapsuleVisual({
           args={[r * 1.015, r * 1.015, r * 0.14, 16, 1, true]}
         />
         <meshStandardMaterial
-          color={color}
+          color={tint}
           roughness={0.7}
           metalness={0}
           side={THREE.DoubleSide}

@@ -31,11 +31,13 @@
   "breadcrumb": "Boutique",
   "typeLabels": {
     "TOKEN_PACK": "Packs de jetons",
+    "CAPSULE_ASTRAL": "Capsules astrales",
+    "CAPSULE_COMET": "Capsule Comète",
+    "CAPSULE_ELEMENT": "Capsules élémentaires",
     "ENERGY_PACK": "Énergie",
     "BOOST": "Boosts",
     "COSMETIC": "Cosmétiques",
-    "MACHINE": "Machines",
-    "CAPSULE": "Capsules"
+    "MACHINE": "Machines"
   },
   "sections": {
     "wishlistTitle": "Vœux",
@@ -44,7 +46,10 @@
     "noCardAvailable": "Aucune carte disponible",
     "noItemAvailable": "Aucun article disponible pour l'instant",
     "itemCount_one": "{{count}} ARTICLE",
-    "itemCount_other": "{{count}} ARTICLES"
+    "itemCount_other": "{{count}} ARTICLES",
+    "cometRefreshIn": "Nouvelle sélection dans",
+    "timeLeftDays": "{{d}} j {{h}} h",
+    "timeLeftHours": "{{h}} h {{m}} min"
   },
   "wishlistSection": {
     "emptyPrefix": "Choisis des cartes dans ta",
