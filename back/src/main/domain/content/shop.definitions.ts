@@ -105,6 +105,30 @@ export const SHOP_ITEMS = [
     currency: 'DUST' as const,
     value: { multiplier: 2, rarity: 'EPIC', pulls: 10 },
   },
+  // Capsules astrales — seule voie d'accès aux cartes LUMIÈRE/TÉNÈBRES,
+  // exclues du tirage normal (card-pools.ts#ASTRAL_ELEMENTS).
+  {
+    nameFr: 'Capsule astrale',
+    nameEn: 'Astral capsule',
+    descriptionFr:
+      'Une carte Lumière ou Ténèbres. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'One Light or Dark card. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 400,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'ASTRAL', quantity: 1 },
+  },
+  {
+    nameFr: '10 capsules astrales',
+    nameEn: '10 astral capsules',
+    descriptionFr:
+      'Dix cartes Lumière ou Ténèbres. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'Ten Light or Dark cards. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 4000,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'ASTRAL', quantity: 10 },
+  },
   // Cosmétiques
   {
     nameFr: 'Cadre Doré',

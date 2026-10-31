@@ -53,6 +53,7 @@ const economyConfigResponseSchema = z.object({
   gacha: z.object({
     pullTokenCost: z.number(),
     pityThreshold: z.number(),
+    astralPityThreshold: z.number(),
     tokenRegenIntervalMinutes: z.number(),
     tokenMaxStock: z.number(),
   }),
@@ -155,6 +156,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'xp.levelCap',
         'gacha.pullTokenCost',
         'pityThreshold',
+        'astral.pityThreshold',
         'tokenRegenIntervalMinutes',
         'tokenMaxStock',
         'dustCommon',
@@ -233,6 +235,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         gacha: {
           pullTokenCost: c['gacha.pullTokenCost'],
           pityThreshold: c.pityThreshold,
+          astralPityThreshold: c['astral.pityThreshold'],
           tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
           tokenMaxStock: c.tokenMaxStock,
         },

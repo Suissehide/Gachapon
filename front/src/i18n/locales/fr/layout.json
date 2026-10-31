@@ -22,7 +22,8 @@
       "users": "Joueurs",
       "stats": "Stats",
       "health": "Santé",
-      "combatDebug": "Combat — Debug"
+      "combatDebug": "Combat — Debug",
+      "capsuleLab": "Labo capsule"
     }
   },
   "notFound": {

@@ -12,9 +12,12 @@ import {
   defaultLocaleName,
   readNameInBothLocales,
 } from '../../../../../infra/i18n/localized-broadcast'
+import type { PullBatchResult } from '../../../../../types/domain/gacha/gacha.types'
 import { wsManager } from '../../../../ws/ws-manager'
 import {
+  capsulesResponseSchema,
   dropRatesResponseSchema,
+  pullAstralResponseSchema,
   pullBatchBodySchema,
   pullBatchResponseSchema,
   pullResponseSchema,
@@ -40,6 +43,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     betDomain,
     teamProgressionDomain,
     backgroundTasks,
+    userCapsuleRepository,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -75,6 +79,59 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         payload: { from: leveledUp.from, to: leveledUp.to },
       })
     }
+  }
+
+  const toPullsPayload = (pulls: PullBatchResult['pulls']) =>
+    pulls.map((p) => ({
+      card: {
+        id: p.card.id,
+        name: p.card.name,
+        imageUrl: resolveUrl(p.card.imageUrl),
+        rarity: p.card.rarity,
+        element: p.card.element,
+        variant: p.pull.variant,
+        set: { id: p.card.set.id, name: p.card.set.name },
+      },
+      wasDuplicate: p.wasDuplicate,
+      dustEarned: p.dustEarned,
+      pityCurrent: p.pityCurrent,
+      wasFreePull: p.wasFreePull,
+      wasGoldenBall: p.wasGoldenBall,
+      wasBoostGuarantee: p.wasBoostGuarantee,
+      unlockedAchievements: p.unlockedAchievements,
+    }))
+
+  /** Feed live (échelonné) + activité de rareté et de niveau d'un lot. */
+  const publishBatch = (
+    user: { id: string; username: string },
+    result: PullBatchResult,
+  ) => {
+    result.pulls.forEach((p, idx) => {
+      // Même contournement que /pulls : voir `localized-broadcast.ts`.
+      const cardName = readNameInBothLocales(p.card)
+      const setName = readNameInBothLocales(p.card.set)
+      setTimeout(() => {
+        wsManager.broadcast({
+          type: 'feed:pull',
+          username: user.username,
+          cardName: defaultLocaleName(cardName),
+          cardNameFr: cardName.fr,
+          cardNameEn: cardName.en,
+          rarity: p.card.rarity,
+          variant: p.pull.variant,
+          cardId: p.card.id,
+          imageUrl: resolveUrl(p.card.imageUrl),
+          setName: defaultLocaleName(setName),
+          setNameFr: setName.fr,
+          setNameEn: setName.en,
+          pulledAt: p.pull.pulledAt.toISOString(),
+        })
+      }, idx * 50)
+    })
+    for (const p of result.pulls) {
+      recordRarityActivity(user.id, user.username, p.card, p.pull.variant)
+    }
+    recordLevelUpActivity(user.id, user.username, result.leveledUp)
   }
 
   // POST /pulls — consommer 1 token et tirer une carte
@@ -205,24 +262,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       const result = await gachaDomain.pullBatch(request.user.userID, count)
       const user = await userRepository.findById(request.user.userID)
 
-      const pullsPayload = result.pulls.map((p) => ({
-        card: {
-          id: p.card.id,
-          name: p.card.name,
-          imageUrl: resolveUrl(p.card.imageUrl),
-          rarity: p.card.rarity,
-          element: p.card.element,
-          variant: p.pull.variant,
-          set: { id: p.card.set.id, name: p.card.set.name },
-        },
-        wasDuplicate: p.wasDuplicate,
-        dustEarned: p.dustEarned,
-        pityCurrent: p.pityCurrent,
-        wasFreePull: p.wasFreePull,
-        wasGoldenBall: p.wasGoldenBall,
-        wasBoostGuarantee: p.wasBoostGuarantee,
-        unlockedAchievements: p.unlockedAchievements,
-      }))
+      const pullsPayload = toPullsPayload(result.pulls)
 
       wsManager.notify(request.user.userID, {
         type: 'pull:batch-result',
@@ -232,32 +272,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       })
 
       if (user) {
-        result.pulls.forEach((p, idx) => {
-          // Même contournement que /pulls : voir `localized-broadcast.ts`.
-          const cardName = readNameInBothLocales(p.card)
-          const setName = readNameInBothLocales(p.card.set)
-          setTimeout(() => {
-            wsManager.broadcast({
-              type: 'feed:pull',
-              username: user.username,
-              cardName: defaultLocaleName(cardName),
-              cardNameFr: cardName.fr,
-              cardNameEn: cardName.en,
-              rarity: p.card.rarity,
-              variant: p.pull.variant,
-              cardId: p.card.id,
-              imageUrl: resolveUrl(p.card.imageUrl),
-              setName: defaultLocaleName(setName),
-              setNameFr: setName.fr,
-              setNameEn: setName.en,
-              pulledAt: p.pull.pulledAt.toISOString(),
-            })
-          }, idx * 50)
-        })
-        for (const p of result.pulls) {
-          recordRarityActivity(user.id, user.username, p.card, p.pull.variant)
-        }
-        recordLevelUpActivity(user.id, user.username, result.leveledUp)
+        publishBatch(user, result)
       }
 
       // Déclenche le règlement des duels ACTIVE du joueur. `void` + `catch` :
@@ -291,6 +306,42 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         tokensRemaining: result.tokensRemaining,
         xpGained: result.xpGained,
         unlockedAchievements: result.unlockedAchievements,
+      })
+    },
+  )
+
+  // POST /pulls/astral — ouvrir 1 à 10 capsules astrales (aucun jeton). Pas
+  // de règlement de duel ni de pari : le tirage astral est hors de leur
+  // fenêtre.
+  fastify.post(
+    '/pulls/astral',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Open astral capsules',
+        body: pullBatchBodySchema,
+        response: { 201: pullAstralResponseSchema },
+      },
+    },
+    async (request, reply) => {
+      const { count } = request.body
+      const result = await gachaDomain.pullAstral(request.user.userID, count)
+      const user = await userRepository.findById(request.user.userID)
+      if (user) {
+        publishBatch(user, result)
+      }
+      backgroundTasks.track(
+        teamProgressionDomain
+          .award(request.user.userID, null, 'PULL', count)
+          .catch((err) => fastify.log.error({ err }, 'team points failed')),
+      )
+      return reply.status(201).send({
+        pulls: toPullsPayload(result.pulls),
+        tokensRemaining: result.tokensRemaining,
+        xpGained: result.xpGained,
+        unlockedAchievements: result.unlockedAchievements,
+        capsulesRemaining: result.capsulesRemaining,
+        astralPityCurrent: result.astralPityCurrent,
       })
     },
   )
@@ -393,6 +444,39 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
+  // GET /capsules — inventaire de capsules (toujours une entrée ASTRAL)
+  fastify.get(
+    '/capsules',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Get my capsule inventory',
+        response: { 200: capsulesResponseSchema },
+      },
+    },
+    async (request) => {
+      const [capsules, upgrades, cfg] = await Promise.all([
+        userCapsuleRepository.findByUser(request.user.userID),
+        skillTreeRepository.getEffectsForUser(request.user.userID),
+        configService.getMany('astral.pityThreshold'),
+      ])
+      const astral = capsules.find((c) => c.type === 'ASTRAL')
+      return {
+        capsules: [
+          {
+            type: 'ASTRAL' as const,
+            quantity: astral?.quantity ?? 0,
+            pityCurrent: astral?.pityCurrent ?? 0,
+            pityThreshold: effectivePityThreshold(
+              cfg['astral.pityThreshold'],
+              upgrades.pityReduction ?? 0,
+            ),
+          },
+        ],
+      }
+    },
+  )
+
   // GET /pulls/history — historique paginé
   fastify.get(
     '/pulls/history',
@@ -477,7 +561,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async () => {
-      const cards = await cardRepository.findAllActive()
+      const cards = await cardRepository.findActiveNormal()
       return { rates: computeDropRates(cards) }
     },
   )

@@ -1,5 +1,6 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { EffectComposer } from '@react-three/postprocessing'
+import gsap from 'gsap'
 import { Leva, useControls } from 'leva'
 import {
   BloomEffect,
@@ -13,6 +14,7 @@ import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion.
 import { CapsuleScene } from './CapsuleScene'
 import {
   type CapsuleAnim,
+  type CapsuleKind,
   type CapsuleTuning,
   createCapsuleAnim,
   type TeaseTier,
@@ -86,12 +88,28 @@ function PostFX({
 type Props = {
   teaseTier: TeaseTier | null
   onBurst: () => void
+  capsuleKind?: CapsuleKind
+  /** Ralenti de toute la chorégraphie gsap (1 = vitesse normale), pour régler
+   *  la séquence à l'œil : labo capsule et sélecteur de dev du tirage. */
+  timeScale?: number
 }
 
-export function CapsuleStage({ teaseTier, onBurst }: Props) {
+export function CapsuleStage({
+  teaseTier,
+  onBurst,
+  capsuleKind = 'classic',
+  timeScale = 1,
+}: Props) {
   const { canvasKey, canvasRef } = useCanvasContextRecovery()
   const reduced = usePrefersReducedMotion()
   const anim = useMemo(createCapsuleAnim, [])
+
+  useEffect(() => {
+    gsap.globalTimeline.timeScale(timeScale)
+    return () => {
+      gsap.globalTimeline.timeScale(1)
+    }
+  }, [timeScale])
 
   // Multiplicateurs de « feel », tunables en dev via le panneau leva
   const tuning = useControls('Capsule FX', {
@@ -126,6 +144,7 @@ export function CapsuleStage({ teaseTier, onBurst }: Props) {
           onBurst={onBurst}
           reduced={reduced}
           tuning={tuning}
+          capsuleKind={capsuleKind}
         />
         <PostFX
           anim={anim}

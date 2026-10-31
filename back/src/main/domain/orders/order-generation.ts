@@ -6,6 +6,7 @@ import type {
   PoolCard,
   Rng,
 } from '../../types/domain/orders/orders.domain.interface'
+import { isAstralElement } from '../gacha/card-pools'
 import { weightedPick } from '../shared/weighted-pick'
 import { RARITY_ORDER } from '../wagers/wager-rules'
 import { cardMatchesLine } from './order-matching'
@@ -43,13 +44,15 @@ const sameCriteria = (
 
 /** Commande livrable avec les doublons fournis ; [] s'il n'y en a aucun. */
 function feasibleLines(duplicates: DuplicateStack[], rng: Rng): OrderLine[] {
-  const left = new Map(duplicates.map((d) => [d.userCardId, d.available]))
+  // Carte astrale (LIGHT/DARK) jamais livrable par une commande normale.
+  const stock = duplicates.filter((d) => !isAstralElement(d.element))
+  const left = new Map(stock.map((d) => [d.userCardId, d.available]))
   const lines: OrderLine[] = []
   for (let i = 0; i < MAX_LINES; i++) {
     if (i > 0 && rng() >= SECOND_LINE_CHANCE) {
       break
     }
-    const usable = duplicates.filter((d) => (left.get(d.userCardId) ?? 0) > 0)
+    const usable = stock.filter((d) => (left.get(d.userCardId) ?? 0) > 0)
     if (usable.length === 0) {
       break
     }

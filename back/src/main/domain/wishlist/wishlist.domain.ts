@@ -11,6 +11,7 @@ import type { ConfigServiceInterface } from '../../types/infra/config/config.ser
 import type { PostgresORMInterface } from '../../types/infra/orm/client'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
+import { isAstralElement } from '../gacha/card-pools'
 
 const RARITY_PRICE_KEYS = {
   COMMON: 'dailyShopPriceCommon',
@@ -124,6 +125,9 @@ export class WishlistDomain implements IWishlistDomain {
     ])
     if (!card || !card.set.isActive) {
       throw Boom.notFound(errorMessage('wishlist.cardNotFoundOrInactive'))
+    }
+    if (isAstralElement(card.element)) {
+      throw Boom.badRequest(errorMessage('wishlist.astralCardNotWishable'))
     }
     const slots = wishlistSlots(effects.wishlistSlots ?? 0)
 

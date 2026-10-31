@@ -24,7 +24,13 @@ export type ShopItem = {
   id: string
   name: string
   description: string
-  type: 'TOKEN_PACK' | 'ENERGY_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
+  type:
+    | 'TOKEN_PACK'
+    | 'ENERGY_PACK'
+    | 'BOOST'
+    | 'COSMETIC'
+    | 'MACHINE'
+    | 'CAPSULE'
   cost: number
   currency: ShopCurrency
   value: unknown

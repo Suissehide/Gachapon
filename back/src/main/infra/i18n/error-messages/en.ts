@@ -80,6 +80,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   // --- gacha ---
   'gacha.noActiveCards': 'No active cards in any set',
   'gacha.notEnoughTokens': 'Not enough tokens',
+  'gacha.notEnoughCapsules': "You don't have enough astral capsules.",
 
   // --- shop / daily-shop / wishlist ---
   'shop.itemNotFound': 'Item not found',
@@ -96,12 +97,17 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'shop.boostInvalidRarity': 'BOOST item has invalid rarity: {{rarity}}',
   'shop.energyPackMissingCombatPoints':
     'ENERGY_PACK item value has no positive integer combatPoints',
+  'shop.capsuleInvalidType': 'CAPSULE item value has an invalid capsule type',
+  'shop.capsuleMissingQuantity':
+    'CAPSULE item value has no positive integer quantity',
   'dailyShop.notEnoughActiveCards':
     'Not enough active cards to generate the market',
   'dailyShop.itemAlreadyPurchased': 'Item already purchased',
   'wishlist.cardNotFoundOrInactive': 'Card not found or set is inactive',
   'wishlist.full': 'Wishlist full ({{slots}} slots)',
   'wishlist.cardNotInWishlist': 'Card is not in your wishlist',
+  'wishlist.astralCardNotWishable':
+    'Light and Dark cards cannot be wished — they come from the astral capsule',
   'shop.shopItemNotFound': 'Shop item not found',
 
   // --- team ---
@@ -344,6 +350,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
     'The recipe needs {{expected}} cards, the selection has {{got}}',
   'alchemy.noTargetCard':
     'No card is available at the resulting rarity right now',
+  'alchemy.astralIngredient':
+    'Light and Dark cards cannot be used as an ingredient',
 
   // --- infra ---
   'httpClient.getFailed': 'Error getting data',

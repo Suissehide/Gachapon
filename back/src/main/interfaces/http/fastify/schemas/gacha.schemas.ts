@@ -59,6 +59,13 @@ export const pullBatchResponseSchema = z.object({
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
 })
 
+// ── POST /pulls/astral ──────────────────────────────────────────────────────
+
+export const pullAstralResponseSchema = pullBatchResponseSchema.extend({
+  capsulesRemaining: z.number().int(),
+  astralPityCurrent: z.number().int(),
+})
+
 // ── GET /pulls/history ──────────────────────────────────────────────────────
 
 export const pullsHistoryQuerySchema = z.object({
@@ -100,6 +107,19 @@ export const pullsRecentQuerySchema = z.object({
 
 export const dropRatesResponseSchema = z.object({
   rates: z.array(z.object({ rarity: cardRarityEnum, pct: z.number() })),
+})
+
+// ── GET /capsules ───────────────────────────────────────────────────────────
+
+export const capsulesResponseSchema = z.object({
+  capsules: z.array(
+    z.object({
+      type: z.literal('ASTRAL'),
+      quantity: z.number().int(),
+      pityCurrent: z.number().int(),
+      pityThreshold: z.number().int(),
+    }),
+  ),
 })
 
 // ── GET /tokens/balance ─────────────────────────────────────────────────────

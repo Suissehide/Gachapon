@@ -72,6 +72,14 @@ export const ELEMENT_ORDER: CardElement[] = [
   'DARK',
 ]
 
+/** Éléments réservés à la capsule astrale — même liste que
+ * `back/src/main/domain/gacha/card-pools.ts`. */
+const ASTRAL_ELEMENTS: readonly string[] = ['LIGHT', 'DARK']
+
+export function isAstralElement(element: string | null | undefined): boolean {
+  return ASTRAL_ELEMENTS.includes(element ?? '')
+}
+
 // Résolu une fois au chargement du module — sûr ici parce que
 // `useLocale().switchTo` fait toujours un rechargement dur de la page (voir
 // `i18n/useLocale.ts`).

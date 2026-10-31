@@ -701,5 +701,25 @@
       "brilliantMultiplier": "☀️ Multiplicateur Brillante",
       "holographicMultiplier": "🌊 Multiplicateur Holographique"
     }
+  },
+  "capsuleLab": {
+    "kicker": "Outils",
+    "title": "Labo capsule",
+    "subtitle": "Rejoue l'arrivée et l'ouverture de la capsule, au ralenti si besoin.",
+    "capsule": "Capsule",
+    "classic": "Classique",
+    "astral": "Astrale",
+    "speed": "Vitesse",
+    "tier": "Rareté annoncée",
+    "replay": "Rejouer",
+    "tiers": {
+      "common": "Commune",
+      "uncommon": "Peu commune",
+      "rare": "Rare",
+      "epic": "Épique",
+      "brilliant": "Brillante",
+      "legendary": "Légendaire",
+      "holographic": "Holographique"
+    }
   }
 }

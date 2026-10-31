@@ -39,6 +39,7 @@ const TAG_BY_PATH_PREFIX: [prefix: string, tag: string][] = [
   ['/api-keys', 'API keys'],
   ['/pulls', 'Gacha'],
   ['/tokens', 'Gacha'],
+  ['/capsules', 'Gacha'],
   ['/users/:id/collection', 'Collection'],
   ['/collection', 'Collection'],
   ['/cards', 'Collection'],

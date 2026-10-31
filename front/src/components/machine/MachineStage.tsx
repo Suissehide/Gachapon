@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { forwardRef, useImperativeHandle, useRef } from 'react'
 
 import { useCanvasContextRecovery } from '../../hooks/useCanvasContextRecovery.ts'
+import type { CapsuleKind } from './capsule/capsuleConfig'
 import type { GashaponMachineHandle } from './type/GashaponMachine'
 import { GashaponMachine } from './type/GashaponMachine'
 
@@ -12,7 +13,10 @@ export type MachineStageHandle = {
 
 // Le zoom pendant le tirage est un transform CSS sur le conteneur (play.tsx),
 // pas un dolly caméra : un dolly couperait la machine aux bords du canvas.
-export const MachineStage = forwardRef<MachineStageHandle, object>((_, ref) => {
+export const MachineStage = forwardRef<
+  MachineStageHandle,
+  { capsuleKind?: CapsuleKind }
+>(({ capsuleKind = 'classic' }, ref) => {
   const machineRef = useRef<GashaponMachineHandle>(null)
   const { canvasKey, canvasRef } = useCanvasContextRecovery()
 
@@ -34,7 +38,7 @@ export const MachineStage = forwardRef<MachineStageHandle, object>((_, ref) => {
       <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
       <pointLight position={[-3, 3, 3]} intensity={0.6} color="#f59e0b" />
       <pointLight position={[2.5, -1, 3]} intensity={0.35} color="#8ea2ff" />
-      <GashaponMachine ref={machineRef} />
+      <GashaponMachine ref={machineRef} capsuleKind={capsuleKind} />
       <OrbitControls
         enableZoom={false}
         enablePan={false}

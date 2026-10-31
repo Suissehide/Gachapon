@@ -4,19 +4,29 @@ import gsap from 'gsap'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
+import {
+  AstralBand,
+  type AstralMaterial,
+  createAstralMaterial,
+} from './AstralCapsuleVisual'
+import { AstralMeteor } from './AstralMeteor'
 import { ChargeSparks } from './ChargeSparks'
 import { capsuleAudio } from './capsuleAudio'
 import {
   type CapsuleAnim,
+  type CapsuleKind,
   type CapsuleTuning,
   type TeaseTier,
   tierConfig,
 } from './capsuleConfig'
+import { StarShower } from './StarShower'
 import auraFrag from './shaders/aura.frag.glsl'
 import auraVert from './shaders/aura.vert.glsl'
 import groundFrag from './shaders/ground.frag.glsl'
 
 const BALL_SCALE = 1.05
+// Rayon de la capsule d'ouverture (coques et cœur sont dimensionnés dessus)
+const SHELL_R = 0.85
 
 // Profil d'un à-coup de shake : montée sèche vers l'extrême (18 %), puis
 // ressort amorti qui déborde de l'autre côté et s'annule pile à p = 1.
@@ -107,6 +117,36 @@ function poseCapsule(
   bottom.rotation.z = -split * 0.5
 }
 
+// Les coques s'effacent dans la seconde moitié de l'ouverture.
+function shellFade(split: number): number {
+  return split < 0.55 ? 1 : 1 - (split - 0.55) / 0.45
+}
+
+// Pendant astral des matériaux de coque : la nébuleuse reste lisible, la
+// teinte du palier monte par-dessus avec la charge, puis la coque s'efface.
+function shadeAstral(
+  anim: CapsuleAnim,
+  color: THREE.Color,
+  material: AstralMaterial,
+  trim: THREE.Group | null,
+  t: number,
+  reduced: boolean,
+) {
+  const uniforms = material.uniforms
+  if (trim) {
+    trim.visible = anim.split <= 0
+  }
+  if (!reduced) {
+    uniforms.uTime.value = t
+  }
+  const darken = 1 - anim.inhale * 0.7
+  uniforms.uGlow.value
+    .copy(color)
+    .multiplyScalar((anim.charge * 1.6 + anim.sting * 1.1) * darken * 0.5)
+  material.transparent = anim.split > 0
+  uniforms.uOpacity.value = shellFade(anim.split)
+}
+
 // Teinte et intensités des matériaux + lumière interne pour la frame.
 function shadeCapsule(
   anim: CapsuleAnim,
@@ -120,7 +160,7 @@ function shadeCapsule(
 ) {
   const c = anim.charge
   const split = anim.split
-  const fadeAlpha = split < 0.55 ? 1 : 1 - (split - 0.55) / 0.45
+  const fadeAlpha = shellFade(split)
   const darken = 1 - anim.inhale * 0.7
   if (bottomMat) {
     bottomMat.color.copy(shell)
@@ -156,6 +196,7 @@ type Props = {
   onBurst: () => void
   reduced: boolean
   tuning: CapsuleTuning
+  capsuleKind?: CapsuleKind
 }
 
 // Chorégraphie complète de la capsule : pop d'apparition → 3 à-coups de
@@ -168,6 +209,7 @@ export function CapsuleScene({
   onBurst,
   reduced,
   tuning,
+  capsuleKind = 'classic',
 }: Props) {
   const camera = useThree((s) => s.camera)
 
@@ -180,6 +222,14 @@ export function CapsuleScene({
   const lidMatRef = useRef<THREE.MeshPhysicalMaterial>(null)
   const coreMatRef = useRef<THREE.MeshStandardMaterial>(null)
   const lightRef = useRef<THREE.PointLight>(null)
+  const astralTrimRef = useRef<THREE.Group>(null)
+
+  // Enveloppe astrale : un seul matériau pour les deux coques
+  const astralMat = useMemo(
+    () => (capsuleKind === 'astral' ? createAstralMaterial() : null),
+    [capsuleKind],
+  )
+  useEffect(() => () => astralMat?.dispose(), [astralMat])
 
   const curColor = useMemo(() => new THREE.Color(tierConfig(null).color), [])
   const curOuter = useMemo(
@@ -239,6 +289,8 @@ export function CapsuleScene({
   const chargeTweenRef = useRef<gsap.core.Tween | null>(null)
   const notifiedRef = useRef(false)
   const stingFiredRef = useRef(false)
+  // Lu une seule fois au montage, comme la chorégraphie qu'il pilote.
+  const fallsRef = useRef(capsuleKind === 'astral' && !reduced)
 
   const getSparkConfig = useMemo(() => () => tierConfig(tierRef.current), [])
 
@@ -317,8 +369,36 @@ export function CapsuleScene({
       sting: 0,
       camZ: 7,
       camShake: 0,
+      fall: 0,
+      impact: 0,
+      flash: 0,
     })
-    tl.to(anim, { pop: 1, duration: 0.45, ease: 'elastic.out(1.1, 0.5)' })
+    if (fallsRef.current) {
+      // L'étoile filante tombe du ciel ; à l'arrivée un flash blanc couvre
+      // l'écran et l'étoile explose. La capsule naît dans la lumière : petite
+      // au pic du flash, elle grandit pendant que le flash retombe.
+      tl.set(anim, { fall: 1 })
+      tl.to(anim, { fall: 0, duration: 1.15, ease: 'power2.in' })
+      tl.to(anim, { flash: 1, duration: 0.06, ease: 'power1.out' }, '-=0.04')
+      tl.call(() => {
+        capsuleAudio.clack()
+        gsap.fromTo(
+          anim,
+          { impact: 0 },
+          { impact: 1, duration: 0.9, ease: 'power3.out' },
+        )
+        gsap.fromTo(
+          anim,
+          { camShake: 1.8 },
+          { camShake: 0, duration: 0.7, ease: 'power2.out' },
+        )
+      })
+      tl.set(anim, { pop: 0.2 })
+      tl.to(anim, { flash: 0, duration: 0.55, ease: 'power2.out' }, '+=0.06')
+      tl.to(anim, { pop: 1, duration: 0.8, ease: 'elastic.out(1, 0.5)' }, '<')
+    } else {
+      tl.to(anim, { pop: 1, duration: 0.45, ease: 'elastic.out(1.1, 0.5)' })
+    }
     for (let i = 0; i < 3; i++) {
       tl.call(() => {
         burstTargetRef.current = randomBurstTarget(burstIdxRef.current)
@@ -407,6 +487,16 @@ export function CapsuleScene({
     if (seamRef.current) {
       seamRef.current.visible = anim.split <= 0
     }
+    if (astralMat) {
+      shadeAstral(
+        anim,
+        curColor,
+        astralMat,
+        astralTrimRef.current,
+        t,
+        reducedRef.current,
+      )
+    }
     shadeCapsule(
       anim,
       curShell,
@@ -420,12 +510,15 @@ export function CapsuleScene({
 
     const split = anim.split
     auraUniforms.uTime.value = t
+    // L'aura naît avec la capsule : sans elle, son halo pulsé trahirait le
+    // point d'arrivée pendant le vol de l'étoile filante.
     auraUniforms.uIntensity.value =
-      (0.25 +
+      ((0.25 +
         c * cfg.aura * 1.9 * tuningRef.current.auraBoost +
         anim.sting * 1.2) *
         (1 - anim.inhale * 0.35) +
-      split * 2.4
+        split * 2.4) *
+      Math.min(1, anim.pop)
     auraUniforms.uRays.value = cfg.rays * (0.3 + 0.7 * c) * rawReveal
     auraUniforms.uHueCycle.value = cfg.hueCycle && rawReveal > 0.5 ? 1 : 0
     auraUniforms.uContract.value = anim.inhale
@@ -483,6 +576,13 @@ export function CapsuleScene({
 
       <ChargeSparks anim={anim} color={curColor} getConfig={getSparkConfig} />
 
+      {capsuleKind === 'astral' && !reduced && (
+        <>
+          <AstralMeteor anim={anim} />
+          <StarShower anim={anim} reduced={reduced} />
+        </>
+      )}
+
       {/* Lumière interne teintée rareté — éclaire la scène à la charge */}
       <pointLight
         ref={lightRef}
@@ -504,53 +604,94 @@ export function CapsuleScene({
           />
         </mesh>
 
-        {/* ── Couvercle translucide ── */}
+        {/* ── Couvercle translucide (nébuleuse de jour en astral) ── */}
         <group ref={topRef}>
-          <mesh renderOrder={1}>
-            <sphereGeometry
-              args={[0.85, 64, 64, 0, Math.PI * 2, 0, Math.PI / 2]}
-            />
-            <meshPhysicalMaterial
-              ref={lidMatRef}
-              color="#cfe6f5"
-              roughness={0.12}
-              metalness={0}
-              opacity={0.42}
-              transparent
-              clearcoat={0.8}
-              clearcoatRoughness={0.12}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
+          {astralMat ? (
+            <mesh material={astralMat}>
+              <sphereGeometry
+                args={[SHELL_R, 64, 64, 0, Math.PI * 2, 0, Math.PI / 2]}
+              />
+            </mesh>
+          ) : (
+            <mesh renderOrder={1}>
+              <sphereGeometry
+                args={[0.85, 64, 64, 0, Math.PI * 2, 0, Math.PI / 2]}
+              />
+              <meshPhysicalMaterial
+                ref={lidMatRef}
+                color="#cfe6f5"
+                roughness={0.12}
+                metalness={0}
+                opacity={0.42}
+                transparent
+                clearcoat={0.8}
+                clearcoatRoughness={0.12}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+          )}
         </group>
 
-        {/* ── Coque basse ── */}
+        {/* ── Coque basse (nébuleuse de nuit en astral) ── */}
         <group ref={bottomRef}>
-          <mesh>
-            <sphereGeometry
-              args={[0.85, 64, 64, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]}
-            />
-            <meshStandardMaterial
-              ref={bottomMatRef}
-              color="#e6e2ee"
-              roughness={0.55}
-              metalness={0.05}
-              emissive="#cdd5e4"
-              emissiveIntensity={0}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-          <mesh ref={seamRef}>
-            <cylinderGeometry args={[0.862, 0.862, 0.12, 64, 1, true]} />
-            <meshStandardMaterial
-              ref={seamMatRef}
-              color="#e6e2ee"
-              roughness={0.6}
-              metalness={0.05}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
+          {astralMat ? (
+            <mesh material={astralMat}>
+              <sphereGeometry
+                args={[
+                  SHELL_R,
+                  64,
+                  64,
+                  0,
+                  Math.PI * 2,
+                  Math.PI / 2,
+                  Math.PI / 2,
+                ]}
+              />
+            </mesh>
+          ) : (
+            <>
+              <mesh>
+                <sphereGeometry
+                  args={[
+                    0.85,
+                    64,
+                    64,
+                    0,
+                    Math.PI * 2,
+                    Math.PI / 2,
+                    Math.PI / 2,
+                  ]}
+                />
+                <meshStandardMaterial
+                  ref={bottomMatRef}
+                  color="#e6e2ee"
+                  roughness={0.55}
+                  metalness={0.05}
+                  emissive="#cdd5e4"
+                  emissiveIntensity={0}
+                  side={THREE.DoubleSide}
+                />
+              </mesh>
+              <mesh ref={seamRef}>
+                <cylinderGeometry args={[0.862, 0.862, 0.12, 64, 1, true]} />
+                <meshStandardMaterial
+                  ref={seamMatRef}
+                  color="#e6e2ee"
+                  roughness={0.6}
+                  metalness={0.05}
+                  side={THREE.DoubleSide}
+                />
+              </mesh>
+            </>
+          )}
         </group>
+
+        {/* Bande or astrale : masquée dès l'ouverture, comme le joint */}
+        {astralMat && (
+          <group ref={astralTrimRef}>
+            <AstralBand radius={SHELL_R} segments={64} />
+          </group>
+        )}
       </group>
     </>
   )

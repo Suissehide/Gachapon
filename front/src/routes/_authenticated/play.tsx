@@ -1,13 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  Gem,
-  HelpCircle,
-  SkipForward,
-  Ticket,
-  Volume2,
-  VolumeX,
-} from 'lucide-react'
+import { Gem, HelpCircle, SkipForward, Volume2, VolumeX } from 'lucide-react'
 import {
   type CSSProperties,
   type ReactNode,
@@ -21,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { CapsuleStage } from '../../components/machine/capsule/CapsuleStage'
 import { capsuleAudio } from '../../components/machine/capsule/capsuleAudio'
 import {
+  type CapsuleKind,
   computeTeaseTier,
   type TeaseTier,
   tierConfig,
@@ -33,6 +27,7 @@ import { activeBoostsOf, BoostCard } from '../../components/play/BoostCard.tsx'
 import { LevelCard } from '../../components/play/LevelCard.tsx'
 import { PityCard } from '../../components/play/PityCard.tsx'
 import { PlayTutorialPopup } from '../../components/play/PlayTutorialPopup.tsx'
+import { PullActions } from '../../components/play/PullActions.tsx'
 import { PullHud } from '../../components/play/PullHud.tsx'
 import { QuestsCard } from '../../components/play/QuestsCard.tsx'
 import { RatesModal } from '../../components/play/RatesModal.tsx'
@@ -43,9 +38,13 @@ import { WagerBanner } from '../../components/play/WagerBanner.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { InfoButton } from '../../components/shared/InfoButton.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
-import { Button } from '../../components/ui/button.tsx'
+import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
-import type { TokenBalance } from '../../constants/gacha.constant.ts'
+import type {
+  AstralPullResult,
+  Capsule,
+  TokenBalance,
+} from '../../constants/gacha.constant.ts'
 import type { ShopItem } from '../../constants/shop.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
@@ -59,7 +58,12 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import type { PullBatchResult } from '../../queries/useGacha'
-import { usePullBatch, useTokenBalance } from '../../queries/useGacha'
+import {
+  useCapsules,
+  usePullAstral,
+  usePullBatch,
+  useTokenBalance,
+} from '../../queries/useGacha'
 import { useAchievementUnlockStore } from '../../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import { useLevelUpStore } from '../../stores/levelUp.store.ts'
@@ -110,6 +114,14 @@ const AMBIENT_PARTICLES = [
 ]
 
 const SKIP_KEY = 'play.skipAnimations'
+const CAPSULE_KINDS: readonly CapsuleKind[] = ['classic', 'astral']
+
+// Un tirage astral renvoie en plus le stock de capsules restant
+type PullResult = PullBatchResult | AstralPullResult
+
+function astralStockOf(data: { capsules: Capsule[] } | undefined) {
+  return data?.capsules.find((c) => c.type === 'ASTRAL')
+}
 
 // Garantie + boosts tels que le joueur les voyait au lancement du tirage.
 type PullSnapshot = { pity: number; threshold: number; boosts: ShopItem[] }
@@ -137,23 +149,40 @@ function advanceSnapshot(
   }
 }
 
-// Boutons flottants : son, revoir le tutoriel, sauter les animations
+// Ralentis proposés en dev pour régler l'animation de la capsule à l'œil.
+const DEV_TIME_SCALES = ['0.1', '0.25', '0.5', '1'] as const
+type DevTimeScale = (typeof DEV_TIME_SCALES)[number]
+
+// Boutons flottants : son, revoir le tutoriel, sauter les animations (et le
+// ralenti, en dev seulement)
 function PlayFloatingControls({
   soundOn,
   onToggleSound,
   skipAnimations,
   onToggleSkip,
   onOpenTutorial,
+  timeScale,
+  onTimeScaleChange,
 }: {
   soundOn: boolean
   onToggleSound: () => void
   skipAnimations: boolean
   onToggleSkip: () => void
   onOpenTutorial: () => void
+  timeScale: DevTimeScale
+  onTimeScaleChange: (scale: DevTimeScale) => void
 }) {
   const { t } = useTranslation('gacha')
   return (
     <div className="fixed bottom-4 right-4 z-5 flex items-center gap-2 sm:bottom-5 sm:right-5">
+      {import.meta.env.DEV && (
+        <SegmentedControl<DevTimeScale>
+          options={DEV_TIME_SCALES.map((s) => ({ value: s, label: `×${s}` }))}
+          value={timeScale}
+          onChange={onTimeScaleChange}
+          className="shadow-md"
+        />
+      )}
       <button
         type="button"
         aria-label={
@@ -210,7 +239,9 @@ function PlayFloatingControls({
  *  when the user closes the reveal or the pull errors back to idle. */
 function PullCycleOverlay({
   phase,
+  capsuleKind,
   teaseTier,
+  timeScale,
   result,
   soundOn,
   onToggleSound,
@@ -222,8 +253,10 @@ function PullCycleOverlay({
   hud,
 }: {
   phase: Phase
+  capsuleKind: CapsuleKind
   teaseTier: TeaseTier | null
-  result: PullBatchResult | null
+  timeScale: number
+  result: PullResult | null
   soundOn: boolean
   onToggleSound: () => void
   onCapsuleBurst: () => void
@@ -271,9 +304,17 @@ function PullCycleOverlay({
       )}
 
       {/* Capsule scene — chorégraphie gsap + bloom, rarity-aware */}
-      {phase === 'capsule' && (
+      {/* En astral, la scène reste montée pendant le flash : la pluie
+       *  d'étoiles du burst s'y déploie au lieu d'être coupée net. */}
+      {(phase === 'capsule' ||
+        (capsuleKind === 'astral' && phase === 'ball-flash')) && (
         <div className="absolute inset-0">
-          <CapsuleStage teaseTier={teaseTier} onBurst={onCapsuleBurst} />
+          <CapsuleStage
+            teaseTier={teaseTier}
+            onBurst={onCapsuleBurst}
+            capsuleKind={capsuleKind}
+            timeScale={timeScale}
+          />
         </div>
       )}
 
@@ -323,7 +364,9 @@ function PullCycleOverlay({
       {phase === 'reveal-grid' && result && (
         <RevealGrid
           results={result.pulls}
-          tokensRemaining={result.tokensRemaining}
+          {...('capsulesRemaining' in result
+            ? { tokensRemaining: result.capsulesRemaining, astral: true }
+            : { tokensRemaining: result.tokensRemaining })}
           onClose={onClose}
           onPullAgain={onPullAgain}
           onCardRevealed={onCardRevealed}
@@ -337,12 +380,12 @@ function PullCycleOverlay({
 function Play() {
   const { t } = useTranslation('gacha')
   const [phase, setPhase] = useState<Phase>('idle')
-  const [result, setResult] = useState<PullBatchResult | null>(null)
+  const [result, setResult] = useState<PullResult | null>(null)
   // Palier de rareté teasé par la capsule (meilleure rareté du lot) — null
   // tant que le réseau n'a pas répondu : capsule neutre, qui « bloom » à sa
   // couleur dès que le résultat tombe.
   const [teaseTier, setTeaseTier] = useState<TeaseTier | null>(null)
-  const pendingResult = useRef<PullBatchResult | null>(null)
+  const pendingResult = useRef<PullResult | null>(null)
   // Level-up detected at pull time but celebrated only once every card is
   // flipped (see receivePullResult / handleAllRevealed).
   const pendingLevelUp = useRef<{
@@ -369,6 +412,11 @@ function Play() {
 
   // Son du tirage : off par défaut, persistant. Le moteur audio est un
   // singleton — on synchronise juste son état muet.
+  const [devTimeScale, setDevTimeScale] = useStoredState<DevTimeScale>(
+    'play.devTimeScale',
+    '1',
+    DEV_TIME_SCALES,
+  )
   const [soundOn, setSoundOn] = useStoredState<'true' | 'false'>(
     'play.soundOn',
     'false',
@@ -391,7 +439,34 @@ function Play() {
   }, [skipAnimations])
 
   const { data: balance } = useTokenBalance()
-  const { mutate: pullBatchMutation, isPending: pullPending } = usePullBatch()
+  const { mutate: pullBatchMutation, isPending: batchPending } = usePullBatch()
+  const { mutate: pullAstralMutation, isPending: astralPending } =
+    usePullAstral()
+  const pullPending = batchPending || astralPending
+  const { data: capsules } = useCapsules()
+  const astralStock = astralStockOf(capsules)?.quantity ?? 0
+
+  // Capsule choisie, mémorisée. Hors tirage, une astrale sans stock retombe
+  // sur la classique (au chargement comme après avoir vidé le stock) ; pendant
+  // un tirage on n'y touche pas, la scène en cours en dépend.
+  const [capsuleKind, setCapsuleKind] = useStoredState<CapsuleKind>(
+    'play.capsuleKind',
+    'classic',
+    CAPSULE_KINDS,
+  )
+  useEffect(() => {
+    if (
+      capsuleKind === 'astral' &&
+      capsules !== undefined &&
+      astralStock === 0 &&
+      phase === 'idle'
+    ) {
+      setCapsuleKind('classic')
+    }
+  }, [capsuleKind, capsules, astralStock, phase, setCapsuleKind])
+  const astral = capsuleKind === 'astral'
+
+  // Étoile filante astrale, coupée en reduced motion
   const username = useAuthStore((s) => s.user?.username ?? '')
   const { toast } = useToast()
   const qc = useQueryClient()
@@ -408,27 +483,47 @@ function Play() {
   const [snapshot, setSnapshot] = useState<PullSnapshot | null>(null)
   const revealedRef = useRef(new Set<number>())
   const [revealedCount, setRevealedCount] = useState(0)
-  const takeSnapshot = useCallback(() => {
-    const bal = qc.getQueryData<TokenBalance>(['tokens', 'balance'])
-    const shop = qc.getQueryData<{ items: ShopItem[] }>(['shop'])
-    revealedRef.current = new Set()
-    setRevealedCount(0)
-    setSnapshot({
-      pity: bal?.pityCurrent ?? 0,
-      threshold: bal?.pityThreshold ?? 0,
-      boosts: activeBoostsOf(shop?.items),
-    })
-  }, [qc])
+  // En astral : garantie propre aux capsules, et aucun boost (ni appliqué ni
+  // consommé par ce tirage).
+  const takeSnapshot = useCallback(
+    (kind: CapsuleKind) => {
+      revealedRef.current = new Set()
+      setRevealedCount(0)
+      if (kind === 'astral') {
+        const capsule = astralStockOf(
+          qc.getQueryData<{ capsules: Capsule[] }>(['capsules']),
+        )
+        setSnapshot({
+          pity: capsule?.pityCurrent ?? 0,
+          threshold: capsule?.pityThreshold ?? 0,
+          boosts: [],
+        })
+        return
+      }
+      const bal = qc.getQueryData<TokenBalance>(['tokens', 'balance'])
+      const shop = qc.getQueryData<{ items: ShopItem[] }>(['shop'])
+      setSnapshot({
+        pity: bal?.pityCurrent ?? 0,
+        threshold: bal?.pityThreshold ?? 0,
+        boosts: activeBoostsOf(shop?.items),
+      })
+    },
+    [qc],
+  )
 
-  // Keep tokens in a ref so startPull can guard on it without being recreated on every balance tick
-  const tokensRef = useRef(tokens)
+  const pullCost = economy.gacha.pullTokenCost
+  // Tirages payables dans la capsule choisie (jetons ÷ coût, ou stock astral)
+  const affordable = astral ? astralStock : Math.floor(tokens / pullCost)
+
+  // Mirrored in refs so startPull can guard without being recreated on every balance tick
+  const affordableRef = useRef(affordable)
+  const capsuleKindRef = useRef(capsuleKind)
   const pullPendingRef = useRef(pullPending)
   useEffect(() => {
-    tokensRef.current = tokens
-  }, [tokens])
-  useEffect(() => {
+    affordableRef.current = affordable
+    capsuleKindRef.current = capsuleKind
     pullPendingRef.current = pullPending
-  }, [pullPending])
+  }, [affordable, capsuleKind, pullPending])
 
   // Stable handlers — useCallback because they're passed to children with effect deps.
   // La capsule vient d'exploser (burst gsap dans CapsuleScene). Fire the flash
@@ -482,7 +577,7 @@ function Play() {
   // detects a level-up NOW — before the profile refetch lands — but holds the
   // celebration back until every card is revealed (handleAllRevealed).
   const receivePullResult = useCallback(
-    (r: PullBatchResult) => {
+    (r: PullResult) => {
       pendingResult.current = r
       // Foreshadowing : la capsule s'illumine à la couleur de la meilleure
       // rareté du lot — jamais la carte précise.
@@ -567,19 +662,39 @@ function Play() {
     phaseRef.current = 'capsule'
   }, [])
 
+  // Lance la requête dans la capsule choisie ; une erreur ramène à idle.
+  const firePull = useCallback(
+    (count: number) => {
+      const options = {
+        onSuccess: receivePullResult,
+        onError: () => {
+          pullAbortedRef.current = true
+          setPhase('idle')
+          phaseRef.current = 'idle'
+        },
+      }
+      if (capsuleKindRef.current === 'astral') {
+        pullAstralMutation(count, options)
+      } else {
+        pullBatchMutation(count, options)
+      }
+    },
+    [pullAstralMutation, pullBatchMutation, receivePullResult],
+  )
+
   // startPull reads all guards from refs so it is safe to call via queueMicrotask / setTimeout
   // after a synchronous state update.
   const startPull = useCallback(
     async (count: number) => {
       if (
-        tokensRef.current < count ||
+        affordableRef.current < count ||
         phaseRef.current !== 'idle' ||
         pullPendingRef.current
       ) {
         return
       }
       pullAbortedRef.current = false
-      takeSnapshot()
+      takeSnapshot(capsuleKindRef.current)
 
       // Geste utilisateur → déverrouille le contexte WebAudio
       capsuleAudio.unlock()
@@ -589,17 +704,10 @@ function Play() {
       setTeaseTier(null)
 
       // "Skip animations" only skips the 3D machine animation — the capsule
-      // sequence, flash and card-reveal effects still play. Go straight to
-      // the capsule on the black backdrop.
+      // sequence, flash and card-reveal
+      // effects still play. Go straight to the capsule on the black backdrop.
       if (skipAnimationsRef.current) {
-        pullBatchMutation(count, {
-          onSuccess: receivePullResult,
-          onError: () => {
-            pullAbortedRef.current = true
-            setPhase('idle')
-            phaseRef.current = 'idle'
-          },
-        })
+        firePull(count)
         runCapsuleSequence()
         return
       }
@@ -607,14 +715,7 @@ function Play() {
       // Full animation path
       setPhase('machine-anim')
       phaseRef.current = 'machine-anim'
-      pullBatchMutation(count, {
-        onSuccess: receivePullResult,
-        onError: () => {
-          pullAbortedRef.current = true
-          setPhase('idle')
-          phaseRef.current = 'idle'
-        },
-      })
+      firePull(count)
 
       await machineRef.current?.startAnimation()
       if (pullAbortedRef.current) {
@@ -626,7 +727,7 @@ function Play() {
       }
       runCapsuleSequence()
     },
-    [pullBatchMutation, receivePullResult, runCapsuleSequence, takeSnapshot],
+    [firePull, runCapsuleSequence, takeSnapshot],
   )
 
   // From the reveal grid's bottom-bar "Nouveau tirage x1/x10": skip machine anim,
@@ -635,7 +736,7 @@ function Play() {
     (count: number) => {
       // Guard: only callable from the reveal-grid phase; phaseRef is set synchronously
       // before any async work so a second click sees a non-reveal-grid phase and exits.
-      if (phaseRef.current !== 'reveal-grid' || tokensRef.current < count) {
+      if (phaseRef.current !== 'reveal-grid' || affordableRef.current < count) {
         return
       }
       // Lock synchronously — second click is now a no-op
@@ -644,24 +745,19 @@ function Play() {
       pendingResult.current = null
       capsuleAudio.unlock()
       setTeaseTier(null)
-      takeSnapshot()
+      // Même capsule que le tirage qu'on vient de voir
+      takeSnapshot(capsuleKindRef.current)
 
-      // This replay is already on the black backdrop, so the machine anim is
-      // never involved — the "skip animations" toggle has nothing to skip here.
-      // Always play the ball → flash → reveal sequence.
-      pullBatchMutation(count, {
-        onSuccess: receivePullResult,
-        onError: () => {
-          pullAbortedRef.current = true
-          setPhase('idle')
-          phaseRef.current = 'idle'
-        },
-      })
+      // This replay is already on the black backdrop, so the machine anim (and
+      // the astral shooting star) is never involved — the "skip animations"
+      // toggle has nothing to skip here. Always play the ball → flash →
+      // reveal sequence.
+      firePull(count)
 
       setResult(null)
       runCapsuleSequence()
     },
-    [pullBatchMutation, receivePullResult, runCapsuleSequence, takeSnapshot],
+    [firePull, runCapsuleSequence, takeSnapshot],
   )
 
   const showCapsule = phase === 'capsule'
@@ -674,15 +770,12 @@ function Play() {
     phase === 'reveal-grid' ||
     phase === 'pulling'
   const showActions = phase === 'idle'
-  const canPullX1 = tokens >= 1 && phase === 'idle' && !pullPending
-  const canPullX10 = tokens >= 10 && phase === 'idle' && !pullPending
 
   // Hors tirage (idle, y compris après une erreur) : données serveur en direct.
   const live = phase !== 'idle' ? snapshot : null
   const shown = live && advanceSnapshot(live, result, revealedCount)
 
   const [ratesOpen, setRatesOpen] = useState(false)
-  const pullCost = economy.gacha.pullTokenCost
   const toggleSound = () => setSoundOn(soundOn === 'true' ? 'false' : 'true')
 
   return (
@@ -720,7 +813,7 @@ function Play() {
         {/* Cartes de stats */}
         <div className="order-2 grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:order-1 lg:flex lg:flex-col lg:gap-3.5">
           <TokenCard />
-          <PityCard current={shown?.pity} />
+          <PityCard current={shown?.pity} astral={astral} />
           <StreakCard />
           <LevelCard />
           <QuestsCard />
@@ -749,7 +842,8 @@ function Play() {
                     phase === 'machine-anim' && 'motion-safe:scale-[1.3]',
                   )}
                 >
-                  <MachineStage ref={machineRef} />
+                  <MachineStage ref={machineRef} capsuleKind={capsuleKind} />
+
                 </div>
               )}
             </div>
@@ -770,30 +864,15 @@ function Play() {
               !showActions && 'invisible pointer-events-none',
             )}
           >
-            <Button
-              onClick={() => startPull(1)}
-              disabled={!canPullX1}
-              variant="none"
-              className="h-auto flex-1 whitespace-nowrap rounded-2xl border-solid border-[1.5px] border-border-dark bg-card px-7 py-4 text-[17px] font-bold text-text transition-all hover:-translate-y-0.5 hover:border-text-light disabled:opacity-50 sm:flex-none"
-            >
-              {t('gacha:page.pullX1')}
-              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-text/6 px-2.5 py-1 font-mono text-xs text-text-light">
-                <Ticket className="h-3.5 w-3.5" />
-                {pullCost}
-              </span>
-            </Button>
-            <Button
-              onClick={() => startPull(10)}
-              disabled={!canPullX10}
-              variant="none"
-              className="h-auto flex-1 whitespace-nowrap rounded-2xl bg-linear-to-br from-primary to-orange-500 px-7 py-4 text-[17px] font-bold text-white shadow-[0_14px_30px_-12px_rgba(245,158,11,0.65)] transition-all hover:-translate-y-0.5 disabled:opacity-50 sm:flex-none"
-            >
-              {t('gacha:page.pullX10')}
-              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-1 font-mono text-xs text-white">
-                <Ticket className="h-3.5 w-3.5" />
-                {pullCost * 10}
-              </span>
-            </Button>
+            <PullActions
+              kind={capsuleKind}
+              onKindChange={setCapsuleKind}
+              tokens={tokens}
+              astralStock={astralStock}
+              pullCost={pullCost}
+              disabled={phase !== 'idle' || pullPending}
+              onPull={startPull}
+            />
           </div>
         </div>
 
@@ -811,6 +890,8 @@ function Play() {
         skipAnimations={skipAnimations}
         onToggleSkip={() => setSkipAnimations((s) => !s)}
         onOpenTutorial={() => setTutorialOpen(true)}
+        timeScale={devTimeScale}
+        onTimeScaleChange={setDevTimeScale}
       />
 
       {/* ── Fullscreen pull-cycle overlay ─────────────────────────────────
@@ -821,7 +902,9 @@ function Play() {
       {inPullCycleFullscreen && (
         <PullCycleOverlay
           phase={phase}
+          capsuleKind={capsuleKind}
           teaseTier={teaseTier}
+          timeScale={import.meta.env.DEV ? Number(devTimeScale) : 1}
           result={result}
           soundOn={soundOn === 'true'}
           onToggleSound={toggleSound}
@@ -836,6 +919,7 @@ function Play() {
                 pity={shown.pity}
                 threshold={shown.threshold}
                 boosts={shown.boosts}
+                astral={astral}
               />
             )
           }

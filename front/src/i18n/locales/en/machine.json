@@ -36,7 +36,8 @@
     "tokensRemaining": "Tokens left",
     "pullAgainX1": "New pull x1",
     "pullAgainX10": "Pull x10",
-    "great": "Great!"
+    "great": "Great!",
+    "capsulesRemaining": "Astral capsules left"
   },
   "a11y": {
     "revealNextCard": "Reveal the next card",

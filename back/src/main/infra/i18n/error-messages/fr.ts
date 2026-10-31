@@ -96,6 +96,7 @@ export const FR_MESSAGES = {
   // --- gacha ---
   'gacha.noActiveCards': 'Aucune carte active dans un set',
   'gacha.notEnoughTokens': 'Jetons insuffisants',
+  'gacha.notEnoughCapsules': "Tu n'as pas assez de capsules astrales.",
 
   // --- shop / daily-shop / wishlist ---
   'shop.itemNotFound': 'Article introuvable',
@@ -115,6 +116,10 @@ export const FR_MESSAGES = {
     'La valeur du BOOST a une rareté invalide : {{rarity}}',
   'shop.energyPackMissingCombatPoints':
     'La valeur de l’ENERGY_PACK n’a pas d’entier positif de points de combat',
+  'shop.capsuleInvalidType':
+    'La valeur du CAPSULE a un type de capsule invalide',
+  'shop.capsuleMissingQuantity':
+    'La valeur du CAPSULE n’a pas d’entier positif de quantité',
   'dailyShop.notEnoughActiveCards':
     'Pas assez de cartes actives pour générer le marché',
   'dailyShop.itemAlreadyPurchased': 'Article déjà acheté',
@@ -122,6 +127,8 @@ export const FR_MESSAGES = {
   'wishlist.full': 'Wishlist pleine ({{slots}} emplacements)',
   'wishlist.cardNotInWishlist':
     'Cette carte n’est pas dans ta liste de souhaits',
+  'wishlist.astralCardNotWishable':
+    'Les cartes Lumière et Ténèbres ne peuvent pas faire l’objet d’un vœu — elles viennent de la capsule astrale',
   'shop.shopItemNotFound': 'Article de boutique introuvable',
 
   // --- team ---
@@ -392,6 +399,8 @@ export const FR_MESSAGES = {
     'La recette demande {{expected}} cartes, la sélection en contient {{got}}',
   'alchemy.noTargetCard':
     'Aucune carte disponible à la rareté obtenue pour le moment',
+  'alchemy.astralIngredient':
+    'Les cartes Lumière et Ténèbres ne peuvent pas servir d’ingrédient',
 
   // --- infra ---
   'httpClient.getFailed': 'Erreur lors de la récupération des données',

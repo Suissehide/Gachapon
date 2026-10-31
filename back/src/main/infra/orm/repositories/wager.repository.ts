@@ -356,10 +356,13 @@ function listActiveDuelsForUserWith(
  * peuvent tomber sur le même instant. `id` en second tri rend l'ordre — et
  * donc le sous-ensemble des `take` premiers — déterministe, ce qui compte
  * puisque c'est lui qui décide quelles cartes sont saisissables au règlement.
+ *
+ * `source: 'TOKEN'` exclut les tirages astraux de la fenêtre : ils ne
+ * déclenchent ni n'avancent un pari ou un duel.
  */
 function countedPullsWindow(userId: string, since: Date, take: number) {
   return {
-    where: { userId, pulledAt: { gt: since } },
+    where: { userId, source: 'TOKEN' as const, pulledAt: { gt: since } },
     orderBy: [{ pulledAt: 'asc' as const }, { id: 'asc' as const }],
     take,
   }

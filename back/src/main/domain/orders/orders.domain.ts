@@ -26,6 +26,7 @@ import {
   effectiveRegenInterval,
   overflowDust,
 } from '../economy/economy.domain'
+import { isAstralElement, NORMAL_POOL_WHERE } from '../gacha/card-pools'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { RARITY_ORDER } from '../wagers/wager-rules'
 import { generateOrderLines, pickClient } from './order-generation'
@@ -222,7 +223,7 @@ export class OrdersDomain implements IOrdersDomain {
         },
       }),
       tx.card.findMany({
-        where: { set: { isActive: true } },
+        where: NORMAL_POOL_WHERE,
         select: {
           id: true,
           rarity: true,
@@ -243,7 +244,8 @@ export class OrdersDomain implements IOrdersDomain {
         (u) =>
           u.variant === 'NORMAL' &&
           u.quantity > 1 &&
-          !engaged.has(`${u.cardId}:${u.variant}`),
+          !engaged.has(`${u.cardId}:${u.variant}`) &&
+          !isAstralElement(u.card.element),
       )
       .map((u) => ({
         userCardId: u.id,

@@ -6,7 +6,13 @@ export type CreateShopItemInput = {
   nameEn: string
   descriptionFr: string
   descriptionEn: string
-  type: 'TOKEN_PACK' | 'ENERGY_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
+  type:
+    | 'TOKEN_PACK'
+    | 'ENERGY_PACK'
+    | 'BOOST'
+    | 'COSMETIC'
+    | 'MACHINE'
+    | 'CAPSULE'
   cost: number
   currency?: 'DUST' | 'GOLD'
   value: Prisma.InputJsonObject

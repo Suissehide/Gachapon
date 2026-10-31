@@ -48,6 +48,7 @@ export interface EconomyConfig {
   gacha: {
     pullTokenCost: number
     pityThreshold: number
+    astralPityThreshold: number
     tokenRegenIntervalMinutes: number
     tokenMaxStock: number
   }

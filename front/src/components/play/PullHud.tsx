@@ -10,10 +10,13 @@ export function PullHud({
   pity,
   threshold,
   boosts,
+  astral = false,
 }: {
   pity: number
   threshold: number
   boosts: ShopItem[]
+  // Tirage astral : la garantie suivie est celle des capsules astrales
+  astral?: boolean
 }) {
   const { t } = useTranslation('gacha')
   const { remaining, pct } = pityProgress(pity, threshold)
@@ -22,6 +25,11 @@ export function PullHud({
     <div className="pointer-events-none absolute top-3 left-3 z-[60] flex w-[min(15rem,calc(100vw-1.5rem))] flex-col gap-2 rounded-2xl border border-white/15 bg-black/50 px-3.5 py-3 text-white backdrop-blur animate-in fade-in-0 duration-500">
       {threshold > 0 && (
         <div>
+          {astral && (
+            <div className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
+              {t('gacha:cards.pityAstral')}
+            </div>
+          )}
           <div className="flex items-center gap-1.5 text-[12px] text-white/70">
             <Gem className="h-3.5 w-3.5 shrink-0 text-secondary" />
             {remaining === 1 ? (

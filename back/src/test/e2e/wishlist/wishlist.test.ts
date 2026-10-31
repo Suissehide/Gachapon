@@ -6,6 +6,7 @@ describe('Wishlist routes', () => {
   let cookies: string
   let userId: string
   let cardIds: string[] = []
+  let darkCard: { id: string }
   let skillBranchId: string | undefined
 
   const suffix = Date.now()
@@ -48,6 +49,16 @@ describe('Wishlist routes', () => {
       })
       cardIds.push(card.id)
     }
+    darkCard = await prisma.card.create({
+      data: {
+        setId: set.id,
+        nameFr: `DARK-wishlist-${suffix}`,
+        nameEn: `DARK-wishlist-${suffix}`,
+        rarity: 'RARE',
+        element: 'DARK',
+        dropWeight: 1.0,
+      },
+    })
 
     const loginRes = await app.inject({
       method: 'POST',
@@ -232,5 +243,14 @@ describe('Wishlist routes', () => {
       headers: auth(),
     })
     expect(overflow.statusCode).toBe(409)
+  })
+
+  it('PUT /wishlist/:cardId — refuse une carte DARK (capsule astrale)', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: `/wishlist/${darkCard.id}`,
+      headers: auth(),
+    })
+    expect(res.statusCode).toBe(400)
   })
 })

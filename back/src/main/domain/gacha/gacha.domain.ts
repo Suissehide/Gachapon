@@ -1,9 +1,13 @@
 import Boom from '@hapi/boom'
 
+import type { PullSource } from '../../../generated/client'
 import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
-import type { GachaDomainInterface } from '../../types/domain/gacha/gacha.domain.interface'
+import type {
+  AstralPullResult,
+  GachaDomainInterface,
+} from '../../types/domain/gacha/gacha.domain.interface'
 import type {
   CardRarity,
   CardVariant,
@@ -22,6 +26,7 @@ import type { IGachaPullRepository } from '../../types/infra/orm/repositories/ga
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
+import type { IUserCapsuleRepository } from '../../types/infra/orm/repositories/user-capsule.repository.interface'
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
@@ -32,6 +37,7 @@ import {
 } from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { levelAfterXpGain } from '../shared/xp'
+import { pickAstralCard } from './astral-pick'
 
 // ---------------------------------------------------------------------------
 // Boost weight helper (exported for unit tests)
@@ -228,6 +234,7 @@ type PullCfg = {
   tokenRegenIntervalMinutes: number
   tokenMaxStock: number
   pityThreshold: number
+  astralPityThreshold: number
   dustByRarity: Record<string, number>
   variantRates: VariantRates
   upgrades: UserUpgradeEffects
@@ -374,6 +381,30 @@ function mergeLevelUps(
   }
 }
 
+/** Une carte astrale : pitié astrale au seuil → légendaire ; sinon boule
+ *  d'or tirée comme au tirage normal, qui restreint à RARE+. */
+function drawAstral(
+  cfg: PullCfg,
+  normalPool: CardWithSet[],
+  astralPool: CardWithSet[],
+  astralPity: number,
+): { card: CardWithSet; isGolden: boolean } {
+  const isPityForced =
+    astralPity >=
+    effectivePityThreshold(
+      cfg.astralPityThreshold,
+      cfg.upgrades.pityReduction ?? 0,
+    )
+  const isGolden =
+    !isPityForced && Math.random() < (cfg.upgrades.goldenBallChance ?? 0) / 100
+  const card = pickAstralCard(normalPool, astralPool, {
+    luckMultiplier: cfg.upgrades.luckMultiplier,
+    forceLegendary: isPityForced,
+    minRarity: isGolden ? 'RARE' : undefined,
+  })
+  return { card, isGolden }
+}
+
 type Unlocks = Awaited<ReturnType<AchievementsDomainInterface['track']>>
 
 type StepOutcome = {
@@ -402,6 +433,7 @@ export class GachaDomain implements GachaDomainInterface {
   readonly #userBoostRepository: IUserBoostRepository
   readonly #combatPointsTx: IocContainer['combatPointsTx']
   readonly #teamProgressionDomain: ITeamProgressionDomain
+  readonly #userCapsuleRepository: IUserCapsuleRepository
 
   constructor({
     postgresOrm,
@@ -416,6 +448,7 @@ export class GachaDomain implements GachaDomainInterface {
     userBoostRepository,
     combatPointsTx,
     teamProgressionDomain,
+    userCapsuleRepository,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
@@ -429,6 +462,7 @@ export class GachaDomain implements GachaDomainInterface {
     this.#userBoostRepository = userBoostRepository
     this.#combatPointsTx = combatPointsTx
     this.#teamProgressionDomain = teamProgressionDomain
+    this.#userCapsuleRepository = userCapsuleRepository
   }
 
   async #loadUserAndInitialState(
@@ -482,6 +516,52 @@ export class GachaDomain implements GachaDomainInterface {
     return rows.map((row) => row.cardId)
   }
 
+  /** Variante, ajout à la collection, ligne `GachaPull` et `PULL_COMPLETED`
+   *  d'une carte tirée — commun aux tirages normal et astral. */
+  async #recordPullInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cfg: PullCfg,
+    card: CardWithSet,
+    source: PullSource,
+  ): Promise<{
+    pull: StepOutcome['pull']
+    wasDuplicate: boolean
+    unlockedAchievements: Unlocks
+  }> {
+    const variant = pickVariant(
+      card.rarity,
+      cfg.variantRates,
+      cfg.upgrades.variantLuckMultiplier ?? 1,
+    )
+    const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
+      tx,
+      userId,
+      card.id,
+      variant,
+    )
+    const pull = await this.#gachaPullRepository.createInTx(tx, {
+      userId,
+      cardId: card.id,
+      variant,
+      wasDuplicate,
+      dustEarned: 0,
+      source,
+    })
+    const unlockedAchievements = await this.#achievementsDomain.track(
+      tx,
+      userId,
+      {
+        kind: 'PULL_COMPLETED',
+        cardId: card.id,
+        rarity: card.rarity,
+        variant,
+        wasDuplicate,
+      },
+    )
+    return { pull, wasDuplicate, unlockedAchievements }
+  }
+
   async #executeSinglePullStep(
     tx: PrimaTransactionClient,
     userId: string,
@@ -533,41 +613,17 @@ export class GachaDomain implements GachaDomainInterface {
 
     consumeBoosts(boosts, card)
 
-    const variantLuckMultiplier = cfg.upgrades.variantLuckMultiplier ?? 1
-    const rolledVariant = pickVariant(
-      card.rarity,
-      cfg.variantRates,
-      variantLuckMultiplier,
-    )
-    const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
-      tx,
-      userId,
-      card.id,
-      rolledVariant,
-    )
+    const { pull, wasDuplicate, unlockedAchievements } =
+      await this.#recordPullInTx(tx, userId, cfg, card, 'TOKEN')
     const dustEarned = 0
-    const pull = await this.#gachaPullRepository.createInTx(tx, {
-      userId,
-      cardId: card.id,
-      variant: rolledVariant,
-      wasDuplicate,
-      dustEarned,
-    })
     const isLegendary = card.rarity === 'LEGENDARY'
     const nextPity = isLegendary ? 0 : stepState.currentPity + 1
-    const pullUnlocks = await this.#achievementsDomain.track(tx, userId, {
-      kind: 'PULL_COMPLETED',
-      cardId: card.id,
-      rarity: card.rarity,
-      variant: rolledVariant,
-      wasDuplicate,
-    })
     return {
       pull,
       card,
       wasDuplicate,
       dustEarned,
-      unlockedAchievements: pullUnlocks,
+      unlockedAchievements,
       nextPity,
       wasGoldenBall: isGolden,
       wasBoostGuarantee,
@@ -879,75 +935,199 @@ export class GachaDomain implements GachaDomainInterface {
     }
   }
 
-  pull(userId: string): Promise<PullResult> {
-    const attempt = async (): Promise<PullResult> => {
-      // Lire la config AVANT la transaction (pas d'I/O async dans le tx serializable)
-      const [c, upgrades, teamEffects, wishedCardIds] = await Promise.all([
-        this.#configService.getMany(
-          'tokenRegenIntervalMinutes',
-          'tokenMaxStock',
-          'pityThreshold',
-          'dustCommon',
-          'dustUncommon',
-          'dustRare',
-          'dustEpic',
-          'dustLegendary',
-          'brilliantRateRare',
-          'brilliantRateEpic',
-          'brilliantRateLegendary',
-          'holoRateRare',
-          'holoRateEpic',
-          'holoRateLegendary',
-          'xpPerPull',
-          'gacha.pullTokenCost',
-          'xp.base',
-          'xp.slope',
-          'xp.levelCap',
-          'levelup.refillEnergy',
-        ),
-        this.#skillTreeRepository.getEffectsForUser(userId),
-        this.#teamProgressionDomain.effectsForUser(userId),
-        this.#wishedCardIds(userId),
-      ])
-      const cfg: PullCfg = {
-        tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
-        tokenMaxStock: c.tokenMaxStock,
-        pityThreshold: c.pityThreshold,
-        dustByRarity: {
-          COMMON: c.dustCommon,
-          UNCOMMON: c.dustUncommon,
-          RARE: c.dustRare,
-          EPIC: c.dustEpic,
-          LEGENDARY: c.dustLegendary,
-        },
-        variantRates: {
-          brilliantRateRare: c.brilliantRateRare,
-          brilliantRateEpic: c.brilliantRateEpic,
-          brilliantRateLegendary: c.brilliantRateLegendary,
-          holoRateRare: c.holoRateRare,
-          holoRateEpic: c.holoRateEpic,
-          holoRateLegendary: c.holoRateLegendary,
-        },
-        xpPerPull: c.xpPerPull,
-        pullTokenCost: c['gacha.pullTokenCost'],
-        xpCurve: {
-          base: c['xp.base'],
-          slope: c['xp.slope'],
-          levelCap: c['xp.levelCap'],
-        },
-        upgrades,
-        refillEnergyOnLevelUp: c['levelup.refillEnergy'] === 1,
-        teamLootBonusPct: teamEffects.loot,
-        wishedCardIds,
-      }
+  async #executeAstralBatchTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cfg: PullCfg,
+    count: number,
+  ): Promise<AstralPullResult> {
+    // Contrôle précoce ; la garde qui fait foi est le décrément conditionnel
+    // de `consumeInTx` en fin de transaction.
+    const capsule = await this.#userCapsuleRepository.findInTx(
+      tx,
+      userId,
+      'ASTRAL',
+    )
+    const stock = capsule?.quantity ?? 0
+    if (stock < count) {
+      throw Boom.paymentRequired(errorMessage('gacha.notEnoughCapsules'))
+    }
+    const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
+    const normalPool = await this.#cardRepository.findActiveForPullInTx(
+      tx,
+      false,
+    )
+    const astralPool = await this.#cardRepository.findActiveAstralInTx(tx)
+    if (astralPool.length === 0) {
+      throw Boom.internal(errorMessage('gacha.noActiveCards'))
+    }
+    const levelAt = (xp: number) =>
+      levelAfterXpGain(
+        user.level,
+        xp,
+        cfg.xpCurve.base,
+        cfg.xpCurve.slope,
+        cfg.xpCurve.levelCap,
+      )
+    const xpPerPullBonused = Math.round(
+      cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100),
+    )
+    const totalXp = xpPerPullBonused * count
+    const oldLevel = levelAt(user.xp)
+    let runningXp = user.xp
+    let astralPity = capsule?.pityCurrent ?? 0
+    const pulls: PullBatchResult['pulls'] = []
+    for (let i = 0; i < count; i++) {
+      const { card, isGolden } = drawAstral(
+        cfg,
+        normalPool,
+        astralPool,
+        astralPity,
+      )
+      const { pull, wasDuplicate, unlockedAchievements } =
+        await this.#recordPullInTx(tx, userId, cfg, card, 'ASTRAL')
+      astralPity = card.rarity === 'LEGENDARY' ? 0 : astralPity + 1
+      const levelBefore = levelAt(runningXp)
+      runningXp += xpPerPullBonused
+      const levelAfter = levelAt(runningXp)
+      pulls.push({
+        pull,
+        card,
+        wasDuplicate,
+        dustEarned: 0,
+        pityCurrent: astralPity,
+        wasFreePull: false,
+        wasGoldenBall: isGolden,
+        wasBoostGuarantee: false,
+        unlockedAchievements,
+        leveledUp:
+          levelAfter > levelBefore
+            ? { from: levelBefore, to: levelAfter }
+            : undefined,
+      })
+    }
+
+    await this.#userCapsuleRepository.consumeInTx(
+      tx,
+      userId,
+      'ASTRAL',
+      count,
+      astralPity,
+    )
+    const newLevel = levelAt(user.xp + totalXp)
+    const gained = skillPointsGained(oldLevel, newLevel)
+    // Jetons : seule la régénération est réglée, aucun n'est dépensé ; la
+    // pitié normale reste celle du joueur.
+    await this.#writeFinalUserUpdate(
+      tx,
+      userId,
+      state.currentTokens,
+      state.overflowDustGained,
+      totalXp,
+      newLevel,
+      user.pityCurrent,
+      state.newLastTokenAt,
+      gained > 0 ? gained : undefined,
+    )
+    const [, levelUnlocks] = await this.#trackSpendAndLevel(
+      tx,
+      userId,
+      0,
+      oldLevel,
+      newLevel,
+    )
+    await this.#grantLevelUpRewards(tx, userId, cfg, oldLevel, newLevel)
+    return {
+      pulls,
+      tokensRemaining: state.currentTokens,
+      xpGained: totalXp,
+      unlockedAchievements: levelUnlocks,
+      leveledUp: mergeLevelUps(pulls.map((p) => p.leveledUp)),
+      capsulesRemaining: stock - count,
+      astralPityCurrent: astralPity,
+    }
+  }
+
+  /** Config du tirage, lue AVANT la transaction (pas d'I/O async hors
+   *  requêtes dans le tx sérialisable). */
+  async #loadPullCfg(userId: string): Promise<PullCfg> {
+    const [c, upgrades, teamEffects, wishedCardIds] = await Promise.all([
+      this.#configService.getMany(
+        'tokenRegenIntervalMinutes',
+        'tokenMaxStock',
+        'pityThreshold',
+        'astral.pityThreshold',
+        'dustCommon',
+        'dustUncommon',
+        'dustRare',
+        'dustEpic',
+        'dustLegendary',
+        'brilliantRateRare',
+        'brilliantRateEpic',
+        'brilliantRateLegendary',
+        'holoRateRare',
+        'holoRateEpic',
+        'holoRateLegendary',
+        'xpPerPull',
+        'gacha.pullTokenCost',
+        'xp.base',
+        'xp.slope',
+        'xp.levelCap',
+        'levelup.refillEnergy',
+      ),
+      this.#skillTreeRepository.getEffectsForUser(userId),
+      this.#teamProgressionDomain.effectsForUser(userId),
+      this.#wishedCardIds(userId),
+    ])
+    return {
+      tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
+      tokenMaxStock: c.tokenMaxStock,
+      pityThreshold: c.pityThreshold,
+      astralPityThreshold: c['astral.pityThreshold'],
+      dustByRarity: {
+        COMMON: c.dustCommon,
+        UNCOMMON: c.dustUncommon,
+        RARE: c.dustRare,
+        EPIC: c.dustEpic,
+        LEGENDARY: c.dustLegendary,
+      },
+      variantRates: {
+        brilliantRateRare: c.brilliantRateRare,
+        brilliantRateEpic: c.brilliantRateEpic,
+        brilliantRateLegendary: c.brilliantRateLegendary,
+        holoRateRare: c.holoRateRare,
+        holoRateEpic: c.holoRateEpic,
+        holoRateLegendary: c.holoRateLegendary,
+      },
+      xpPerPull: c.xpPerPull,
+      pullTokenCost: c['gacha.pullTokenCost'],
+      xpCurve: {
+        base: c['xp.base'],
+        slope: c['xp.slope'],
+        levelCap: c['xp.levelCap'],
+      },
+      upgrades,
+      refillEnergyOnLevelUp: c['levelup.refillEnergy'] === 1,
+      teamLootBonusPct: teamEffects.loot,
+      wishedCardIds,
+    }
+  }
+
+  /** Transaction sérialisable relancée sur conflit de sérialisation (P2034).
+   *  La config est relue à chaque tentative. */
+  #runSerializable<T>(
+    userId: string,
+    fn: (tx: PrimaTransactionClient, cfg: PullCfg) => Promise<T>,
+  ): Promise<T> {
+    const attempt = async (): Promise<T> => {
+      const cfg = await this.#loadPullCfg(userId)
       return this.#postgresOrm.executeWithTransactionClient(
-        (tx) => this.#executePullTx(tx, userId, cfg),
+        (tx) => fn(tx, cfg),
         { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
       )
     }
-
     const MAX_RETRIES = 3
-    const run = async (retriesLeft: number): Promise<PullResult> => {
+    const run = async (retriesLeft: number): Promise<T> => {
       try {
         return await attempt()
       } catch (err: unknown) {
@@ -957,87 +1137,26 @@ export class GachaDomain implements GachaDomainInterface {
         throw err
       }
     }
-
     return run(MAX_RETRIES)
   }
 
-  pullBatch(userId: string, count: number): Promise<PullBatchResult> {
-    const attempt = async (): Promise<PullBatchResult> => {
-      const [c, upgrades, teamEffects, wishedCardIds] = await Promise.all([
-        this.#configService.getMany(
-          'tokenRegenIntervalMinutes',
-          'tokenMaxStock',
-          'pityThreshold',
-          'dustCommon',
-          'dustUncommon',
-          'dustRare',
-          'dustEpic',
-          'dustLegendary',
-          'brilliantRateRare',
-          'brilliantRateEpic',
-          'brilliantRateLegendary',
-          'holoRateRare',
-          'holoRateEpic',
-          'holoRateLegendary',
-          'xpPerPull',
-          'gacha.pullTokenCost',
-          'xp.base',
-          'xp.slope',
-          'xp.levelCap',
-          'levelup.refillEnergy',
-        ),
-        this.#skillTreeRepository.getEffectsForUser(userId),
-        this.#teamProgressionDomain.effectsForUser(userId),
-        this.#wishedCardIds(userId),
-      ])
-      const cfg: PullCfg = {
-        tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
-        tokenMaxStock: c.tokenMaxStock,
-        pityThreshold: c.pityThreshold,
-        dustByRarity: {
-          COMMON: c.dustCommon,
-          UNCOMMON: c.dustUncommon,
-          RARE: c.dustRare,
-          EPIC: c.dustEpic,
-          LEGENDARY: c.dustLegendary,
-        },
-        variantRates: {
-          brilliantRateRare: c.brilliantRateRare,
-          brilliantRateEpic: c.brilliantRateEpic,
-          brilliantRateLegendary: c.brilliantRateLegendary,
-          holoRateRare: c.holoRateRare,
-          holoRateEpic: c.holoRateEpic,
-          holoRateLegendary: c.holoRateLegendary,
-        },
-        xpPerPull: c.xpPerPull,
-        pullTokenCost: c['gacha.pullTokenCost'],
-        xpCurve: {
-          base: c['xp.base'],
-          slope: c['xp.slope'],
-          levelCap: c['xp.levelCap'],
-        },
-        upgrades,
-        refillEnergyOnLevelUp: c['levelup.refillEnergy'] === 1,
-        teamLootBonusPct: teamEffects.loot,
-        wishedCardIds,
-      }
-      return this.#postgresOrm.executeWithTransactionClient(
-        (tx) => this.#executePullBatchTx(tx, userId, cfg, count),
-        { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
-      )
-    }
+  pull(userId: string): Promise<PullResult> {
+    return this.#runSerializable(userId, (tx, cfg) =>
+      this.#executePullTx(tx, userId, cfg),
+    )
+  }
 
-    const MAX_RETRIES = 3
-    const run = async (retriesLeft: number): Promise<PullBatchResult> => {
-      try {
-        return await attempt()
-      } catch (err: unknown) {
-        if (retriesLeft > 0 && isPrismaSerializationError(err)) {
-          return run(retriesLeft - 1)
-        }
-        throw err
-      }
-    }
-    return run(MAX_RETRIES)
+  pullBatch(userId: string, count: number): Promise<PullBatchResult> {
+    return this.#runSerializable(userId, (tx, cfg) =>
+      this.#executePullBatchTx(tx, userId, cfg, count),
+    )
+  }
+
+  /** Ouvre `count` capsules astrales : aucun jeton dépensé, pitié astrale à
+   *  part, boosts achetés ni appliqués ni consommés. */
+  pullAstral(userId: string, count: number): Promise<AstralPullResult> {
+    return this.#runSerializable(userId, (tx, cfg) =>
+      this.#executeAstralBatchTx(tx, userId, cfg, count),
+    )
   }
 }

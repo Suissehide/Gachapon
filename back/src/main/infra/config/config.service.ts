@@ -50,6 +50,10 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'combat.baseArmorPen': 0,
   'combat.baseLifesteal': 0,
   'gacha.pullTokenCost': 1,
+  // Seuil de pitié du tirage astral (capsule LUMIÈRE/TÉNÈBRES), indépendant
+  // du pityThreshold du tirage normal — réduit par PITY_BOOST via
+  // effectivePityThreshold, comme le pity normal.
+  'astral.pityThreshold': 300,
   // Courbe ×5 (2026-09-15) : un joueur actif atteignait le niveau 30 en un
   // jour. La cause mesurée est `levelup.refillEnergy`, qui remet l'énergie au
   // max à CHAQUE montée et fait passer la journée de 31 à ~146 combats — la

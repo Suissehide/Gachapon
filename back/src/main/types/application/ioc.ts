@@ -76,6 +76,7 @@ import type { ITowerRepository } from '../infra/orm/repositories/tower.repositor
 import type { UserRepositoryInterface } from '../infra/orm/repositories/user.repository.interface'
 import type { UserAchievementProgressRepositoryInterface } from '../infra/orm/repositories/user-achievement-progress.repository.interface'
 import type { IUserBoostRepository } from '../infra/orm/repositories/user-boost.repository.interface'
+import type { IUserCapsuleRepository } from '../infra/orm/repositories/user-capsule.repository.interface'
 import type { IUserQuestRepository } from '../infra/orm/repositories/user-quest.repository.interface'
 import type { UserRewardRepositoryInterface } from '../infra/orm/repositories/user-reward.repository.interface'
 import type { IWagerRepository } from '../infra/orm/repositories/wager.repository.interface'
@@ -143,6 +144,7 @@ export interface IocContainer {
   readonly streakMilestoneRepository: StreakMilestoneRepositoryInterface
   readonly userRewardRepository: UserRewardRepositoryInterface
   readonly userBoostRepository: IUserBoostRepository
+  readonly userCapsuleRepository: IUserCapsuleRepository
   readonly streakDomain: StreakDomainInterface
   readonly rewardsDomain: RewardsDomainInterface
   readonly questRepository: IQuestRepository

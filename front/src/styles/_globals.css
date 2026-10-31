@@ -66,6 +66,9 @@
   --color-amber-deep: var(--amber-deep);
 
   --color-dust: var(--dust);
+  --color-astral: var(--astral);
+  --color-astral-night-violet: var(--astral-night-violet);
+  --color-astral-night-deep: var(--astral-night-deep);
   --color-currency-dust: var(--currency-dust);
   --color-currency-dust-ink: var(--currency-dust-ink);
   --color-currency-gold: var(--currency-gold);
@@ -343,6 +346,64 @@ h6 {
     background-position: 50% 0%;
   }
 }
+/* Aura des cartes Lumière / Ténèbres (ElementAuraOverlay.tsx) */
+@property --dawn-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes auraBreath {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes dawnMote {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-160px);
+  }
+}
+
+@keyframes dawnSheen {
+  to {
+    --dawn-angle: 360deg;
+  }
+}
+
+@keyframes nebulaDrift {
+  from {
+    background-position: 0% 100%;
+  }
+  to {
+    background-position: 100% 90%;
+  }
+}
+
+@keyframes nebulaTwinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes holoSweep {
   0% {
     background-position: 50% 100%;

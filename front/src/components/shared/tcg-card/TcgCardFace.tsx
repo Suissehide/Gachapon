@@ -20,6 +20,7 @@ import {
   type StatKey,
   VARIANT_OVERLAYS,
 } from './config.ts'
+import { ElementAuraOverlay } from './ElementAuraOverlay.tsx'
 import { HoloOverlay, useHoloPointer } from './HoloOverlay.tsx'
 
 const STAT_ICONS: Record<StatKey, LucideIcon> = {
@@ -242,6 +243,7 @@ export function TcgCardFace({
           }}
         />
       ))}
+      {isOwned && element && <ElementAuraOverlay element={element} />}
       {isHolo && <HoloOverlay active={holoActive} />}
 
       {/* Internal stylized frame — double outline + corner accents */}

@@ -34,7 +34,8 @@
     "ENERGY_PACK": "Énergie",
     "BOOST": "Boosts",
     "COSMETIC": "Cosmétiques",
-    "MACHINE": "Machines"
+    "MACHINE": "Machines",
+    "CAPSULE": "Capsules"
   },
   "sections": {
     "wishlistTitle": "Vœux",

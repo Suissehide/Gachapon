@@ -64,7 +64,9 @@
     "removeWish": "Retirer le vœu",
     "setWish": "Définir comme vœu",
     "ownedLabel": "Possédées",
-    "recycle": "Recycler"
+    "recycle": "Recycler",
+    "astralHint": "S'obtient dans la capsule astrale.",
+    "astralHintLink": "Voir la boutique"
   },
   "recycleModal": {
     "title": "Recycler des cartes",

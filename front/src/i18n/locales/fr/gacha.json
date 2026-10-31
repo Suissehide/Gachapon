@@ -5,7 +5,8 @@
       "pull": "Erreur lors du tirage",
       "loadHistory": "Erreur lors de la récupération de l'historique",
       "loadFeed": "Erreur lors du chargement du fil",
-      "loadDropRates": "Erreur lors du chargement des taux de drop"
+      "loadDropRates": "Erreur lors du chargement des taux de drop",
+      "loadCapsules": "Erreur lors de la récupération des capsules"
     }
   },
   "toasts": {
@@ -29,7 +30,8 @@
     "achievements": "Succès",
     "boost": "Boost",
     "boostPulls_one": "{{count}} tirage",
-    "boostPulls_other": "{{count}} tirages"
+    "boostPulls_other": "{{count}} tirages",
+    "pityAstral": "Garantie astrale"
   },
   "feed": {
     "variantBrilliant": "BRILLANTE",
@@ -66,15 +68,22 @@
     "subtitle": "Dépense tes jetons pour tirer de nouvelles cartes.",
     "ratesButtonTitle": "Voir les taux de drop",
     "ratesButton": "Taux de drop",
-    "pullX1": "Tirage x1",
-    "pullX10": "Tirage x10",
     "soundOff": "Couper le son",
     "soundOn": "Activer le son du tirage",
     "soundOnShort": "Activer le son",
     "replayTutorial": "Revoir le tutoriel",
     "skipAnimations": "Sauter les animations",
     "pullingTitle": "Tirage en cours…",
-    "serverNotResponding": "Le serveur ne répond pas."
+    "serverNotResponding": "Le serveur ne répond pas.",
+    "pull": "Tirer",
+    "chooseCapsule": "Tirer — choisir la capsule",
+    "capsuleClassic": "Classique",
+    "capsuleAstral": "Astrale",
+    "buyInShop": "Acheter en boutique",
+    "tokenBalance_one": "{{count}} jeton",
+    "tokenBalance_other": "{{count}} jetons",
+    "capsuleBalance_one": "{{count}} capsule",
+    "capsuleBalance_other": "{{count}} capsules"
   },
   "tutorial": {
     "stepCounter": "Étape {{current}} sur {{total}}",

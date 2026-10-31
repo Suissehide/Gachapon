@@ -36,6 +36,8 @@ export const useBuyItem = () => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       // Un ENERGY_PACK crédite des PC — rafraîchit la jauge de la campagne.
       qc.invalidateQueries({ queryKey: ['combat', 'points'] })
+      // Un CAPSULE crédite du stock de capsules — rafraîchit le compteur.
+      qc.invalidateQueries({ queryKey: ['capsules'] })
       qc.invalidateQueries({ queryKey: ['shop'] })
       // A purchase fires MACHINE_PURCHASED + GOLD/DUST_SPENT events that feed the
       // quest + achievement engines — progress advances on every buy, not only

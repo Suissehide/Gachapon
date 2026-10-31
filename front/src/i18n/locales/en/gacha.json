@@ -5,7 +5,8 @@
       "pull": "Error during the pull",
       "loadHistory": "Error loading the history",
       "loadFeed": "Error loading the feed",
-      "loadDropRates": "Error loading the drop rates"
+      "loadDropRates": "Error loading the drop rates",
+      "loadCapsules": "Error loading the capsules"
     }
   },
   "toasts": {
@@ -29,7 +30,8 @@
     "achievements": "Achievements",
     "boost": "Boost",
     "boostPulls_one": "{{count}} pull",
-    "boostPulls_other": "{{count}} pulls"
+    "boostPulls_other": "{{count}} pulls",
+    "pityAstral": "Astral pity"
   },
   "feed": {
     "variantBrilliant": "BRILLIANT",
@@ -66,15 +68,22 @@
     "subtitle": "Spend your tokens to pull new cards.",
     "ratesButtonTitle": "See the drop rates",
     "ratesButton": "Drop rates",
-    "pullX1": "Pull x1",
-    "pullX10": "Pull x10",
     "soundOff": "Mute the sound",
     "soundOn": "Turn on the pull sound",
     "soundOnShort": "Turn on the sound",
     "replayTutorial": "Replay the tutorial",
     "skipAnimations": "Skip animations",
     "pullingTitle": "Pull in progress…",
-    "serverNotResponding": "The server is not responding."
+    "serverNotResponding": "The server is not responding.",
+    "pull": "Pull",
+    "chooseCapsule": "Pull — choose the capsule",
+    "capsuleClassic": "Classic",
+    "capsuleAstral": "Astral",
+    "buyInShop": "Buy in the shop",
+    "tokenBalance_one": "{{count}} token",
+    "tokenBalance_other": "{{count}} tokens",
+    "capsuleBalance_one": "{{count}} capsule",
+    "capsuleBalance_other": "{{count}} capsules"
   },
   "tutorial": {
     "stepCounter": "Step {{current}} of {{total}}",

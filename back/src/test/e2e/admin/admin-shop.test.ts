@@ -57,4 +57,22 @@ describe('Admin shop routes', () => {
     const res = await app.inject({ method: 'DELETE', url: `/admin/shop-items/${itemId}`, headers: { cookie: adminCookies } })
     expect(res.statusCode).toBe(204)
   })
+
+  it('PATCH /admin/shop-items/:id — met à jour un item CAPSULE (type inclus, comme envoyé par le formulaire admin)', async () => {
+    const createRes = await app.inject({
+      method: 'POST', url: '/admin/shop-items',
+      headers: { cookie: adminCookies },
+      payload: { nameFr: 'Capsule Test', nameEn: 'Test Capsule', descriptionFr: 'desc', descriptionEn: 'desc', type: 'CAPSULE', cost: 400, currency: 'DUST', value: { capsuleType: 'ASTRAL', quantity: 1 }, isActive: true },
+    })
+    expect(createRes.statusCode).toBe(201)
+    const capsuleId = createRes.json().id
+
+    const patchRes = await app.inject({
+      method: 'PATCH', url: `/admin/shop-items/${capsuleId}`,
+      headers: { cookie: adminCookies },
+      payload: { nameFr: 'Capsule Test', nameEn: 'Test Capsule', descriptionFr: 'desc', descriptionEn: 'desc', type: 'CAPSULE', cost: 500, currency: 'DUST', value: { capsuleType: 'ASTRAL', quantity: 1 }, isActive: true },
+    })
+    expect(patchRes.statusCode).toBe(200)
+    expect(patchRes.json().cost).toBe(500)
+  })
 })
