@@ -91,7 +91,7 @@ const planeVert = /* glsl */ `
 `
 
 // Boule de lumière : cœur blanc éblouissant, halo doré qui vire au violet
-// sur les bords, quatre aigrettes fines qui scintillent.
+// sur les bords, quatre aigrettes courtes et discrètes qui scintillent.
 const orbFrag = /* glsl */ `
   uniform vec3 uGold;
   uniform vec3 uViolet;
@@ -105,8 +105,8 @@ const orbFrag = /* glsl */ `
     float glow = exp(-r * r * 14.0);
     float halo = exp(-r * 3.2) * 0.55;
     float flicker = 0.85 + 0.15 * sin(uTime * 23.0);
-    float spikes = (exp(-abs(p.x) * 70.0) * exp(-abs(p.y) * 3.5)
-                  + exp(-abs(p.y) * 70.0) * exp(-abs(p.x) * 3.5)) * flicker;
+    float spikes = (exp(-abs(p.x) * 60.0) * exp(-abs(p.y) * 9.0)
+                  + exp(-abs(p.y) * 60.0) * exp(-abs(p.x) * 9.0)) * flicker * 0.45;
     vec3 col = mix(uViolet, uGold, smoothstep(0.9, 0.2, r));
     col = mix(col, vec3(1.0), clamp(core * 1.4 + glow * 0.6 + spikes, 0.0, 1.0));
     float a = clamp(core + glow * 0.9 + halo + spikes * 0.7, 0.0, 1.0);
@@ -125,11 +125,11 @@ const tailFrag = /* glsl */ `
   varying vec2 vUv;
   void main() {
     float x = vUv.y * 2.0 - 1.0;
-    float across = exp(-x * x * mix(5.0, 9.0, uCore));
-    float along = pow(1.0 - vUv.x, 1.6);
+    float across = exp(-x * x * mix(3.0, 9.0, uCore)) * (1.0 - x * x);
+    float along = pow(1.0 - vUv.x, mix(2.4, 1.6, uCore));
     vec3 col = mix(uViolet, uGold, smoothstep(1.0, 0.35, vUv.x));
     col = mix(col, vec3(1.0), smoothstep(0.35, 0.0, vUv.x) * 0.9 + uCore * 0.6);
-    float a = across * along * mix(0.45, 0.9, uCore) * uOpacity;
+    float a = across * along * mix(0.22, 0.9, uCore) * uOpacity;
     gl_FragColor = vec4(col, a);
   }
 `
@@ -177,8 +177,8 @@ const waveFrag = /* glsl */ `
   varying vec2 vUv;
   void main() {
     float r = length(vUv * 2.0 - 1.0);
-    float radius = 0.12 + uImpact * 0.85;
-    float band = exp(-pow((r - radius) * 14.0, 2.0));
+    float radius = 0.08 + uImpact * 0.62;
+    float band = exp(-pow((r - radius) * 14.0, 2.0)) * smoothstep(1.0, 0.8, r);
     float inner = exp(-r * r * 6.0) * (1.0 - uImpact) * 0.5;
     float a = (band + inner) * (1.0 - uImpact) * step(0.001, uImpact);
     gl_FragColor = vec4(mix(vec3(1.0), uGold, 0.5), a);
@@ -342,7 +342,7 @@ export function AstralMeteor({ anim }: { anim: CapsuleAnim }) {
 
       {/* Onde de lumière derrière la capsule */}
       <mesh position={[0, 0, -0.6]}>
-        <planeGeometry args={[7, 7]} />
+        <planeGeometry args={[12, 12]} />
         <shaderMaterial
           vertexShader={planeVert}
           fragmentShader={waveFrag}

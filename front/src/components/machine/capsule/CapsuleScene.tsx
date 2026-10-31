@@ -510,12 +510,15 @@ export function CapsuleScene({
 
     const split = anim.split
     auraUniforms.uTime.value = t
+    // L'aura naît avec la capsule : sans elle, son halo pulsé trahirait le
+    // point d'arrivée pendant le vol de l'étoile filante.
     auraUniforms.uIntensity.value =
-      (0.25 +
+      ((0.25 +
         c * cfg.aura * 1.9 * tuningRef.current.auraBoost +
         anim.sting * 1.2) *
         (1 - anim.inhale * 0.35) +
-      split * 2.4
+        split * 2.4) *
+      Math.min(1, anim.pop)
     auraUniforms.uRays.value = cfg.rays * (0.3 + 0.7 * c) * rawReveal
     auraUniforms.uHueCycle.value = cfg.hueCycle && rawReveal > 0.5 ? 1 : 0
     auraUniforms.uContract.value = anim.inhale
