@@ -1,12 +1,13 @@
-import { useId } from 'react'
+import type { CSSProperties } from 'react'
 
 import type { CardElement } from '../../../constants/card.constant.ts'
 
 /**
  * Aura des cartes Lumière / Ténèbres, posée sur la face comme le holo.
  * « Aube » pour la Lumière : le bas de la carte s'embrase, des poussières
- * dorées montent, un reflet fait le tour du cadre. « Brume des abysses »
- * pour les Ténèbres : une brume violet-noir monte du bas et ronge la carte.
+ * dorées montent, un reflet fait le tour du cadre. « Nébuleuse » pour les
+ * Ténèbres : le bas de la carte se fond dans le ciel de nuit de la capsule
+ * astrale, avec des étoiles qui scintillent.
  * Purement visuelle ; les animations s'arrêtent avec la règle reduced-motion
  * globale.
  */
@@ -15,7 +16,7 @@ export function ElementAuraOverlay({ element }: { element: CardElement }) {
     return <DawnAura />
   }
   if (element === 'DARK') {
-    return <AbyssMistAura />
+    return <NebulaAura />
   }
   return null
 }
@@ -71,43 +72,57 @@ function DawnAura() {
   )
 }
 
-function AbyssMistAura() {
-  // Un filtre par carte : plusieurs cartes Ténèbres coexistent dans une
-  // grille, chacune a besoin de son propre identifiant SVG.
-  const filterId = `abyss-mist-${useId().replace(/:/g, '')}`
+// Étoiles de la nébuleuse : positions fixes dans le bas de la carte (en %),
+// taille en px et rythme de scintillement variés.
+const NEBULA_STARS = [
+  { x: 8, y: 92, size: 2, delay: 0, duration: 2.6 },
+  { x: 17, y: 78, size: 1.5, delay: 1.2, duration: 3.1 },
+  { x: 26, y: 88, size: 2.5, delay: 0.4, duration: 2.2 },
+  { x: 34, y: 70, size: 1.5, delay: 2, duration: 3.4 },
+  { x: 42, y: 95, size: 2, delay: 0.8, duration: 2.8 },
+  { x: 51, y: 82, size: 1.5, delay: 1.6, duration: 2.4 },
+  { x: 60, y: 74, size: 2.5, delay: 0.2, duration: 3 },
+  { x: 68, y: 90, size: 1.5, delay: 2.4, duration: 2.6 },
+  { x: 76, y: 79, size: 2, delay: 1, duration: 3.3 },
+  { x: 85, y: 93, size: 1.5, delay: 0.6, duration: 2.3 },
+  { x: 92, y: 72, size: 2, delay: 1.8, duration: 2.9 },
+  { x: 12, y: 66, size: 1.5, delay: 2.8, duration: 3.2 },
+  { x: 72, y: 64, size: 1.5, delay: 0.9, duration: 2.7 },
+  { x: 47, y: 62, size: 1.5, delay: 2.2, duration: 3.5 },
+]
+
+function NebulaAura() {
   return (
     <div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden rounded-[inherit]">
-      <svg width="0" height="0" className="absolute" aria-hidden="true">
-        <filter id={filterId}>
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.018 0.035"
-            numOctaves={3}
-            seed={4}
-          />
-          <feDisplacementMap in="SourceGraphic" scale={38} />
-        </filter>
-      </svg>
-      {/* La brume déformée une fois pour toutes ; seul son conteneur dérive,
-          pour ne pas recalculer le filtre à chaque image */}
-      <div className="absolute -inset-[12%] [animation:abyssMist_14s_ease-in-out_infinite_alternate]">
-        <div
-          className="absolute inset-0"
-          style={{
-            filter: `url(#${filterId})`,
-            background:
-              'linear-gradient(0deg, color-mix(in oklab, var(--astral-night-deep) 100%, black 45%) 0%, color-mix(in oklab, var(--astral-night-deep) 95%, transparent) 18%, color-mix(in oklab, var(--astral-night-violet) 60%, var(--astral-night-deep) 40%) 34%, color-mix(in oklab, var(--astral-night-violet) 25%, transparent) 50%, transparent 62%), radial-gradient(ellipse 40% 30% at 0% 50%, color-mix(in oklab, var(--astral-night-deep) 90%, transparent), transparent 70%), radial-gradient(ellipse 40% 30% at 100% 35%, color-mix(in oklab, var(--astral-night-deep) 85%, transparent), transparent 70%)',
-          }}
-        />
-      </div>
-      {/* Bords rongés par l'ombre */}
+      {/* Le bas de la carte se fond dans le ciel de nuit de la capsule :
+          voile sombre léger et nuages violets, roses et bleus qui dérivent */}
       <div
-        className="absolute inset-0 rounded-[inherit]"
+        className="absolute inset-0 [animation:nebulaDrift_18s_ease-in-out_infinite_alternate] [background-size:120%_120%]"
         style={{
-          boxShadow:
-            'inset 0 0 26px color-mix(in oklab, var(--astral-night-deep) 90%, transparent)',
+          background:
+            'radial-gradient(ellipse 45% 22% at 25% 82%, color-mix(in oklab, var(--astral-night-pink) 32%, transparent), transparent 70%), radial-gradient(ellipse 55% 26% at 72% 76%, color-mix(in oklab, var(--astral-night-violet) 45%, transparent), transparent 70%), radial-gradient(ellipse 35% 18% at 48% 92%, color-mix(in oklab, var(--astral-night-blue) 28%, transparent), transparent 70%), linear-gradient(0deg, color-mix(in oklab, var(--astral-night-deep) 70%, transparent) 0%, color-mix(in oklab, var(--astral-night-deep) 40%, transparent) 25%, transparent 58%)',
+          maskImage: 'linear-gradient(0deg, #000 30%, transparent 70%)',
         }}
       />
+      {NEBULA_STARS.map((star) => (
+        <i
+          key={`${star.x}-${star.y}`}
+          className="absolute rounded-full [animation:nebulaTwinkle_var(--twinkle)_ease-in-out_infinite]"
+          style={
+            {
+              left: `${star.x}%`,
+              top: `${star.y}%`,
+              width: star.size,
+              height: star.size,
+              animationDelay: `${star.delay}s`,
+              '--twinkle': `${star.duration}s`,
+              background: 'white',
+              boxShadow:
+                '0 0 4px 1px color-mix(in oklab, var(--astral-night-violet) 60%, white)',
+            } as CSSProperties
+          }
+        />
+      ))}
     </div>
   )
 }

@@ -383,12 +383,24 @@ h6 {
   }
 }
 
-@keyframes abyssMist {
+@keyframes nebulaDrift {
   from {
-    transform: translate(-3%, 2%);
+    background-position: 0% 100%;
   }
   to {
-    transform: translate(3%, -2%);
+    background-position: 100% 90%;
+  }
+}
+
+@keyframes nebulaTwinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
