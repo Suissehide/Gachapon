@@ -288,12 +288,13 @@ export function UnitPortrait({
 
 /**
  * Jauge d'ultime : un cran par action jouée depuis le dernier ultime, sur
- * `cadence` crans (statut `ULTIMATE` des `TURN_END`, `value` / `turns`).
+ * `cadence - 1` crans (statut `ULTIMATE` des `TURN_END`, `value` / `turns`) :
+ * l'ultime est la `cadence`-ième action, il part donc jauge pleine.
  * Absente tant qu'aucun `TURN_END` n'est passé et pour les unités sans
  * archétype (ennemis).
  */
 /** Crans possibles d'une jauge (cadence maximale 4), numérotés à partir de 1. */
-const GAUGE_SLOTS = [1, 2, 3, 4] as const
+const GAUGE_SLOTS = [1, 2, 3] as const
 
 function UltimateGauge({ unit }: { unit: SceneUnit }) {
   const { t } = useTranslation('combat')
@@ -308,7 +309,7 @@ function UltimateGauge({ unit }: { unit: SceneUnit }) {
       className="mt-1 flex h-1.5 w-full gap-0.5"
       title={t('unitStatus.ultimateGauge', { charge, cadence })}
     >
-      {GAUGE_SLOTS.slice(0, cadence).map((slot) => (
+      {GAUGE_SLOTS.slice(0, cadence - 1).map((slot) => (
         <div
           key={slot}
           className={cn(
