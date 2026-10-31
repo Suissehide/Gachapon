@@ -29,11 +29,16 @@
   },
   "title": "Dépense ta poussière",
   "breadcrumb": "Boutique",
+  "tabs": {
+    "tokens": "Jetons",
+    "cards": "Cartes",
+    "energy": "Énergie"
+  },
   "typeLabels": {
-    "TOKEN_PACK": "Packs de jetons",
-    "CAPSULE_ASTRAL": "Capsules astrales",
-    "CAPSULE_COMET": "Capsule Comète",
-    "CAPSULE_ELEMENT": "Capsules élémentaires",
+    "TOKEN_PACK": "Jetons classiques",
+    "CAPSULE_ASTRAL": "Jeton astral",
+    "CAPSULE_COMET": "Jeton Comète",
+    "CAPSULE_ELEMENT": "Jetons élémentaires",
     "ENERGY_PACK": "Énergie",
     "BOOST": "Boosts",
     "COSMETIC": "Cosmétiques",
@@ -59,12 +64,33 @@
     "bought": "Achetée"
   },
   "staticCard": {
-    "purchaseSuccess": "Achat réussi",
     "owned": "Possédée",
     "comingSoon": "Bientôt",
-    "buy": "Acheter",
-    "insufficient": "Insuffisant",
     "activeBoost_one": "Actif — {{count}} tirage restant",
-    "activeBoost_other": "Actif — {{count}} tirages restants"
+    "activeBoost_other": "Actif — {{count}} tirages restants",
+    "bought": "Acheté"
+  },
+  "offer": {
+    "tokenCount_one": "{{count}} jeton",
+    "tokenCount_other": "{{count}} jetons",
+    "discount": "−{{pct}} %"
+  },
+  "comet": {
+    "title": "Sélection de la semaine",
+    "text": "Ouvre une capsule tirée parmi la sélection en cours <b>au moment où tu l'utilises</b>. Garde tes jetons si la sélection suivante te plaît plus.",
+    "thisWeek": "Cette semaine",
+    "nextWeek": "Semaine prochaine",
+    "cardCount_one": "{{count}} carte",
+    "cardCount_other": "{{count}} cartes",
+    "nextMeta_one": "Aperçu · {{count}} carte · dès lundi",
+    "nextMeta_other": "Aperçu · {{count}} cartes · dès lundi"
+  },
+  "astral": {
+    "title": "Lumière ou Ténèbres",
+    "text": "Une carte <light>Lumière</light> ou <dark>Ténèbres</dark>, introuvable avec les autres jetons."
+  },
+  "classic": {
+    "title": "Tous les éléments",
+    "text": "Une carte de n'importe quel élément, comme à la machine."
   }
 }

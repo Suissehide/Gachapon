@@ -135,18 +135,18 @@ export const capsulesResponseSchema = z.object({
 
 // ── GET /capsules/comet ─────────────────────────────────────────────────────
 
+const cometCardSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  imageUrl: z.string().nullable(),
+  rarity: z.string(),
+  element: cardElementEnum.nullable(),
+  set: z.object({ id: z.string(), name: z.string() }),
+})
+
 export const cometCapsuleResponseSchema = z.object({
-  endsAt: z.string(),
-  cards: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      imageUrl: z.string().nullable(),
-      rarity: z.string(),
-      element: cardElementEnum.nullable(),
-      set: z.object({ id: z.string(), name: z.string() }),
-    }),
-  ),
+  current: z.object({ endsAt: z.string(), cards: z.array(cometCardSchema) }),
+  next: z.object({ startsAt: z.string(), cards: z.array(cometCardSchema) }),
 })
 
 // ── GET /tokens/balance ─────────────────────────────────────────────────────

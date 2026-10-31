@@ -56,6 +56,14 @@ const buttonVariants = cva(
         // aux étiquettes non cliquables qui partagent la même recette.
         // L'intention du handoff est qu'une action impossible ou mineure ne
         // se présente jamais en gros bloc plein.
+        // Bouton de prix — handoff boutique : le montant EST le bouton, teinté
+        // par sa monnaie via `--cur` / `--cur-ink` (voir `PriceButton`).
+        // Survol = fond seulement, ni translation ni ombre.
+        currency:
+          'font-bold border tabular-nums ' +
+          'border-[color-mix(in_srgb,var(--cur)_30%,transparent)] ' +
+          'bg-[color-mix(in_srgb,var(--cur)_9%,var(--card))] text-(--cur-ink) ' +
+          'hover:bg-[color-mix(in_srgb,var(--cur)_18%,var(--card))] [&_svg]:size-[15px] [&_svg]:text-(--cur)',
         mono: 'rounded-full border border-foreground/10 bg-surface-2 font-mono font-bold tracking-[0.1em] text-foreground/45 hover:border-foreground/25 hover:text-text',
       },
       size: {
@@ -80,6 +88,8 @@ const buttonVariants = cva(
         // précisément la raison de passer par `Button` plutôt que par un
         // `<button>` nu.
         bare: 'h-auto p-0 rounded-none',
+        // Gabarit du bouton de prix (variante `currency`).
+        price: 'h-[34px] min-w-[92px] rounded-lg px-3 text-[13px]',
       },
     },
     defaultVariants: {

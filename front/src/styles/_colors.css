@@ -120,6 +120,12 @@
   --astral-gold: #fde047;
   --astral-gold-deep: #f59e0b;
   --astral-pearl: #ede9fe;
+  /* Pastille du jeton astral (boutique, menu Tirer) et couleurs de
+     « Lumière » / « Ténèbres » dans les textes de la boutique. */
+  --astral-band-light: #eab308;
+  --astral-band-dark: #6d28d9;
+  --astral-light-ink: #a16207;
+  --astral-dark-ink: #6d28d9;
 
   /* Palette des duels et paris — handoff `docs/design_handoff_duels`
      (`equipe-duels.css`). Le duel emprunte l'ambre déjà tokenisé ; le pari,

@@ -7,27 +7,29 @@ import {
   ELEMENT_CAPSULE_KINDS,
 } from '../machine/capsule/capsuleConfig'
 
-// Pastille de capsule : moitié haute / moitié basse, comme la capsule 3D. Les
-// capsules teintées reprennent la classique avec leur couleur en bas.
+const RIM = 'inset 0 0 0 1.5px var(--border)'
+
+// Pastille de capsule : moitié haute blanche, moitié basse à la couleur de la
+// capsule, comme la capsule 3D. L'astrale porte ses bandes or / nuit, la
+// pastille « élémentaire » (en-tête de boutique) les quatre éléments.
 function swatchStyle(kind: CapsuleKind | 'elemental'): CSSProperties {
   if (kind === 'elemental') {
-    // Les quatre éléments en quartiers dans la moitié basse.
     const [fire, water, nature, earth] = ELEMENT_CAPSULE_KINDS.map(capsuleTint)
     return {
-      background: `linear-gradient(180deg, var(--card) 50%, transparent 50%), conic-gradient(from 90deg, ${fire} 0 12.5%, ${water} 0 25%, ${nature} 0 37.5%, ${earth} 0 50%, transparent 0)`,
-      boxShadow: 'inset 0 0 0 1px var(--border-dark)',
+      background: `conic-gradient(${fire} 0 25%, ${water} 0 50%, ${nature} 0 75%, ${earth} 0)`,
+      boxShadow: RIM,
     }
   }
   if (kind === 'astral') {
     return {
       background:
-        'linear-gradient(180deg, var(--astral-day-sky), var(--astral-day-haze) 50%, var(--astral-night-violet) 50%, var(--astral-night-deep))',
-      boxShadow: '0 0 6px var(--astral-night-violet)',
+        'linear-gradient(180deg, var(--card) 0 44%, var(--astral-band-light) 44% 72%, var(--astral-band-dark) 72%)',
+      boxShadow: RIM,
     }
   }
   return {
     background: `linear-gradient(180deg, var(--card) 50%, ${capsuleTint(kind) ?? 'var(--primary)'} 50%)`,
-    boxShadow: 'inset 0 0 0 1px var(--border-dark)',
+    boxShadow: RIM,
   }
 }
 
@@ -41,7 +43,7 @@ export function CapsuleSwatch({
   return (
     <span
       aria-hidden
-      className={cn('h-4 w-4 shrink-0 rounded-full', className)}
+      className={cn('h-[18px] w-[18px] shrink-0 rounded-full', className)}
       style={swatchStyle(kind)}
     />
   )

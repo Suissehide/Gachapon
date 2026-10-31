@@ -19,6 +19,7 @@ import { wsManager } from '../../../../ws/ws-manager'
 import {
   capsulesResponseSchema,
   capsuleTypeEnum,
+  cometCapsuleResponseSchema,
   dropRatesResponseSchema,
   pullBatchBodySchema,
   pullBatchResponseSchema,
@@ -31,7 +32,6 @@ import {
   pullsRecentResponseSchema,
   tokensBalanceResponseSchema,
   tokensNextAtResponseSchema,
-  cometCapsuleResponseSchema,
 } from '../../schemas/gacha.schemas'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -507,34 +507,41 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // GET /capsules/comet — sélection de la capsule Comète (publique :
-  // la vitrine de la boutique la montre avant tout achat)
+  // GET /capsules/comet — sélection de la capsule Comète, en cours et à
+  // venir (publique : la boutique la montre avant tout achat)
   fastify.get(
     '/capsules/comet',
     {
       schema: {
-        summary: 'Get this week Comet capsule selection',
+        summary: 'Get the current and next Comet capsule selections',
         response: { 200: cometCapsuleResponseSchema },
       },
     },
     async () => {
-      const now = new Date()
-      const weekStart = Date.parse(`${mondayOfUtcWeek(now)}T00:00:00.000Z`)
-      const cards = capsulePoolOf(
-        'COMET',
-        await cardRepository.findActiveNormal(),
-        now,
+      const WEEK_MS = 7 * 86_400_000
+      const weekStart = Date.parse(
+        `${mondayOfUtcWeek(new Date())}T00:00:00.000Z`,
       )
-      return {
-        endsAt: new Date(weekStart + 7 * 86_400_000).toISOString(),
-        cards: cards.map((c) => ({
+      const nextStart = new Date(weekStart + WEEK_MS)
+      const pool = await cardRepository.findActiveNormal()
+      const toPayload = (cards: typeof pool) =>
+        cards.map((c) => ({
           id: c.id,
           name: c.name,
           imageUrl: resolveUrl(c.imageUrl),
           rarity: c.rarity,
           element: c.element,
           set: { id: c.set.id, name: c.set.name },
-        })),
+        }))
+      return {
+        current: {
+          endsAt: nextStart.toISOString(),
+          cards: toPayload(capsulePoolOf('COMET', pool, new Date(weekStart))),
+        },
+        next: {
+          startsAt: nextStart.toISOString(),
+          cards: toPayload(capsulePoolOf('COMET', pool, nextStart)),
+        },
       }
     },
   )
