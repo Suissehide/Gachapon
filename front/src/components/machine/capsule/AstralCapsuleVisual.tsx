@@ -44,20 +44,6 @@ export function createAstralMaterial(): AstralMaterial {
   return material as AstralMaterial
 }
 
-// Anneau doré incliné de la maquette (ellipse ~290×88 autour d'une capsule de
-// 170 px : rayon ≈ 1,7 × celui de la capsule, plan vu à ~17°, penché de -18°).
-export function AstralRing({ radius }: { radius: number }) {
-  const gold = astralPalette().gold
-  return (
-    <group rotation={[0, 0, -0.31]}>
-      <mesh rotation={[Math.PI / 2 - 0.3, 0, 0]}>
-        <torusGeometry args={[radius * 1.7, radius * 0.025, 8, 64]} />
-        <meshBasicMaterial color={gold} transparent opacity={0.7} />
-      </mesh>
-    </group>
-  )
-}
-
 // Bande or au joint des deux hémisphères
 export function AstralBand({
   radius,
@@ -92,9 +78,8 @@ export function AstralBand({
 }
 
 // Mini-capsule astrale des machines, même rayon que `MiniCapsuleVisual`.
-// Version allégée pour le globe (~24 instances) : pas d'anneau — il
-// traverserait les capsules voisines. La capsule distinguée (`glow`, celle
-// qui sort de la trappe) porte l'anneau et respire en émissif doré.
+// La capsule distinguée (`glow`, celle qui sort de la trappe) respire en
+// émissif doré.
 export function AstralCapsuleVisual({ glow = false }: { glow?: boolean }) {
   const r = MINI_CAPSULE_RADIUS
   const reduced = usePrefersReducedMotion()
@@ -125,7 +110,6 @@ export function AstralCapsuleVisual({ glow = false }: { glow?: boolean }) {
         />
       </mesh>
       <AstralBand radius={r} segments={16} />
-      {glow && <AstralRing radius={r} />}
     </group>
   )
 }

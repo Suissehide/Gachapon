@@ -7,9 +7,9 @@ import * as THREE from 'three'
 import {
   AstralBand,
   type AstralMaterial,
-  AstralRing,
   createAstralMaterial,
 } from './AstralCapsuleVisual'
+import { AstralMeteor } from './AstralMeteor'
 import { ChargeSparks } from './ChargeSparks'
 import { capsuleAudio } from './capsuleAudio'
 import {
@@ -19,7 +19,6 @@ import {
   type TeaseTier,
   tierConfig,
 } from './capsuleConfig'
-import { FALL_FROM, FallTrail } from './FallTrail'
 import { StarShower } from './StarShower'
 import auraFrag from './shaders/aura.frag.glsl'
 import auraVert from './shaders/aura.vert.glsl'
@@ -86,8 +85,7 @@ function poseCapsule(
 ) {
   const c = anim.charge
   group.rotation.set(0, 0, 0)
-  group.position.copy(FALL_FROM).multiplyScalar(anim.fall)
-  group.rotation.z = anim.fall * 2.4
+  group.position.set(0, 0, 0)
   let scale = BALL_SCALE * anim.pop
 
   if (anim.burstT > 0 && anim.burstT < 1) {
@@ -372,24 +370,30 @@ export function CapsuleScene({
       camZ: 7,
       camShake: 0,
       fall: 0,
+      impact: 0,
     })
     if (fallsRef.current) {
-      // La capsule astrale tombe du ciel en étoile filante, puis se pose.
-      tl.set(anim, { pop: 1, fall: 1 })
-      tl.to(anim, { fall: 0, duration: 0.9, ease: 'power2.in' })
+      // Une étoile tombe du fond du ciel et éclot en capsule à l'arrivée.
+      tl.set(anim, { fall: 1 })
+      tl.to(anim, { fall: 0, duration: 1.05, ease: 'power2.in' })
       tl.call(() => {
         capsuleAudio.clack()
         gsap
           .timeline()
-          .to(anim, { sting: 0.8, duration: 0.08, ease: 'power1.out' })
-          .to(anim, { sting: 0, duration: 0.5, ease: 'power2.out' })
+          .to(anim, { sting: 1, duration: 0.06, ease: 'power1.out' })
+          .to(anim, { sting: 0, duration: 0.6, ease: 'power2.out' })
         gsap.fromTo(
           anim,
-          { camShake: 0.5 },
+          { impact: 0 },
+          { impact: 1, duration: 0.7, ease: 'power2.out' },
+        )
+        gsap.fromTo(
+          anim,
+          { camShake: 0.45 },
           { camShake: 0, duration: 0.4, ease: 'power2.out' },
         )
       })
-      tl.to({}, { duration: 0.25 })
+      tl.to(anim, { pop: 1, duration: 0.55, ease: 'elastic.out(1.1, 0.5)' })
     } else {
       tl.to(anim, { pop: 1, duration: 0.45, ease: 'elastic.out(1.1, 0.5)' })
     }
@@ -569,7 +573,7 @@ export function CapsuleScene({
 
       {capsuleKind === 'astral' && !reduced && (
         <>
-          <FallTrail anim={anim} />
+          <AstralMeteor anim={anim} />
           <StarShower anim={anim} reduced={reduced} />
         </>
       )}
@@ -677,11 +681,10 @@ export function CapsuleScene({
           )}
         </group>
 
-        {/* Bande or + anneau astral : masqués dès l'ouverture, comme le joint */}
+        {/* Bande or astrale : masquée dès l'ouverture, comme le joint */}
         {astralMat && (
           <group ref={astralTrimRef}>
             <AstralBand radius={SHELL_R} segments={64} />
-            <AstralRing radius={SHELL_R} />
           </group>
         )}
       </group>

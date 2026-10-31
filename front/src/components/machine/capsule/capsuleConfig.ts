@@ -281,8 +281,10 @@ export interface CapsuleAnim {
   camZ: number
   // Secousse caméra au burst (1→0)
   camShake: number
-  // Chute astrale : 1 = capsule loin dans le ciel, 0 = posée au centre
+  // Vol de l'étoile filante astrale : 1 = au fond du ciel, 0 = arrivée
   fall: number
+  // Onde de choc de l'éclosion astrale (0→1)
+  impact: number
 }
 
 export function createCapsuleAnim(): CapsuleAnim {
@@ -296,5 +298,6 @@ export function createCapsuleAnim(): CapsuleAnim {
     camZ: 7,
     camShake: 0,
     fall: 0,
+    impact: 0,
   }
 }
