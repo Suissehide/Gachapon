@@ -346,6 +346,33 @@ h6 {
     background-position: 50% 0%;
   }
 }
+/* Aura des cartes Lumière / Ténèbres (ElementAuraOverlay.tsx) */
+@keyframes celestialRays {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes auraBreath {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes abyssDrift {
+  0%,
+  100% {
+    background-position: 0% 100%;
+  }
+  50% {
+    background-position: 100% 0%;
+  }
+}
+
 @keyframes holoSweep {
   0% {
     background-position: 50% 100%;
