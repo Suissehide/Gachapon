@@ -647,6 +647,67 @@ class CapsuleAudioEngine {
     })
   }
 
+  // ── Cues constellation ───────────────────────────────────────────────────
+
+  // Allumage des étoiles : un tintement cristallin par étoile, en montant la
+  // gamme, au rythme de la formation de la figure.
+  constellation(stars: number, duration: number) {
+    if (this.muted) {
+      return
+    }
+    const ctx = this.ensureCtx()
+    if (!ctx || !this.master) {
+      return
+    }
+    const base = 1046.5 // C6
+    for (let i = 0; i < stars; i++) {
+      const freq = base * 2 ** (SCALE[i % SCALE.length] / 12)
+      const when = (i / stars) * duration
+      this.playTone(ctx, this.master, {
+        type: 'sine',
+        freq,
+        duration: 0.5,
+        gain: 0.07,
+        when,
+      })
+      this.playTone(ctx, this.master, {
+        type: 'triangle',
+        freq: freq * 2,
+        duration: 0.2,
+        gain: 0.02,
+        when,
+      })
+    }
+  }
+
+  // Repli de la figure et flash : souffle qui monte, puis accord clair.
+  constellationFlash() {
+    if (this.muted) {
+      return
+    }
+    const ctx = this.ensureCtx()
+    if (!ctx || !this.master) {
+      return
+    }
+    this.playNoise(ctx, this.master, {
+      duration: 0.35,
+      filterType: 'bandpass',
+      freqFrom: 900,
+      freqTo: 4200,
+      q: 1.5,
+      gain: 0.3,
+    })
+    for (const [i, semi] of [0, 7, 12, 19].entries()) {
+      this.playTone(ctx, this.master, {
+        type: 'sine',
+        freq: 523.25 * 2 ** (semi / 12),
+        duration: 0.9,
+        gain: 0.09,
+        when: 0.05 + i * 0.03,
+      })
+    }
+  }
+
   // Coupe tout ce qui boucle (démontage de la scène / abandon du tirage)
   stopAll() {
     this.stopCharge()

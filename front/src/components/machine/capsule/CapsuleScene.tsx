@@ -11,12 +11,15 @@ import {
 } from './AstralCapsuleVisual'
 import { AstralMeteor } from './AstralMeteor'
 import { ChargeSparks } from './ChargeSparks'
+import { Constellation, FORM_DURATION, STAR_COUNT } from './Constellation'
 import { capsuleAudio } from './capsuleAudio'
 import {
   type CapsuleAnim,
   type CapsuleKind,
   type CapsuleTuning,
+  CONSTELLATION_SPARK_COLORS,
   capsuleTint,
+  hasSkyArrival,
   type TeaseTier,
   tierConfig,
 } from './capsuleConfig'
@@ -295,8 +298,10 @@ export function CapsuleScene({
   const chargeTweenRef = useRef<gsap.core.Tween | null>(null)
   const notifiedRef = useRef(false)
   const stingFiredRef = useRef(false)
-  // Lu une seule fois au montage, comme la chorégraphie qu'il pilote.
+  // Lus une seule fois au montage, comme la chorégraphie qu'ils pilotent.
   const fallsRef = useRef(capsuleKind === 'astral' && !reduced)
+  const constellationRef = useRef(capsuleKind === 'comet' && !reduced)
+  const skyArrival = hasSkyArrival(capsuleKind) && !reduced
 
   const getSparkConfig = useMemo(() => () => tierConfig(tierRef.current), [])
 
@@ -379,6 +384,8 @@ export function CapsuleScene({
       impact: 0,
       flash: 0,
       hitstop: 0,
+      gather: 0,
+      ring: 0,
     })
     if (fallsRef.current) {
       // L'étoile filante tombe du ciel, la caméra tremble de plus en plus.
@@ -404,6 +411,31 @@ export function CapsuleScene({
           anim,
           { camShake: 2.4 },
           { camShake: 0, duration: 0.8, ease: 'power2.out' },
+        )
+      })
+      tl.to(anim, { flash: 1, duration: 0.05, ease: 'power1.out' })
+      tl.set(anim, { pop: 1 })
+      tl.to(anim, { flash: 0, duration: 0.4, ease: 'power3.out' }, '+=0.05')
+    } else if (constellationRef.current) {
+      // Les étoiles s'allument une à une et se relient, la figure tient un
+      // instant puis se replie sur le point d'arrivée : flash, onde de
+      // lumière, la capsule est là quand le flash retombe. Pas de gel ni
+      // d'onde de choc : le gros coup reste à l'astrale.
+      tl.set(anim, { fall: 1 })
+      tl.call(() => capsuleAudio.constellation(STAR_COUNT, FORM_DURATION))
+      tl.to(anim, { fall: 0, duration: FORM_DURATION, ease: 'none' })
+      tl.to(anim, { gather: 1, duration: 0.55, ease: 'power3.in' }, '+=0.2')
+      tl.call(() => {
+        capsuleAudio.constellationFlash()
+        gsap.fromTo(
+          anim,
+          { ring: 0 },
+          { ring: 1, duration: 0.9, ease: 'power3.out' },
+        )
+        gsap.fromTo(
+          anim,
+          { camShake: 0.8 },
+          { camShake: 0, duration: 0.5, ease: 'power2.out' },
         )
       })
       tl.to(anim, { flash: 1, duration: 0.05, ease: 'power1.out' })
@@ -589,11 +621,16 @@ export function CapsuleScene({
 
       <ChargeSparks anim={anim} color={curColor} getConfig={getSparkConfig} />
 
-      {capsuleKind === 'astral' && !reduced && (
-        <>
-          <AstralMeteor anim={anim} />
-          <StarShower anim={anim} reduced={reduced} />
-        </>
+      {capsuleKind === 'astral' && !reduced && <AstralMeteor anim={anim} />}
+      {capsuleKind === 'comet' && !reduced && <Constellation anim={anim} />}
+      {skyArrival && (
+        <StarShower
+          anim={anim}
+          reduced={reduced}
+          palette={
+            capsuleKind === 'comet' ? CONSTELLATION_SPARK_COLORS : undefined
+          }
+        />
       )}
 
       {/* Lumière interne teintée rareté — éclaire la scène à la charge */}

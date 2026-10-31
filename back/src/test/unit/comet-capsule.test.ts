@@ -54,7 +54,7 @@ describe('capsulePoolOf', () => {
     expect(fire.every((c) => c.element === 'FIRE')).toBe(true)
   })
 
-  it('capsule Comète : sélection de la semaine UTC en cours', () => {
+  it('jeton Constellation : sélection de la semaine UTC en cours', () => {
     const sunday = new Date('2026-11-01T23:00:00Z')
     expect(capsulePoolOf('COMET', pool, sunday)).toEqual(
       cometCapsuleCards(pool, '2026-10-26'),

@@ -5,9 +5,10 @@ import * as THREE from 'three'
 import { makeSprite } from './ChargeSparks'
 import { astralPalette, type CapsuleAnim } from './capsuleConfig'
 
-// Pluie d'étoiles de la capsule astrale : au burst, la nébuleuse se déchire
-// en éclats qui jaillissent puis retombent en s'éteignant. Un seul Points,
-// trajectoires balistiques calculées depuis l'instant d'ouverture.
+// Pluie d'étoiles des capsules célestes : au burst, la coque se déchire en
+// éclats qui jaillissent puis retombent en s'éteignant. Un seul Points,
+// trajectoires balistiques calculées depuis l'instant d'ouverture. Palette
+// astrale par défaut, `palette` pour une autre capsule.
 
 const COUNT = 220
 const LIFE_S = 1.6
@@ -16,9 +17,11 @@ const GRAVITY = 3.2
 export function StarShower({
   anim,
   reduced,
+  palette,
 }: {
   anim: CapsuleAnim
   reduced: boolean
+  palette?: readonly string[]
 }) {
   const pointsRef = useRef<THREE.Points>(null)
   const matRef = useRef<THREE.PointsMaterial>(null)
@@ -27,14 +30,16 @@ export function StarShower({
   const sprite = useMemo(makeSprite, [])
   const { positions, colors, velocity } = useMemo(() => {
     const pal = astralPalette()
-    const palette = [
-      pal.gold,
-      pal.dayHaze,
-      pal.daySky,
-      pal.nightPink,
-      pal.nightViolet,
-      '#ffffff',
-    ].map((c) => new THREE.Color(c))
+    const colors = (
+      palette ?? [
+        pal.gold,
+        pal.dayHaze,
+        pal.daySky,
+        pal.nightPink,
+        pal.nightViolet,
+        '#ffffff',
+      ]
+    ).map((c) => new THREE.Color(c))
     const pos = new Float32Array(COUNT * 3)
     const col = new Float32Array(COUNT * 3)
     const vel = new Float32Array(COUNT * 3)
@@ -51,10 +56,10 @@ export function StarShower({
       vel[i * 3] = v.x
       vel[i * 3 + 1] = v.y
       vel[i * 3 + 2] = v.z
-      palette[i % palette.length].toArray(col, i * 3)
+      colors[i % colors.length].toArray(col, i * 3)
     }
     return { positions: pos, colors: col, velocity: vel }
-  }, [])
+  }, [palette])
 
   useFrame((state) => {
     const points = pointsRef.current

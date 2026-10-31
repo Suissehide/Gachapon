@@ -513,7 +513,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/capsules/comet',
     {
       schema: {
-        summary: 'Get the current and next Comet capsule selections',
+        summary: 'Get the current and next Constellation token selections',
         response: { 200: cometCapsuleResponseSchema },
       },
     },

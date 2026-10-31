@@ -166,7 +166,7 @@ describe('Capsule astrale — achat en boutique', () => {
     expect(fire.quantity).toBe(10)
   })
 
-  it('les capsules Comète sont en boutique à 250 / 2500', async () => {
+  it('les jetons Constellation sont en boutique à 250 / 2500', async () => {
     const { postgresOrm } = (app as any).iocContainer
     const items = await postgresOrm.prisma.shopItem.findMany({
       where: { value: { path: ['capsuleType'], equals: 'COMET' } },

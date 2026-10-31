@@ -41,9 +41,24 @@ export function capsuleTypeOf(kind: Exclude<CapsuleKind, 'classic'>) {
   return kind.toUpperCase() as CapsuleType
 }
 
-// Couleur de la capsule Comète : three.js veut une couleur concrète,
-// comme ELEMENT_COLOR.
+// Couleur de la capsule Constellation (type d'inventaire `COMET`) : three.js
+// veut une couleur concrète, comme ELEMENT_COLOR.
 const COMET_CAPSULE_COLOR = '#14b8a6'
+
+// Éclats de la pluie d'étoiles au burst d'une capsule Constellation.
+export const CONSTELLATION_SPARK_COLORS = [
+  COMET_CAPSULE_COLOR,
+  '#5eead4',
+  '#ccfbf1',
+  '#ffffff',
+]
+
+// Capsules livrées par un événement céleste (étoile filante, constellation)
+// au lieu d'un pop : la scène reste montée pendant le flash du burst pour
+// que leur pluie d'étoiles s'y déploie.
+export function hasSkyArrival(kind: CapsuleKind): boolean {
+  return kind === 'astral' || kind === 'comet'
+}
 
 // Teinte d'une capsule classique teintée ; null pour classic et astral.
 export function capsuleTint(kind: CapsuleKind): string | null {
@@ -343,6 +358,10 @@ export interface CapsuleAnim {
   flash: number
   // Gel de l'image à l'impact astral (1 = tout est figé)
   hitstop: number
+  // Constellation : repli des étoiles vers le point d'arrivée (0→1)
+  gather: number
+  // Constellation : onde de lumière après le flash (0→1)
+  ring: number
 }
 
 export function createCapsuleAnim(): CapsuleAnim {
@@ -359,5 +378,7 @@ export function createCapsuleAnim(): CapsuleAnim {
     impact: 0,
     flash: 0,
     hitstop: 0,
+    gather: 0,
+    ring: 0,
   }
 }

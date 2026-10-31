@@ -33,7 +33,7 @@ export const ELEMENT_CAPSULE_TYPES = [
 const RARITIES = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'] as const
 export const COMET_CARDS_PER_RARITY = 3
 
-/** Sélection de la capsule Comète : 3 cartes par rareté tirées dans le
+/** Sélection du jeton Constellation (type COMET) : 3 cartes par rareté tirées dans le
  * pool normal, graine = lundi de la semaine (UTC). Commune à tous et stable
  * toute la semaine tant que le pool ne change pas.
  * ponytail: recalculée à chaque lecture — ajouter une carte en cours de

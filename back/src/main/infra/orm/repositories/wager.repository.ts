@@ -358,7 +358,7 @@ function listActiveDuelsForUserWith(
  * puisque c'est lui qui décide quelles cartes sont saisissables au règlement.
  *
  * Les tirages astraux sont exclus de la fenêtre : ils ne déclenchent ni
- * n'avancent un pari ou un duel. Les autres capsules (élémentaires, Comète)
+ * n'avancent un pari ou un duel. Les autres capsules (élémentaires, Constellation)
  * y entrent : elles partagent la garantie des jetons, que la cote gèle au
  * placement — les laisser hors fenêtre permettrait d'avancer cette garantie
  * après coup.

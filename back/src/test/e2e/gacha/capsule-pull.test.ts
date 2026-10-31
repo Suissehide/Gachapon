@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
 
-describe('POST /pulls/capsules/:type (élémentaire, Comète)', () => {
+describe('POST /pulls/capsules/:type (élémentaire, Constellation)', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let prisma: any
   let configService: any
@@ -127,7 +127,7 @@ describe('POST /pulls/capsules/:type (élémentaire, Comète)', () => {
     expect((await pullCapsule('LIGHT', 1)).statusCode).toBe(400)
   })
 
-  it('capsule Comète : cartes de la sélection publique, jamais LIGHT/DARK', async () => {
+  it('jeton Constellation : cartes de la sélection publique, jamais LIGHT/DARK', async () => {
     const comet = await app.inject({ method: 'GET', url: '/capsules/comet' })
     expect(comet.statusCode).toBe(200)
     const { current, next } = comet.json()

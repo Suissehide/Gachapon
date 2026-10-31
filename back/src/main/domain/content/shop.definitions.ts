@@ -211,11 +211,11 @@ export const SHOP_ITEMS = [
     currency: 'DUST' as const,
     value: { capsuleType: 'EARTH', quantity: 10 },
   },
-  // Jeton Comète — une carte parmi 15 (3 par rareté), liste commune
+  // Jeton Constellation (type COMET) — une carte parmi 15 (3 par rareté), liste commune
   // à tous les joueurs, renouvelée chaque lundi (card-pools.ts#cometCapsuleCards).
   {
-    nameFr: 'Jeton Comète',
-    nameEn: 'Comet token',
+    nameFr: 'Jeton Constellation',
+    nameEn: 'Constellation token',
     descriptionFr:
       'Une carte parmi les 15 de la sélection de la semaine. Rareté tirée comme un tirage normal.',
     descriptionEn:
@@ -226,8 +226,8 @@ export const SHOP_ITEMS = [
     value: { capsuleType: 'COMET', quantity: 1 },
   },
   {
-    nameFr: '10 jetons Comète',
-    nameEn: '10 Comet tokens',
+    nameFr: '10 jetons Constellation',
+    nameEn: '10 Constellation tokens',
     descriptionFr:
       'Dix cartes parmi les 15 de la sélection de la semaine. Rareté tirée comme un tirage normal.',
     descriptionEn:

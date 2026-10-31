@@ -18,6 +18,7 @@ import {
   type CapsuleKind,
   capsuleTypeOf,
   computeTeaseTier,
+  hasSkyArrival,
   type TeaseTier,
   tierConfig,
 } from '../../components/machine/capsule/capsuleConfig'
@@ -303,10 +304,10 @@ function PullCycleOverlay({
       )}
 
       {/* Capsule scene — chorégraphie gsap + bloom, rarity-aware */}
-      {/* En astral, la scène reste montée pendant le flash : la pluie
-       *  d'étoiles du burst s'y déploie au lieu d'être coupée net. */}
+      {/* Pour une capsule céleste, la scène reste montée pendant le flash :
+       *  la pluie d'étoiles du burst s'y déploie au lieu d'être coupée net. */}
       {(phase === 'capsule' ||
-        (capsuleKind === 'astral' && phase === 'ball-flash')) && (
+        (hasSkyArrival(capsuleKind) && phase === 'ball-flash')) && (
         <div className="absolute inset-0">
           <CapsuleStage
             teaseTier={teaseTier}

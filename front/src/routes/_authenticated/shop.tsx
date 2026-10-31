@@ -474,7 +474,7 @@ function TokensTab({ items, buy }: { items: ShopItem[]; buy: BuyState }) {
   )
 }
 
-// ── Jeton Comète ─────────────────────────────────────────────────────────────
+// ── Jeton Constellation ────────────────────────────────────────────────────────
 
 type Week = 'current' | 'next'
 

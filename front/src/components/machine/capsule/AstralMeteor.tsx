@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 import { astralPalette, type CapsuleAnim } from './capsuleConfig'
+import { ADDITIVE, dimFrag, flashFrag, planeVert, waveFrag } from './skyShaders'
 
 // Trajet de l'étoile : courbe de Bézier qui entre par le haut à gauche, hors
 // cadre, et finit au centre. `anim.fall` va de 1 (départ) à 0 (arrivée) ;
@@ -84,14 +85,6 @@ const BURST_COUNT = 160
 const DUST_LIFE = 1.3
 const GRAVITY = 2.6
 
-const planeVert = /* glsl */ `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`
-
 // Boule de lumière : cœur blanc éblouissant, halo doré qui vire au violet et
 // s'éteint bien avant le bord du plan (aucun disque net), quatre aigrettes
 // qui scintillent. `uBurst` la change en étoile d'impact : aigrettes longues,
@@ -165,54 +158,6 @@ const dustFrag = /* glsl */ `
   }
 `
 
-// Flash d'arrivée plein cadre : opaque au pic pour cacher l'apparition de la
-// capsule, bord doré.
-const flashFrag = /* glsl */ `
-  uniform vec3 uGold;
-  uniform float uFlash;
-  varying vec2 vUv;
-  void main() {
-    float r = length(vUv * 2.0 - 1.0);
-    vec3 col = mix(vec3(1.0), uGold, smoothstep(0.2, 1.0, r) * 0.45);
-    gl_FragColor = vec4(col, uFlash);
-  }
-`
-
-// Voile noir au fond de la scène : le ciel s'assombrit pendant la chute,
-// derrière l'étoile, qui garde tout son éclat.
-const dimFrag = /* glsl */ `
-  uniform float uDim;
-  void main() {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, uDim);
-  }
-`
-
-// Onde de lumière après le flash : un front large qui s'élargit, doublé
-// d'un anneau fin et net qui le devance.
-const waveFrag = /* glsl */ `
-  uniform vec3 uGold;
-  uniform float uImpact;
-  varying vec2 vUv;
-  void main() {
-    float r = length(vUv * 2.0 - 1.0);
-    float radius = 0.08 + uImpact * 0.62;
-    float band = exp(-pow((r - radius) * 24.0, 2.0)) * 0.7;
-    float ring = exp(-pow((r - radius * 1.25 - 0.03) * 90.0, 2.0));
-    float inner = exp(-r * r * 6.0) * (1.0 - uImpact) * 0.5;
-    float fade = (1.0 - uImpact) * step(0.001, uImpact) * smoothstep(1.0, 0.8, r);
-    float a = (band + ring + inner) * fade;
-    vec3 col = mix(vec3(1.0), uGold, 0.65 - ring * 0.5);
-    gl_FragColor = vec4(col, a);
-  }
-`
-
-const ADDITIVE = {
-  transparent: true,
-  depthWrite: false,
-  toneMapped: false,
-  blending: THREE.AdditiveBlending,
-} as const
-
 /**
  * L'étoile filante qui apporte la capsule astrale : une boule de lumière
  * entre par le haut à gauche et plonge en arc. Le ciel s'assombrit, la boule
@@ -251,9 +196,9 @@ export function AstralMeteor({ anim }: { anim: CapsuleAnim }) {
         uOpacity: { value: 0 },
       },
       dust: { uGold: { value: colors.gold } },
-      flash: { uGold: { value: colors.gold }, uFlash: { value: 0 } },
+      flash: { uTint: { value: colors.gold }, uFlash: { value: 0 } },
       dim: { uDim: { value: 0 } },
-      wave: { uGold: { value: colors.gold }, uImpact: { value: 0 } },
+      wave: { uTint: { value: colors.gold }, uImpact: { value: 0 } },
     }),
     [colors],
   )
