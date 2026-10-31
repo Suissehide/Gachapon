@@ -739,10 +739,16 @@ function Play() {
                   'radial-gradient(48% 44% at 50% 46%, color-mix(in oklab, var(--primary) 20%, transparent), color-mix(in oklab, var(--secondary) 8%, transparent) 55%, transparent 75%)',
               }}
             />
-            {/* Emplacement machine 3D — balle / flash / reveal vivent dans l'overlay plein écran */}
+            {/* Emplacement machine 3D — balle / flash / reveal vivent dans l'overlay plein écran.
+                Zoom CSS plutôt que dolly caméra : le canvas carré couperait la machine, ici elle déborde du cadre. */}
             <div className="relative aspect-square w-full max-w-[320px] lg:max-w-[440px]">
               {showMachine && (
-                <div className="absolute inset-0 transition-opacity duration-300">
+                <div
+                  className={cn(
+                    'absolute inset-0 origin-[45%_65%] transition-transform delay-[600ms] duration-[1300ms] ease-in-out',
+                    phase === 'machine-anim' && 'motion-safe:scale-[1.3]',
+                  )}
+                >
                   <MachineStage ref={machineRef} />
                 </div>
               )}
