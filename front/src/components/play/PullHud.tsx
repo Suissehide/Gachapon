@@ -2,6 +2,10 @@ import { Gem, Zap } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 
 import type { ShopItem } from '../../constants/shop.constant.ts'
+import {
+  OWN_PITY_LABEL_KEY,
+  type OwnPityType,
+} from '../machine/capsule/capsuleConfig.ts'
 import { pityProgress } from './PityCard.tsx'
 
 // Garantie + boosts actifs, affichés par-dessus le tirage (fond noir). Les
@@ -10,13 +14,13 @@ export function PullHud({
   pity,
   threshold,
   boosts,
-  astral = false,
+  ownPity,
 }: {
   pity: number
   threshold: number
   boosts: ShopItem[]
-  // Tirage astral : la garantie suivie est celle des capsules astrales
-  astral?: boolean
+  // Capsule à garantie propre : c'est elle qui est suivie
+  ownPity?: OwnPityType
 }) {
   const { t } = useTranslation('gacha')
   const { remaining, pct } = pityProgress(pity, threshold)
@@ -25,9 +29,9 @@ export function PullHud({
     <div className="pointer-events-none absolute top-3 left-3 z-[60] flex w-[min(15rem,calc(100vw-1.5rem))] flex-col gap-2 rounded-2xl border border-white/15 bg-black/50 px-3.5 py-3 text-white backdrop-blur animate-in fade-in-0 duration-500">
       {threshold > 0 && (
         <div>
-          {astral && (
+          {ownPity && (
             <div className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
-              {t('gacha:cards.pityAstral')}
+              {t(OWN_PITY_LABEL_KEY[ownPity])}
             </div>
           )}
           <div className="flex items-center gap-1.5 text-[12px] text-white/70">

@@ -41,6 +41,24 @@ export function capsuleTypeOf(kind: Exclude<CapsuleKind, 'classic'>) {
   return kind.toUpperCase() as CapsuleType
 }
 
+// Capsules à garantie propre (compteur sur la ligne d'inventaire) ; les
+// autres partagent celle des jetons.
+export type OwnPityType = 'ASTRAL' | 'COMET'
+export function ownPityTypeOf(kind: CapsuleKind): OwnPityType | undefined {
+  if (kind === 'astral') {
+    return 'ASTRAL'
+  }
+  if (kind === 'comet') {
+    return 'COMET'
+  }
+  return undefined
+}
+
+export const OWN_PITY_LABEL_KEY = {
+  ASTRAL: 'gacha:cards.pityAstral',
+  COMET: 'gacha:cards.pityComet',
+} as const
+
 // Couleur de la capsule Constellation (type d'inventaire `COMET`) : three.js
 // veut une couleur concrète, comme ELEMENT_COLOR.
 const COMET_CAPSULE_COLOR = '#14b8a6'

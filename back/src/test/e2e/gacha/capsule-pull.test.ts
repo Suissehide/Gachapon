@@ -146,6 +146,27 @@ describe('POST /pulls/capsules/:type (élémentaire, Constellation)', () => {
     expect(res.json().pulls.every((p: any) => ids.has(p.card.id))).toBe(true)
   })
 
+  it('jeton Constellation : garantie propre, hors pitié des jetons et hors fenêtre des paris', async () => {
+    const { 'comet.pityThreshold': threshold } =
+      await configService.getMany('comet.pityThreshold')
+    await prisma.user.update({ where: { id: userId }, data: { pityCurrent: 7 } })
+    await setCapsules('COMET', 1, threshold)
+    const res = await pullCapsule('COMET', 1)
+    expect(res.statusCode).toBe(201)
+    expect(res.json().pulls[0].card.rarity).toBe('LEGENDARY')
+    const comet = await prisma.userCapsule.findUnique({
+      where: { userId_type: { userId, type: 'COMET' } },
+    })
+    expect(comet.pityCurrent).toBe(0)
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    expect(user.pityCurrent).toBe(7)
+    const pull = await prisma.gachaPull.findFirstOrThrow({
+      where: { userId },
+      orderBy: { pulledAt: 'desc' },
+    })
+    expect(pull.source).toBe('COMET')
+  })
+
   it('GET /capsules : une entrée par type', async () => {
     const res = await app.inject({
       method: 'GET',

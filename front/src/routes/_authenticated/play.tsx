@@ -19,6 +19,7 @@ import {
   capsuleTypeOf,
   computeTeaseTier,
   hasSkyArrival,
+  ownPityTypeOf,
   type TeaseTier,
   tierConfig,
 } from '../../components/machine/capsule/capsuleConfig'
@@ -484,17 +485,18 @@ function Play() {
   const [snapshot, setSnapshot] = useState<PullSnapshot | null>(null)
   const revealedRef = useRef(new Set<number>())
   const [revealedCount, setRevealedCount] = useState(0)
-  // En astral : garantie propre aux capsules astrales. Les autres capsules
+  // Astrale et Constellation : garantie propre à la capsule. Les autres
   // partagent la garantie des jetons. Aucune capsule n'applique ni ne
   // consomme de boost.
   const takeSnapshot = useCallback(
     (kind: CapsuleKind) => {
       revealedRef.current = new Set()
       setRevealedCount(0)
-      if (kind === 'astral') {
+      const ownPity = ownPityTypeOf(kind)
+      if (ownPity) {
         const capsule = qc
           .getQueryData<{ capsules: Capsule[] }>(['capsules'])
-          ?.capsules.find((c) => c.type === 'ASTRAL')
+          ?.capsules.find((c) => c.type === ownPity)
         setSnapshot({
           pity: capsule?.pityCurrent ?? 0,
           threshold: capsule?.pityThreshold ?? 0,
@@ -818,7 +820,10 @@ function Play() {
         {/* Cartes de stats */}
         <div className="order-2 grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:order-1 lg:flex lg:flex-col lg:gap-3.5">
           <TokenCard />
-          <PityCard current={shown?.pity} astral={capsuleKind === 'astral'} />
+          <PityCard
+            current={shown?.pity}
+            ownPity={ownPityTypeOf(capsuleKind)}
+          />
           <StreakCard />
           <LevelCard />
           <QuestsCard />
@@ -923,7 +928,7 @@ function Play() {
                 pity={shown.pity}
                 threshold={shown.threshold}
                 boosts={shown.boosts}
-                astral={capsuleKind === 'astral'}
+                ownPity={ownPityTypeOf(capsuleKind)}
               />
             )
           }

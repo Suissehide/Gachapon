@@ -480,7 +480,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       const [capsules, upgrades, cfg, user] = await Promise.all([
         userCapsuleRepository.findByUser(request.user.userID),
         skillTreeRepository.getEffectsForUser(request.user.userID),
-        configService.getMany('astral.pityThreshold', 'pityThreshold'),
+        configService.getMany(
+          'astral.pityThreshold',
+          'comet.pityThreshold',
+          'pityThreshold',
+        ),
         userRepository.findById(request.user.userID),
       ])
       return {
@@ -489,16 +493,18 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
           return {
             type,
             quantity: owned?.quantity ?? 0,
-            // Seule l'astrale a sa garantie ; les autres partagent celle des
-            // jetons.
+            // L'astrale et la Constellation ont leur garantie ; les
+            // élémentaires partagent celle des jetons.
             pityCurrent:
-              type === 'ASTRAL'
+              type === 'ASTRAL' || type === 'COMET'
                 ? (owned?.pityCurrent ?? 0)
                 : (user?.pityCurrent ?? 0),
             pityThreshold: effectivePityThreshold(
               type === 'ASTRAL'
                 ? cfg['astral.pityThreshold']
-                : cfg.pityThreshold,
+                : type === 'COMET'
+                  ? cfg['comet.pityThreshold']
+                  : cfg.pityThreshold,
               upgrades.pityReduction ?? 0,
             ),
           }

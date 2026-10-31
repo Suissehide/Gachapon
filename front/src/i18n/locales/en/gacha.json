@@ -31,7 +31,8 @@
     "boost": "Boost",
     "boostPulls_one": "{{count}} pull",
     "boostPulls_other": "{{count}} pulls",
-    "pityAstral": "Astral pity"
+    "pityAstral": "Astral pity",
+    "pityComet": "Constellation pity"
   },
   "feed": {
     "variantBrilliant": "BRILLIANT",

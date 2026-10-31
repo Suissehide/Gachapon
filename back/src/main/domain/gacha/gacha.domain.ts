@@ -236,6 +236,7 @@ type PullCfg = {
   tokenMaxStock: number
   pityThreshold: number
   astralPityThreshold: number
+  cometPityThreshold: number
   dustByRarity: Record<string, number>
   variantRates: VariantRates
   upgrades: UserUpgradeEffects
@@ -383,7 +384,8 @@ function mergeLevelUps(
 }
 
 /** Une carte de capsule : pitié de la capsule au seuil → légendaire ; sinon
- *  boule d'or tirée comme au tirage normal, qui restreint à RARE+. */
+ *  boule d'or tirée comme au tirage normal, qui restreint à RARE+. Chance,
+ *  boule d'or, pitié réduite et « Vœu exaucé » s'appliquent comme aux jetons. */
 function drawCapsule(
   cfg: PullCfg,
   normalPool: CardWithSet[],
@@ -396,26 +398,34 @@ function drawCapsule(
     effectivePityThreshold(pityThreshold, cfg.upgrades.pityReduction ?? 0)
   const isGolden =
     !isPityForced && Math.random() < (cfg.upgrades.goldenBallChance ?? 0) / 100
-  const card = pickCapsuleCard(normalPool, capsulePool, {
+  const drawn = pickCapsuleCard(normalPool, capsulePool, {
     luckMultiplier: cfg.upgrades.luckMultiplier,
     forceLegendary: isPityForced,
     minRarity: isGolden ? 'RARE' : undefined,
   })
+  // « Vœu exaucé » : vœux pris dans la capsule, pour ne jamais en sortir.
+  const card = applyWishlistRedirect(
+    drawn,
+    capsulePool.filter((c) => cfg.wishedCardIds.includes(c.id)),
+    cfg.upgrades.wishlistPullChance ?? 0,
+  )
   return { card, isGolden }
 }
 
-/** Garantie d'un tirage de capsule : l'astrale a la sienne (colonne de la
- *  capsule), les autres partagent celle des jetons (User.pityCurrent).
- *  `persist` dit quoi réécrire dans chaque colonne après le lot. */
+/** Garantie d'un tirage de capsule : l'astrale et la Constellation ont la
+ *  leur (colonne de la capsule), les élémentaires partagent celle des jetons
+ *  (User.pityCurrent). `persist` dit quoi réécrire dans chaque colonne après
+ *  le lot. */
 function capsulePityPlan(
   type: CapsuleType,
   cfg: PullCfg,
   capsuleRowPity: number,
   userPity: number,
 ) {
-  if (type === 'ASTRAL') {
+  if (type === 'ASTRAL' || type === 'COMET') {
     return {
-      threshold: cfg.astralPityThreshold,
+      threshold:
+        type === 'ASTRAL' ? cfg.astralPityThreshold : cfg.cometPityThreshold,
       start: capsuleRowPity,
       persist: (final: number) => ({ capsuleRow: final, user: userPity }),
     }
@@ -425,6 +435,15 @@ function capsulePityPlan(
     start: userPity,
     persist: (final: number) => ({ capsuleRow: capsuleRowPity, user: final }),
   }
+}
+
+/** Source enregistrée sur le tirage : les capsules à pitié propre ont la leur,
+ *  ce qui les sort de la fenêtre des paris (wager.repository#countedPullsWindow). */
+function capsulePullSource(type: CapsuleType): PullSource {
+  if (type === 'ASTRAL' || type === 'COMET') {
+    return type
+  }
+  return 'CAPSULE'
 }
 
 type Unlocks = Awaited<ReturnType<AchievementsDomainInterface['track']>>
@@ -1013,7 +1032,7 @@ export class GachaDomain implements GachaDomainInterface {
           userId,
           cfg,
           card,
-          type === 'ASTRAL' ? 'ASTRAL' : 'CAPSULE',
+          capsulePullSource(type),
         )
       capsulePity = card.rarity === 'LEGENDARY' ? 0 : capsulePity + 1
       const levelBefore = levelAt(runningXp)
@@ -1102,6 +1121,7 @@ export class GachaDomain implements GachaDomainInterface {
         'tokenMaxStock',
         'pityThreshold',
         'astral.pityThreshold',
+        'comet.pityThreshold',
         'dustCommon',
         'dustUncommon',
         'dustRare',
@@ -1129,6 +1149,7 @@ export class GachaDomain implements GachaDomainInterface {
       tokenMaxStock: c.tokenMaxStock,
       pityThreshold: c.pityThreshold,
       astralPityThreshold: c['astral.pityThreshold'],
+      cometPityThreshold: c['comet.pityThreshold'],
       dustByRarity: {
         COMMON: c.dustCommon,
         UNCOMMON: c.dustUncommon,

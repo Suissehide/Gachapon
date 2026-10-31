@@ -357,11 +357,11 @@ function listActiveDuelsForUserWith(
  * donc le sous-ensemble des `take` premiers — déterministe, ce qui compte
  * puisque c'est lui qui décide quelles cartes sont saisissables au règlement.
  *
- * Les tirages astraux sont exclus de la fenêtre : ils ne déclenchent ni
- * n'avancent un pari ou un duel. Les autres capsules (élémentaires, Constellation)
- * y entrent : elles partagent la garantie des jetons, que la cote gèle au
- * placement — les laisser hors fenêtre permettrait d'avancer cette garantie
- * après coup.
+ * Les tirages astraux et Constellation sont exclus de la fenêtre : ils ont
+ * leur propre garantie et ne déclenchent ni n'avancent un pari ou un duel.
+ * Les capsules élémentaires y entrent : elles partagent la garantie des
+ * jetons, que la cote gèle au placement — les laisser hors fenêtre
+ * permettrait d'avancer cette garantie après coup.
  */
 function countedPullsWindow(userId: string, since: Date, take: number) {
   return {

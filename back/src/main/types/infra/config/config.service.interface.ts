@@ -33,6 +33,7 @@ export const CONFIG_KEYS = [
   'combat.baseLifesteal',
   'gacha.pullTokenCost',
   'astral.pityThreshold',
+  'comet.pityThreshold',
   'xp.base',
   'xp.slope',
   'xp.levelCap',

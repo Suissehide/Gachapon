@@ -86,8 +86,9 @@ enum ShopItemType {
 /// Type de capsule détenue en inventaire, un stock par type.
 /// ASTRAL : LIGHT/DARK. FIRE/WATER/NATURE/EARTH : cartes de cet élément.
 /// COMET : liste commune de 15 cartes renouvelée chaque lundi
-/// (card-pools.ts#cometCapsuleCards). Seule l'astrale garde sa propre pitié
-/// (`pityCurrent`) ; les autres partagent celle des jetons (User.pityCurrent).
+/// (card-pools.ts#cometCapsuleCards). L'astrale et la Constellation ont leur
+/// propre pitié (`pityCurrent`) ; les élémentaires partagent celle des jetons
+/// (User.pityCurrent).
 enum CapsuleType {
   ASTRAL
   FIRE
@@ -104,6 +105,7 @@ enum PullSource {
   TOKEN
   ASTRAL
   CAPSULE
+  COMET
 }
 
 enum ShopCurrency {

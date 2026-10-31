@@ -31,7 +31,8 @@
     "boost": "Boost",
     "boostPulls_one": "{{count}} tirage",
     "boostPulls_other": "{{count}} tirages",
-    "pityAstral": "Garantie astrale"
+    "pityAstral": "Garantie astrale",
+    "pityComet": "Garantie Constellation"
   },
   "feed": {
     "variantBrilliant": "BRILLANTE",
