@@ -224,6 +224,7 @@ function ShopPage() {
         <>
           <WishlistSection dust={dust} />
           <DailyShopSection dust={dust} />
+          <OtherItemsSection items={shopItems} types={['COSMETIC']} buy={buy} />
         </>
       ) : shopLoading ? (
         <Card className="flex h-48 items-center justify-center p-6">
@@ -391,15 +392,25 @@ function TokensTab({ items, buy }: { items: ShopItem[]; buy: BuyState }) {
     offer: ofCapsule(kind.toUpperCase()),
   })).filter((e) => e.offer.length > 0)
   const classic = items.filter((i) => i.type === 'TOKEN_PACK').sort(byCost)
-  const others = items.filter(
-    (i) =>
-      i.type !== 'TOKEN_PACK' &&
-      i.type !== 'ENERGY_PACK' &&
-      i.type !== 'CAPSULE',
-  )
 
   return (
     <>
+      {classic.length > 0 && (
+        <ShopSection
+          icon={<CapsuleSwatch kind="classic" />}
+          title={t('shop:typeLabels.TOKEN_PACK')}
+          aside={<ItemCountAside count={classic.length} />}
+        >
+          <SplitOffer
+            className="border-primary/30 bg-primary/5"
+            title={t('shop:classic.title')}
+            text={t('shop:classic.text')}
+            offer={classic}
+            buy={buy}
+          />
+        </ShopSection>
+      )}
+
       {comet.length > 0 && <CometSection offer={comet} buy={buy} />}
 
       {astral.length > 0 && (
@@ -453,23 +464,7 @@ function TokensTab({ items, buy }: { items: ShopItem[]; buy: BuyState }) {
         </ShopSection>
       )}
 
-      {classic.length > 0 && (
-        <ShopSection
-          icon={<CapsuleSwatch kind="classic" />}
-          title={t('shop:typeLabels.TOKEN_PACK')}
-          aside={<ItemCountAside count={classic.length} />}
-        >
-          <SplitOffer
-            className="border-primary/30 bg-primary/5"
-            title={t('shop:classic.title')}
-            text={t('shop:classic.text')}
-            offer={classic}
-            buy={buy}
-          />
-        </ShopSection>
-      )}
-
-      {others.length > 0 && <OtherItemsSection items={others} buy={buy} />}
+      <OtherItemsSection items={items} types={['BOOST', 'MACHINE']} buy={buy} />
     </>
   )
 }
@@ -604,19 +599,23 @@ function EnergySection({
   )
 }
 
-// ── Autres articles (boosts, machines, cosmétiques) ─────────────────────────
+// ── Autres articles : boosts et machines (Jetons), cosmétiques (Cartes) ─────
 
-const OTHER_SECTIONS = [
-  { type: 'BOOST', icon: <Sparkles className="h-4 w-4 text-secondary" /> },
-  { type: 'MACHINE', icon: <Cog className="h-4 w-4 text-primary" /> },
-  { type: 'COSMETIC', icon: <Package className="h-4 w-4 text-accent" /> },
-] as const
+type OtherType = 'BOOST' | 'MACHINE' | 'COSMETIC'
+
+const OTHER_ICONS: Record<OtherType, ReactNode> = {
+  BOOST: <Sparkles className="h-4 w-4 text-secondary" />,
+  MACHINE: <Cog className="h-4 w-4 text-primary" />,
+  COSMETIC: <Package className="h-4 w-4 text-accent" />,
+}
 
 function OtherItemsSection({
   items,
+  types,
   buy,
 }: {
   items: ShopItem[]
+  types: OtherType[]
   buy: BuyState
 }) {
   const { t } = useTranslation('shop')
@@ -624,7 +623,7 @@ function OtherItemsSection({
   const ownedMachineIds = machinesData?.machineIds ?? []
   return (
     <>
-      {OTHER_SECTIONS.map(({ type, icon }) => {
+      {types.map((type) => {
         const typeItems = items.filter((i) => i.type === type).sort(byCost)
         if (typeItems.length === 0) {
           return null
@@ -632,7 +631,7 @@ function OtherItemsSection({
         return (
           <ShopSection
             key={type}
-            icon={icon}
+            icon={OTHER_ICONS[type]}
             title={t(`shop:typeLabels.${type}`)}
             aside={<ItemCountAside count={typeItems.length} />}
           >
