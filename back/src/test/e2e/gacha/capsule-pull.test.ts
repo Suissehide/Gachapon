@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
 
@@ -165,6 +165,27 @@ describe('POST /pulls/capsules/:type (élémentaire, Constellation)', () => {
       orderBy: { pulledAt: 'desc' },
     })
     expect(pull.source).toBe('COMET')
+  })
+
+  it('tirage gratuit (skill) : la capsule n\'est pas consommée', async () => {
+    const { skillTreeRepository } = (app as any).iocContainer
+    const real = await skillTreeRepository.getEffectsForUser(userId)
+    const spy = jest
+      .spyOn(skillTreeRepository, 'getEffectsForUser')
+      .mockResolvedValue({ ...real, freePullChance: 100 } as never)
+    try {
+      await setCapsules('COMET', 1)
+      const res = await pullCapsule('COMET', 1)
+      expect(res.statusCode).toBe(201)
+      expect(res.json().pulls[0].wasFreePull).toBe(true)
+      expect(res.json().capsulesRemaining).toBe(1)
+      const comet = await prisma.userCapsule.findUnique({
+        where: { userId_type: { userId, type: 'COMET' } },
+      })
+      expect(comet.quantity).toBe(1)
+    } finally {
+      spy.mockRestore()
+    }
   })
 
   it('GET /capsules : une entrée par type', async () => {

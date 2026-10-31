@@ -987,7 +987,13 @@ export class GachaDomain implements GachaDomainInterface {
     // de `consumeInTx` en fin de transaction.
     const capsule = await this.#userCapsuleRepository.findInTx(tx, userId, type)
     const stock = capsule?.quantity ?? 0
-    if (stock < count) {
+    // Un tirage gratuit (skill freePullChance) ne consomme pas de capsule.
+    const preRolledFree = Array.from(
+      { length: count },
+      () => Math.random() < (cfg.upgrades.freePullChance ?? 0) / 100,
+    )
+    const paidCount = preRolledFree.filter((f) => !f).length
+    if (stock < paidCount) {
       throw Boom.paymentRequired(errorMessage('gacha.notEnoughCapsules'))
     }
     const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
@@ -1044,7 +1050,7 @@ export class GachaDomain implements GachaDomainInterface {
         wasDuplicate,
         dustEarned: 0,
         pityCurrent: capsulePity,
-        wasFreePull: false,
+        wasFreePull: preRolledFree[i] ?? false,
         wasGoldenBall: isGolden,
         wasBoostGuarantee: false,
         unlockedAchievements,
@@ -1059,7 +1065,7 @@ export class GachaDomain implements GachaDomainInterface {
       tx,
       userId,
       type,
-      count,
+      paidCount,
       pity.persist(capsulePity).capsuleRow,
     )
     const newLevel = levelAt(user.xp + totalXp)
@@ -1090,7 +1096,7 @@ export class GachaDomain implements GachaDomainInterface {
       xpGained: totalXp,
       unlockedAchievements: levelUnlocks,
       leveledUp: mergeLevelUps(pulls.map((p) => p.leveledUp)),
-      capsulesRemaining: stock - count,
+      capsulesRemaining: stock - paidCount,
       capsulePityCurrent: capsulePity,
     }
   }
