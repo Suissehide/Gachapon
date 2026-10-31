@@ -283,8 +283,10 @@ export interface CapsuleAnim {
   camShake: number
   // Vol de l'étoile filante astrale : 1 = au fond du ciel, 0 = arrivée
   fall: number
-  // Onde de choc de l'éclosion astrale (0→1)
+  // Étoile d'impact et traits de vitesse de l'arrivée astrale (0→1)
   impact: number
+  // Flash blanc plein cadre de l'arrivée astrale (0 = absent, 1 = opaque)
+  flash: number
 }
 
 export function createCapsuleAnim(): CapsuleAnim {
@@ -299,5 +301,6 @@ export function createCapsuleAnim(): CapsuleAnim {
     camShake: 0,
     fall: 0,
     impact: 0,
+    flash: 0,
   }
 }
