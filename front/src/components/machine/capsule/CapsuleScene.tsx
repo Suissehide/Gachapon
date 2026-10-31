@@ -16,6 +16,7 @@ import {
   type CapsuleAnim,
   type CapsuleKind,
   type CapsuleTuning,
+  capsuleTint,
   type TeaseTier,
   tierConfig,
 } from './capsuleConfig'
@@ -248,9 +249,11 @@ export function CapsuleScene({
     () => new THREE.Color(tierConfig(null).colorOuter),
     [],
   )
+  // Capsule teintée (élément, semaine) : la coque part de sa teinte avant de
+  // virer à la couleur de la rareté teasée.
   const neutralShell = useMemo(
-    () => new THREE.Color(tierConfig(null).shell),
-    [],
+    () => new THREE.Color(capsuleTint(capsuleKind) ?? tierConfig(null).shell),
+    [capsuleKind],
   )
   const tmpColor = useMemo(() => new THREE.Color(), [])
 

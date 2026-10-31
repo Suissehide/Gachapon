@@ -79,16 +79,36 @@ export type PullBatchResult = {
   unlockedAchievements?: UnlockedAchievement[]
 }
 
+export type CapsuleType =
+  | 'ASTRAL'
+  | 'FIRE'
+  | 'WATER'
+  | 'NATURE'
+  | 'EARTH'
+  | 'WEEKLY'
+
 export type Capsule = {
-  type: 'ASTRAL'
+  type: CapsuleType
   quantity: number
   pityCurrent: number
   pityThreshold: number
 }
 
-export type AstralPullResult = PullBatchResult & {
+export type CapsulePullResult = PullBatchResult & {
   capsulesRemaining: number
-  astralPityCurrent: number
+  capsulePityCurrent: number
+}
+
+export type WeeklyCapsule = {
+  endsAt: string
+  cards: {
+    id: string
+    name: string
+    imageUrl: string | null
+    rarity: CardRarity
+    element: CardElement | null
+    set: { id: string; name: string }
+  }[]
 }
 
 // Routes
@@ -96,8 +116,9 @@ export const GACHA_ROUTES = {
   tokenBalance: '/tokens/balance',
   pull: '/pulls',
   pullBatch: '/pulls/batch',
-  pullAstral: '/pulls/astral',
+  pullCapsule: (type: CapsuleType) => `/pulls/capsules/${type}`,
   capsules: '/capsules',
+  weeklyCapsule: '/capsules/weekly',
   history: (page: number) => `/pulls/history?page=${page}`,
   rates: '/pulls/rates',
   recent: (opts?: {

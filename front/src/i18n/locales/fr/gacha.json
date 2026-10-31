@@ -31,7 +31,14 @@
     "boost": "Boost",
     "boostPulls_one": "{{count}} tirage",
     "boostPulls_other": "{{count}} tirages",
-    "pityAstral": "Garantie astrale"
+    "pityCapsule": {
+      "ASTRAL": "Garantie astrale",
+      "WEEKLY": "Garantie de la semaine",
+      "FIRE": "Garantie Feu",
+      "WATER": "Garantie Eau",
+      "NATURE": "Garantie Nature",
+      "EARTH": "Garantie Terre"
+    }
   },
   "feed": {
     "variantBrilliant": "BRILLANTE",
@@ -77,8 +84,15 @@
     "serverNotResponding": "Le serveur ne répond pas.",
     "pull": "Tirer",
     "chooseCapsule": "Tirer — choisir la capsule",
-    "capsuleClassic": "Classique",
-    "capsuleAstral": "Astrale",
+    "capsuleNames": {
+      "classic": "Classique",
+      "astral": "Astrale",
+      "weekly": "De la semaine",
+      "fire": "Feu",
+      "water": "Eau",
+      "nature": "Nature",
+      "earth": "Terre"
+    },
     "buyInShop": "Acheter en boutique",
     "tokenBalance_one": "{{count}} jeton",
     "tokenBalance_other": "{{count}} jetons",

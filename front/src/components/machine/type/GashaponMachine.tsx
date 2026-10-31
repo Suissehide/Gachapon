@@ -22,6 +22,7 @@ import { AstralCapsuleVisual } from '../capsule/AstralCapsuleVisual'
 import { capsuleAudio } from '../capsule/capsuleAudio'
 import {
   type CapsuleKind,
+  capsuleTint,
   MINI_CAPSULE_RADIUS,
   machineLightColor,
 } from '../capsule/capsuleConfig'
@@ -175,7 +176,7 @@ function PhysicsCapsule({
       {kind === 'astral' ? (
         <AstralCapsuleVisual />
       ) : (
-        <MiniCapsuleVisual color={color} />
+        <MiniCapsuleVisual color={capsuleTint(kind) ?? color} />
       )}
     </RigidBody>
   )
@@ -219,7 +220,7 @@ function DispensedPhysicsCapsule({
       {kind === 'astral' ? (
         <AstralCapsuleVisual glow />
       ) : (
-        <MiniCapsuleVisual color={color} glow />
+        <MiniCapsuleVisual color={capsuleTint(kind) ?? color} glow />
       )}
     </RigidBody>
   )

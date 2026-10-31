@@ -1,6 +1,7 @@
 import { Gem, Zap } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 
+import type { CapsuleType } from '../../constants/gacha.constant.ts'
 import type { ShopItem } from '../../constants/shop.constant.ts'
 import { pityProgress } from './PityCard.tsx'
 
@@ -10,13 +11,13 @@ export function PullHud({
   pity,
   threshold,
   boosts,
-  astral = false,
+  capsule,
 }: {
   pity: number
   threshold: number
   boosts: ShopItem[]
-  // Tirage astral : la garantie suivie est celle des capsules astrales
-  astral?: boolean
+  // Tirage de capsule : la garantie suivie est celle de ce type de capsule
+  capsule?: CapsuleType
 }) {
   const { t } = useTranslation('gacha')
   const { remaining, pct } = pityProgress(pity, threshold)
@@ -25,9 +26,9 @@ export function PullHud({
     <div className="pointer-events-none absolute top-3 left-3 z-[60] flex w-[min(15rem,calc(100vw-1.5rem))] flex-col gap-2 rounded-2xl border border-white/15 bg-black/50 px-3.5 py-3 text-white backdrop-blur animate-in fade-in-0 duration-500">
       {threshold > 0 && (
         <div>
-          {astral && (
+          {capsule && (
             <div className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
-              {t('gacha:cards.pityAstral')}
+              {t(`gacha:cards.pityCapsule.${capsule}`)}
             </div>
           )}
           <div className="flex items-center gap-1.5 text-[12px] text-white/70">

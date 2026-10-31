@@ -4,8 +4,15 @@ import { DropdownMenu } from 'radix-ui'
 import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { Capsule } from '../../constants/gacha.constant.ts'
 import { cn } from '../../libs/utils.ts'
-import type { CapsuleKind } from '../machine/capsule/capsuleConfig'
+import {
+  CAPSULE_KINDS,
+  type CapsuleKind,
+  capsuleTint,
+  capsuleTypeOf,
+} from '../machine/capsule/capsuleConfig'
+import { CapsuleSwatch } from '../shared/CapsuleSwatch.tsx'
 import { Button } from '../ui/button.tsx'
 import {
   DropdownMenuCustomCheckboxItem,
@@ -15,27 +22,16 @@ import {
 
 const COUNTS = [1, 10] as const
 
-// Pastille de capsule : moitié haute / moitié basse, comme la capsule 3D.
-const SWATCH: Record<CapsuleKind, CSSProperties> = {
-  classic: {
-    background: 'linear-gradient(180deg, var(--card) 50%, var(--primary) 50%)',
-    boxShadow: 'inset 0 0 0 1px var(--border-dark)',
-  },
-  astral: {
-    background:
-      'linear-gradient(180deg, var(--astral-day-sky), var(--astral-day-haze) 50%, var(--astral-night-violet) 50%, var(--astral-night-deep))',
-    boxShadow: '0 0 6px var(--astral-night-violet)',
-  },
-}
-
-function CapsuleSwatch({ kind }: { kind: CapsuleKind }) {
-  return (
-    <span
-      aria-hidden
-      className="h-4 w-4 shrink-0 rounded-full"
-      style={SWATCH[kind]}
-    />
-  )
+// Stock d'un type de capsule (0 tant que l'inventaire n'est pas chargé).
+export function capsuleStock(
+  capsules: Capsule[] | undefined,
+  kind: CapsuleKind,
+): number {
+  if (kind === 'classic') {
+    return 0
+  }
+  const type = capsuleTypeOf(kind)
+  return capsules?.find((c) => c.type === type)?.quantity ?? 0
 }
 
 // Bouton groupé « Tirer » : le libellé ouvre la liste des capsules, les
@@ -45,7 +41,7 @@ export function PullActions({
   kind,
   onKindChange,
   tokens,
-  astralStock,
+  capsules,
   pullCost,
   disabled,
   onPull,
@@ -53,25 +49,32 @@ export function PullActions({
   kind: CapsuleKind
   onKindChange: (kind: CapsuleKind) => void
   tokens: number
-  astralStock: number
+  capsules: Capsule[] | undefined
   pullCost: number
   disabled: boolean
   onPull: (count: 1 | 10) => void
 }) {
   const { t } = useTranslation('gacha')
-  const astral = kind === 'astral'
-  const funds = astral ? astralStock : tokens
-  const unitCost = astral ? 1 : pullCost
-  const CostIcon = astral ? Sparkles : Ticket
+  const classic = kind === 'classic'
+  const funds = classic ? tokens : capsuleStock(capsules, kind)
+  const unitCost = classic ? pullCost : 1
+  const CostIcon = classic ? Ticket : Sparkles
+  const tint = capsuleTint(kind)
+  const anyEmpty = CAPSULE_KINDS.some(
+    (k) => k !== 'classic' && capsuleStock(capsules, k) === 0,
+  )
 
   return (
     <div
       className={cn(
         'flex h-12 items-stretch overflow-hidden rounded-xl border-[1.5px] text-[15px] font-bold text-white shadow-md',
-        astral
+        kind === 'astral'
           ? 'border-astral-night-violet bg-linear-to-br from-astral-night-violet to-astral-night-deep shadow-astral-night-violet/40'
-          : 'border-primary bg-linear-to-br from-primary to-orange-500 shadow-primary/40',
+          : tint
+            ? 'border-(--tint) bg-(--tint) shadow-black/20'
+            : 'border-primary bg-linear-to-br from-primary to-orange-500 shadow-primary/40',
       )}
+      style={tint ? ({ '--tint': tint } as CSSProperties) : undefined}
     >
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild disabled={disabled}>
@@ -90,31 +93,28 @@ export function PullActions({
             </span>
           </Button>
         </DropdownMenu.Trigger>
-        <DropdownMenuCustomContent align="start" className="w-60">
-          <DropdownMenuCustomCheckboxItem
-            checked={!astral}
-            onCheckedChange={() => onKindChange('classic')}
-            className="gap-2"
-          >
-            <CapsuleSwatch kind="classic" />
-            {t('gacha:page.capsuleClassic')}
-            <span className="ml-auto font-mono text-[11px] text-text-light">
-              {t('gacha:page.tokenBalance', { count: tokens })}
-            </span>
-          </DropdownMenuCustomCheckboxItem>
-          <DropdownMenuCustomCheckboxItem
-            checked={astral}
-            disabled={astralStock === 0}
-            onCheckedChange={() => onKindChange('astral')}
-            className="gap-2 data-disabled:pointer-events-none data-disabled:opacity-45"
-          >
-            <CapsuleSwatch kind="astral" />
-            {t('gacha:page.capsuleAstral')}
-            <span className="ml-auto font-mono text-[11px] text-text-light">
-              {t('gacha:page.capsuleBalance', { count: astralStock })}
-            </span>
-          </DropdownMenuCustomCheckboxItem>
-          {astralStock === 0 && (
+        <DropdownMenuCustomContent align="start" className="w-64">
+          {CAPSULE_KINDS.map((k) => {
+            const stock = capsuleStock(capsules, k)
+            return (
+              <DropdownMenuCustomCheckboxItem
+                key={k}
+                checked={kind === k}
+                disabled={k !== 'classic' && stock === 0}
+                onCheckedChange={() => onKindChange(k)}
+                className="gap-2 data-disabled:pointer-events-none data-disabled:opacity-45"
+              >
+                <CapsuleSwatch kind={k} />
+                {t(`gacha:page.capsuleNames.${k}`)}
+                <span className="ml-auto font-mono text-[11px] text-text-light">
+                  {k === 'classic'
+                    ? t('gacha:page.tokenBalance', { count: tokens })
+                    : t('gacha:page.capsuleBalance', { count: stock })}
+                </span>
+              </DropdownMenuCustomCheckboxItem>
+            )
+          })}
+          {anyEmpty && (
             <DropdownMenuCustomItem
               asChild
               className="gap-2 py-1.5 pl-8 pr-2 text-sm"

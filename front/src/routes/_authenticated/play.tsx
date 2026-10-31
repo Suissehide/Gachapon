@@ -14,7 +14,9 @@ import { useTranslation } from 'react-i18next'
 import { CapsuleStage } from '../../components/machine/capsule/CapsuleStage'
 import { capsuleAudio } from '../../components/machine/capsule/capsuleAudio'
 import {
+  CAPSULE_KINDS,
   type CapsuleKind,
+  capsuleTypeOf,
   computeTeaseTier,
   type TeaseTier,
   tierConfig,
@@ -27,7 +29,10 @@ import { activeBoostsOf, BoostCard } from '../../components/play/BoostCard.tsx'
 import { LevelCard } from '../../components/play/LevelCard.tsx'
 import { PityCard } from '../../components/play/PityCard.tsx'
 import { PlayTutorialPopup } from '../../components/play/PlayTutorialPopup.tsx'
-import { PullActions } from '../../components/play/PullActions.tsx'
+import {
+  capsuleStock,
+  PullActions,
+} from '../../components/play/PullActions.tsx'
 import { PullHud } from '../../components/play/PullHud.tsx'
 import { QuestsCard } from '../../components/play/QuestsCard.tsx'
 import { RatesModal } from '../../components/play/RatesModal.tsx'
@@ -41,8 +46,8 @@ import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import type {
-  AstralPullResult,
   Capsule,
+  CapsulePullResult,
   TokenBalance,
 } from '../../constants/gacha.constant.ts'
 import type { ShopItem } from '../../constants/shop.constant.ts'
@@ -60,8 +65,8 @@ import {
 import type { PullBatchResult } from '../../queries/useGacha'
 import {
   useCapsules,
-  usePullAstral,
   usePullBatch,
+  usePullCapsule,
   useTokenBalance,
 } from '../../queries/useGacha'
 import { useAchievementUnlockStore } from '../../stores/achievementUnlock.store.ts'
@@ -114,14 +119,8 @@ const AMBIENT_PARTICLES = [
 ]
 
 const SKIP_KEY = 'play.skipAnimations'
-const CAPSULE_KINDS: readonly CapsuleKind[] = ['classic', 'astral']
-
-// Un tirage astral renvoie en plus le stock de capsules restant
-type PullResult = PullBatchResult | AstralPullResult
-
-function astralStockOf(data: { capsules: Capsule[] } | undefined) {
-  return data?.capsules.find((c) => c.type === 'ASTRAL')
-}
+// Un tirage de capsule renvoie en plus le stock de capsules restant
+type PullResult = PullBatchResult | CapsulePullResult
 
 // Garantie + boosts tels que le joueur les voyait au lancement du tirage.
 type PullSnapshot = { pity: number; threshold: number; boosts: ShopItem[] }
@@ -365,7 +364,7 @@ function PullCycleOverlay({
         <RevealGrid
           results={result.pulls}
           {...('capsulesRemaining' in result
-            ? { tokensRemaining: result.capsulesRemaining, astral: true }
+            ? { tokensRemaining: result.capsulesRemaining, fromCapsules: true }
             : { tokensRemaining: result.tokensRemaining })}
           onClose={onClose}
           onPullAgain={onPullAgain}
@@ -440,13 +439,12 @@ function Play() {
 
   const { data: balance } = useTokenBalance()
   const { mutate: pullBatchMutation, isPending: batchPending } = usePullBatch()
-  const { mutate: pullAstralMutation, isPending: astralPending } =
-    usePullAstral()
-  const pullPending = batchPending || astralPending
+  const { mutate: pullCapsuleMutation, isPending: capsulePending } =
+    usePullCapsule()
+  const pullPending = batchPending || capsulePending
   const { data: capsules } = useCapsules()
-  const astralStock = astralStockOf(capsules)?.quantity ?? 0
 
-  // Capsule choisie, mémorisée. Hors tirage, une astrale sans stock retombe
+  // Capsule choisie, mémorisée. Hors tirage, une capsule sans stock retombe
   // sur la classique (au chargement comme après avoir vidé le stock) ; pendant
   // un tirage on n'y touche pas, la scène en cours en dépend.
   const [capsuleKind, setCapsuleKind] = useStoredState<CapsuleKind>(
@@ -454,17 +452,19 @@ function Play() {
     'classic',
     CAPSULE_KINDS,
   )
+  const capsuleStockLeft = capsuleStock(capsules?.capsules, capsuleKind)
   useEffect(() => {
     if (
-      capsuleKind === 'astral' &&
+      capsuleKind !== 'classic' &&
       capsules !== undefined &&
-      astralStock === 0 &&
+      capsuleStockLeft === 0 &&
       phase === 'idle'
     ) {
       setCapsuleKind('classic')
     }
-  }, [capsuleKind, capsules, astralStock, phase, setCapsuleKind])
-  const astral = capsuleKind === 'astral'
+  }, [capsuleKind, capsules, capsuleStockLeft, phase, setCapsuleKind])
+  const capsuleType =
+    capsuleKind === 'classic' ? undefined : capsuleTypeOf(capsuleKind)
 
   // Étoile filante astrale, coupée en reduced motion
   const username = useAuthStore((s) => s.user?.username ?? '')
@@ -483,16 +483,17 @@ function Play() {
   const [snapshot, setSnapshot] = useState<PullSnapshot | null>(null)
   const revealedRef = useRef(new Set<number>())
   const [revealedCount, setRevealedCount] = useState(0)
-  // En astral : garantie propre aux capsules, et aucun boost (ni appliqué ni
-  // consommé par ce tirage).
+  // En capsule : garantie propre au type de capsule, et aucun boost (ni
+  // appliqué ni consommé par ce tirage).
   const takeSnapshot = useCallback(
     (kind: CapsuleKind) => {
       revealedRef.current = new Set()
       setRevealedCount(0)
-      if (kind === 'astral') {
-        const capsule = astralStockOf(
-          qc.getQueryData<{ capsules: Capsule[] }>(['capsules']),
-        )
+      if (kind !== 'classic') {
+        const type = capsuleTypeOf(kind)
+        const capsule = qc
+          .getQueryData<{ capsules: Capsule[] }>(['capsules'])
+          ?.capsules.find((c) => c.type === type)
         setSnapshot({
           pity: capsule?.pityCurrent ?? 0,
           threshold: capsule?.pityThreshold ?? 0,
@@ -512,8 +513,10 @@ function Play() {
   )
 
   const pullCost = economy.gacha.pullTokenCost
-  // Tirages payables dans la capsule choisie (jetons ÷ coût, ou stock astral)
-  const affordable = astral ? astralStock : Math.floor(tokens / pullCost)
+  // Tirages payables dans la capsule choisie (jetons ÷ coût, ou stock)
+  const affordable = capsuleType
+    ? capsuleStockLeft
+    : Math.floor(tokens / pullCost)
 
   // Mirrored in refs so startPull can guard without being recreated on every balance tick
   const affordableRef = useRef(affordable)
@@ -673,13 +676,14 @@ function Play() {
           phaseRef.current = 'idle'
         },
       }
-      if (capsuleKindRef.current === 'astral') {
-        pullAstralMutation(count, options)
+      const kind = capsuleKindRef.current
+      if (kind !== 'classic') {
+        pullCapsuleMutation({ type: capsuleTypeOf(kind), count }, options)
       } else {
         pullBatchMutation(count, options)
       }
     },
-    [pullAstralMutation, pullBatchMutation, receivePullResult],
+    [pullCapsuleMutation, pullBatchMutation, receivePullResult],
   )
 
   // startPull reads all guards from refs so it is safe to call via queueMicrotask / setTimeout
@@ -813,7 +817,7 @@ function Play() {
         {/* Cartes de stats */}
         <div className="order-2 grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:order-1 lg:flex lg:flex-col lg:gap-3.5">
           <TokenCard />
-          <PityCard current={shown?.pity} astral={astral} />
+          <PityCard current={shown?.pity} capsule={capsuleType} />
           <StreakCard />
           <LevelCard />
           <QuestsCard />
@@ -843,7 +847,6 @@ function Play() {
                   )}
                 >
                   <MachineStage ref={machineRef} capsuleKind={capsuleKind} />
-
                 </div>
               )}
             </div>
@@ -868,7 +871,7 @@ function Play() {
               kind={capsuleKind}
               onKindChange={setCapsuleKind}
               tokens={tokens}
-              astralStock={astralStock}
+              capsules={capsules?.capsules}
               pullCost={pullCost}
               disabled={phase !== 'idle' || pullPending}
               onPull={startPull}
@@ -919,7 +922,7 @@ function Play() {
                 pity={shown.pity}
                 threshold={shown.threshold}
                 boosts={shown.boosts}
-                astral={astral}
+                capsule={capsuleType}
               />
             )
           }

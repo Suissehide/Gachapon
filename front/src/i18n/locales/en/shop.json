@@ -31,11 +31,13 @@
   "breadcrumb": "Shop",
   "typeLabels": {
     "TOKEN_PACK": "Token packs",
+    "CAPSULE_ASTRAL": "Astral capsules",
+    "CAPSULE_WEEKLY": "Weekly capsule",
+    "CAPSULE_ELEMENT": "Elemental capsules",
     "ENERGY_PACK": "Energy",
     "BOOST": "Boosts",
     "COSMETIC": "Cosmetics",
-    "MACHINE": "Machines",
-    "CAPSULE": "Capsules"
+    "MACHINE": "Machines"
   },
   "sections": {
     "wishlistTitle": "Wishes",
@@ -44,7 +46,10 @@
     "noCardAvailable": "No card available",
     "noItemAvailable": "No item available yet",
     "itemCount_one": "{{count}} ITEM",
-    "itemCount_other": "{{count}} ITEMS"
+    "itemCount_other": "{{count}} ITEMS",
+    "weeklyRefreshIn": "New selection in",
+    "timeLeftDays": "{{d}}d {{h}}h",
+    "timeLeftHours": "{{h}}h {{m}}m"
   },
   "wishlistSection": {
     "emptyPrefix": "Pick cards from your",

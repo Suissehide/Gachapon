@@ -13,15 +13,19 @@ import { levelUpReward } from '../utils/levelRewards.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
 export type {
-  AstralPullResult,
   Capsule,
+  CapsulePullResult,
+  CapsuleType,
   DropRate,
   PullBatchEntry,
   PullBatchResult,
   PullHistory,
   PullResult,
   TokenBalance,
+  WeeklyCapsule,
 } from '../api/gacha.api.ts'
+
+import type { CapsuleType } from '../api/gacha.api.ts'
 
 export const useTokenBalance = () => {
   const query = useQuery({
@@ -167,7 +171,22 @@ export const useCapsules = () => {
   return query
 }
 
-export const usePullAstral = () => {
+export const useWeeklyCapsule = () => {
+  const query = useQuery({
+    queryKey: ['capsules', 'weekly'],
+    queryFn: () => GachaApi.getWeeklyCapsule(),
+  })
+
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
+export const usePullCapsule = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
   const setUser = useAuthStore((s) => s.setUser)
@@ -175,7 +194,8 @@ export const usePullAstral = () => {
   const username = useAuthStore((s) => s.user?.username ?? '')
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   return useMutation({
-    mutationFn: (count: number) => GachaApi.pullAstral(count),
+    mutationFn: ({ type, count }: { type: CapsuleType; count: number }) =>
+      GachaApi.pullCapsule(type, count),
     onSuccess: (result) => {
       // Mêmes célébrations différées que usePullBatch : la page de tirage
       // les joue au bon moment, ce hook ne fait que synchroniser les données.

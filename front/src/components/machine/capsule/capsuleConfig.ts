@@ -1,10 +1,59 @@
-import type { CardRarity } from '../../../constants/card.constant'
+import {
+  type CardElement,
+  type CardRarity,
+  ELEMENT_COLOR,
+} from '../../../constants/card.constant'
+import type { CapsuleType } from '../../../constants/gacha.constant'
 import type { PullBatchResult } from '../../../queries/useGacha'
 import { resolveEffectKey } from '../reveal/rarityConfig'
 
-// Enveloppe des capsules affichées : gacha classique ou capsule astrale
-// (nébuleuse jour / nuit). Ne change que l'habillage, jamais la chorégraphie.
-export type CapsuleKind = 'classic' | 'astral'
+// Enveloppe des capsules affichées : gacha classique, capsule astrale
+// (nébuleuse jour / nuit) ou capsule classique teintée (élément, semaine). Ne
+// change que l'habillage, jamais la chorégraphie.
+export type CapsuleKind =
+  | 'classic'
+  | 'astral'
+  | 'weekly'
+  | 'fire'
+  | 'water'
+  | 'nature'
+  | 'earth'
+
+export const CAPSULE_KINDS: readonly CapsuleKind[] = [
+  'classic',
+  'astral',
+  'weekly',
+  'fire',
+  'water',
+  'nature',
+  'earth',
+]
+
+export const ELEMENT_CAPSULE_KINDS = [
+  'fire',
+  'water',
+  'nature',
+  'earth',
+] as const
+
+// Type d'inventaire côté API d'une capsule payée en stock (tout sauf classic).
+export function capsuleTypeOf(kind: Exclude<CapsuleKind, 'classic'>) {
+  return kind.toUpperCase() as CapsuleType
+}
+
+// Couleur de la capsule de la semaine : three.js veut une couleur concrète,
+// comme ELEMENT_COLOR.
+const WEEKLY_CAPSULE_COLOR = '#14b8a6'
+
+// Teinte d'une capsule classique teintée ; null pour classic et astral.
+export function capsuleTint(kind: CapsuleKind): string | null {
+  if (kind === 'classic' || kind === 'astral') {
+    return null
+  }
+  return kind === 'weekly'
+    ? WEEKLY_CAPSULE_COLOR
+    : ELEMENT_COLOR[capsuleTypeOf(kind) as CardElement]
+}
 
 // Rayon des mini-capsules des machines (globe du gashapon, bac de la pince).
 export const MINI_CAPSULE_RADIUS = 0.11
@@ -50,9 +99,12 @@ export function astralPalette(): AstralPalette {
   return astralPaletteCache
 }
 
-// Lumière interne d'une machine : violette quand elle distribue de l'astral.
+// Lumière interne d'une machine : violette quand elle distribue de l'astral,
+// à la teinte de la capsule sinon.
 export function machineLightColor(kind: CapsuleKind, classic: string): string {
-  return kind === 'astral' ? astralPalette().nightViolet : classic
+  return kind === 'astral'
+    ? astralPalette().nightViolet
+    : (capsuleTint(kind) ?? classic)
 }
 
 // Palier de tease de la capsule : la capsule « annonce » la MEILLEURE rareté
