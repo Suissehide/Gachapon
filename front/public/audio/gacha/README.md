@@ -16,6 +16,8 @@ chaque fichier manquant. Déposer les assets suivants pour remplacer les synths 
 | `crank.webm` / `crank.mp3` | Cran du bouton rotatif (machine) | ~0.1 s |
 | `rattle.webm` / `rattle.mp3` | Brassage des capsules dans le globe | ~0.7 s |
 | `dispense.webm` / `dispense.mp3` | Trappe + capsule éjectée | ~0.4 s |
+| `meteor.webm` / `meteor.mp3` | Souffle de l'étoile filante astrale pendant sa chute | ~1.2 s |
+| `impact.webm` / `impact.mp3` | Contact de l'étoile : craquement, basse, explosion | ~0.8 s |
 
 `webm` est tenté d'abord, `mp3` en secours. Les fichiers sont chargés au
 premier clic de tirage ; des 404 en console sont normaux tant qu'ils manquent.

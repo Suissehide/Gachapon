@@ -18,6 +18,8 @@ type FileCue =
   | 'crank'
   | 'rattle'
   | 'dispense'
+  | 'meteor'
+  | 'impact'
 
 const FILE_SOURCES: Record<FileCue, string[]> = {
   clack: ['/audio/gacha/clack.webm', '/audio/gacha/clack.mp3'],
@@ -30,6 +32,8 @@ const FILE_SOURCES: Record<FileCue, string[]> = {
   crank: ['/audio/gacha/crank.webm', '/audio/gacha/crank.mp3'],
   rattle: ['/audio/gacha/rattle.webm', '/audio/gacha/rattle.mp3'],
   dispense: ['/audio/gacha/dispense.webm', '/audio/gacha/dispense.mp3'],
+  meteor: ['/audio/gacha/meteor.webm', '/audio/gacha/meteor.mp3'],
+  impact: ['/audio/gacha/impact.webm', '/audio/gacha/impact.mp3'],
 }
 
 // Gamme majeure étendue (demi-tons) pour stings et fanfares
@@ -547,6 +551,99 @@ class CapsuleAudioEngine {
       duration: 0.22,
       gain: 0.3,
       when: 0.12,
+    })
+  }
+
+  // ── Cues astraux (étoile filante) ────────────────────────────────────────
+
+  // Chute de l'étoile : souffle qui monte et se rapproche pendant tout le
+  // vol, coupé net au contact.
+  meteor() {
+    if (this.muted) {
+      return
+    }
+    const file = this.fileHowl('meteor')
+    if (file) {
+      file.play()
+      return
+    }
+    const ctx = this.ensureCtx()
+    if (!ctx || !this.master) {
+      return
+    }
+    const t = ctx.currentTime
+    const duration = 1.15
+    const src = ctx.createBufferSource()
+    src.buffer = this.getNoise(ctx)
+    src.loop = true
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.Q.value = 1.2
+    filter.frequency.setValueAtTime(300, t)
+    filter.frequency.exponentialRampToValueAtTime(3800, t + duration)
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.0001, t)
+    gain.gain.exponentialRampToValueAtTime(0.5, t + duration * 0.9)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration + 0.04)
+    src.connect(filter).connect(gain).connect(this.master)
+    src.start(t)
+    src.stop(t + duration + 0.1)
+    const osc = ctx.createOscillator()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(160, t)
+    osc.frequency.exponentialRampToValueAtTime(1100, t + duration)
+    const oscGain = ctx.createGain()
+    oscGain.gain.setValueAtTime(0.0001, t)
+    oscGain.gain.exponentialRampToValueAtTime(0.12, t + duration * 0.9)
+    oscGain.gain.exponentialRampToValueAtTime(0.001, t + duration + 0.04)
+    osc.connect(oscGain).connect(this.master)
+    osc.start(t)
+    osc.stop(t + duration + 0.1)
+  }
+
+  // Contact de l'étoile : craquement sec et coup de basse, puis le corps
+  // de l'explosion et un scintillement quand la gerbe part.
+  impact() {
+    if (this.muted) {
+      return
+    }
+    const file = this.fileHowl('impact')
+    if (file) {
+      file.play()
+      return
+    }
+    const ctx = this.ensureCtx()
+    if (!ctx || !this.master) {
+      return
+    }
+    this.playNoise(ctx, this.master, {
+      duration: 0.1,
+      filterType: 'highpass',
+      freqFrom: 1500,
+      gain: 0.55,
+    })
+    this.playTone(ctx, this.master, {
+      type: 'sine',
+      freq: 95,
+      freqTo: 28,
+      duration: 0.55,
+      gain: 0.7,
+    })
+    this.playNoise(ctx, this.master, {
+      duration: 0.7,
+      filterType: 'lowpass',
+      freqFrom: 1200,
+      freqTo: 90,
+      gain: 0.5,
+      when: 0.07,
+    })
+    this.playNoise(ctx, this.master, {
+      duration: 0.5,
+      filterType: 'bandpass',
+      freqFrom: 5200,
+      q: 2,
+      gain: 0.16,
+      when: 0.09,
     })
   }
 

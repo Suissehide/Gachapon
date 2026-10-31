@@ -380,14 +380,15 @@ export function CapsuleScene({
       // d'impact, puis flash blanc, onde de choc et gerbe. La capsule est
       // déjà là, pleine taille, quand le flash retombe.
       tl.set(anim, { fall: 1 })
+      tl.call(() => capsuleAudio.meteor())
       tl.to(anim, { fall: 0, duration: 1.15, ease: 'power2.in' })
       tl.to(anim, { camShake: 0.5, duration: 1.15, ease: 'power3.in' }, '<')
       tl.set(anim, { hitstop: 1, camShake: 0 })
-      tl.to({}, { duration: 0.1 })
+      tl.call(() => capsuleAudio.impact())
+      tl.to({}, { duration: 0.07 })
       tl.set(anim, { hitstop: 0 })
-      tl.to(anim, { flash: 1, duration: 0.05, ease: 'power1.out' })
+      // La gerbe et l'onde partent dès la fin du gel, sous le flash qui monte.
       tl.call(() => {
-        capsuleAudio.clack()
         gsap.fromTo(
           anim,
           { impact: 0 },
@@ -399,6 +400,7 @@ export function CapsuleScene({
           { camShake: 0, duration: 0.8, ease: 'power2.out' },
         )
       })
+      tl.to(anim, { flash: 1, duration: 0.05, ease: 'power1.out' })
       tl.set(anim, { pop: 1 })
       tl.to(anim, { flash: 0, duration: 0.4, ease: 'power3.out' }, '+=0.05')
     } else {
