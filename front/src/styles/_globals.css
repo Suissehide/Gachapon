@@ -347,10 +347,10 @@ h6 {
   }
 }
 /* Aura des cartes Lumière / Ténèbres (ElementAuraOverlay.tsx) */
-@keyframes celestialRays {
-  to {
-    transform: rotate(360deg);
-  }
+@property --dawn-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
 }
 
 @keyframes auraBreath {
@@ -363,13 +363,32 @@ h6 {
   }
 }
 
-@keyframes abyssDrift {
-  0%,
-  100% {
-    background-position: 0% 100%;
+@keyframes dawnMote {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
   }
-  50% {
-    background-position: 100% 0%;
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-160px);
+  }
+}
+
+@keyframes dawnSheen {
+  to {
+    --dawn-angle: 360deg;
+  }
+}
+
+@keyframes abyssMist {
+  from {
+    transform: translate(-3%, 2%);
+  }
+  to {
+    transform: translate(3%, -2%);
   }
 }
 
