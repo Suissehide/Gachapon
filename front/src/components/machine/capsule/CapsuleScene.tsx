@@ -377,8 +377,8 @@ export function CapsuleScene({
     if (fallsRef.current) {
       // L'étoile filante tombe du ciel, la caméra tremble de plus en plus.
       // À l'arrivée l'image se fige un instant (hitstop) sur l'étoile
-      // d'impact, puis flash blanc, onde de choc et gerbe. La capsule naît
-      // dans la lumière : au ralenti d'abord, puis elle claque en place.
+      // d'impact, puis flash blanc, onde de choc et gerbe. La capsule est
+      // déjà là, pleine taille, quand le flash retombe.
       tl.set(anim, { fall: 1 })
       tl.to(anim, { fall: 0, duration: 1.15, ease: 'power2.in' })
       tl.to(anim, { camShake: 0.5, duration: 1.15, ease: 'power3.in' }, '<')
@@ -399,10 +399,8 @@ export function CapsuleScene({
           { camShake: 0, duration: 0.8, ease: 'power2.out' },
         )
       })
-      tl.set(anim, { pop: 0.2 })
+      tl.set(anim, { pop: 1 })
       tl.to(anim, { flash: 0, duration: 0.4, ease: 'power3.out' }, '+=0.05')
-      tl.to(anim, { pop: 0.55, duration: 0.35, ease: 'power1.inOut' }, '<')
-      tl.to(anim, { pop: 1, duration: 0.45, ease: 'back.out(2.2)' })
     } else {
       tl.to(anim, { pop: 1, duration: 0.45, ease: 'elastic.out(1.1, 0.5)' })
     }
