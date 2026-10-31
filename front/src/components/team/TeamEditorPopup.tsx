@@ -346,6 +346,7 @@ function MiniCardFace({
         compact
         level={card.level}
         element={card.card.element}
+        archetype={card.card.archetype}
       />
       {power !== undefined && (
         <span className="pointer-events-none absolute left-1/2 top-1.5 z-20 inline-flex -translate-x-1/2 items-center gap-1 rounded-sm border-[0.5px] border-white bg-[#1b1726]/92 px-1.5 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45)]">

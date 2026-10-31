@@ -81,6 +81,9 @@ function TowerFloorsPage() {
   const celebrateLevelUp = useLevelUpCelebration()
 
   const [editorOpen, setEditorOpen] = useState(false)
+  // Étage dont la préparation a ouvert l'éditeur : on y revient à sa fermeture.
+  const [prepBeforeEditor, setPrepBeforeEditor] =
+    useState<TowerFloorView | null>(null)
   const [result, setResult] = useState<TowerBattleResult | null>(null)
   // Le combat se joue d'abord en animation (comme la campagne), et seulement
   // ensuite la fenêtre de résultat s'ouvre. `sceneDone` sépare les deux temps.
@@ -224,6 +227,7 @@ function TowerFloorsPage() {
         onFight={() => prep && handleFight(prep.index)}
         onSweep={(runs) => prep && handleSweep(prep.index, runs)}
         onEditTeam={() => {
+          setPrepBeforeEditor(prep)
           setPrep(null)
           setEditorOpen(true)
         }}
@@ -249,7 +253,13 @@ function TowerFloorsPage() {
 
       <TeamEditorPopup
         open={editorOpen}
-        onOpenChange={setEditorOpen}
+        onOpenChange={(v) => {
+          setEditorOpen(v)
+          if (!v && prepBeforeEditor) {
+            setPrep(prepBeforeEditor)
+            setPrepBeforeEditor(null)
+          }
+        }}
         teamKey={teamKey}
         modeLabel={towerName}
       />
