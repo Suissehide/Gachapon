@@ -59,6 +59,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
           imageUrl: resolveUrl(c.imageUrl),
           rarity: c.rarity,
           element: c.element,
+          archetype: c.archetype,
           set: { id: c.set.id, name: c.set.name },
         })),
       }

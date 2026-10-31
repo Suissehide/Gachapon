@@ -1,7 +1,10 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 
-import type { CardElement } from '../../../constants/card.constant.ts'
+import type {
+  CardArchetype,
+  CardElement,
+} from '../../../constants/card.constant.ts'
 import { CardAura } from './CardAura.tsx'
 import { cardImageSizeOf } from './cardImage.ts'
 import type { StatKey } from './config.ts'
@@ -59,6 +62,7 @@ type Props = {
   level?: number | null
   stats?: Record<StatKey, number> | null
   element?: CardElement | null
+  archetype?: CardArchetype | null
   description?: string | null
   artPosition?: string
   newBadge?: boolean
@@ -89,6 +93,7 @@ export function CardDisplay({
   level,
   stats,
   element,
+  archetype,
   description,
   artPosition,
   newBadge,
@@ -253,6 +258,7 @@ export function CardDisplay({
               level={level}
               stats={stats}
               element={element}
+              archetype={archetype}
               description={description}
               artPosition={artPosition}
               newBadge={newBadge}

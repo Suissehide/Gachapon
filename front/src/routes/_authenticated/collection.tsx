@@ -11,6 +11,7 @@ import {
   RARITY_ORDER,
 } from '../../components/collection/CollectionCard.tsx'
 import {
+  type ArchetypeFilter,
   CollectionFilters,
   type ElementFilter,
   type GroupMode,
@@ -29,7 +30,11 @@ import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
-import { ELEMENT_LABELS, ELEMENT_ORDER } from '../../constants/card.constant.ts'
+import {
+  CARD_ARCHETYPES,
+  ELEMENT_LABELS,
+  ELEMENT_ORDER,
+} from '../../constants/card.constant.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import {
@@ -146,6 +151,11 @@ function Collection() {
     'all',
     ['all', ...ELEMENT_ORDER],
   )
+  const [archetype, setArchetype] = useStoredState<ArchetypeFilter>(
+    'collection-filters/archetype',
+    'all',
+    ['all', ...CARD_ARCHETYPES],
+  )
   const [ownership, setOwnership] = useStoredState<OwnershipFilter>(
     'collection-filters/ownership',
     'owned',
@@ -236,8 +246,9 @@ function Collection() {
       .filter((e) => rarity === 'all' || e.card.rarity === rarity)
       .filter((e) => variant === 'all' || e.variant === variant)
       .filter((e) => element === 'all' || e.card.element === element)
+      .filter((e) => archetype === 'all' || e.card.archetype === archetype)
       .filter((e) => ownership === 'all' || e.isOwned)
-  }, [displayEntries, rarity, variant, element, ownership])
+  }, [displayEntries, rarity, variant, element, archetype, ownership])
 
   const collectionStats = useMemo(() => {
     const distinctCardIds = new Set(userCards.map((uc) => uc.card.id))
@@ -389,6 +400,8 @@ function Collection() {
             onVariantChange={setVariant}
             element={element}
             onElementChange={setElement}
+            archetype={archetype}
+            onArchetypeChange={setArchetype}
             ownership={ownership}
             onOwnershipChange={setOwnership}
             sort={sort}

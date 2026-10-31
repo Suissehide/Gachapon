@@ -157,6 +157,7 @@ export function CollectionCard({
           compact
           level={shownLevel}
           element={card.element}
+          archetype={card.archetype}
           stats={isOwned ? stats : null}
           description={isOwned ? description : null}
         />

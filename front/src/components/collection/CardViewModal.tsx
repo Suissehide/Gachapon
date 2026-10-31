@@ -4,9 +4,14 @@ import type { CSSProperties } from 'react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { describeUltimate } from '../../constants/archetypes.constant.ts'
+import {
+  ARCHETYPE_ICONS,
+  archetypeName,
+  describeUltimate,
+} from '../../constants/archetypes.constant.ts'
 import type { CardVariant } from '../../constants/card.constant'
 import {
+  type CardArchetype,
   type CardElement,
   ELEMENT_COLOR,
   ELEMENT_ICON,
@@ -254,6 +259,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               level={userCard?.level ?? null}
               stats={stats}
               element={card.element}
+              archetype={card.archetype}
               description={description}
             />
           </div>
@@ -283,6 +289,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
                     {RARITY_LABELS[card.rarity]}
                   </span>
                   {card.element && <ElementChip element={card.element} />}
+                  <ArchetypeChip archetype={card.archetype} />
                   {variantInfo && (
                     <span
                       className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${variantInfo.className}`}
@@ -369,6 +376,16 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
 // Element chip — sits next to the rarity chip in the recap header and borrows
 // its shape, so the two read as one row of tags; only the accent colour and the
 // leading pictogram change.
+function ArchetypeChip({ archetype }: { archetype: CardArchetype }) {
+  const Icon = ARCHETYPE_ICONS[archetype]
+  return (
+    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-border bg-background px-2.75 py-1.25 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-text">
+      <Icon className="h-3 w-3" />
+      {archetypeName(archetype)}
+    </span>
+  )
+}
+
 function ElementChip({ element }: { element: CardElement }) {
   const hex = ELEMENT_COLOR[element]
   const Icon = ELEMENT_ICON[element]

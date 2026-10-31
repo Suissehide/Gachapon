@@ -48,6 +48,7 @@
       "rarity": "Rareté",
       "variant": "Type",
       "element": "Élément",
+      "archetype": "Archétype",
       "sort": "Tri"
     }
   },

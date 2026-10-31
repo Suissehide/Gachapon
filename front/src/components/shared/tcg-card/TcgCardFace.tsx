@@ -3,6 +3,11 @@ import { type CSSProperties, useState } from 'react'
 
 import placeholderImg from '../../../assets/data/not-found.png'
 import {
+  ARCHETYPE_ICONS,
+  archetypeName,
+} from '../../../constants/archetypes.constant.ts'
+import {
+  type CardArchetype,
   type CardElement,
   ELEMENT_COLOR,
   ELEMENT_ICON,
@@ -52,6 +57,8 @@ type Props = {
   stats?: CardStats | null
   /** When provided, renders the element badge under the level square. */
   element?: CardElement | null
+  /** When provided, renders the archetype badge under the element badge. */
+  archetype?: CardArchetype | null
   /** Description / lore / passive effect shown in the bottom area. */
   description?: string | null
   /** CSS `object-position` for the art image (e.g. `'50% 18%'`). */
@@ -145,6 +152,7 @@ export function TcgCardFace({
   level,
   stats,
   element,
+  archetype,
   description,
   artPosition,
   showName = true,
@@ -253,6 +261,7 @@ export function TcgCardFace({
       <BadgeColumn
         level={level}
         element={element ?? null}
+        archetype={archetype}
         tone={tone}
         compact={compact}
       />
@@ -365,20 +374,22 @@ function CornerAccent({
   return <span className="pointer-events-none absolute z-[5]" style={styles} />
 }
 
-// Top-left column: level square with the element badge stacked right under it.
+// Top-left column: level square, then the element and archetype badges.
 function BadgeColumn({
   level,
   element,
+  archetype,
   tone,
   compact,
 }: {
   level: number | null | undefined
   element: CardElement | null
+  archetype: CardArchetype | null | undefined
   tone: RarityTone
   compact: boolean
 }) {
   const hasLevel = level !== null && level !== undefined
-  if (!hasLevel && !element) {
+  if (!hasLevel && !element && !archetype) {
     return null
   }
   return (
@@ -391,6 +402,7 @@ function BadgeColumn({
     >
       {hasLevel && <LevelSquare level={level} tone={tone} compact={compact} />}
       {element && <ElementBadge element={element} compact={compact} />}
+      {archetype && <ArchetypeBadge archetype={archetype} compact={compact} />}
     </div>
   )
 }
@@ -437,6 +449,26 @@ function ElementBadge({
       }`}
       style={{ background: ELEMENT_COLOR[element] }}
       title={ELEMENT_LABELS[element]}
+    >
+      <Icon className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+    </div>
+  )
+}
+
+function ArchetypeBadge({
+  archetype,
+  compact,
+}: {
+  archetype: CardArchetype
+  compact: boolean
+}) {
+  const Icon = ARCHETYPE_ICONS[archetype]
+  return (
+    <div
+      className={`flex items-center justify-center rounded-full border-[0.5px] border-white bg-[#1b1726]/92 text-primary shadow-[0_2px_6px_rgba(0,0,0,0.4)] ${
+        compact ? 'h-6 w-6' : 'h-8 w-8'
+      }`}
+      title={archetypeName(archetype)}
     >
       <Icon className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
     </div>

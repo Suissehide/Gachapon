@@ -3,6 +3,12 @@ import { useTranslation } from 'react-i18next'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import {
+  ARCHETYPE_ICONS,
+  archetypeName,
+} from '../../constants/archetypes.constant.ts'
+import {
+  CARD_ARCHETYPES,
+  type CardArchetype,
   type CardElement,
   ELEMENT_COLOR,
   ELEMENT_LABELS,
@@ -19,6 +25,7 @@ type Rarity = Card['rarity']
 export type RarityFilter = Rarity | 'all'
 export type VariantFilter = CardVariant | 'all'
 export type ElementFilter = CardElement | 'all'
+export type ArchetypeFilter = CardArchetype | 'all'
 export type GroupMode = 'rarity' | 'set' | 'element'
 export type OwnershipFilter = 'all' | 'owned'
 export type SortMode = 'default' | 'power' | 'level' | 'copies' | 'name'
@@ -42,6 +49,18 @@ export const ELEMENT_OPTIONS = [
     label: ELEMENT_LABELS[el],
     icon: <RarityDot color={ELEMENT_COLOR[el]} />,
   })),
+]
+
+const ARCHETYPE_FILTER_OPTIONS = [
+  { value: 'all', label: i18n.t('collection:filters.allMasculine') },
+  ...CARD_ARCHETYPES.map((archetype) => {
+    const Icon = ARCHETYPE_ICONS[archetype]
+    return {
+      value: archetype,
+      label: archetypeName(archetype),
+      icon: <Icon className="h-3.5 w-3.5 text-text-light" />,
+    }
+  }),
 ]
 
 const VARIANT_OPTIONS = [
@@ -97,6 +116,8 @@ interface Props {
   onVariantChange: (v: VariantFilter) => void
   element: ElementFilter
   onElementChange: (e: ElementFilter) => void
+  archetype: ArchetypeFilter
+  onArchetypeChange: (a: ArchetypeFilter) => void
   ownership: OwnershipFilter
   onOwnershipChange: (o: OwnershipFilter) => void
   sort: SortMode
@@ -112,6 +133,8 @@ export function CollectionFilters({
   onVariantChange,
   element,
   onElementChange,
+  archetype,
+  onArchetypeChange,
   ownership,
   onOwnershipChange,
   sort,
@@ -170,6 +193,18 @@ export function CollectionFilters({
             options={ELEMENT_OPTIONS}
             value={element}
             onValueChange={(v) => onElementChange(v as ElementFilter)}
+            clearable={false}
+          />
+        </FilterField>
+        <FilterField
+          id="filter-archetype"
+          label={t('collection:filters.labels.archetype')}
+        >
+          <Select
+            id="filter-archetype"
+            options={ARCHETYPE_FILTER_OPTIONS}
+            value={archetype}
+            onValueChange={(v) => onArchetypeChange(v as ArchetypeFilter)}
             clearable={false}
           />
         </FilterField>

@@ -9,6 +9,7 @@ import {
   RARITY_ORDER,
 } from '../../../components/collection/CollectionCard.tsx'
 import {
+  type ArchetypeFilter,
   CollectionFilters,
   type ElementFilter,
   type GroupMode,
@@ -56,6 +57,7 @@ function UserCollectionPage() {
   const [rarity, setRarity] = useState<RarityFilter>('all')
   const [variant, setVariant] = useState<VariantFilter>('all')
   const [element, setElement] = useState<ElementFilter>('all')
+  const [archetype, setArchetype] = useState<ArchetypeFilter>('all')
   const [ownership, setOwnership] = useState<OwnershipFilter>('owned')
   const [sort, setSort] = useState<SortMode>('default')
 
@@ -107,8 +109,9 @@ function UserCollectionPage() {
         .filter((e) => rarity === 'all' || e.card.rarity === rarity)
         .filter((e) => variant === 'all' || e.variant === variant)
         .filter((e) => element === 'all' || e.card.element === element)
+        .filter((e) => archetype === 'all' || e.card.archetype === archetype)
         .filter((e) => ownership === 'all' || e.isOwned),
-    [displayEntries, rarity, variant, element, ownership],
+    [displayEntries, rarity, variant, element, archetype, ownership],
   )
 
   const sections = useMemo(() => {
@@ -231,6 +234,8 @@ function UserCollectionPage() {
           onVariantChange={setVariant}
           element={element}
           onElementChange={setElement}
+          archetype={archetype}
+          onArchetypeChange={setArchetype}
           ownership={ownership}
           onOwnershipChange={setOwnership}
           sort={sort}

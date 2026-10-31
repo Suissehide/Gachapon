@@ -48,6 +48,7 @@
       "rarity": "Rarity",
       "variant": "Type",
       "element": "Element",
+      "archetype": "Archetype",
       "sort": "Sort"
     }
   },
