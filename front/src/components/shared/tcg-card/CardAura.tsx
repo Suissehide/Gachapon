@@ -105,6 +105,8 @@ function AuraHalo({
   haloOpacity: number
   large: boolean
 }) {
+  // Only transform/opacity animate here: anything else under the blur would
+  // re-blur the whole halo every frame. Colors cycle by spinning the conic.
   if (isVariant) {
     return (
       <div
@@ -117,15 +119,15 @@ function AuraHalo({
           } as CSSProperties
         }
       >
-        <div
-          className="absolute inset-0"
-          style={{
-            background: isHolo ? HOLO_GRADIENT : GOLD_GRADIENT,
-            animation: isHolo
-              ? 'cardAuraBlob 9s ease-in-out infinite, cardAuraHue 6s linear infinite'
-              : 'cardAuraBlob 9s ease-in-out infinite, cardAuraShimmer 3.2s ease-in-out infinite',
-          }}
-        />
+        <div className="absolute inset-0 [animation:cardAuraBlob_9s_ease-in-out_infinite]">
+          <div
+            className="absolute inset-0 rounded-[45%]"
+            style={{
+              background: isHolo ? HOLO_GRADIENT : GOLD_GRADIENT,
+              animation: `foilSpin ${isHolo ? 6 : 8}s linear infinite`,
+            }}
+          />
+        </div>
       </div>
     )
   }

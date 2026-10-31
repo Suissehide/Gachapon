@@ -349,12 +349,6 @@ h6 {
   }
 }
 /* Aura des cartes Lumière / Ténèbres (ElementAuraOverlay.tsx) */
-@property --dawn-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
 @keyframes auraBreath {
   0%,
   100% {
@@ -379,18 +373,12 @@ h6 {
   }
 }
 
-@keyframes dawnSheen {
-  to {
-    --dawn-angle: 360deg;
-  }
-}
-
 @keyframes nebulaDrift {
   from {
-    background-position: 0% 100%;
+    transform: translateX(8.3%);
   }
   to {
-    background-position: 100% 90%;
+    transform: translateX(-8.3%);
   }
 }
 
@@ -428,15 +416,15 @@ h6 {
 
 /* Molten specular beam: sweeps the diagonal once, rests off-card, then loops.
  * Gradient is transparent at both ends of the travel so the loop jump is invisible. */
+/* Transform plutôt que background-position : le calque est composité au lieu
+ * d'être repeint à chaque frame. Le calque fait 320 % de la carte. */
 @keyframes goldSweep {
   0% {
-    background-position: 115% 115%;
+    transform: translate(0, 0);
   }
-  55% {
-    background-position: -15% -15%;
-  }
+  55%,
   100% {
-    background-position: -15% -15%;
+    transform: translate(89.4%, 89.4%);
   }
 }
 
@@ -634,31 +622,21 @@ h6 {
   }
 }
 
-/* Organic multicolor blob for the holographic aura: morphs shape + drifts
- * randomly (cardAuraBlob) while the prismatic colors cycle (cardAuraHue). */
+/* Organic multicolor blob for the holographic aura: drifts
+ * randomly (cardAuraBlob) while the conic colors turn (foilSpin). */
 @keyframes cardAuraBlob {
   0%,
   100% {
-    border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
     transform: translate(0%, 0%) scale(1);
   }
   25% {
-    border-radius: 62% 38% 40% 60% / 58% 63% 37% 42%;
     transform: translate(5%, -4%) scale(1.06);
   }
   50% {
-    border-radius: 38% 62% 55% 45% / 46% 38% 62% 54%;
     transform: translate(-4%, 5%) scale(0.95);
   }
   75% {
-    border-radius: 55% 45% 42% 58% / 63% 52% 48% 37%;
     transform: translate(4%, 3%) scale(1.03);
-  }
-}
-
-@keyframes cardAuraHue {
-  to {
-    filter: hue-rotate(360deg);
   }
 }
 
@@ -673,16 +651,6 @@ h6 {
 }
 
 /* Golden shimmer for the brilliant aura — molten-gold brightness pulse. */
-@keyframes cardAuraShimmer {
-  0%,
-  100% {
-    filter: brightness(0.85) saturate(1);
-  }
-  50% {
-    filter: brightness(1.3) saturate(1.2);
-  }
-}
-
 @keyframes cardAuraRise {
   0% {
     opacity: 0;

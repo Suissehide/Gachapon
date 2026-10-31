@@ -85,6 +85,8 @@ export type VariantOverlayLayer = {
   blendMode: string
   /** Number, or a CSS expression (e.g. `var(--holo-opc, 0)` for pointer-driven layers). */
   opacity: number | string
+  /** Boîte du calque quand elle déborde de la carte (calque animé en transform). */
+  box?: { left: string; top: string; width: string; height: string }
 }
 
 export const VARIANT_OVERLAYS: Record<string, VariantOverlayLayer[]> = {
@@ -127,14 +129,14 @@ export const VARIANT_OVERLAYS: Record<string, VariantOverlayLayer[]> = {
     {
       // 4. Molten sweep — a hot white-gold specular beam travelling the diagonal
       //    once, then resting off-card (goldSweep), like light rolling over metal.
-      //    Band must stay narrower than the card once scaled by bgSize (here
+      //    The layer is 320% of the card and moved by transform (composited, no
+      //    per-frame repaint). Band must stay narrower than the card (here
       //    14% × 320% ≈ 45% of the card), otherwise it covers the whole art and
-      //    reads as a static rectangle instead of a moving beam. `no-repeat` is
-      //    required too: while the beam rests off-card, the repeated neighbour
-      //    tile would otherwise bleed a frozen gold block onto the card edge.
+      //    reads as a static rectangle instead of a moving beam.
       id: 'brilliant-sweep',
-      bg: 'linear-gradient(115deg, transparent 43%, rgba(255,208,96,0.45) 47%, rgba(255,252,235,0.95) 50%, rgba(255,208,96,0.45) 53%, transparent 57%) no-repeat',
-      bgSize: '320% 320%',
+      bg: 'linear-gradient(115deg, transparent 43%, rgba(255,208,96,0.45) 47%, rgba(255,252,235,0.95) 50%, rgba(255,208,96,0.45) 53%, transparent 57%)',
+      bgSize: '100% 100%',
+      box: { left: '-253%', top: '-253%', width: '320%', height: '320%' },
       animation: 'goldSweep 6.5s ease-in-out infinite',
       blendMode: 'screen',
       opacity: 0.85,

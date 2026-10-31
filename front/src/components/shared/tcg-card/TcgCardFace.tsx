@@ -248,6 +248,7 @@ export function TcgCardFace({
             animation: layer.animation,
             mixBlendMode: layer.blendMode as CSSProperties['mixBlendMode'],
             opacity: layer.opacity,
+            ...layer.box,
           }}
         />
       ))}

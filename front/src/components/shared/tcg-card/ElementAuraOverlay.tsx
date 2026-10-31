@@ -58,16 +58,22 @@ function DawnAura() {
           }}
         />
       ))}
-      {/* Reflet qui fait le tour du cadre : un dégradé conique dont on ne
-          garde que la bordure */}
+      {/* Reflet qui fait le tour du cadre : un dégradé conique qui tourne
+          (transform, sans repeindre) dont on ne garde que la bordure */}
       <div
-        className="absolute inset-0 rounded-[inherit] p-[2px] [animation:dawnSheen_5s_linear_infinite]"
+        className="absolute inset-0 overflow-hidden rounded-[inherit] p-[2px]"
         style={{
-          background:
-            'conic-gradient(from var(--dawn-angle), transparent 0 75%, var(--astral-day-cloud) 85%, transparent 95%)',
           mask: 'linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)',
         }}
-      />
+      >
+        <div
+          className="absolute -inset-1/2 [animation:foilSpin_5s_linear_infinite]"
+          style={{
+            background:
+              'conic-gradient(transparent 0 75%, var(--astral-day-cloud) 85%, transparent 95%)',
+          }}
+        />
+      </div>
     </div>
   )
 }
@@ -94,9 +100,10 @@ function NebulaAura() {
     <div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden rounded-[inherit]">
       {/* Le bas de la carte se fond dans le ciel de nuit de la capsule : nuit
           dense en bas qui s'éclaircit vers le haut, nuages violets, roses et
-          bleus qui dérivent */}
+          bleus qui dérivent (calque plus large que la carte, déplacé en
+          transform) */}
       <div
-        className="absolute inset-0 [animation:nebulaDrift_18s_ease-in-out_infinite_alternate] [background-size:120%_120%]"
+        className="absolute inset-y-0 -inset-x-[10%] [animation:nebulaDrift_18s_ease-in-out_infinite_alternate]"
         style={{
           background:
             'radial-gradient(ellipse 45% 22% at 25% 82%, color-mix(in oklab, var(--astral-night-pink) 48%, transparent), transparent 70%), radial-gradient(ellipse 55% 26% at 72% 76%, color-mix(in oklab, var(--astral-night-violet) 62%, transparent), transparent 70%), radial-gradient(ellipse 35% 18% at 48% 92%, color-mix(in oklab, var(--astral-night-blue) 40%, transparent), transparent 70%), linear-gradient(0deg, color-mix(in oklab, var(--astral-night-deep) 92%, transparent) 0%, color-mix(in oklab, var(--astral-night-deep) 70%, transparent) 22%, color-mix(in oklab, var(--astral-night-deep) 35%, transparent) 45%, transparent 72%)',
