@@ -8,12 +8,12 @@ import type { PullBatchResult } from '../../../queries/useGacha'
 import { resolveEffectKey } from '../reveal/rarityConfig'
 
 // Enveloppe des capsules affichées : gacha classique, capsule astrale
-// (nébuleuse jour / nuit) ou capsule classique teintée (élément, semaine). Ne
+// (nébuleuse jour / nuit) ou capsule classique teintée (élément, Comète). Ne
 // change que l'habillage, jamais la chorégraphie.
 export type CapsuleKind =
   | 'classic'
   | 'astral'
-  | 'weekly'
+  | 'comet'
   | 'fire'
   | 'water'
   | 'nature'
@@ -22,7 +22,7 @@ export type CapsuleKind =
 export const CAPSULE_KINDS: readonly CapsuleKind[] = [
   'classic',
   'astral',
-  'weekly',
+  'comet',
   'fire',
   'water',
   'nature',
@@ -41,17 +41,17 @@ export function capsuleTypeOf(kind: Exclude<CapsuleKind, 'classic'>) {
   return kind.toUpperCase() as CapsuleType
 }
 
-// Couleur de la capsule de la semaine : three.js veut une couleur concrète,
+// Couleur de la capsule Comète : three.js veut une couleur concrète,
 // comme ELEMENT_COLOR.
-const WEEKLY_CAPSULE_COLOR = '#14b8a6'
+const COMET_CAPSULE_COLOR = '#14b8a6'
 
 // Teinte d'une capsule classique teintée ; null pour classic et astral.
 export function capsuleTint(kind: CapsuleKind): string | null {
   if (kind === 'classic' || kind === 'astral') {
     return null
   }
-  return kind === 'weekly'
-    ? WEEKLY_CAPSULE_COLOR
+  return kind === 'comet'
+    ? COMET_CAPSULE_COLOR
     : ELEMENT_COLOR[capsuleTypeOf(kind) as CardElement]
 }
 

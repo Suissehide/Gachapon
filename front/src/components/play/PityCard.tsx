@@ -1,7 +1,6 @@
 import { Gem } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 
-import type { CapsuleType } from '../../constants/gacha.constant.ts'
 import { useCapsules, useTokenBalance } from '../../queries/useGacha.ts'
 
 export function pityProgress(current: number, threshold: number) {
@@ -19,19 +18,19 @@ export function pityProgress(current: number, threshold: number) {
 
 // `current` remplace le compteur serveur pendant un tirage : la jauge ne doit
 // avancer qu'au rythme des cartes retournées, pas dès la réponse réseau.
-// `capsule` : la garantie affichée est celle, distincte, de ce type de capsule.
+// `astral` : la garantie affichée est celle, distincte, des capsules astrales.
 export function PityCard({
   current: override,
-  capsule,
+  astral = false,
 }: {
   current?: number
-  capsule?: CapsuleType
+  astral?: boolean
 }) {
   const { t } = useTranslation('gacha')
   const { data: balance } = useTokenBalance()
   const { data: capsules } = useCapsules()
-  const source = capsule
-    ? capsules?.capsules.find((c) => c.type === capsule)
+  const source = astral
+    ? capsules?.capsules.find((c) => c.type === 'ASTRAL')
     : balance
 
   const current = override ?? source?.pityCurrent ?? 0
@@ -43,9 +42,7 @@ export function PityCard({
       <div className="flex flex-col gap-1">
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           <Gem className="h-3.5 w-3.5 text-secondary" />
-          {capsule
-            ? t(`gacha:cards.pityCapsule.${capsule}`)
-            : t('gacha:cards.pity')}
+          {astral ? t('gacha:cards.pityAstral') : t('gacha:cards.pity')}
         </span>
         <span className="text-[13px] text-text-light">
           {threshold === 0 ? (

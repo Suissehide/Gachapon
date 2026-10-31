@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
 
-describe('POST /pulls/capsules/:type (élémentaire, semaine)', () => {
+describe('POST /pulls/capsules/:type (élémentaire, Comète)', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let prisma: any
   let configService: any
@@ -89,18 +89,33 @@ describe('POST /pulls/capsules/:type (élémentaire, semaine)', () => {
     expect(pulls.every((p: { source: string }) => p.source === 'CAPSULE')).toBe(true)
   })
 
-  it('pitié propre à chaque élément, au seuil du tirage normal', async () => {
+  it('garantie partagée avec les jetons : au seuil → LEGENDARY, pitié normale remise à 0', async () => {
     const { pityThreshold } = await configService.getMany('pityThreshold')
-    await setCapsules('FIRE', 1, pityThreshold)
-    await setCapsules('WATER', 0, 5)
+    await prisma.user.update({
+      where: { id: userId },
+      data: { pityCurrent: pityThreshold },
+    })
+    await setCapsules('FIRE', 1, 42)
     const res = await pullCapsule('FIRE', 1)
     expect(res.statusCode).toBe(201)
     expect(res.json().pulls[0].card.rarity).toBe('LEGENDARY')
     expect(res.json().capsulePityCurrent).toBe(0)
-    const water = await prisma.userCapsule.findUnique({
-      where: { userId_type: { userId, type: 'WATER' } },
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    expect(user.pityCurrent).toBe(0)
+    // La colonne de pitié de la capsule ne sert qu'à l'astrale.
+    const fire = await prisma.userCapsule.findUnique({
+      where: { userId_type: { userId, type: 'FIRE' } },
     })
-    expect(water.pityCurrent).toBe(5)
+    expect(fire.pityCurrent).toBe(42)
+  })
+
+  it('un tirage de capsule élémentaire avance la pitié normale', async () => {
+    await prisma.user.update({ where: { id: userId }, data: { pityCurrent: 3 } })
+    await setCapsules('WATER', 1)
+    const res = await pullCapsule('WATER', 1)
+    expect(res.statusCode).toBe(201)
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    expect(user.pityCurrent).toBe(4)
   })
 
   it('stock insuffisant → 402', async () => {
@@ -112,17 +127,17 @@ describe('POST /pulls/capsules/:type (élémentaire, semaine)', () => {
     expect((await pullCapsule('LIGHT', 1)).statusCode).toBe(400)
   })
 
-  it('capsule de la semaine : cartes de la sélection publique, jamais LIGHT/DARK', async () => {
-    const weekly = await app.inject({ method: 'GET', url: '/capsules/weekly' })
-    expect(weekly.statusCode).toBe(200)
-    const { cards, endsAt } = weekly.json()
+  it('capsule Comète : cartes de la sélection publique, jamais LIGHT/DARK', async () => {
+    const comet = await app.inject({ method: 'GET', url: '/capsules/comet' })
+    expect(comet.statusCode).toBe(200)
+    const { cards, endsAt } = comet.json()
     expect(cards.length).toBeGreaterThan(0)
     expect(cards.length).toBeLessThanOrEqual(15)
     expect(new Date(endsAt).getUTCDay()).toBe(1)
     expect(cards.some((c: any) => ['LIGHT', 'DARK'].includes(c.element))).toBe(false)
 
-    await setCapsules('WEEKLY', 10)
-    const res = await pullCapsule('WEEKLY', 10)
+    await setCapsules('COMET', 10)
+    const res = await pullCapsule('COMET', 10)
     expect(res.statusCode).toBe(201)
     const ids = new Set(cards.map((c: any) => c.id))
     expect(res.json().pulls.every((p: any) => ids.has(p.card.id))).toBe(true)
@@ -141,7 +156,7 @@ describe('POST /pulls/capsules/:type (élémentaire, semaine)', () => {
       'WATER',
       'NATURE',
       'EARTH',
-      'WEEKLY',
+      'COMET',
     ])
   })
 })

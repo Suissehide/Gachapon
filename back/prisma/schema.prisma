@@ -83,22 +83,23 @@ enum ShopItemType {
   CAPSULE
 }
 
-/// Type de capsule détenue en inventaire, un stock et une pitié par type.
+/// Type de capsule détenue en inventaire, un stock par type.
 /// ASTRAL : LIGHT/DARK. FIRE/WATER/NATURE/EARTH : cartes de cet élément.
-/// WEEKLY : liste commune de 15 cartes renouvelée chaque lundi
-/// (card-pools.ts#weeklyCapsuleCards).
+/// COMET : liste commune de 15 cartes renouvelée chaque lundi
+/// (card-pools.ts#cometCapsuleCards). Seule l'astrale garde sa propre pitié
+/// (`pityCurrent`) ; les autres partagent celle des jetons (User.pityCurrent).
 enum CapsuleType {
   ASTRAL
   FIRE
   WATER
   NATURE
   EARTH
-  WEEKLY
+  COMET
 }
 
 /// Origine d'un tirage : TOKEN pour le gacha normal, ASTRAL pour une capsule
-/// astrale, CAPSULE pour les autres capsules. Seul TOKEN entre dans la
-/// fenêtre des paris et des duels (voir betDomain/duelDomain).
+/// astrale, CAPSULE pour les autres capsules. TOKEN et CAPSULE entrent dans la
+/// fenêtre des paris et des duels (voir wager.repository#countedPullsWindow).
 enum PullSource {
   TOKEN
   ASTRAL

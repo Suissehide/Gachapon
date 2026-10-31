@@ -404,6 +404,29 @@ function drawCapsule(
   return { card, isGolden }
 }
 
+/** Garantie d'un tirage de capsule : l'astrale a la sienne (colonne de la
+ *  capsule), les autres partagent celle des jetons (User.pityCurrent).
+ *  `persist` dit quoi réécrire dans chaque colonne après le lot. */
+function capsulePityPlan(
+  type: CapsuleType,
+  cfg: PullCfg,
+  capsuleRowPity: number,
+  userPity: number,
+) {
+  if (type === 'ASTRAL') {
+    return {
+      threshold: cfg.astralPityThreshold,
+      start: capsuleRowPity,
+      persist: (final: number) => ({ capsuleRow: final, user: userPity }),
+    }
+  }
+  return {
+    threshold: cfg.pityThreshold,
+    start: userPity,
+    persist: (final: number) => ({ capsuleRow: capsuleRowPity, user: final }),
+  }
+}
+
 type Unlocks = Awaited<ReturnType<AchievementsDomainInterface['track']>>
 
 type StepOutcome = {
@@ -953,13 +976,7 @@ export class GachaDomain implements GachaDomainInterface {
       tx,
       false,
     )
-    const capsulePool =
-      type === 'ASTRAL'
-        ? await this.#cardRepository.findActiveAstralInTx(tx)
-        : capsulePoolOf(type, normalPool, new Date())
-    if (capsulePool.length === 0) {
-      throw Boom.internal(errorMessage('gacha.noActiveCards'))
-    }
+    const capsulePool = await this.#capsulePoolInTx(tx, type, normalPool)
     const levelAt = (xp: number) =>
       levelAfterXpGain(
         user.level,
@@ -974,9 +991,13 @@ export class GachaDomain implements GachaDomainInterface {
     const totalXp = xpPerPullBonused * count
     const oldLevel = levelAt(user.xp)
     let runningXp = user.xp
-    const pityThreshold =
-      type === 'ASTRAL' ? cfg.astralPityThreshold : cfg.pityThreshold
-    let capsulePity = capsule?.pityCurrent ?? 0
+    const pity = capsulePityPlan(
+      type,
+      cfg,
+      capsule?.pityCurrent ?? 0,
+      user.pityCurrent,
+    )
+    let capsulePity = pity.start
     const pulls: PullBatchResult['pulls'] = []
     for (let i = 0; i < count; i++) {
       const { card, isGolden } = drawCapsule(
@@ -984,7 +1005,7 @@ export class GachaDomain implements GachaDomainInterface {
         normalPool,
         capsulePool,
         capsulePity,
-        pityThreshold,
+        pity.threshold,
       )
       const { pull, wasDuplicate, unlockedAchievements } =
         await this.#recordPullInTx(
@@ -1020,12 +1041,11 @@ export class GachaDomain implements GachaDomainInterface {
       userId,
       type,
       count,
-      capsulePity,
+      pity.persist(capsulePity).capsuleRow,
     )
     const newLevel = levelAt(user.xp + totalXp)
     const gained = skillPointsGained(oldLevel, newLevel)
-    // Jetons : seule la régénération est réglée, aucun n'est dépensé ; la
-    // pitié normale reste celle du joueur.
+    // Jetons : seule la régénération est réglée, aucun n'est dépensé.
     await this.#writeFinalUserUpdate(
       tx,
       userId,
@@ -1033,7 +1053,7 @@ export class GachaDomain implements GachaDomainInterface {
       state.overflowDustGained,
       totalXp,
       newLevel,
-      user.pityCurrent,
+      pity.persist(capsulePity).user,
       state.newLastTokenAt,
       gained > 0 ? gained : undefined,
     )
@@ -1054,6 +1074,23 @@ export class GachaDomain implements GachaDomainInterface {
       capsulesRemaining: stock - count,
       capsulePityCurrent: capsulePity,
     }
+  }
+
+  /** Cartes d'une capsule : LIGHT/DARK pour l'astrale (hors pool normal),
+   *  sinon prises dans le pool normal. */
+  async #capsulePoolInTx(
+    tx: PrimaTransactionClient,
+    type: CapsuleType,
+    normalPool: CardWithSet[],
+  ): Promise<CardWithSet[]> {
+    const pool =
+      type === 'ASTRAL'
+        ? await this.#cardRepository.findActiveAstralInTx(tx)
+        : capsulePoolOf(type, normalPool, new Date())
+    if (pool.length === 0) {
+      throw Boom.internal(errorMessage('gacha.noActiveCards'))
+    }
+    return pool
   }
 
   /** Config du tirage, lue AVANT la transaction (pas d'I/O async hors

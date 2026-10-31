@@ -85,7 +85,7 @@ export type CapsuleType =
   | 'WATER'
   | 'NATURE'
   | 'EARTH'
-  | 'WEEKLY'
+  | 'COMET'
 
 export type Capsule = {
   type: CapsuleType
@@ -99,7 +99,7 @@ export type CapsulePullResult = PullBatchResult & {
   capsulePityCurrent: number
 }
 
-export type WeeklyCapsule = {
+export type CometCapsule = {
   endsAt: string
   cards: {
     id: string
@@ -118,7 +118,7 @@ export const GACHA_ROUTES = {
   pullBatch: '/pulls/batch',
   pullCapsule: (type: CapsuleType) => `/pulls/capsules/${type}`,
   capsules: '/capsules',
-  weeklyCapsule: '/capsules/weekly',
+  cometCapsule: '/capsules/comet',
   history: (page: number) => `/pulls/history?page=${page}`,
   rates: '/pulls/rates',
   recent: (opts?: {

@@ -357,12 +357,19 @@ function listActiveDuelsForUserWith(
  * donc le sous-ensemble des `take` premiers — déterministe, ce qui compte
  * puisque c'est lui qui décide quelles cartes sont saisissables au règlement.
  *
- * `source: 'TOKEN'` exclut les tirages astraux de la fenêtre : ils ne
- * déclenchent ni n'avancent un pari ou un duel.
+ * Les tirages astraux sont exclus de la fenêtre : ils ne déclenchent ni
+ * n'avancent un pari ou un duel. Les autres capsules (élémentaires, Comète)
+ * y entrent : elles partagent la garantie des jetons, que la cote gèle au
+ * placement — les laisser hors fenêtre permettrait d'avancer cette garantie
+ * après coup.
  */
 function countedPullsWindow(userId: string, since: Date, take: number) {
   return {
-    where: { userId, source: 'TOKEN' as const, pulledAt: { gt: since } },
+    where: {
+      userId,
+      source: { in: ['TOKEN' as const, 'CAPSULE' as const] },
+      pulledAt: { gt: since },
+    },
     orderBy: [{ pulledAt: 'asc' as const }, { id: 'asc' as const }],
     take,
   }

@@ -31,7 +31,7 @@ import {
   pullsRecentResponseSchema,
   tokensBalanceResponseSchema,
   tokensNextAtResponseSchema,
-  weeklyCapsuleResponseSchema,
+  cometCapsuleResponseSchema,
 } from '../../schemas/gacha.schemas'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -315,9 +315,9 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // POST /pulls/capsules/:type — ouvrir 1 à 10 capsules (aucun jeton). Pas
-  // de règlement de duel ni de pari : les tirages de capsule sont hors de
-  // leur fenêtre.
+  // POST /pulls/capsules/:type — ouvrir 1 à 10 capsules (aucun jeton). Les
+  // tirages astraux sont hors de la fenêtre des duels et des paris ; les
+  // autres capsules y entrent et les règlent comme un tirage de jetons.
   fastify.post(
     '/pulls/capsules/:type',
     {
@@ -339,6 +339,18 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       const user = await userRepository.findById(request.user.userID)
       if (user) {
         publishBatch(user, result)
+      }
+      if (request.params.type !== 'ASTRAL') {
+        backgroundTasks.track(
+          duelDomain
+            .settleForUser(request.user.userID)
+            .catch((err) => fastify.log.error({ err }, 'duel settle failed')),
+        )
+        backgroundTasks.track(
+          betDomain
+            .settleForUser(request.user.userID)
+            .catch((err) => fastify.log.error({ err }, 'bet settle failed')),
+        )
       }
       backgroundTasks.track(
         teamProgressionDomain
@@ -465,10 +477,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async (request) => {
-      const [capsules, upgrades, cfg] = await Promise.all([
+      const [capsules, upgrades, cfg, user] = await Promise.all([
         userCapsuleRepository.findByUser(request.user.userID),
         skillTreeRepository.getEffectsForUser(request.user.userID),
         configService.getMany('astral.pityThreshold', 'pityThreshold'),
+        userRepository.findById(request.user.userID),
       ])
       return {
         capsules: capsuleTypeEnum.options.map((type) => {
@@ -476,7 +489,12 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
           return {
             type,
             quantity: owned?.quantity ?? 0,
-            pityCurrent: owned?.pityCurrent ?? 0,
+            // Seule l'astrale a sa garantie ; les autres partagent celle des
+            // jetons.
+            pityCurrent:
+              type === 'ASTRAL'
+                ? (owned?.pityCurrent ?? 0)
+                : (user?.pityCurrent ?? 0),
             pityThreshold: effectivePityThreshold(
               type === 'ASTRAL'
                 ? cfg['astral.pityThreshold']
@@ -489,21 +507,21 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // GET /capsules/weekly — sélection de la capsule de la semaine (publique :
+  // GET /capsules/comet — sélection de la capsule Comète (publique :
   // la vitrine de la boutique la montre avant tout achat)
   fastify.get(
-    '/capsules/weekly',
+    '/capsules/comet',
     {
       schema: {
-        summary: 'Get this week capsule selection',
-        response: { 200: weeklyCapsuleResponseSchema },
+        summary: 'Get this week Comet capsule selection',
+        response: { 200: cometCapsuleResponseSchema },
       },
     },
     async () => {
       const now = new Date()
       const weekStart = Date.parse(`${mondayOfUtcWeek(now)}T00:00:00.000Z`)
       const cards = capsulePoolOf(
-        'WEEKLY',
+        'COMET',
         await cardRepository.findActiveNormal(),
         now,
       )

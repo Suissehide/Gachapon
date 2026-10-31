@@ -67,7 +67,7 @@ export const capsuleTypeEnum = z.enum([
   'WATER',
   'NATURE',
   'EARTH',
-  'WEEKLY',
+  'COMET',
 ])
 
 export const pullCapsuleParamsSchema = z.object({ type: capsuleTypeEnum })
@@ -133,9 +133,9 @@ export const capsulesResponseSchema = z.object({
   ),
 })
 
-// ── GET /capsules/weekly ────────────────────────────────────────────────────
+// ── GET /capsules/comet ─────────────────────────────────────────────────────
 
-export const weeklyCapsuleResponseSchema = z.object({
+export const cometCapsuleResponseSchema = z.object({
   endsAt: z.string(),
   cards: z.array(
     z.object({

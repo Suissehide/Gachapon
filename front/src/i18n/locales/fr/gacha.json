@@ -31,14 +31,7 @@
     "boost": "Boost",
     "boostPulls_one": "{{count}} tirage",
     "boostPulls_other": "{{count}} tirages",
-    "pityCapsule": {
-      "ASTRAL": "Garantie astrale",
-      "WEEKLY": "Garantie de la semaine",
-      "FIRE": "Garantie Feu",
-      "WATER": "Garantie Eau",
-      "NATURE": "Garantie Nature",
-      "EARTH": "Garantie Terre"
-    }
+    "pityAstral": "Garantie astrale"
   },
   "feed": {
     "variantBrilliant": "BRILLANTE",
@@ -87,7 +80,7 @@
     "capsuleNames": {
       "classic": "Classique",
       "astral": "Astrale",
-      "weekly": "De la semaine",
+      "comet": "Comète",
       "fire": "Feu",
       "water": "Eau",
       "nature": "Nature",

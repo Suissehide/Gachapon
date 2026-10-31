@@ -31,15 +31,15 @@ export const ELEMENT_CAPSULE_TYPES = [
 ] as const
 
 const RARITIES = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'] as const
-export const WEEKLY_CARDS_PER_RARITY = 3
+export const COMET_CARDS_PER_RARITY = 3
 
-/** Sélection de la capsule de la semaine : 3 cartes par rareté tirées dans le
+/** Sélection de la capsule Comète : 3 cartes par rareté tirées dans le
  * pool normal, graine = lundi de la semaine (UTC). Commune à tous et stable
  * toute la semaine tant que le pool ne change pas.
  * ponytail: recalculée à chaque lecture — ajouter une carte en cours de
  * semaine peut changer la sélection de sa rareté ; figer la liste en table si
  * ça devient gênant. */
-export function weeklyCapsuleCards<T extends { id: string; rarity: string }>(
+export function cometCapsuleCards<T extends { id: string; rarity: string }>(
   normalPool: T[],
   weekKey: string,
 ): T[] {
@@ -49,7 +49,7 @@ export function weeklyCapsuleCards<T extends { id: string; rarity: string }>(
         .filter((c) => c.rarity === rarity)
         .map((card) => ({ key: card.id, card })),
       `capsule:${weekKey}:${rarity}`,
-      WEEKLY_CARDS_PER_RARITY,
+      COMET_CARDS_PER_RARITY,
     ).map((e) => e.card),
   )
 }
@@ -59,11 +59,11 @@ export function weeklyCapsuleCards<T extends { id: string; rarity: string }>(
 export function capsulePoolOf<
   T extends { id: string; rarity: string; element: string | null },
 >(
-  type: (typeof ELEMENT_CAPSULE_TYPES)[number] | 'WEEKLY',
+  type: (typeof ELEMENT_CAPSULE_TYPES)[number] | 'COMET',
   normalPool: T[],
   now: Date,
 ): T[] {
-  return type === 'WEEKLY'
-    ? weeklyCapsuleCards(normalPool, mondayOfUtcWeek(now))
+  return type === 'COMET'
+    ? cometCapsuleCards(normalPool, mondayOfUtcWeek(now))
     : normalPool.filter((c) => c.element === type)
 }

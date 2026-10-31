@@ -27,7 +27,7 @@ import { useToast } from '../../hooks/useToast'
 import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
-import { useWeeklyCapsule } from '../../queries/useGacha'
+import { useCometCapsule } from '../../queries/useGacha'
 import type { ShopItem } from '../../queries/useShop'
 import {
   useBuyItem,
@@ -114,11 +114,11 @@ const SECTIONS: ShopSection[] = [
     matches: (i) => capsuleTypeOfItem(i) === 'ASTRAL',
   },
   {
-    key: 'CAPSULE_WEEKLY',
-    label: i18n.t('shop:typeLabels.CAPSULE_WEEKLY'),
-    icon: <CapsuleSwatch kind="weekly" />,
+    key: 'CAPSULE_COMET',
+    label: i18n.t('shop:typeLabels.CAPSULE_COMET'),
+    icon: <CapsuleSwatch kind="comet" />,
     color: 'border-border bg-surface-2/40',
-    matches: (i) => capsuleTypeOfItem(i) === 'WEEKLY',
+    matches: (i) => capsuleTypeOfItem(i) === 'COMET',
   },
   {
     key: 'CAPSULE_ELEMENT',
@@ -255,9 +255,15 @@ function ShopPage() {
     })
   }
 
+  // Capsules élémentaires dans l'ordre des éléments (Feu, Eau, Nature,
+  // Terre), puis ×1 avant ×10.
+  const elementRank = (item: ShopItem) =>
+    ELEMENT_CAPSULE_TYPES.indexOf(capsuleTypeOfItem(item) ?? '')
   const grouped = SECTIONS.map((section) => ({
     section,
-    items: shopItems.filter(section.matches),
+    items: shopItems
+      .filter(section.matches)
+      .sort((a, b) => elementRank(a) - elementRank(b) || a.cost - b.cost),
   }))
 
   return (
@@ -346,7 +352,7 @@ function ShopPage() {
                   {t('shop:sections.itemCount', { count: typeItems.length })}
                 </span>
               </div>
-              {section.key === 'CAPSULE_WEEKLY' && <WeeklySelection />}
+              {section.key === 'CAPSULE_COMET' && <CometSelection />}
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {typeItems.map((item) => {
                   const machineId =
@@ -381,7 +387,7 @@ function ShopPage() {
   )
 }
 
-// ── Weekly capsule selection ────────────────────────────────────────────────
+// ── Comet capsule selection ─────────────────────────────────────────────────
 
 function timeLeftParts(endsAt: string, now: number) {
   const diff = Math.max(0, Date.parse(endsAt) - now)
@@ -393,11 +399,11 @@ function timeLeftParts(endsAt: string, now: number) {
   }
 }
 
-// Les 15 cartes que la capsule de la semaine peut donner, et le compte à
+// Les 15 cartes que la capsule Comète peut donner, et le compte à
 // rebours jusqu'à la prochaine sélection.
-function WeeklySelection() {
+function CometSelection() {
   const { t } = useTranslation('shop')
-  const { data, refetch } = useWeeklyCapsule()
+  const { data, refetch } = useCometCapsule()
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
@@ -417,7 +423,7 @@ function WeeklySelection() {
   return (
     <div className="mb-4 flex flex-col gap-3">
       <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-text-light">
-        <span>{t('shop:sections.weeklyRefreshIn')}</span>
+        <span>{t('shop:sections.cometRefreshIn')}</span>
         <span className="font-bold tabular-nums text-text">
           {left.d > 0
             ? t('shop:sections.timeLeftDays', left)

@@ -483,17 +483,17 @@ function Play() {
   const [snapshot, setSnapshot] = useState<PullSnapshot | null>(null)
   const revealedRef = useRef(new Set<number>())
   const [revealedCount, setRevealedCount] = useState(0)
-  // En capsule : garantie propre au type de capsule, et aucun boost (ni
-  // appliqué ni consommé par ce tirage).
+  // En astral : garantie propre aux capsules astrales. Les autres capsules
+  // partagent la garantie des jetons. Aucune capsule n'applique ni ne
+  // consomme de boost.
   const takeSnapshot = useCallback(
     (kind: CapsuleKind) => {
       revealedRef.current = new Set()
       setRevealedCount(0)
-      if (kind !== 'classic') {
-        const type = capsuleTypeOf(kind)
+      if (kind === 'astral') {
         const capsule = qc
           .getQueryData<{ capsules: Capsule[] }>(['capsules'])
-          ?.capsules.find((c) => c.type === type)
+          ?.capsules.find((c) => c.type === 'ASTRAL')
         setSnapshot({
           pity: capsule?.pityCurrent ?? 0,
           threshold: capsule?.pityThreshold ?? 0,
@@ -506,7 +506,7 @@ function Play() {
       setSnapshot({
         pity: bal?.pityCurrent ?? 0,
         threshold: bal?.pityThreshold ?? 0,
-        boosts: activeBoostsOf(shop?.items),
+        boosts: kind === 'classic' ? activeBoostsOf(shop?.items) : [],
       })
     },
     [qc],
@@ -817,7 +817,7 @@ function Play() {
         {/* Cartes de stats */}
         <div className="order-2 grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:order-1 lg:flex lg:flex-col lg:gap-3.5">
           <TokenCard />
-          <PityCard current={shown?.pity} capsule={capsuleType} />
+          <PityCard current={shown?.pity} astral={capsuleKind === 'astral'} />
           <StreakCard />
           <LevelCard />
           <QuestsCard />
@@ -922,7 +922,7 @@ function Play() {
                 pity={shown.pity}
                 threshold={shown.threshold}
                 boosts={shown.boosts}
-                capsule={capsuleType}
+                astral={capsuleKind === 'astral'}
               />
             )
           }

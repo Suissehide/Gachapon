@@ -3,13 +3,13 @@ import type {
   Capsule,
   CapsulePullResult,
   CapsuleType,
+  CometCapsule,
   DropRate,
   PullBatchEntry,
   PullBatchResult,
   PullHistory,
   PullResult,
   TokenBalance,
-  WeeklyCapsule,
 } from '../constants/gacha.constant.ts'
 import { GACHA_ROUTES } from '../constants/gacha.constant.ts'
 import i18n from '../i18n/index.ts'
@@ -27,7 +27,7 @@ export type {
   Capsule,
   CapsulePullResult,
   CapsuleType,
-  WeeklyCapsule,
+  CometCapsule,
 }
 
 export const GachaApi = {
@@ -110,8 +110,8 @@ export const GachaApi = {
     return res.json()
   },
 
-  getWeeklyCapsule: async (): Promise<WeeklyCapsule> => {
-    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.weeklyCapsule}`)
+  getCometCapsule: async (): Promise<CometCapsule> => {
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.cometCapsule}`)
     if (!res.ok) {
       handleHttpError(
         res,

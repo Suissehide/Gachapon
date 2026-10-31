@@ -211,11 +211,11 @@ export const SHOP_ITEMS = [
     currency: 'DUST' as const,
     value: { capsuleType: 'EARTH', quantity: 10 },
   },
-  // Capsule de la semaine — une carte parmi 15 (3 par rareté), liste commune
-  // à tous les joueurs, renouvelée chaque lundi (card-pools.ts#weeklyCapsuleCards).
+  // Capsule Comète — une carte parmi 15 (3 par rareté), liste commune
+  // à tous les joueurs, renouvelée chaque lundi (card-pools.ts#cometCapsuleCards).
   {
-    nameFr: 'Capsule de la semaine',
-    nameEn: 'Weekly capsule',
+    nameFr: 'Capsule Comète',
+    nameEn: 'Comet capsule',
     descriptionFr:
       'Une carte parmi les 15 de la sélection de la semaine. Rareté tirée comme un tirage normal.',
     descriptionEn:
@@ -223,11 +223,11 @@ export const SHOP_ITEMS = [
     type: 'CAPSULE' as const,
     cost: 250,
     currency: 'DUST' as const,
-    value: { capsuleType: 'WEEKLY', quantity: 1 },
+    value: { capsuleType: 'COMET', quantity: 1 },
   },
   {
-    nameFr: '10 capsules de la semaine',
-    nameEn: '10 weekly capsules',
+    nameFr: '10 capsules Comète',
+    nameEn: '10 Comet capsules',
     descriptionFr:
       'Dix cartes parmi les 15 de la sélection de la semaine. Rareté tirée comme un tirage normal.',
     descriptionEn:
@@ -235,7 +235,7 @@ export const SHOP_ITEMS = [
     type: 'CAPSULE' as const,
     cost: 2500,
     currency: 'DUST' as const,
-    value: { capsuleType: 'WEEKLY', quantity: 10 },
+    value: { capsuleType: 'COMET', quantity: 10 },
   },
   // Cosmétiques
   {

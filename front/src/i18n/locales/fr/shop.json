@@ -32,7 +32,7 @@
   "typeLabels": {
     "TOKEN_PACK": "Packs de jetons",
     "CAPSULE_ASTRAL": "Capsules astrales",
-    "CAPSULE_WEEKLY": "Capsule de la semaine",
+    "CAPSULE_COMET": "Capsule Comète",
     "CAPSULE_ELEMENT": "Capsules élémentaires",
     "ENERGY_PACK": "Énergie",
     "BOOST": "Boosts",
@@ -47,7 +47,7 @@
     "noItemAvailable": "Aucun article disponible pour l'instant",
     "itemCount_one": "{{count}} ARTICLE",
     "itemCount_other": "{{count}} ARTICLES",
-    "weeklyRefreshIn": "Nouvelle sélection dans",
+    "cometRefreshIn": "Nouvelle sélection dans",
     "timeLeftDays": "{{d}} j {{h}} h",
     "timeLeftHours": "{{h}} h {{m}} min"
   },

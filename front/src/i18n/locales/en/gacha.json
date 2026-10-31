@@ -31,14 +31,7 @@
     "boost": "Boost",
     "boostPulls_one": "{{count}} pull",
     "boostPulls_other": "{{count}} pulls",
-    "pityCapsule": {
-      "ASTRAL": "Astral pity",
-      "WEEKLY": "Weekly pity",
-      "FIRE": "Fire pity",
-      "WATER": "Water pity",
-      "NATURE": "Nature pity",
-      "EARTH": "Earth pity"
-    }
+    "pityAstral": "Astral pity"
   },
   "feed": {
     "variantBrilliant": "BRILLIANT",
@@ -87,7 +80,7 @@
     "capsuleNames": {
       "classic": "Classic",
       "astral": "Astral",
-      "weekly": "Weekly",
+      "comet": "Comet",
       "fire": "Fire",
       "water": "Water",
       "nature": "Nature",

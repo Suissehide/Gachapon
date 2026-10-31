@@ -32,7 +32,7 @@
   "typeLabels": {
     "TOKEN_PACK": "Token packs",
     "CAPSULE_ASTRAL": "Astral capsules",
-    "CAPSULE_WEEKLY": "Weekly capsule",
+    "CAPSULE_COMET": "Comet capsule",
     "CAPSULE_ELEMENT": "Elemental capsules",
     "ENERGY_PACK": "Energy",
     "BOOST": "Boosts",
@@ -47,7 +47,7 @@
     "noItemAvailable": "No item available yet",
     "itemCount_one": "{{count}} ITEM",
     "itemCount_other": "{{count}} ITEMS",
-    "weeklyRefreshIn": "New selection in",
+    "cometRefreshIn": "New selection in",
     "timeLeftDays": "{{d}}d {{h}}h",
     "timeLeftHours": "{{h}}h {{m}}m"
   },

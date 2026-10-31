@@ -16,13 +16,13 @@ export type {
   Capsule,
   CapsulePullResult,
   CapsuleType,
+  CometCapsule,
   DropRate,
   PullBatchEntry,
   PullBatchResult,
   PullHistory,
   PullResult,
   TokenBalance,
-  WeeklyCapsule,
 } from '../api/gacha.api.ts'
 
 import type { CapsuleType } from '../api/gacha.api.ts'
@@ -171,10 +171,10 @@ export const useCapsules = () => {
   return query
 }
 
-export const useWeeklyCapsule = () => {
+export const useCometCapsule = () => {
   const query = useQuery({
-    queryKey: ['capsules', 'weekly'],
-    queryFn: () => GachaApi.getWeeklyCapsule(),
+    queryKey: ['capsules', 'comet'],
+    queryFn: () => GachaApi.getCometCapsule(),
   })
 
   useDataFetching({
