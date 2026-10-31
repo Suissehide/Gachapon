@@ -80,7 +80,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   // --- gacha ---
   'gacha.noActiveCards': 'No active cards in any set',
   'gacha.notEnoughTokens': 'Not enough tokens',
-  'gacha.notEnoughCapsules': "You don't have enough astral capsules.",
+  'gacha.notEnoughCapsules': "You don't have enough capsules.",
 
   // --- shop / daily-shop / wishlist ---
   'shop.itemNotFound': 'Item not found',

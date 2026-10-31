@@ -83,20 +83,26 @@ enum ShopItemType {
   CAPSULE
 }
 
-/// Type de capsule détenue en inventaire. Une seule valeur aujourd'hui
-/// (LIGHT/DARK partagent le même pool astral), mais une enum plutôt qu'un
-/// booléen pour laisser la porte ouverte à un futur type sans migration de
-/// colonne.
+/// Type de capsule détenue en inventaire, un stock et une pitié par type.
+/// ASTRAL : LIGHT/DARK. FIRE/WATER/NATURE/EARTH : cartes de cet élément.
+/// WEEKLY : liste commune de 15 cartes renouvelée chaque lundi
+/// (card-pools.ts#weeklyCapsuleCards).
 enum CapsuleType {
   ASTRAL
+  FIRE
+  WATER
+  NATURE
+  EARTH
+  WEEKLY
 }
 
-/// Origine d'un tirage : TOKEN pour le gacha normal, ASTRAL pour un tirage
-/// payé en capsule (LIGHT/DARK uniquement). N'entre pas dans la fenêtre des
-/// paris et des duels (voir betDomain/duelDomain, filtrés sur TOKEN).
+/// Origine d'un tirage : TOKEN pour le gacha normal, ASTRAL pour une capsule
+/// astrale, CAPSULE pour les autres capsules. Seul TOKEN entre dans la
+/// fenêtre des paris et des duels (voir betDomain/duelDomain).
 enum PullSource {
   TOKEN
   ASTRAL
+  CAPSULE
 }
 
 enum ShopCurrency {

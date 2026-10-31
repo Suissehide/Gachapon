@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
 
-describe('POST /pulls/astral', () => {
+describe('POST /pulls/capsules/ASTRAL', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let prisma: any
   let configService: any
@@ -28,7 +28,7 @@ describe('POST /pulls/astral', () => {
   const pullAstral = (count: number) =>
     app.inject({
       method: 'POST',
-      url: '/pulls/astral',
+      url: '/pulls/capsules/ASTRAL',
       headers: { cookie: cookies },
       payload: { count },
     })
@@ -102,7 +102,7 @@ describe('POST /pulls/astral', () => {
     await setCapsules(3)
     const res = await pullAstral(10)
     expect(res.statusCode).toBe(402)
-    expect(res.json().message).toContain('astral capsules')
+    expect(res.json().message).toContain('enough capsules')
     expect((await getCapsule()).quantity).toBe(3)
     expect(await prisma.gachaPull.count({ where: { userId } })).toBe(0)
   })
@@ -124,7 +124,7 @@ describe('POST /pulls/astral', () => {
     expect(body.capsulesRemaining).toBe(0)
     expect(body.tokensRemaining).toBe(before.tokens)
     expect(body.xpGained).toBe(10 * xpPerPull)
-    expect(body.astralPityCurrent).toBe(body.pulls.at(-1).pityCurrent)
+    expect(body.capsulePityCurrent).toBe(body.pulls.at(-1).pityCurrent)
 
     expect((await getCapsule()).quantity).toBe(0)
     const pulls = await prisma.gachaPull.findMany({ where: { userId } })
@@ -155,7 +155,7 @@ describe('POST /pulls/astral', () => {
     expect(res.statusCode).toBe(201)
     const body = res.json()
     expect(body.pulls[0].card.rarity).toBe('LEGENDARY')
-    expect(body.astralPityCurrent).toBe(0)
+    expect(body.capsulePityCurrent).toBe(0)
     expect((await getCapsule()).pityCurrent).toBe(0)
     const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
     expect(user.pityCurrent).toBe(7)

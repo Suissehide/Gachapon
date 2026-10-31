@@ -5,8 +5,10 @@ import {
   calculateTokens,
   effectiveRegenInterval,
 } from '../../../../../domain/economy/economy.domain'
+import { capsulePoolOf } from '../../../../../domain/gacha/card-pools'
 import { computeDropRates } from '../../../../../domain/gacha/drop-rates'
 import { effectivePityThreshold } from '../../../../../domain/gacha/gacha.domain'
+import { mondayOfUtcWeek } from '../../../../../domain/quests/quest-matching'
 import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
   defaultLocaleName,
@@ -16,10 +18,12 @@ import type { PullBatchResult } from '../../../../../types/domain/gacha/gacha.ty
 import { wsManager } from '../../../../ws/ws-manager'
 import {
   capsulesResponseSchema,
+  capsuleTypeEnum,
   dropRatesResponseSchema,
-  pullAstralResponseSchema,
   pullBatchBodySchema,
   pullBatchResponseSchema,
+  pullCapsuleParamsSchema,
+  pullCapsuleResponseSchema,
   pullResponseSchema,
   pullsHistoryQuerySchema,
   pullsHistoryResponseSchema,
@@ -27,6 +31,7 @@ import {
   pullsRecentResponseSchema,
   tokensBalanceResponseSchema,
   tokensNextAtResponseSchema,
+  weeklyCapsuleResponseSchema,
 } from '../../schemas/gacha.schemas'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -310,22 +315,27 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // POST /pulls/astral — ouvrir 1 à 10 capsules astrales (aucun jeton). Pas
-  // de règlement de duel ni de pari : le tirage astral est hors de leur
-  // fenêtre.
+  // POST /pulls/capsules/:type — ouvrir 1 à 10 capsules (aucun jeton). Pas
+  // de règlement de duel ni de pari : les tirages de capsule sont hors de
+  // leur fenêtre.
   fastify.post(
-    '/pulls/astral',
+    '/pulls/capsules/:type',
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        summary: 'Open astral capsules',
+        summary: 'Open capsules of one type',
+        params: pullCapsuleParamsSchema,
         body: pullBatchBodySchema,
-        response: { 201: pullAstralResponseSchema },
+        response: { 201: pullCapsuleResponseSchema },
       },
     },
     async (request, reply) => {
       const { count } = request.body
-      const result = await gachaDomain.pullAstral(request.user.userID, count)
+      const result = await gachaDomain.pullCapsule(
+        request.user.userID,
+        request.params.type,
+        count,
+      )
       const user = await userRepository.findById(request.user.userID)
       if (user) {
         publishBatch(user, result)
@@ -341,7 +351,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         xpGained: result.xpGained,
         unlockedAchievements: result.unlockedAchievements,
         capsulesRemaining: result.capsulesRemaining,
-        astralPityCurrent: result.astralPityCurrent,
+        capsulePityCurrent: result.capsulePityCurrent,
       })
     },
   )
@@ -444,7 +454,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // GET /capsules — inventaire de capsules (toujours une entrée ASTRAL)
+  // GET /capsules — inventaire de capsules (une entrée par type, même à 0)
   fastify.get(
     '/capsules',
     {
@@ -458,21 +468,55 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       const [capsules, upgrades, cfg] = await Promise.all([
         userCapsuleRepository.findByUser(request.user.userID),
         skillTreeRepository.getEffectsForUser(request.user.userID),
-        configService.getMany('astral.pityThreshold'),
+        configService.getMany('astral.pityThreshold', 'pityThreshold'),
       ])
-      const astral = capsules.find((c) => c.type === 'ASTRAL')
       return {
-        capsules: [
-          {
-            type: 'ASTRAL' as const,
-            quantity: astral?.quantity ?? 0,
-            pityCurrent: astral?.pityCurrent ?? 0,
+        capsules: capsuleTypeEnum.options.map((type) => {
+          const owned = capsules.find((c) => c.type === type)
+          return {
+            type,
+            quantity: owned?.quantity ?? 0,
+            pityCurrent: owned?.pityCurrent ?? 0,
             pityThreshold: effectivePityThreshold(
-              cfg['astral.pityThreshold'],
+              type === 'ASTRAL'
+                ? cfg['astral.pityThreshold']
+                : cfg.pityThreshold,
               upgrades.pityReduction ?? 0,
             ),
-          },
-        ],
+          }
+        }),
+      }
+    },
+  )
+
+  // GET /capsules/weekly — sélection de la capsule de la semaine (publique :
+  // la vitrine de la boutique la montre avant tout achat)
+  fastify.get(
+    '/capsules/weekly',
+    {
+      schema: {
+        summary: 'Get this week capsule selection',
+        response: { 200: weeklyCapsuleResponseSchema },
+      },
+    },
+    async () => {
+      const now = new Date()
+      const weekStart = Date.parse(`${mondayOfUtcWeek(now)}T00:00:00.000Z`)
+      const cards = capsulePoolOf(
+        'WEEKLY',
+        await cardRepository.findActiveNormal(),
+        now,
+      )
+      return {
+        endsAt: new Date(weekStart + 7 * 86_400_000).toISOString(),
+        cards: cards.map((c) => ({
+          id: c.id,
+          name: c.name,
+          imageUrl: resolveUrl(c.imageUrl),
+          rarity: c.rarity,
+          element: c.element,
+          set: { id: c.set.id, name: c.set.name },
+        })),
       }
     },
   )

@@ -1,5 +1,5 @@
 /**
- * Définitions de la boutique — 10 articles.
+ * Définitions de la boutique.
  *
  * Vit sous `src/main/` et non dans `prisma/seed/` parce que du code de
  * PRODUCTION la consomme : le backfill de traductions au démarrage doit lire
@@ -128,6 +128,114 @@ export const SHOP_ITEMS = [
     cost: 4000,
     currency: 'DUST' as const,
     value: { capsuleType: 'ASTRAL', quantity: 10 },
+  },
+  // Capsules élémentaires — une carte de l'élément acheté, au même tirage de
+  // rareté que le gacha normal.
+  {
+    nameFr: 'Capsule Feu',
+    nameEn: 'Fire capsule',
+    descriptionFr: 'Une carte Feu. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'One Fire card. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 150,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'FIRE', quantity: 1 },
+  },
+  {
+    nameFr: '10 capsules Feu',
+    nameEn: '10 Fire capsules',
+    descriptionFr: 'Dix cartes Feu. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'Ten Fire cards. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 1500,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'FIRE', quantity: 10 },
+  },
+  {
+    nameFr: 'Capsule Eau',
+    nameEn: 'Water capsule',
+    descriptionFr: 'Une carte Eau. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'One Water card. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 150,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'WATER', quantity: 1 },
+  },
+  {
+    nameFr: '10 capsules Eau',
+    nameEn: '10 Water capsules',
+    descriptionFr: 'Dix cartes Eau. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'Ten Water cards. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 1500,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'WATER', quantity: 10 },
+  },
+  {
+    nameFr: 'Capsule Nature',
+    nameEn: 'Nature capsule',
+    descriptionFr: 'Une carte Nature. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'One Nature card. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 150,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'NATURE', quantity: 1 },
+  },
+  {
+    nameFr: '10 capsules Nature',
+    nameEn: '10 Nature capsules',
+    descriptionFr: 'Dix cartes Nature. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'Ten Nature cards. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 1500,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'NATURE', quantity: 10 },
+  },
+  {
+    nameFr: 'Capsule Terre',
+    nameEn: 'Earth capsule',
+    descriptionFr: 'Une carte Terre. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'One Earth card. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 150,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'EARTH', quantity: 1 },
+  },
+  {
+    nameFr: '10 capsules Terre',
+    nameEn: '10 Earth capsules',
+    descriptionFr: 'Dix cartes Terre. Rareté tirée comme un tirage normal.',
+    descriptionEn: 'Ten Earth cards. Rarity rolled like a normal pull.',
+    type: 'CAPSULE' as const,
+    cost: 1500,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'EARTH', quantity: 10 },
+  },
+  // Capsule de la semaine — une carte parmi 15 (3 par rareté), liste commune
+  // à tous les joueurs, renouvelée chaque lundi (card-pools.ts#weeklyCapsuleCards).
+  {
+    nameFr: 'Capsule de la semaine',
+    nameEn: 'Weekly capsule',
+    descriptionFr:
+      'Une carte parmi les 15 de la sélection de la semaine. Rareté tirée comme un tirage normal.',
+    descriptionEn:
+      "One card from this week's 15-card selection. Rarity rolled like a normal pull.",
+    type: 'CAPSULE' as const,
+    cost: 250,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'WEEKLY', quantity: 1 },
+  },
+  {
+    nameFr: '10 capsules de la semaine',
+    nameEn: '10 weekly capsules',
+    descriptionFr:
+      'Dix cartes parmi les 15 de la sélection de la semaine. Rareté tirée comme un tirage normal.',
+    descriptionEn:
+      "Ten cards from this week's 15-card selection. Rarity rolled like a normal pull.",
+    type: 'CAPSULE' as const,
+    cost: 2500,
+    currency: 'DUST' as const,
+    value: { capsuleType: 'WEEKLY', quantity: 10 },
   },
   // Cosmétiques
   {

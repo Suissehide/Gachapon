@@ -59,11 +59,22 @@ export const pullBatchResponseSchema = z.object({
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
 })
 
-// ── POST /pulls/astral ──────────────────────────────────────────────────────
+// ── POST /pulls/capsules/:type ──────────────────────────────────────────────
 
-export const pullAstralResponseSchema = pullBatchResponseSchema.extend({
+export const capsuleTypeEnum = z.enum([
+  'ASTRAL',
+  'FIRE',
+  'WATER',
+  'NATURE',
+  'EARTH',
+  'WEEKLY',
+])
+
+export const pullCapsuleParamsSchema = z.object({ type: capsuleTypeEnum })
+
+export const pullCapsuleResponseSchema = pullBatchResponseSchema.extend({
   capsulesRemaining: z.number().int(),
-  astralPityCurrent: z.number().int(),
+  capsulePityCurrent: z.number().int(),
 })
 
 // ── GET /pulls/history ──────────────────────────────────────────────────────
@@ -114,10 +125,26 @@ export const dropRatesResponseSchema = z.object({
 export const capsulesResponseSchema = z.object({
   capsules: z.array(
     z.object({
-      type: z.literal('ASTRAL'),
+      type: capsuleTypeEnum,
       quantity: z.number().int(),
       pityCurrent: z.number().int(),
       pityThreshold: z.number().int(),
+    }),
+  ),
+})
+
+// ── GET /capsules/weekly ────────────────────────────────────────────────────
+
+export const weeklyCapsuleResponseSchema = z.object({
+  endsAt: z.string(),
+  cards: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      imageUrl: z.string().nullable(),
+      rarity: z.string(),
+      element: cardElementEnum.nullable(),
+      set: z.object({ id: z.string(), name: z.string() }),
     }),
   ),
 })

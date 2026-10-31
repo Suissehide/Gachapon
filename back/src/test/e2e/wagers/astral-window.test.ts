@@ -226,7 +226,7 @@ describe('fenêtre des paris : les tirages astraux restent invisibles', () => {
     for (let i = 0; i < PULL_WINDOW; i++) {
       const res = await app.inject({
         method: 'POST',
-        url: '/pulls/astral',
+        url: '/pulls/capsules/ASTRAL',
         headers: { cookie: cookiesB },
         payload: { count: 1 },
       })
