@@ -10,6 +10,19 @@
     "fixed": "Corrigé"
   },
   "releases": {
+    "v4_0": {
+      "title": "Ultimes et jetons astraux",
+      "date": "Octobre 2026",
+      "summary": "Chaque carte gagne un ultime selon son archétype, Lumière et Ténèbres deviennent des cartes astrales, et la boutique passe au tout-jeton.",
+      "entries": {
+        "e1": "Chaque carte a désormais un archétype et l’ultime qui va avec : toutes les 2 actions pour l’Assassin, toutes les 3 pour le Mage, le Tireur, le Combattant et l’Équilibré, toutes les 4 pour le Tank (bouclier pour toute l’équipe) et le Soutien (soin pour toute l’équipe). Une jauge sous chaque unité montre quand il va partir, et l’ultime se renforce à l’ascension jusqu’au palier 6. Il est visible sur la fiche de carte, en préparation de combat et dans le replay ; les ennemis sont relevés pour garder la même difficulté.",
+        "e2": "Les cartes Lumière et Ténèbres deviennent astrales : 30 de chaque, à toutes les raretés, qu’on n’obtient plus qu’avec le jeton astral, en vente à la boutique. La capsule astrale tombe du ciel en étoile filante et explose à l’arrivée. Une fois possédées, elles portent une aura (Aube pour la Lumière, Nébuleuse pour les Ténèbres) ; elles ne peuvent pas servir d’ingrédient (commandes, Alchimie) ni être mises en vœu.",
+        "e3": "Nouveaux jetons : un jeton par élément (Feu, Eau, Nature, Terre) pour une carte de cet élément, et le jeton Constellation, qui tire parmi 15 cartes renouvelées chaque lundi — tu vois la sélection de la semaine et celle de la suivante. Sa capsule arrive dans un ciel où les étoiles s’allument et se relient. Sur la page de tirage, la flèche du bouton Tirer liste tous tes jetons.",
+        "e4": "La boutique est réorganisée en trois onglets : Jetons, Cartes et Énergie. Tous les tirages s’y achètent sous forme de jetons — classiques en or, élémentaires, Constellation et astraux en poussière — avec la remise de chaque lot affichée, et les cosmétiques rejoignent l’onglet Cartes.",
+        "e5": "Le monstre errant ne passe plus une seule fois par jour : chaque passage dure 3 heures, et le suivant arrive 1 à 6 heures après son départ ou ta victoire.",
+        "e6": "La réduction de l’arbre sur les prix en poussière s’applique enfin à la boutique ; les montants affichés incluent les bonus de l’arbre ; investir ou réinitialiser des points ne s’applique plus au temps déjà écoulé (un coffre agrandi ne se remplit plus d’un coup). En combat, les PV affichés suivent les vrais PV, chaque coup rejoue son élan en entier et le vol de vie s’affiche après l’attaque qui le rapporte. Les stats du profil passent en notation compacte au-delà de 5 chiffres, et la gerbe du coffre ne fait plus clignoter de barre de défilement."
+      }
+    },
     "v3_9": {
       "title": "La défense remise à plat",
       "date": "Octobre 2026",

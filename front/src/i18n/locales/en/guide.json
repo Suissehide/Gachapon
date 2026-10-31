@@ -93,7 +93,8 @@
       "list": {
         "i1": "You can pull one at a time, or ten at once with <pill>Pull x10</pill>.",
         "i2": "The result shows the card, its variant, and whether it's new to you.",
-        "i3": "Your <strong>pity</strong> counter goes up with every pull (see below)."
+        "i3": "Your <strong>pity</strong> counter goes up with every pull (see below).",
+        "i4": "The arrow on the Pull button lets you pick which token to use: <strong>classic</strong> (all elements), <strong>elemental</strong> (a card of the chosen element), <strong>Constellation</strong> (from 15 cards refreshed every Monday) or <strong>astral</strong> (a Light or Dark card)."
       },
       "skills": "Several skills affect pulls: they raise the odds of <rare>RARE</rare> <epic>EPIC</epic> <legendary>LEGENDARY</legendary> cards and of variants, give a chance of a <strong>free pull</strong>, or trigger a <strong>golden ball</strong> that forces a minimum rarity. <strong>Wish Granted</strong> can swap the card you pulled for one from your wishlist, of the same rarity.",
       "info": "The shop also sells <strong>boosts</strong>: for a few pulls, they raise the odds of the higher rarities."
@@ -113,7 +114,8 @@
       "list": {
         "i1": "When the counter <strong>reaches the threshold</strong>, your next pull is a legendary.",
         "i2": "Any legendary, from pity or not, <strong>resets the counter to zero</strong>.",
-        "i3": "The counter is yours alone and carries over between sessions."
+        "i3": "The counter is yours alone and carries over between sessions.",
+        "i4": "Elemental and Constellation tokens advance the same counter as classic tokens; the astral token has its own counter."
       },
       "info": "Your counter is shown on the <strong>Play</strong> page and in the rate details. The <strong>Fate</strong> skill lowers the threshold."
     },
@@ -129,7 +131,7 @@
       "tip": "Keep duplicates of the cards you fight with: without them, no ascension. The Recycling skill increases the dust you get."
     },
     "boutique": {
-      "intro": "The <strong>shop</strong> lets you target specific cards instead of leaving everything to chance, and sells resources.",
+      "intro": "The <strong>shop</strong> has three tabs, <strong>Tokens</strong>, <strong>Cards</strong> and <strong>Energy</strong>. It lets you target specific cards instead of leaving everything to chance, and sells resources.",
       "cards": {
         "i1": {
           "title": "Market",
@@ -141,7 +143,11 @@
         },
         "i3": {
           "title": "Packs & boosts",
-          "text": "<strong>Token packs</strong> cost gold. <strong>Energy packs</strong> cost dust, are limited per day, and can take your energy past its cap. <strong>Boosts</strong>, paid in dust, raise the odds of the higher rarities for a few pulls. There are cosmetics too."
+          "text": "<strong>Energy packs</strong> cost dust, are limited per day, and can take your energy past its cap. <strong>Boosts</strong>, paid in dust, raise the odds of the higher rarities for a few pulls. There are cosmetics too."
+        },
+        "i4": {
+          "title": "Tokens",
+          "text": "<strong>Classic tokens</strong> cost gold. <strong>Elemental</strong>, <strong>Constellation</strong> and <strong>astral</strong> tokens cost dust, one at a time or in bundles of 10 at a discount, with limited stock. For Constellation, you see this week's selection and next week's: the capsule draws from the selection active when you open it."
         }
       }
     },
@@ -222,7 +228,8 @@
         "i1": "Fire beats Nature, Nature beats Earth, Earth beats Water, Water beats Fire.",
         "i2": "Light and Dark sit outside the cycle: each one has the advantage over the other.",
         "i3": "Your cards go for enemies weak to their element first.",
-        "i4": "A chapter's boss has an element that none of the chapter's monsters have: plan a different team for it."
+        "i4": "A chapter's boss has an element that none of the chapter's monsters have: plan a different team for it.",
+        "i5": "Light and Dark cards only come from the <strong>astral token</strong>. They can't be used as ingredients (orders, Alchemy) or added to your wishes."
       },
       "tip": "The element guide opens from the campaign and tower headers, and the collection can be filtered by element."
     },

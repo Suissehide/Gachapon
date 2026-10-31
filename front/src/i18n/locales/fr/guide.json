@@ -93,7 +93,8 @@
       "list": {
         "i1": "Tu peux tirer à l'unité ou par dix avec <pill>Tirage x10</pill>.",
         "i2": "Le résultat indique la carte, sa variante et si elle est nouvelle pour toi.",
-        "i3": "Ton compteur de <strong>pitié</strong> avance à chaque tirage (voir plus bas)."
+        "i3": "Ton compteur de <strong>pitié</strong> avance à chaque tirage (voir plus bas).",
+        "i4": "Avec la flèche du bouton Tirer, tu choisis le jeton à utiliser : <strong>classique</strong> (tous les éléments), <strong>élémentaire</strong> (une carte de l'élément choisi), <strong>Constellation</strong> (parmi 15 cartes renouvelées chaque lundi) ou <strong>astral</strong> (une carte Lumière ou Ténèbres)."
       },
       "skills": "Plusieurs compétences agissent sur le tirage : elles augmentent les chances <rare>RARE</rare> <epic>EPIC</epic> <legendary>LEGENDARY</legendary> et celles des variantes, donnent une chance de <strong>tirage gratuit</strong>, ou déclenchent une <strong>boule dorée</strong> qui force une rareté minimale. <strong>Vœu exaucé</strong> peut remplacer la carte tirée par une carte de ton vœu, de même rareté.",
       "info": "La boutique vend aussi des <strong>boosts</strong> : pendant quelques tirages, ils augmentent les chances des raretés hautes."
@@ -113,7 +114,8 @@
       "list": {
         "i1": "Quand le compteur <strong>atteint le seuil</strong>, le tirage suivant est une légendaire.",
         "i2": "Toute légendaire, qu'elle vienne de la pitié ou non, <strong>remet le compteur à zéro</strong>.",
-        "i3": "Le compteur t'est propre et se conserve d'une session à l'autre."
+        "i3": "Le compteur t'est propre et se conserve d'une session à l'autre.",
+        "i4": "Les jetons élémentaires et Constellation font avancer le même compteur que les jetons classiques ; le jeton astral a son propre compteur."
       },
       "info": "Ton compteur est affiché sur la page <strong>Jouer</strong> et dans le détail des taux. La compétence <strong>Destin</strong> abaisse le seuil."
     },
@@ -129,7 +131,7 @@
       "tip": "Garde des doublons des cartes que tu fais combattre : sans eux, pas d'ascension. La compétence Recyclage augmente la poussière reçue."
     },
     "boutique": {
-      "intro": "La <strong>boutique</strong> te laisse viser des cartes précises au lieu de tout laisser au hasard, et vend des ressources.",
+      "intro": "La <strong>boutique</strong> a trois onglets, <strong>Jetons</strong>, <strong>Cartes</strong> et <strong>Énergie</strong>. Elle te laisse viser des cartes précises au lieu de tout laisser au hasard, et vend des ressources.",
       "cards": {
         "i1": {
           "title": "Marché",
@@ -141,7 +143,11 @@
         },
         "i3": {
           "title": "Packs & boosts",
-          "text": "Les <strong>packs de jetons</strong> se paient en or. Les <strong>packs d'énergie</strong> se paient en poussière, en nombre limité par jour, et peuvent faire dépasser ton plafond d'énergie. Les <strong>boosts</strong>, en poussière, augmentent les chances des raretés hautes pendant quelques tirages. Il y a aussi des cosmétiques."
+          "text": "Les <strong>packs d'énergie</strong> se paient en poussière, en nombre limité par jour, et peuvent faire dépasser ton plafond d'énergie. Les <strong>boosts</strong>, en poussière, augmentent les chances des raretés hautes pendant quelques tirages. Il y a aussi des cosmétiques."
+        },
+        "i4": {
+          "title": "Jetons",
+          "text": "Les <strong>jetons classiques</strong> se paient en or. Les jetons <strong>élémentaires</strong>, <strong>Constellation</strong> et <strong>astraux</strong> se paient en poussière, à l'unité ou par lot de 10 avec remise, en stock limité. Pour Constellation, tu vois la sélection de la semaine et celle de la suivante : la capsule tire dans la sélection active au moment où tu l'ouvres."
         }
       }
     },
@@ -222,7 +228,8 @@
         "i1": "Feu bat Nature, Nature bat Terre, Terre bat Eau, Eau bat Feu.",
         "i2": "Lumière et Ténèbres sont hors cycle : chacune a l'avantage sur l'autre.",
         "i3": "Tes cartes visent en priorité les ennemis faibles contre leur élément.",
-        "i4": "Le boss d'un chapitre a un élément qu'aucun monstre du chapitre ne porte : prévois une équipe différente pour lui."
+        "i4": "Le boss d'un chapitre a un élément qu'aucun monstre du chapitre ne porte : prévois une équipe différente pour lui.",
+        "i5": "Les cartes Lumière et Ténèbres ne sortent que du <strong>jeton astral</strong>. Elles ne servent pas d'ingrédient (commandes, Alchimie) et ne se mettent pas en vœu."
       },
       "tip": "Le guide des éléments s'ouvre depuis l'en-tête de la campagne et des tours, et la collection se filtre par élément."
     },

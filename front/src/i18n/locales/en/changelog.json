@@ -10,6 +10,19 @@
     "fixed": "Fixed"
   },
   "releases": {
+    "v4_0": {
+      "title": "Ultimates and Astral Tokens",
+      "date": "October 2026",
+      "summary": "Every card gains an ultimate based on its archetype, Light and Dark become astral cards, and the shop goes all-tokens.",
+      "entries": {
+        "e1": "Every card now has an archetype and the ultimate that comes with it: every 2 actions for the Assassin, every 3 for the Mage, Ranger, Fighter and Balanced, every 4 for the Tank (a shield for the whole team) and the Support (healing for the whole team). A gauge under each unit shows when it's about to fire, and the ultimate grows stronger with ascension up to tier 6. It shows on the card sheet, in battle prep and in the replay; enemies are raised to keep the same difficulty.",
+        "e2": "Light and Dark cards become astral: 30 of each, across all rarities, now only available with the astral token, on sale in the shop. The astral capsule falls from the sky as a shooting star and bursts on arrival. Once owned, they carry an aura (Dawn for Light, Nebula for Dark); they can't be used as ingredients (orders, Alchemy) or added to your wishes.",
+        "e3": "New tokens: one token per element (Fire, Water, Nature, Earth) for a card of that element, and the Constellation token, which draws from 15 cards refreshed every Monday — you see this week's selection and next week's. Its capsule arrives in a sky where stars light up and link together. On the pull page, the arrow on the Pull button lists all your tokens.",
+        "e4": "The shop is reorganized into three tabs: Tokens, Cards and Energy. Every pull is bought there as tokens — classic ones with gold, elemental, Constellation and astral ones with dust — with each bundle's discount shown, and cosmetics move to the Cards tab.",
+        "e5": "The wandering monster no longer shows up just once a day: each visit lasts 3 hours, and the next one comes 1 to 6 hours after it leaves or you beat it.",
+        "e6": "The skill tree discount on dust prices now actually applies in the shop; displayed amounts include skill tree bonuses; investing or resetting points no longer applies to time already elapsed (an enlarged vault no longer fills up all at once). In combat, displayed HP follows actual HP, every hit replays its full swing and lifesteal shows after the attack that earns it. Profile stats switch to compact notation beyond 5 digits, and the chest's loot burst no longer flashes a scrollbar."
+      }
+    },
     "v3_9": {
       "title": "Defense Reworked",
       "date": "October 2026",
