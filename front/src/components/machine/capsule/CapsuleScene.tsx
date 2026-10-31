@@ -372,14 +372,20 @@ export function CapsuleScene({
       fall: 0,
       impact: 0,
       flash: 0,
+      hitstop: 0,
     })
     if (fallsRef.current) {
-      // L'étoile filante tombe du ciel ; à l'arrivée un flash blanc couvre
-      // l'écran et l'étoile explose. La capsule naît dans la lumière : petite
-      // au pic du flash, elle grandit pendant que le flash retombe.
+      // L'étoile filante tombe du ciel, la caméra tremble de plus en plus.
+      // À l'arrivée l'image se fige un instant (hitstop) sur l'étoile
+      // d'impact, puis flash blanc, onde de choc et gerbe. La capsule naît
+      // dans la lumière : au ralenti d'abord, puis elle claque en place.
       tl.set(anim, { fall: 1 })
       tl.to(anim, { fall: 0, duration: 1.15, ease: 'power2.in' })
-      tl.to(anim, { flash: 1, duration: 0.06, ease: 'power1.out' }, '-=0.04')
+      tl.to(anim, { camShake: 0.5, duration: 1.15, ease: 'power3.in' }, '<')
+      tl.set(anim, { hitstop: 1, camShake: 0 })
+      tl.to({}, { duration: 0.1 })
+      tl.set(anim, { hitstop: 0 })
+      tl.to(anim, { flash: 1, duration: 0.05, ease: 'power1.out' })
       tl.call(() => {
         capsuleAudio.clack()
         gsap.fromTo(
@@ -389,13 +395,14 @@ export function CapsuleScene({
         )
         gsap.fromTo(
           anim,
-          { camShake: 1.8 },
-          { camShake: 0, duration: 0.7, ease: 'power2.out' },
+          { camShake: 2.4 },
+          { camShake: 0, duration: 0.8, ease: 'power2.out' },
         )
       })
       tl.set(anim, { pop: 0.2 })
-      tl.to(anim, { flash: 0, duration: 0.55, ease: 'power2.out' }, '+=0.06')
-      tl.to(anim, { pop: 1, duration: 0.8, ease: 'elastic.out(1, 0.5)' }, '<')
+      tl.to(anim, { flash: 0, duration: 0.4, ease: 'power3.out' }, '+=0.05')
+      tl.to(anim, { pop: 0.55, duration: 0.35, ease: 'power1.inOut' }, '<')
+      tl.to(anim, { pop: 1, duration: 0.45, ease: 'back.out(2.2)' })
     } else {
       tl.to(anim, { pop: 1, duration: 0.45, ease: 'elastic.out(1.1, 0.5)' })
     }

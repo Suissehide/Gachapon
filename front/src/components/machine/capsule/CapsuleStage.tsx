@@ -1,13 +1,15 @@
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { EffectComposer } from '@react-three/postprocessing'
 import gsap from 'gsap'
 import { Leva, useControls } from 'leva'
 import {
   BloomEffect,
   ChromaticAberrationEffect,
+  ShockWaveEffect,
   VignetteEffect,
 } from 'postprocessing'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import * as THREE from 'three'
 
 import { useCanvasContextRecovery } from '../../../hooks/useCanvasContextRecovery.ts'
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion.ts'
@@ -55,30 +57,60 @@ function PostFX({
     () => new VignetteEffect({ eskil: false, offset: 0.25, darkness: 0.78 }),
     [],
   )
+  // Onde de choc de l'impact astral : distorsion radiale de l'image entière,
+  // déclenchée une fois quand `impact` démarre.
+  const camera = useThree((s) => s.camera)
+  const shockwave = useMemo(
+    () =>
+      new ShockWaveEffect(camera, new THREE.Vector3(0, 0, 0.6), {
+        speed: 1.4,
+        maxRadius: 1.2,
+        waveSize: 0.16,
+        amplitude: 0.07,
+      }),
+    [camera],
+  )
+  const shockFired = useRef(false)
 
   useEffect(
     () => () => {
       bloom.dispose()
       ca.dispose()
       vignette.dispose()
+      shockwave.dispose()
     },
-    [bloom, ca, vignette],
+    [bloom, ca, vignette, shockwave],
   )
 
   useFrame(() => {
     const cfg = tierConfig(teaseTier)
+    const meteor = anim.fall > 0 ? (1 - anim.fall) ** 3 : 0
     bloom.intensity =
-      (0.35 + anim.charge * cfg.bloom + anim.sting * 0.9 + anim.split * 2.2) *
+      (0.35 +
+        anim.charge * cfg.bloom +
+        anim.sting * 0.9 +
+        anim.split * 2.2 +
+        meteor * 0.6 +
+        anim.hitstop * 1.4) *
       tuning.bloom
     const v = reduced
       ? 0
-      : (cfg.rays > 0.5 ? anim.charge ** 2 * 0.0012 : 0) + anim.split * 0.0025
+      : (cfg.rays > 0.5 ? anim.charge ** 2 * 0.0012 : 0) +
+        anim.split * 0.0025 +
+        meteor * 0.0025 +
+        anim.hitstop * 0.006 +
+        (anim.impact > 0 ? (1 - anim.impact) ** 2 * 0.005 : 0)
     ca.offset.set(v, v * 0.6)
+    if (anim.impact > 0 && !shockFired.current && !reduced) {
+      shockFired.current = true
+      shockwave.explode()
+    }
   })
 
   return (
     <EffectComposer multisampling={0}>
       <primitive object={bloom} />
+      <primitive object={shockwave} />
       <primitive object={ca} />
       <primitive object={vignette} />
     </EffectComposer>

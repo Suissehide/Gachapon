@@ -289,6 +289,8 @@ export interface CapsuleAnim {
   impact: number
   // Flash blanc plein cadre de l'arrivée astrale (0 = absent, 1 = opaque)
   flash: number
+  // Gel de l'image à l'impact astral (1 = tout est figé)
+  hitstop: number
 }
 
 export function createCapsuleAnim(): CapsuleAnim {
@@ -304,5 +306,6 @@ export function createCapsuleAnim(): CapsuleAnim {
     fall: 0,
     impact: 0,
     flash: 0,
+    hitstop: 0,
   }
 }
