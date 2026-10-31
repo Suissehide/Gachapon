@@ -81,7 +81,9 @@
     "capsuleAstral": "Astral",
     "buyInShop": "Buy in the shop",
     "tokenBalance_one": "{{count}} token",
-    "tokenBalance_other": "{{count}} tokens"
+    "tokenBalance_other": "{{count}} tokens",
+    "capsuleBalance_one": "{{count}} capsule",
+    "capsuleBalance_other": "{{count}} capsules"
   },
   "tutorial": {
     "stepCounter": "Step {{current}} of {{total}}",

@@ -111,7 +111,7 @@ export function PullActions({
             <CapsuleSwatch kind="astral" />
             {t('gacha:page.capsuleAstral')}
             <span className="ml-auto font-mono text-[11px] text-text-light">
-              ×{astralStock}
+              {t('gacha:page.capsuleBalance', { count: astralStock })}
             </span>
           </DropdownMenuCustomCheckboxItem>
           {astralStock === 0 && (

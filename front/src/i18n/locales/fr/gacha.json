@@ -81,7 +81,9 @@
     "capsuleAstral": "Astrale",
     "buyInShop": "Acheter en boutique",
     "tokenBalance_one": "{{count}} jeton",
-    "tokenBalance_other": "{{count}} jetons"
+    "tokenBalance_other": "{{count}} jetons",
+    "capsuleBalance_one": "{{count}} capsule",
+    "capsuleBalance_other": "{{count}} capsules"
   },
   "tutorial": {
     "stepCounter": "Étape {{current}} sur {{total}}",
