@@ -65,7 +65,7 @@
     "setWish": "Set as wish",
     "ownedLabel": "Owned",
     "recycle": "Recycle",
-    "astralHint": "Found in the astral capsule.",
+    "astralHint": "Found with the astral token.",
     "astralHintLink": "Go to the shop"
   },
   "recycleModal": {
