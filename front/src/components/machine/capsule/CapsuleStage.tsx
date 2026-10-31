@@ -1,6 +1,5 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { EffectComposer } from '@react-three/postprocessing'
-import gsap from 'gsap'
 import { Leva, useControls } from 'leva'
 import {
   BloomEffect,
@@ -107,16 +106,7 @@ export function CapsuleStage({
     auraBoost: { value: 1, min: 0, max: 2.5, step: 0.05 },
     vibrateBoost: { value: 1, min: 0, max: 2.5, step: 0.05 },
     dolly: { value: 1, min: 0, max: 2, step: 0.05 },
-    // Ralenti de toute la chorégraphie gsap, pour régler une séquence trop
-    // rapide à l'œil (panneau de dev uniquement).
-    timeScale: { value: 1, min: 0.05, max: 1, step: 0.05 },
   })
-  useEffect(() => {
-    gsap.globalTimeline.timeScale(tuning.timeScale)
-    return () => {
-      gsap.globalTimeline.timeScale(1)
-    }
-  }, [tuning.timeScale])
 
   return (
     <>

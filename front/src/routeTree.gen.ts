@@ -62,6 +62,7 @@ import { Route as AdminAdminHealthRouteImport } from './routes/_admin/admin.heal
 import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
 import { Route as AdminAdminCombatDebugRouteImport } from './routes/_admin/admin.combat-debug'
 import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
+import { Route as AdminAdminCapsuleLabRouteImport } from './routes/_admin/admin.capsule-lab'
 import { Route as AuthenticatedTeamIdRaidRouteImport } from './routes/_authenticated/team/$id_.raid'
 import { Route as AuthenticatedProfileUsernameCollectionRouteImport } from './routes/_authenticated/profile/$username_.collection'
 import { Route as AuthenticatedCollectionUserCardIdEquipmentRouteImport } from './routes/_authenticated/collection_.$userCardId.equipment'
@@ -334,6 +335,11 @@ const AdminAdminCardsRoute = AdminAdminCardsRouteImport.update({
   path: '/cards',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminCapsuleLabRoute = AdminAdminCapsuleLabRouteImport.update({
+  id: '/capsule-lab',
+  path: '/capsule-lab',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AuthenticatedTeamIdRaidRoute = AuthenticatedTeamIdRaidRouteImport.update({
   id: '/team/$id_/raid',
   path: '/team/$id/raid',
@@ -384,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/tower': typeof AuthenticatedTowerRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
+  '/admin/capsule-lab': typeof AdminAdminCapsuleLabRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/combat-debug': typeof AdminAdminCombatDebugRoute
   '/admin/config': typeof AdminAdminConfigRoute
@@ -439,6 +446,7 @@ export interface FileRoutesByTo {
   '/tower': typeof AuthenticatedTowerRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
+  '/admin/capsule-lab': typeof AdminAdminCapsuleLabRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/combat-debug': typeof AdminAdminCombatDebugRoute
   '/admin/config': typeof AdminAdminConfigRoute
@@ -498,6 +506,7 @@ export interface FileRoutesById {
   '/_authenticated/tower': typeof AuthenticatedTowerRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
+  '/_admin/admin/capsule-lab': typeof AdminAdminCapsuleLabRoute
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
   '/_admin/admin/combat-debug': typeof AdminAdminCombatDebugRoute
   '/_admin/admin/config': typeof AdminAdminConfigRoute
@@ -556,6 +565,7 @@ export interface FileRouteTypes {
     | '/tower'
     | '/invitations/$token'
     | '/oauth/success'
+    | '/admin/capsule-lab'
     | '/admin/cards'
     | '/admin/combat-debug'
     | '/admin/config'
@@ -611,6 +621,7 @@ export interface FileRouteTypes {
     | '/tower'
     | '/invitations/$token'
     | '/oauth/success'
+    | '/admin/capsule-lab'
     | '/admin/cards'
     | '/admin/combat-debug'
     | '/admin/config'
@@ -669,6 +680,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tower'
     | '/invitations/$token'
     | '/oauth/success'
+    | '/_admin/admin/capsule-lab'
     | '/_admin/admin/cards'
     | '/_admin/admin/combat-debug'
     | '/_admin/admin/config'
@@ -1087,6 +1099,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminCardsRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/capsule-lab': {
+      id: '/_admin/admin/capsule-lab'
+      path: '/capsule-lab'
+      fullPath: '/admin/capsule-lab'
+      preLoaderRoute: typeof AdminAdminCapsuleLabRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_authenticated/team/$id_/raid': {
       id: '/_authenticated/team/$id_/raid'
       path: '/team/$id/raid'
@@ -1112,6 +1131,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminAdminRouteChildren {
+  AdminAdminCapsuleLabRoute: typeof AdminAdminCapsuleLabRoute
   AdminAdminCardsRoute: typeof AdminAdminCardsRoute
   AdminAdminCombatDebugRoute: typeof AdminAdminCombatDebugRoute
   AdminAdminConfigRoute: typeof AdminAdminConfigRoute
@@ -1129,6 +1149,7 @@ interface AdminAdminRouteChildren {
 }
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
+  AdminAdminCapsuleLabRoute: AdminAdminCapsuleLabRoute,
   AdminAdminCardsRoute: AdminAdminCardsRoute,
   AdminAdminCombatDebugRoute: AdminAdminCombatDebugRoute,
   AdminAdminConfigRoute: AdminAdminConfigRoute,

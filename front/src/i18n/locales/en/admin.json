@@ -700,5 +700,25 @@
       "brilliantMultiplier": "☀️ Brilliant multiplier",
       "holographicMultiplier": "🌊 Holographic multiplier"
     }
+  },
+  "capsuleLab": {
+    "kicker": "Tools",
+    "title": "Capsule lab",
+    "subtitle": "Replay the capsule arriving and opening, in slow motion if needed.",
+    "capsule": "Capsule",
+    "classic": "Classic",
+    "astral": "Astral",
+    "speed": "Speed",
+    "tier": "Announced rarity",
+    "replay": "Replay",
+    "tiers": {
+      "common": "Common",
+      "uncommon": "Uncommon",
+      "rare": "Rare",
+      "epic": "Epic",
+      "brilliant": "Brilliant",
+      "legendary": "Legendary",
+      "holographic": "Holographic"
+    }
   }
 }
