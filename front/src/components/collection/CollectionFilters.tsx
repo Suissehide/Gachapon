@@ -122,6 +122,8 @@ interface Props {
   onOwnershipChange: (o: OwnershipFilter) => void
   sort: SortMode
   onSortChange: (s: SortMode) => void
+  /** Action poussée en haut à droite, sur la ligne des onglets. */
+  action?: React.ReactNode
 }
 
 export function CollectionFilters({
@@ -139,6 +141,7 @@ export function CollectionFilters({
   onOwnershipChange,
   sort,
   onSortChange,
+  action,
 }: Props) {
   const { t } = useTranslation('collection')
   return (
@@ -156,6 +159,7 @@ export function CollectionFilters({
           value={group}
           onChange={onGroupChange}
         />
+        {action && <div className="ml-auto">{action}</div>}
       </div>
 
       {/* Row 2 — Rarity / Variant / Sort selects */}

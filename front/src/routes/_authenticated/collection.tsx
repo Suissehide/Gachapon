@@ -390,33 +390,33 @@ function Collection() {
       />
 
       <ArcadeCard>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <CollectionFilters
-            group={group}
-            onGroupChange={setGroup}
-            rarity={rarity}
-            onRarityChange={setRarity}
-            variant={variant}
-            onVariantChange={setVariant}
-            element={element}
-            onElementChange={setElement}
-            archetype={archetype}
-            onArchetypeChange={setArchetype}
-            ownership={ownership}
-            onOwnershipChange={setOwnership}
-            sort={sort}
-            onSortChange={setSort}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setRecycleAllOpen(true)}
-          >
-            <RefreshCw className="h-4 w-4" />
-            {t('collection:page.recycleAll')}
-          </Button>
-        </div>
+        <CollectionFilters
+          group={group}
+          onGroupChange={setGroup}
+          rarity={rarity}
+          onRarityChange={setRarity}
+          variant={variant}
+          onVariantChange={setVariant}
+          element={element}
+          onElementChange={setElement}
+          archetype={archetype}
+          onArchetypeChange={setArchetype}
+          ownership={ownership}
+          onOwnershipChange={setOwnership}
+          sort={sort}
+          onSortChange={setSort}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setRecycleAllOpen(true)}
+            >
+              <RefreshCw className="h-4 w-4" />
+              {t('collection:page.recycleAll')}
+            </Button>
+          }
+        />
       </ArcadeCard>
 
       {sections.length === 0 ? (
