@@ -1,5 +1,5 @@
 import { Heart, type LucideIcon, Shield, Sword, Zap } from 'lucide-react'
-import { type CSSProperties, useState } from 'react'
+import { type CSSProperties, type RefObject, useEffect, useState } from 'react'
 
 import placeholderImg from '../../../assets/data/not-found.png'
 import {
@@ -27,6 +27,45 @@ import {
 } from './config.ts'
 import { ElementAuraOverlay } from './ElementAuraOverlay.tsx'
 import { HoloOverlay, useHoloPointer } from './HoloOverlay.tsx'
+
+// Une grille de collection monte des centaines de cartes, chacune avec des
+// dizaines d'animations infinies (holo, auras, étoiles) : hors de l'écran, on
+// les met en pause. Un seul observateur partagé par toutes les faces.
+const offscreenObserver =
+  typeof IntersectionObserver === 'undefined'
+    ? null
+    : new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            for (const animation of entry.target.getAnimations({
+              subtree: true,
+            })) {
+              // Seulement running ↔ paused : play() relancerait depuis le
+              // début une animation ponctuelle déjà terminée.
+              if (entry.isIntersecting && animation.playState === 'paused') {
+                animation.play()
+              } else if (
+                !entry.isIntersecting &&
+                animation.playState === 'running'
+              ) {
+                animation.pause()
+              }
+            }
+          }
+        },
+        { rootMargin: '200px' },
+      )
+
+function usePauseAnimationsOffscreen(ref: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const el = ref.current
+    if (!(el && offscreenObserver)) {
+      return
+    }
+    offscreenObserver.observe(el)
+    return () => offscreenObserver.unobserve(el)
+  }, [ref])
+}
 
 const STAT_ICONS: Record<StatKey, LucideIcon> = {
   pv: Heart,
@@ -178,6 +217,7 @@ export function TcgCardFace({
   const isHolo = isOwned && variant === 'HOLOGRAPHIC'
   const { rootRef, holoActive, onHoloMouseMove, onHoloMouseLeave } =
     useHoloPointer()
+  usePauseAnimationsOffscreen(rootRef)
   // Any foil variant tracks the pointer: HOLOGRAPHIC feeds <HoloOverlay />,
   // BRILLIANT feeds its `brilliant-glare` layer via the same CSS vars.
   const holoHandlers = overlayLayers
