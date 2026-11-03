@@ -34,11 +34,16 @@ export type AlchemyTier = {
   candidates: AlchemyStack[]
   maxTransmutations: number
   suggestedPicks: AlchemyPick[] | null
+  /** Sélection auto pour ALCHEMY_BATCH_SIZE transmutations ; null si impossible. */
+  suggestedBatchPicks: AlchemyPick[] | null
 }
+
+/** Transmutations enchaînées par le bouton « ×10 » (miroir du back). */
+export const ALCHEMY_BATCH_SIZE = 10
 
 export type AlchemyBoard = { tiers: AlchemyTier[] }
 
-export type TransmuteResult = {
+export type TransmutedCard = {
   card: {
     id: string
     name: string
@@ -49,6 +54,10 @@ export type TransmuteResult = {
     set: { id: string; name: string }
   }
   isNew: boolean
+}
+
+export type TransmuteResult = {
+  results: TransmutedCard[]
   unlockedAchievements: UnlockedAchievement[]
 }
 

@@ -31,7 +31,9 @@
     "auto": "Auto-select",
     "clear": "Clear",
     "lastCopyNote": "You always keep one copy of each card.",
-    "transmute": "Transmute"
+    "transmute": "Transmute",
+    "transmuteBatch": "Transmute ×{{count}}",
+    "or": "or"
   },
   "toasts": {
     "errorTitle": "Alchemy"

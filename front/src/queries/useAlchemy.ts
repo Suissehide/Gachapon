@@ -4,7 +4,7 @@ import { AlchemyApi } from '../api/alchemy.api.ts'
 import type {
   AlchemyFromRarity,
   AlchemyPick,
-  TransmuteResult,
+  TransmutedCard,
 } from '../constants/alchemy.constant.ts'
 import type { PullBatchEntry } from '../constants/gacha.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
@@ -25,7 +25,7 @@ export const useAlchemy = () =>
 /** Carte transmutée → entrée du reveal. La page appelle `reveal` elle-même,
  *  une fois l'animation du chaudron terminée. */
 export const transmuteResultToRevealEntry = (
-  result: TransmuteResult,
+  result: TransmutedCard,
 ): PullBatchEntry => ({
   card: result.card,
   wasDuplicate: !result.isNew,
@@ -44,10 +44,12 @@ export const useTransmute = () => {
     mutationFn: ({
       fromRarity,
       picks,
+      count,
     }: {
       fromRarity: AlchemyFromRarity
       picks: AlchemyPick[]
-    }) => AlchemyApi.transmute(fromRarity, picks),
+      count?: number
+    }) => AlchemyApi.transmute(fromRarity, picks, count),
     onSuccess: (result) => {
       for (const key of [
         ALCHEMY_QUERY_KEY,

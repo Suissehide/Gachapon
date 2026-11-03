@@ -1,5 +1,7 @@
 import { z } from 'zod/v4'
 
+import { ALCHEMY_BATCH_SIZE } from '../../../../domain/alchemy/alchemy-rules'
+
 export const transmuteBodySchema = z.object({
   fromRarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC']),
   picks: z
@@ -10,5 +12,6 @@ export const transmuteBodySchema = z.object({
       }),
     )
     .min(1)
-    .max(20),
+    .max(100),
+  count: z.number().int().min(1).max(ALCHEMY_BATCH_SIZE).default(1),
 })

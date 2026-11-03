@@ -42,10 +42,14 @@ export const alchemyRouter: FastifyPluginCallbackZod = (fastify) => {
         request.user.userID,
         request.body.fromRarity,
         request.body.picks,
+        request.body.count,
       )
       return {
         ...result,
-        card: { ...result.card, imageUrl: resolveUrl(result.card.imageUrl) },
+        results: result.results.map((r) => ({
+          ...r,
+          card: { ...r.card, imageUrl: resolveUrl(r.card.imageUrl) },
+        })),
       }
     },
   )

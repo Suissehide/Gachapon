@@ -18,6 +18,7 @@ import { pickVariant } from '../gacha/gacha.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { weightedPick } from '../shared/weighted-pick'
 import {
+  ALCHEMY_BATCH_SIZE,
   ALCHEMY_COST_KEYS,
   ALCHEMY_FROM_RARITIES,
   maxTransmutations,
@@ -34,6 +35,8 @@ const VARIANT_KEYS = [
   'holoRateEpic',
   'holoRateLegendary',
 ] as const
+
+type GrantedCard = { cardId: string; variant: CardVariant; isNew: boolean }
 
 export class AlchemyDomain implements IAlchemyDomain {
   readonly #postgresOrm
@@ -99,6 +102,10 @@ export class AlchemyDomain implements IAlchemyDomain {
           candidates,
           maxTransmutations: maxTransmutations(candidates, cost),
           suggestedPicks: suggestIngredients(candidates, cost),
+          suggestedBatchPicks: suggestIngredients(
+            candidates,
+            cost * ALCHEMY_BATCH_SIZE,
+          ),
         }
       }),
     }
@@ -153,7 +160,7 @@ export class AlchemyDomain implements IAlchemyDomain {
     userId: string,
     toRarity: CardRarity,
     rates: Record<(typeof VARIANT_KEYS)[number], number>,
-  ): Promise<{ cardId: string; variant: CardVariant; isNew: boolean }> {
+  ): Promise<GrantedCard> {
     const pool = await tx.card.findMany({
       where: { ...NORMAL_POOL_WHERE, rarity: toRarity },
       select: { id: true, dropWeight: true },
@@ -185,6 +192,7 @@ export class AlchemyDomain implements IAlchemyDomain {
     userId: string,
     fromRarity: AlchemyFromRarity,
     picks: AlchemyPick[],
+    count: number,
   ): Promise<TransmuteResult> {
     return retryOnSerialization(async () => {
       const toRarity = nextRarity(fromRarity)
@@ -195,11 +203,16 @@ export class AlchemyDomain implements IAlchemyDomain {
         this.#configService.getMany(ALCHEMY_COST_KEYS[fromRarity]),
         this.#configService.getMany(...VARIANT_KEYS),
       ])
-      const cost = costs[ALCHEMY_COST_KEYS[fromRarity]]
-      const resultId = await this.#postgresOrm.executeWithTransactionClient(
+      const cost = costs[ALCHEMY_COST_KEYS[fromRarity]] * count
+      const granted = await this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
           await this.#consume(tx, userId, fromRarity, picks, cost)
-          const result = await this.#grantResult(tx, userId, toRarity, rates)
+          // Séquentiel : un doublon tiré deux fois dans le lot doit voir le
+          // premier exemplaire (isNew, incrément).
+          const results: GrantedCard[] = []
+          for (let i = 0; i < count; i++) {
+            results.push(await this.#grantResult(tx, userId, toRarity, rates))
+          }
           const unlockedAchievements = await this.#achievementsDomain.track(
             tx,
             userId,
@@ -207,28 +220,38 @@ export class AlchemyDomain implements IAlchemyDomain {
           )
           await this.#achievementsDomain.track(tx, userId, {
             kind: 'ALCHEMY_TRANSMUTED',
+            amount: count,
           })
-          return { ...result, unlockedAchievements }
+          return { results, unlockedAchievements }
         },
         { isolationLevel: 'Serializable' },
       )
       // Lecture hors transaction : noms localisés par le client étendu.
-      const card = await this.#postgresOrm.prisma.card.findUniqueOrThrow({
-        where: { id: resultId.cardId },
+      const cards = await this.#postgresOrm.prisma.card.findMany({
+        where: { id: { in: granted.results.map((r) => r.cardId) } },
         include: { set: true },
       })
+      const byId = new Map(cards.map((c) => [c.id, c]))
       return {
-        card: {
-          id: card.id,
-          name: card.name,
-          imageUrl: card.imageUrl,
-          rarity: card.rarity as CardRarity,
-          element: card.element,
-          variant: resultId.variant,
-          set: { id: card.set.id, name: card.set.name },
-        },
-        isNew: resultId.isNew,
-        unlockedAchievements: resultId.unlockedAchievements,
+        results: granted.results.map((r) => {
+          const card = byId.get(r.cardId)
+          if (!card) {
+            throw new Error(`Carte ${r.cardId} introuvable après transmutation`)
+          }
+          return {
+            card: {
+              id: card.id,
+              name: card.name,
+              imageUrl: card.imageUrl,
+              rarity: card.rarity as CardRarity,
+              element: card.element,
+              variant: r.variant,
+              set: { id: card.set.id, name: card.set.name },
+            },
+            isNew: r.isNew,
+          }
+        }),
+        unlockedAchievements: granted.unlockedAchievements,
       }
     })
   }

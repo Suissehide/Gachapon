@@ -22,11 +22,12 @@ export const AlchemyApi = {
   transmute: async (
     fromRarity: AlchemyFromRarity,
     picks: AlchemyPick[],
+    count = 1,
   ): Promise<TransmuteResult> => {
     const res = await fetchWithAuth(`${apiUrl}${ALCHEMY_ROUTES.transmute}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fromRarity, picks }),
+      body: JSON.stringify({ fromRarity, picks, count }),
     })
     if (!res.ok) {
       handleHttpError(res, {}, i18n.t('alchemy:apiTitles.transmute'))

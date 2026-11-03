@@ -1,9 +1,10 @@
 import { Minus, WandSparkles } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import type {
-  AlchemyStack,
-  AlchemyTier,
+import {
+  ALCHEMY_BATCH_SIZE,
+  type AlchemyStack,
+  type AlchemyTier,
 } from '../../constants/alchemy.constant.ts'
 import type { CardRarity } from '../../constants/card.constant.ts'
 import { cn } from '../../libs/utils.ts'
@@ -28,6 +29,14 @@ const RESULT_PANEL: Record<CardRarity, string> = {
   LEGENDARY: 'bg-rarity-legendary/10 border-rarity-legendary/30',
 }
 
+function Divider({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/35 before:h-px before:flex-1 before:bg-foreground/10 after:h-px after:flex-1 after:bg-foreground/10">
+      {children}
+    </div>
+  )
+}
+
 type Props = {
   tier: AlchemyTier
   amounts: Record<string, number>
@@ -37,6 +46,7 @@ type Props = {
   onAuto: () => void
   onClear: () => void
   onTransmute: () => void
+  onTransmuteBatch: () => void
 }
 
 export function Cauldron({
@@ -48,6 +58,7 @@ export function Cauldron({
   onAuto,
   onClear,
   onTransmute,
+  onTransmuteBatch,
 }: Props) {
   const { t } = useTranslation(['alchemy', 'common'])
   const full = picked === tier.cost
@@ -123,9 +134,7 @@ export function Cauldron({
         })}
       </div>
 
-      <div className="flex items-center gap-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/35 before:h-px before:flex-1 before:bg-foreground/10 after:h-px after:flex-1 after:bg-foreground/10">
-        {t('alchemy:cauldron.yields')}
-      </div>
+      <Divider>{t('alchemy:cauldron.yields')}</Divider>
 
       <div
         className={cn(
@@ -185,6 +194,16 @@ export function Cauldron({
           onClick={onTransmute}
         >
           {t('alchemy:cauldron.transmute')}
+        </Button>
+        <Divider>{t('alchemy:cauldron.or')}</Divider>
+        <Button
+          type="button"
+          variant="amberSoft"
+          className="h-12 w-full rounded-[14px] text-[15px]"
+          disabled={tier.suggestedBatchPicks === null || pending}
+          onClick={onTransmuteBatch}
+        >
+          {t('alchemy:cauldron.transmuteBatch', { count: ALCHEMY_BATCH_SIZE })}
         </Button>
       </div>
 

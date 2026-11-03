@@ -51,7 +51,8 @@ export type AchievementEvent =
   /** Une commande client livrée. */
   | { kind: 'ORDER_DELIVERED' }
   /** Une transmutation d'alchimie réussie. */
-  | { kind: 'ALCHEMY_TRANSMUTED' }
+  /** `amount` = transmutations réalisées en un seul appel. */
+  | { kind: 'ALCHEMY_TRANSMUTED'; amount: number }
 
 export type AchievementEventKind = AchievementEvent['kind']
 

@@ -30,11 +30,13 @@ export type AlchemyTier = {
   candidates: AlchemyStack[]
   maxTransmutations: number
   suggestedPicks: AlchemyPick[] | null
+  /** Sélection auto pour ALCHEMY_BATCH_SIZE transmutations ; null si impossible. */
+  suggestedBatchPicks: AlchemyPick[] | null
 }
 
 export type AlchemyBoard = { tiers: AlchemyTier[] }
 
-export type TransmuteResult = {
+export type TransmutedCard = {
   card: {
     id: string
     name: string
@@ -45,6 +47,11 @@ export type TransmuteResult = {
     set: { id: string; name: string }
   }
   isNew: boolean
+}
+
+export type TransmuteResult = {
+  /** Une entrée par transmutation, dans l'ordre du tirage. */
+  results: TransmutedCard[]
   unlockedAchievements: UnlockedAchievement[]
 }
 
@@ -54,5 +61,6 @@ export interface IAlchemyDomain {
     userId: string,
     fromRarity: AlchemyFromRarity,
     picks: AlchemyPick[],
+    count: number,
   ): Promise<TransmuteResult>
 }

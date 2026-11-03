@@ -16,6 +16,9 @@ export const ALCHEMY_FROM_RARITIES: AlchemyFromRarity[] = [
   'EPIC',
 ]
 
+/** Transmutations enchaînées par le bouton « ×10 ». */
+export const ALCHEMY_BATCH_SIZE = 10
+
 export const ALCHEMY_COST_KEYS = {
   COMMON: 'alchemy.costCommon',
   UNCOMMON: 'alchemy.costUncommon',

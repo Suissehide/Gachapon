@@ -164,7 +164,7 @@ describe('Alchemy routes', () => {
 
     const res = await transmute(cookie, { fromRarity: 'COMMON', picks })
     expect(res.statusCode).toBe(200)
-    expect(res.json().card.rarity).toBe('UNCOMMON')
+    expect(res.json().results.map((r: any) => r.card.rarity)).toEqual(['UNCOMMON'])
 
     expect((await prisma.userCard.findUnique({ where: { id: stack.id } })).quantity).toBe(1)
   })
@@ -187,14 +187,46 @@ describe('Alchemy routes', () => {
 
     const res = await transmute(cookie, { fromRarity: 'COMMON', picks })
     expect(res.statusCode).toBe(200)
-    expect(res.json().card.rarity).toBe('UNCOMMON')
-    expect(res.json().isNew).toBe(false)
+    expect(res.json().results.map((r: any) => r.card.rarity)).toEqual(['UNCOMMON'])
+    expect(res.json().results[0].isNew).toBe(false)
 
     const after = await prisma.userCard.findMany({
       where: { userId: id, card: { rarity: 'UNCOMMON' } },
     })
     const afterTotal = after.reduce((s: number, u: any) => s + u.quantity, 0)
     expect(afterTotal - beforeTotal).toBe(1)
+  })
+
+  it('POST /alchemy/transmute — ×10 avec les suggestedBatchPicks rend 10 UNCOMMON', async () => {
+    const { id, cookie } = await registerUser('alcbatch')
+    const stackA = await giveStack(id, commonA.id, 31) // available = 30
+    const stackB = await giveStack(id, commonB.id, 21) // available = 20
+
+    const tier = (await getBoard(cookie)).json().tiers.find((t: any) => t.fromRarity === 'COMMON')
+    expect(tier.maxTransmutations).toBe(10)
+    const picks = tier.suggestedBatchPicks
+    expect(picks.reduce((s: number, p: any) => s + p.amount, 0)).toBe(50)
+
+    // Un lot de 10 exige 10 × cost : 5 exemplaires ne suffisent pas.
+    const short = await transmute(cookie, {
+      fromRarity: 'COMMON',
+      picks: [{ userCardId: stackA.id, amount: 5 }],
+      count: 10,
+    })
+    expect(short.statusCode).toBe(400)
+
+    const res = await transmute(cookie, { fromRarity: 'COMMON', picks, count: 10 })
+    expect(res.statusCode).toBe(200)
+    const results = res.json().results
+    expect(results).toHaveLength(10)
+    expect(results.every((r: any) => r.card.rarity === 'UNCOMMON')).toBe(true)
+    // Le même tirage deux fois dans le lot : seul le premier est nouveau.
+    const newIds = results.filter((r: any) => r.isNew).map((r: any) => r.card.id)
+    expect(new Set(newIds).size).toBe(newIds.length)
+
+    for (const stack of [stackA, stackB]) {
+      expect((await prisma.userCard.findUnique({ where: { id: stack.id } })).quantity).toBe(1)
+    }
   })
 
   it('POST /alchemy/transmute — refuse de vider le dernier exemplaire, rien n’est consommé', async () => {

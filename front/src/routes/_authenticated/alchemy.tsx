@@ -11,6 +11,7 @@ import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import {
+  ALCHEMY_BATCH_SIZE,
   ALCHEMY_RARITY_BG,
   type AlchemyFromRarity,
   type AlchemyPick,
@@ -61,15 +62,19 @@ function AlchemyPage() {
   const reduced = usePrefersReducedMotion()
   const [fx, setFx] = useState<CardRarity | null>(null)
   // Le reveal attend l'animation ET la réponse : le premier arrivé attend l'autre.
-  const entry = useRef<PullBatchEntry | null>(null)
+  const entry = useRef<PullBatchEntry[] | null>(null)
   const fxDone = useRef(true)
   const tryReveal = () => {
     if (fxDone.current && entry.current) {
-      reveal([entry.current])
+      reveal(entry.current)
       entry.current = null
     }
   }
-  const startTransmute = (tier: AlchemyTier, picks: AlchemyPick[]) => {
+  const startTransmute = (
+    tier: AlchemyTier,
+    picks: AlchemyPick[],
+    count = 1,
+  ) => {
     entry.current = null
     fxDone.current = reduced
     // Geste utilisateur → déverrouille le contexte WebAudio
@@ -78,10 +83,10 @@ function AlchemyPage() {
       setFx(tier.toRarity)
     }
     transmute.mutate(
-      { fromRarity: tier.fromRarity, picks },
+      { fromRarity: tier.fromRarity, picks, count },
       {
         onSuccess: (result) => {
-          entry.current = transmuteResultToRevealEntry(result)
+          entry.current = result.results.map(transmuteResultToRevealEntry)
           tryReveal()
         },
         // Le toast d'erreur vient de useTransmute ; on coupe juste l'animation.
@@ -163,7 +168,9 @@ function AlchemyPage() {
           <Workbench
             tier={activeTier}
             pending={transmute.isPending || fx !== null}
-            onTransmute={(picks) => startTransmute(activeTier, picks)}
+            onTransmute={(picks, count) =>
+              startTransmute(activeTier, picks, count)
+            }
             // Change de cran ou de stock (transmutation réussie, carte sortie
             // des candidats) → reset : `amounts` ne doit jamais garder des
             // quantités qui dépassent le nouveau disponible.
@@ -199,7 +206,7 @@ function Workbench({
 }: {
   tier: AlchemyTier
   pending: boolean
-  onTransmute: (picks: AlchemyPick[]) => void
+  onTransmute: (picks: AlchemyPick[], count?: number) => void
 }) {
   const [amounts, setAmounts] = useState<Record<string, number>>({})
 
@@ -246,6 +253,11 @@ function Workbench({
           }
           onClear={() => setAmounts({})}
           onTransmute={() => onTransmute(picks)}
+          onTransmuteBatch={() => {
+            if (tier.suggestedBatchPicks) {
+              onTransmute(tier.suggestedBatchPicks, ALCHEMY_BATCH_SIZE)
+            }
+          }}
         />
       </div>
     </div>
