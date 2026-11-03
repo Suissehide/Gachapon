@@ -102,7 +102,8 @@ export function PowerCardPicker({
               userCardId={uc.id}
               level={uc.level}
               palier={uc.palier}
-              onClick={() => onPick(uc.id)}
+              entryKey={uc.id}
+              onClick={onPick}
             />
           ))}
         </div>

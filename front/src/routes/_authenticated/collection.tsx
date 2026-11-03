@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { RefreshCw } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
@@ -174,8 +174,11 @@ function Collection() {
   // reflected until the modal is reopened.
   const { card: detailKey } = Route.useSearch()
   const navigate = Route.useNavigate()
-  const setDetailKey = (key: string | null) =>
-    navigate({ search: key ? { card: key } : {}, replace: true })
+  const setDetailKey = useCallback(
+    (key: string | null) =>
+      navigate({ search: key ? { card: key } : {}, replace: true }),
+    [navigate],
+  )
 
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(user?.id)
@@ -345,8 +348,6 @@ function Collection() {
     equipBonusByCardId,
   ])
 
-  const handleDetail = (entry: DisplayEntry) => setDetailKey(entry.key)
-
   const detailTarget = useMemo(
     () =>
       detailKey
@@ -432,7 +433,7 @@ function Collection() {
             title={section.title}
             entries={section.entries}
             stats={section.stats}
-            onDetail={handleDetail}
+            onDetail={setDetailKey}
             showWishlist
             engagedCardIds={engagedCardIds}
           />

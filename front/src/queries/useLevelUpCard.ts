@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { CollectionApi } from '../api/collection.api'
+import { CollectionApi, type UserCard } from '../api/collection.api'
 import { invalidateBattleCache } from './useCampaign.ts'
 
 export function useLevelUpCard() {
@@ -13,8 +13,19 @@ export function useLevelUpCard() {
       userCardId: string
       targetLevel: number
     }) => CollectionApi.levelUpCard(userCardId, targetLevel),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['collection'] })
+    onSuccess: ({ newLevel }, { userCardId }) => {
+      // Seul le niveau de cette carte change : on l'écrit dans le cache au lieu
+      // de recharger toute la collection à chaque clic.
+      qc.setQueriesData<{ cards: UserCard[] }>(
+        { queryKey: ['collection'] },
+        (old) =>
+          old && {
+            ...old,
+            cards: old.cards.map((uc) =>
+              uc.id === userCardId ? { ...uc, level: newLevel } : uc,
+            ),
+          },
+      )
       qc.invalidateQueries({ queryKey: ['profile'] })
       // Leveling a card fires CARD_LEVELED + GOLD_SPENT events that feed the
       // quest + achievement engines — refresh their progress.

@@ -1,4 +1,5 @@
 import { Sparkles, Star, Swords } from 'lucide-react'
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
@@ -68,7 +69,10 @@ type Props = {
   // poussière et l'ascension la refuseront. Le badge le dit AVANT la
   // tentative plutôt que par un message d'erreur après coup.
   isEngaged?: boolean
-  onClick: () => void
+  // Clé rendue à `onClick` : le parent passe un gestionnaire stable au lieu
+  // d'une flèche par tuile, sinon `memo` ne sert à rien.
+  entryKey: string
+  onClick: (entryKey: string) => void
 }
 
 /**
@@ -106,7 +110,7 @@ function cardFaceStats(
   }
 }
 
-export function CollectionCard({
+export const CollectionCard = memo(function CollectionCard({
   card,
   variant,
   quantity,
@@ -117,6 +121,7 @@ export function CollectionCard({
   isNew,
   isWishlisted,
   isEngaged,
+  entryKey,
   onClick,
 }: Props) {
   const { t } = useTranslation('collection')
@@ -144,7 +149,7 @@ export function CollectionCard({
     <button
       type="button"
       className="group relative block w-full cursor-pointer text-left transition-transform duration-200 hover:-translate-y-1 hover:z-[2]"
-      onClick={onClick}
+      onClick={() => onClick(entryKey)}
     >
       <div className="relative aspect-[2/3]">
         <TcgCardFace
@@ -203,4 +208,4 @@ export function CollectionCard({
       </div>
     </button>
   )
-}
+})

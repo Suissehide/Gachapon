@@ -43,7 +43,7 @@ type Props = {
   title: string
   entries: DisplayEntry[]
   stats: SectionStats
-  onDetail: (entry: DisplayEntry) => void
+  onDetail: (entryKey: string) => void
   showWishlist?: boolean
   // Identifiants de cartes verrouillées par un duel en cours (`engagedCardIds`
   // de `useWagers`). Le serveur les renvoie sans la variante : le badge
@@ -60,7 +60,7 @@ function WishlistAwareCards({
   engagedCardIds,
 }: {
   entries: DisplayEntry[]
-  onDetail: (entry: DisplayEntry) => void
+  onDetail: (entryKey: string) => void
   engagedCardIds?: Set<string>
 }) {
   const { data: wishlist } = useWishlist()
@@ -81,7 +81,8 @@ function WishlistAwareCards({
             entry.variant === 'NORMAL'
           }
           isEngaged={engagedCardIds?.has(entry.card.id) ?? false}
-          onClick={() => onDetail(entry)}
+          entryKey={entry.key}
+          onClick={onDetail}
         />
       ))}
     </>
@@ -136,7 +137,8 @@ export function CollectionSection({
               palier={entry.userCard?.palier ?? null}
               isWishlisted={false}
               isEngaged={engagedCardIds?.has(entry.card.id) ?? false}
-              onClick={() => onDetail(entry)}
+              entryKey={entry.key}
+              onClick={onDetail}
             />
           ))
         )}
