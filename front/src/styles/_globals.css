@@ -332,7 +332,7 @@ h6 {
 
 /* Spatial movement: circular path (start = end → seamless loop). The layers
  * are larger than the card and slide by transform (composited, no repaint):
- * holoDrift moves a 300 % layer, holoSweep a 160 % one. */
+ * holoDrift moves a 300 % layer. */
 @keyframes holoDrift {
   0%,
   100% {
@@ -394,19 +394,34 @@ h6 {
   }
 }
 
+/* holoSweep moves the 160 % × 150 % textures, holoSweepX the rainbow (card
+ * height, so it only travels sideways). */
 @keyframes holoSweep {
   0%,
   100% {
-    transform: translate(-18.75%, -37.5%);
+    transform: translate(-18.75%, -33.33%);
   }
   25% {
-    transform: translate(0, -18.75%);
+    transform: translate(0, -16.67%);
   }
   50% {
     transform: translate(-18.75%, 0);
   }
   75% {
-    transform: translate(-37.5%, -18.75%);
+    transform: translate(-37.5%, -16.67%);
+  }
+}
+@keyframes holoSweepX {
+  0%,
+  50%,
+  100% {
+    transform: translateX(-18.75%);
+  }
+  25% {
+    transform: translateX(0);
+  }
+  75% {
+    transform: translateX(-37.5%);
   }
 }
 

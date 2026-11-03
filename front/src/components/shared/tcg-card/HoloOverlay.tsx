@@ -83,24 +83,54 @@ export function HoloOverlay({ active }: Props) {
         }}
       />
 
-      {/* Sparkles + holo texture + rainbow — idle: offset hue cycle + counter-drift, hover: mouse-driven via CSS vars */}
+      {/* Sparkles + holo texture + rainbow — idle: offset hue cycle + counter-drift, hover: mouse-driven via CSS vars.
+       *  Three children blended in an isolated group: the rainbow keeps the
+       *  card's height and only slides sideways, the textures (150 % tall, their
+       *  aspect ratio at 160 % width) slide both ways. */}
       <div
-        className={`pointer-events-none absolute top-0 left-0 z-[4] h-[160%] w-[160%] mix-blend-color-dodge bg-blend-overlay [background-size:100%] ${
+        className={`pointer-events-none absolute inset-0 z-[4] mix-blend-color-dodge ${
           active
-            ? '[animation:none] [filter:brightness(1)_contrast(1)]'
-            : 'opacity-[0.7] [animation:holoColorReverse_7s_linear_infinite,holoSweep_25s_linear_infinite]'
+            ? '[filter:brightness(1)_contrast(1)]'
+            : 'opacity-[0.7] [animation:holoColorReverse_7s_linear_infinite]'
         }`}
-        style={{
-          backgroundImage: `url('${sparklesGif}'), url('${holoTexture}'), linear-gradient(125deg, rgba(255,0,132,0.31) 15%, rgba(252,164,0,0.25) 30%, rgba(255,255,0,0.19) 40%, rgba(0,255,138,0.13) 60%, rgba(0,207,255,0.25) 70%, rgba(204,76,250,0.31) 85%)`,
-          ...(active
-            ? {
-                transform:
-                  'translate(calc(var(--holo-px, 50) * -0.375%), calc(var(--holo-py, 50) * -0.375%))',
-                opacity: 'var(--holo-opc, 0.5)' as unknown as number,
-              }
-            : {}),
-        }}
-      />
+        style={
+          active
+            ? { opacity: 'var(--holo-opc, 0.5)' as unknown as number }
+            : undefined
+        }
+      >
+        <div
+          className={`absolute top-0 left-0 h-full w-[160%] ${
+            active ? '' : '[animation:holoSweepX_25s_linear_infinite]'
+          }`}
+          style={{
+            backgroundImage:
+              'linear-gradient(125deg, rgba(255,0,132,0.31) 15%, rgba(252,164,0,0.25) 30%, rgba(255,255,0,0.19) 40%, rgba(0,255,138,0.13) 60%, rgba(0,207,255,0.25) 70%, rgba(204,76,250,0.31) 85%)',
+            ...(active
+              ? {
+                  transform: 'translateX(calc(var(--holo-px, 50) * -0.375%))',
+                }
+              : {}),
+          }}
+        />
+        {[holoTexture, sparklesGif].map((src) => (
+          <div
+            key={src}
+            className={`absolute top-0 left-0 h-[150%] w-[160%] mix-blend-overlay [background-size:100%] ${
+              active ? '' : '[animation:holoSweep_25s_linear_infinite]'
+            }`}
+            style={{
+              backgroundImage: `url('${src}')`,
+              ...(active
+                ? {
+                    transform:
+                      'translate(calc(var(--holo-px, 50) * -0.375%), calc(var(--holo-py, 50) * -0.3333%))',
+                  }
+                : {}),
+            }}
+          />
+        ))}
+      </div>
     </>
   )
 }
