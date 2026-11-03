@@ -169,6 +169,7 @@ function DummySetupPage() {
         onOpenChange={setEditorOpen}
         teamKey={DUMMY_TEAM_KEY}
         modeLabel={DUMMY_TEAM_LABEL}
+        enemies={dummies}
       />
     </PageShell>
   )

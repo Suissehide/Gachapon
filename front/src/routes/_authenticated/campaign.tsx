@@ -134,6 +134,10 @@ function CampaignPage() {
   const [reopenAfterEditor, setReopenAfterEditor] = useState<
     (() => void) | null
   >(null)
+  // Adversaires du combat d'où l'éditeur a été ouvert, pour l'auto-équipe.
+  const [editorEnemies, setEditorEnemies] = useState<
+    { element: string | null }[] | undefined
+  >()
 
   // ?editor=true auto-opens the team editor popup (used by /combat redirect and
   // the battle page's "revoir mon équipe" link).
@@ -299,6 +303,7 @@ function CampaignPage() {
         team={teamUnits}
         onEditTeam={() => {
           setReopenAfterEditor(() => () => setWandererOpen(true))
+          setEditorEnemies(wanderer ? [wanderer] : undefined)
           setEditorOpen(true)
         }}
       />
@@ -316,6 +321,9 @@ function CampaignPage() {
         open={editorOpen}
         onOpenChange={(v) => {
           setEditorOpen(v)
+          if (!v) {
+            setEditorEnemies(undefined)
+          }
           if (!v && reopenAfterEditor) {
             reopenAfterEditor()
             setReopenAfterEditor(null)
@@ -323,6 +331,7 @@ function CampaignPage() {
         }}
         teamKey={CAMPAIGN_TEAM_KEY}
         modeLabel={CAMPAIGN_TEAM_LABEL}
+        enemies={editorEnemies}
       />
 
       {/* Prep modal */}
@@ -356,6 +365,7 @@ function CampaignPage() {
               onSweep={handleSweep}
               onEditTeam={() => {
                 setReopenAfterEditor(() => () => setPrep(prep))
+                setEditorEnemies(prep.enemies)
                 setEditorOpen(true)
               }}
               onClose={() => setPrep(null)}

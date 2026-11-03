@@ -283,6 +283,7 @@ function RaidAttackPageContent() {
         }}
         teamKey={RAID_TEAM_KEY}
         modeLabel={RAID_TEAM_LABEL}
+        enemies={raid.data ? [raid.data.boss] : undefined}
       />
 
       <RaidResultPopup

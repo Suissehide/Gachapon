@@ -262,6 +262,7 @@ function TowerFloorsPage() {
         }}
         teamKey={teamKey}
         modeLabel={towerName}
+        enemies={prepBeforeEditor?.enemies}
       />
 
       <BattleResultPopup

@@ -72,6 +72,16 @@ export const ELEMENT_ORDER: CardElement[] = [
   'DARK',
 ]
 
+/** L'élément que chacun bat — miroir de `BEATS` dans back/src/main/domain/combat/element.ts. */
+export const ELEMENT_BEATS: Record<CardElement, CardElement> = {
+  FIRE: 'NATURE',
+  NATURE: 'EARTH',
+  EARTH: 'WATER',
+  WATER: 'FIRE',
+  LIGHT: 'DARK',
+  DARK: 'LIGHT',
+}
+
 /** Éléments réservés à la capsule astrale — même liste que
  * `back/src/main/domain/gacha/card-pools.ts`. */
 const ASTRAL_ELEMENTS: readonly string[] = ['LIGHT', 'DARK']

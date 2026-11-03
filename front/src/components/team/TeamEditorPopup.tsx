@@ -1,7 +1,20 @@
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { Check, RotateCcw, Save, Sparkles, Swords, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
+import {
+  type CardElement,
+  ELEMENT_BEATS,
+} from '../../constants/card.constant.ts'
 import { CAMPAIGN_TEAM_KEY } from '../../constants/combatTeam.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { cn, formatNumber } from '../../libs/utils.ts'
@@ -48,6 +61,26 @@ function fmt(n: number): string {
   return formatNumber(n, currentLocale())
 }
 
+// Multiplicateur de dégâts de `attacker` sur `target` — même roue que le
+// simulateur (`elementMultiplier` côté back).
+function elementMult(
+  attacker: string | null,
+  target: string | null,
+  adv: number,
+  dis: number,
+): number {
+  if (!(attacker && target && attacker in ELEMENT_BEATS)) {
+    return 1
+  }
+  if (ELEMENT_BEATS[attacker as CardElement] === target) {
+    return adv
+  }
+  if (ELEMENT_BEATS[target as CardElement] === attacker) {
+    return dis
+  }
+  return 1
+}
+
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -55,6 +88,9 @@ type Props = {
   teamKey: string
   /** Nom du mode montré au joueur : « Campagne », « Tour de Braise »… */
   modeLabel: string
+  /** Adversaires du combat en vue, quand on les connaît : l'auto-équipe
+   *  favorise alors les cartes qui les contrent. */
+  enemies?: { element: string | null }[]
 }
 
 export function TeamEditorPopup({
@@ -62,6 +98,7 @@ export function TeamEditorPopup({
   onOpenChange,
   teamKey,
   modeLabel,
+  enemies,
 }: Props) {
   const { t } = useTranslation('team')
   const userId = useAuthStore((s) => s.user?.id)
@@ -116,26 +153,35 @@ export function TeamEditorPopup({
     return map
   }, [equipData?.items, setsData, collection.data, economy.equip.levelScale])
 
-  const powerOf = useMemo(
-    () => (uc: UserCard) =>
-      cardPower(
-        uc.card,
-        uc.level,
-        uc.variant,
-        uc.palier,
-        equipBonusByCardId.get(uc.id) ?? emptyStatBonuses(),
-        economy.card,
-      ),
-    [equipBonusByCardId, economy.card],
-  )
+  const powerById = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const uc of collection.data?.cards ?? []) {
+      map.set(
+        uc.id,
+        cardPower(
+          uc.card,
+          uc.level,
+          uc.variant,
+          uc.palier,
+          equipBonusByCardId.get(uc.id) ?? emptyStatBonuses(),
+          economy.card,
+        ),
+      )
+    }
+    return map
+  }, [collection.data, equipBonusByCardId, economy.card])
+  const powerOf = (uc: UserCard) => powerById.get(uc.id) ?? 0
 
   const roster = collection.data?.cards ?? []
-  // Trié par puissance décroissante (départage par niveau) : l'auto-équipe
-  // prend simplement les 3 premières, et les plus fortes sont affichées d'abord.
+  // Plus fortes d'abord (départage par niveau).
   const sortedRoster = useMemo(
     () =>
-      [...roster].sort((a, b) => powerOf(b) - powerOf(a) || b.level - a.level),
-    [roster, powerOf],
+      [...roster].sort(
+        (a, b) =>
+          (powerById.get(b.id) ?? 0) - (powerById.get(a.id) ?? 0) ||
+          b.level - a.level,
+      ),
+    [roster, powerById],
   )
 
   const isDirty =
@@ -150,7 +196,8 @@ export function TeamEditorPopup({
     selectedIds.length <= MAX_TEAM_SIZE &&
     (isDirty || inherited)
 
-  const toggle = (userCardId: string) => {
+  // Stable : les tuiles sont mémoïsées, un clic ne re-rend que celle qui change.
+  const toggle = useCallback((userCardId: string) => {
     setSelectedIds((cur) => {
       if (cur.includes(userCardId)) {
         return cur.filter((id) => id !== userCardId)
@@ -160,12 +207,33 @@ export function TeamEditorPopup({
       }
       return [...cur, userCardId]
     })
-  }
+  }, [])
   const removeAt = (slotIndex: number) => {
     setSelectedIds((cur) => cur.filter((_, i) => i !== slotIndex))
   }
+  // Puissance pondérée par la roue élémentaire face aux adversaires connus :
+  // dégâts infligés en moyenne / dégâts subis en moyenne. Sans adversaires,
+  // c'est la puissance brute.
   const autoTeam = () => {
-    const auto = sortedRoster.slice(0, MAX_TEAM_SIZE).map((c) => c.id)
+    const { elementAdvantageMult: adv, elementDisadvantageMult: dis } =
+      economy.combat
+    const score = (uc: UserCard) => {
+      if (!enemies?.length) {
+        return powerOf(uc)
+      }
+      let dealt = 0
+      let taken = 0
+      for (const e of enemies) {
+        dealt += elementMult(uc.card.element, e.element, adv, dis)
+        taken += elementMult(e.element, uc.card.element, adv, dis)
+      }
+      return (powerOf(uc) * dealt) / taken
+    }
+    const auto = sortedRoster
+      .map((uc) => ({ id: uc.id, s: score(uc) }))
+      .sort((a, b) => b.s - a.s)
+      .slice(0, MAX_TEAM_SIZE)
+      .map((c) => c.id)
     setSelectedIds(auto)
   }
   const handleSave = () => {
@@ -257,26 +325,12 @@ export function TeamEditorPopup({
                 {t('combatTeamPopup.emptyCollectionBody')}
               </EmptyState>
             ) : (
-              // p-2 gives room for the active tile's ring-offset (3px ring +
-              // 2px offset) so it isn't clipped by the overflow-hidden that
-              // overflow-y-auto implicitly forces on the horizontal axis.
-              <div className="max-h-[40vh] overflow-y-auto p-2">
-                <div className="grid grid-cols-4 gap-4 sm:grid-cols-5 md:grid-cols-6">
-                  {sortedRoster.map((uc) => (
-                    <RosterTile
-                      key={uc.id}
-                      card={uc}
-                      power={powerOf(uc)}
-                      active={selectedIds.includes(uc.id)}
-                      disabled={
-                        !selectedIds.includes(uc.id) &&
-                        selectedIds.length >= MAX_TEAM_SIZE
-                      }
-                      onClick={() => toggle(uc.id)}
-                    />
-                  ))}
-                </div>
-              </div>
+              <RosterGrid
+                roster={sortedRoster}
+                powerById={powerById}
+                selectedIds={selectedIds}
+                onToggle={toggle}
+              />
             )}
           </div>
         </PopupBody>
@@ -402,24 +456,25 @@ function Slot({
   )
 }
 
-function RosterTile({
+const RosterTile = memo(function RosterTile({
   card,
   power,
   active,
   disabled,
-  onClick,
+  onToggle,
 }: {
   card: UserCard
   power?: number
   active: boolean
   disabled: boolean
-  onClick: () => void
+  onToggle: (userCardId: string) => void
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => onToggle(card.id)}
       disabled={disabled}
+      aria-pressed={active}
       // rounded-[8px] matches TcgCardFace compact's outer radius so the amber
       // ring wraps the card cleanly; ring-offset gives the "extend out" look.
       className={cn(
@@ -448,5 +503,92 @@ function RosterTile({
         }
       />
     </button>
+  )
+})
+
+// Colonnes de la grille : 4, 5 dès `sm`, 6 dès `md` (points de rupture Tailwind).
+const COLUMN_QUERIES = [
+  ['(min-width: 48rem)', 6],
+  ['(min-width: 40rem)', 5],
+] as const
+
+function subscribeColumns(onChange: () => void) {
+  const lists = COLUMN_QUERIES.map(([q]) => window.matchMedia(q))
+  for (const l of lists) {
+    l.addEventListener('change', onChange)
+  }
+  return () => {
+    for (const l of lists) {
+      l.removeEventListener('change', onChange)
+    }
+  }
+}
+
+function readColumns(): number {
+  return COLUMN_QUERIES.find(([q]) => window.matchMedia(q).matches)?.[1] ?? 4
+}
+
+/**
+ * Grille virtualisée : une collection compte des centaines de cartes, chacune
+ * lourde (holo, auras) ; seules les rangées visibles sont montées.
+ */
+function RosterGrid({
+  roster,
+  powerById,
+  selectedIds,
+  onToggle,
+}: {
+  roster: UserCard[]
+  powerById: Map<string, number>
+  selectedIds: string[]
+  onToggle: (userCardId: string) => void
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const columns = useSyncExternalStore(subscribeColumns, readColumns)
+  const rowCount = Math.ceil(roster.length / columns)
+  const virtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 180,
+    overscan: 2,
+  })
+  const full = selectedIds.length >= MAX_TEAM_SIZE
+
+  return (
+    // p-2 gives room for the active tile's ring-offset (3px ring +
+    // 2px offset) so it isn't clipped by the overflow-hidden that
+    // overflow-y-auto implicitly forces on the horizontal axis.
+    <div ref={scrollRef} className="max-h-[40vh] overflow-y-auto p-2">
+      <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
+        {virtualizer.getVirtualItems().map((row) => (
+          <div
+            key={row.key}
+            ref={virtualizer.measureElement}
+            data-index={row.index}
+            className="absolute inset-x-0 top-0 grid gap-4 pb-4"
+            style={{
+              gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+              transform: `translateY(${row.start}px)`,
+            }}
+          >
+            {roster
+              .slice(row.index * columns, (row.index + 1) * columns)
+              .map((uc) => {
+                const active = selectedIds.includes(uc.id)
+                return (
+                  <RosterTile
+                    key={uc.id}
+                    card={uc}
+                    power={powerById.get(uc.id)}
+                    active={active}
+                    disabled={!active && full}
+                    onToggle={onToggle}
+                  />
+                )
+              })}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
