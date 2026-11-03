@@ -43,11 +43,11 @@ docker network create proxy
 Puis, dans deux terminaux séparés :
 
 ```shell
-cd back && npm run dev   # http://localhost:3001
+cd back && npm run dev   # http://gachapon.localhost:3001
 ```
 
 ```shell
-cd front && npm run dev  # http://localhost:4269
+cd front && npm run dev  # http://gachapon.localhost:4269
 ```
 
 Comptes créés par le seed : `admin@gachapon.dev` (SUPER_ADMIN), `captain`, `alice`, `bob` — tous avec le mot de passe `Password123!`.

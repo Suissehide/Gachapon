@@ -167,6 +167,7 @@ SEO postbuild — `scripts/prerender-seo.mjs` rewrites per-route `<title>`/`<met
 ## Things that bite
 
 - The frontend dev port is **4269**, not the Vite default. The backend dev port is **3001**, not the `3000` fallback baked into `config.ts` — `vite.config.ts` proxies `/auth` to `localhost:3001`, so `back/.env` must set `PORT=3001` or OAuth callbacks break.
+- **Local dev runs on `gachapon.localhost`, not `localhost`.** Cookies ignore the port, and `access_token`/`refresh_token` are generic names other local projects also use, so on bare `localhost` they overwrite each other's sessions. Open `http://gachapon.localhost:4269`; `CORS_ORIGIN`/`FRONT_URL` (back) and `VITE_API_URL` (front) point there, and the back rejects `localhost:4269`. Chrome/Firefox resolve `*.localhost` to 127.0.0.1 with no `/etc/hosts` edit. Local OAuth needs the `gachapon.localhost:3001` callbacks registered with Google/Discord.
 - Frontend uses `VITE_API_URL` (build-time, baked into the bundle) — changing it requires a rebuild, not just a restart.
 - `back/.env*` and `deploy/.env*` are different files for different worlds. Migrating a config var means touching both if it's needed in prod.
 - **npm 11+ blocks lifecycle scripts by default.** A bare `npm install` leaves Prisma without its engines and bcrypt/esbuild/swc without native binaries — everything fails at runtime, not at install. Unblock once per package: `npm install-scripts approve @prisma/engines @swc/core bcrypt esbuild prisma unrs-resolver` in `back/`, `npm install-scripts approve esbuild @swc/core` in `front/`.

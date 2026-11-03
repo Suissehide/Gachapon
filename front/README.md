@@ -14,7 +14,7 @@ App React du Gachapon multijoueur. Voir le [README racine](../README.md) pour le
 
 | Commande          | Description                                        |
 | ----------------- | -------------------------------------------------- |
-| `npm run dev`     | Serveur de dev Vite sur <http://localhost:4269>    |
+| `npm run dev`     | Serveur de dev Vite sur <http://gachapon.localhost:4269>    |
 | `npm run build`   | `tsc -b` + build Vite, puis pré-rendu SEO (`scripts/prerender-seo.mjs`) |
 | `npm run lint`    | Lint Biome sur `src`                               |
 | `npm run preview` | Prévisualise le build de prod                      |
