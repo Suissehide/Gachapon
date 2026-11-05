@@ -46,13 +46,12 @@ describe('POST /collection/recycle-all', () => {
     })
     userId = user.id
 
-    // Doublons : COMMON ×4, RARE ×3 (NORMAL), RARE ×2 (BRILLIANT), EPIC ×5
+    // Doublons : COMMON ×4, RARE ×5 (vernis Brillant débloqué), EPIC ×5
     await postgresOrm.prisma.userCard.createMany({
       data: [
-        { userId, cardId: commonId, variant: 'NORMAL', quantity: 4 },
-        { userId, cardId: rareId, variant: 'NORMAL', quantity: 3 },
-        { userId, cardId: rareId, variant: 'BRILLIANT', quantity: 2 },
-        { userId, cardId: epicId, variant: 'NORMAL', quantity: 5 },
+        { userId, cardId: commonId, quantity: 4 },
+        { userId, cardId: rareId, quantity: 5, finishes: ['BRILLIANT'] },
+        { userId, cardId: epicId, quantity: 5 },
       ],
     })
 
@@ -75,7 +74,7 @@ describe('POST /collection/recycle-all', () => {
     expect(res.statusCode).toBe(401)
   })
 
-  it('recycle les doublons NORMAL <= seuil, garde 1 copie, épargne BRILLIANT et EPIC', async () => {
+  it('recycle les doublons <= seuil, vernis compris, garde 1 copie et ses vernis, épargne EPIC', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/collection/recycle-all',
@@ -84,22 +83,20 @@ describe('POST /collection/recycle-all', () => {
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    // COMMON : 3 copies × 10 = 30 ; RARE NORMAL : 2 copies × 80 = 160
-    expect(body.cardsRecycled).toBe(5)
-    expect(body.dustEarned).toBe(190)
+    // COMMON : 3 copies × 10 = 30 ; RARE : 4 copies × 80 = 320
+    expect(body.cardsRecycled).toBe(7)
+    expect(body.dustEarned).toBe(350)
     expect(typeof body.newDustTotal).toBe('number')
 
     const { postgresOrm } = (app as any).iocContainer
     const cards = await postgresOrm.prisma.userCard.findMany({
       where: { userId },
     })
-    const byKey = new Map(
-      cards.map((c: any) => [`${c.cardId}-${c.variant}`, c.quantity]),
-    )
-    expect(byKey.get(`${commonId}-NORMAL`)).toBe(1)
-    expect(byKey.get(`${rareId}-NORMAL`)).toBe(1)
-    expect(byKey.get(`${rareId}-BRILLIANT`)).toBe(2) // variante épargnée
-    expect(byKey.get(`${epicId}-NORMAL`)).toBe(5) // au-dessus du seuil
+    const byCard = new Map(cards.map((c: any) => [c.cardId, c]))
+    expect(byCard.get(commonId).quantity).toBe(1)
+    expect(byCard.get(rareId).quantity).toBe(1)
+    expect(byCard.get(rareId).finishes).toEqual(['BRILLIANT'])
+    expect(byCard.get(epicId).quantity).toBe(5) // au-dessus du seuil
   })
 
   it('second appel : plus rien à recycler → dustEarned 0 sans erreur', async () => {

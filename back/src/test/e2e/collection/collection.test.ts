@@ -94,6 +94,7 @@ describe('Collection routes', () => {
   })
 
   it('POST /collection/recycle — nécessite quantity > 0', async () => {
+    const { postgresOrm } = (app as any).iocContainer
     // D'abord faire un tirage pour obtenir une carte
     await app.inject({
       method: 'POST',
@@ -113,17 +114,18 @@ describe('Collection routes', () => {
       ['TANK', 'SUPPORT', 'FIGHTER', 'BALANCED', 'RANGER', 'ASSASSIN', 'MAGE'],
     ).toContain(coll.cards[0].card.archetype)
 
-    // La VARIANTE compte : recycler se fait sur (carte, variante), et un
-    // tirage peut sortir un Brillant ou un Holo. Le test envoyait cardId seul,
-    // donc la variante par défaut NORMAL, et échouait en 400 « vous ne
-    // possédez pas cette carte » chaque fois que le tirage n'était pas normal
-    // — un échec aléatoire, une fois sur trois environ.
+    // Un tirage peut sortir un vernis : le dernier exemplaire d'une carte à
+    // vernis n'est pas recyclable, on garantit donc un doublon.
     const drawn = coll.cards[0]
+    await postgresOrm.prisma.userCard.update({
+      where: { userId_cardId: { userId, cardId: drawn.card.id } },
+      data: { quantity: { increment: 1 } },
+    })
     const res = await app.inject({
       method: 'POST',
       url: '/collection/recycle',
       headers: { cookie: cookies },
-      payload: { cardId: drawn.card.id, variant: drawn.variant },
+      payload: { cardId: drawn.card.id },
     })
     expect(res.statusCode).toBe(200)
     const recycleBody = res.json()
@@ -131,7 +133,7 @@ describe('Collection routes', () => {
     expect(recycleBody).toHaveProperty('newDustTotal')
   })
 
-  it('POST /collection/recycle — BRILLIANT RARE donne exactement 80 dust (valeur plate, pas de multiplicateur variante)', async () => {
+  it('POST /collection/recycle — RARE à vernis Brillant donne exactement 80 dust (valeur plate, pas de multiplicateur de vernis)', async () => {
     const { postgresOrm } = (app as any).iocContainer
 
     // Créer un set et une carte RARE dédiés pour ce test
@@ -142,16 +144,17 @@ describe('Collection routes', () => {
       data: { nameFr: `RecycleRare${suffix}`, nameEn: `RecycleRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: recycleSet.id },
     })
 
-    // Insérer directement une copie BRILLIANT de cette carte RARE
+    // Deux exemplaires d'une carte au vernis Brillant : recycler l'un des deux
+    // est permis, la ligne et son vernis restent.
     await postgresOrm.prisma.userCard.create({
-      data: { userId, cardId: rareCard.id, variant: 'BRILLIANT', quantity: 1 },
+      data: { userId, cardId: rareCard.id, finishes: ['BRILLIANT'], quantity: 2 },
     })
 
     const res = await app.inject({
       method: 'POST',
       url: '/collection/recycle',
       headers: { cookie: cookies },
-      payload: { cardId: rareCard.id, quantity: 1, variant: 'BRILLIANT' },
+      payload: { cardId: rareCard.id, quantity: 1 },
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
@@ -159,6 +162,107 @@ describe('Collection routes', () => {
     // dustRare = 80 par défaut, dustHarvestMultiplier = 1 (pas de skills)
     // BRILLIANT RARE doit donner exactement 80, identique à NORMAL RARE.
     expect(body.dustEarned).toBe(80)
+
+    const row = await postgresOrm.prisma.userCard.findUniqueOrThrow({
+      where: { userId_cardId: { userId, cardId: rareCard.id } },
+    })
+    expect(row.quantity).toBe(1)
+    expect(row.finishes).toEqual(['BRILLIANT'])
+  })
+
+  it("POST /collection/recycle — refuse le dernier exemplaire d'une carte à vernis", async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const set = await postgresOrm.prisma.cardSet.create({
+      data: { nameFr: `LastCopySet${suffix}`, nameEn: `LastCopySet${suffix}`, isActive: false },
+    })
+    const card = await postgresOrm.prisma.card.create({
+      data: { nameFr: `LastCopy${suffix}`, nameEn: `LastCopy${suffix}`, rarity: 'RARE', dropWeight: 5, setId: set.id },
+    })
+    await postgresOrm.prisma.userCard.create({
+      data: { userId, cardId: card.id, finishes: ['HOLOGRAPHIC'], quantity: 2 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/collection/recycle',
+      headers: { cookie: cookies },
+      payload: { cardId: card.id, quantity: 2 },
+    })
+    expect(res.statusCode).toBe(400)
+
+    const row = await postgresOrm.prisma.userCard.findUniqueOrThrow({
+      where: { userId_cardId: { userId, cardId: card.id } },
+    })
+    expect(row.quantity).toBe(2)
+    expect(row.finishes).toEqual(['HOLOGRAPHIC'])
+  })
+
+  describe('PATCH /collection/:userCardId/finish', () => {
+    let userCardId: string
+    let otherUserCardId: string
+
+    beforeAll(async () => {
+      const { postgresOrm } = (app as any).iocContainer
+      const set = await postgresOrm.prisma.cardSet.create({
+        data: { nameFr: `FinishSet${suffix}`, nameEn: `FinishSet${suffix}`, isActive: false },
+      })
+      const card = await postgresOrm.prisma.card.create({
+        data: { nameFr: `FinishCard${suffix}`, nameEn: `FinishCard${suffix}`, rarity: 'RARE', dropWeight: 5, setId: set.id },
+      })
+      const uc = await postgresOrm.prisma.userCard.create({
+        data: { userId, cardId: card.id, finishes: ['BRILLIANT'], quantity: 1 },
+      })
+      userCardId = uc.id
+      const other = await postgresOrm.prisma.user.create({
+        data: { email: `finish-other${suffix}@test.com`, username: `finishother${suffix}`, emailVerifiedAt: new Date() },
+      })
+      const otherUc = await postgresOrm.prisma.userCard.create({
+        data: { userId: other.id, cardId: card.id, finishes: ['BRILLIANT'], quantity: 1 },
+      })
+      otherUserCardId = otherUc.id
+    })
+
+    const patchFinish = (id: string, finish: string) =>
+      app.inject({
+        method: 'PATCH',
+        url: `/collection/${id}/finish`,
+        headers: { cookie: cookies },
+        payload: { finish },
+      })
+
+    it('affiche un vernis débloqué', async () => {
+      const res = await patchFinish(userCardId, 'BRILLIANT')
+      expect(res.statusCode).toBe(200)
+      expect(res.json()).toEqual({ displayedFinish: 'BRILLIANT' })
+
+      const coll = await app.inject({
+        method: 'GET',
+        url: `/users/${userId}/collection`,
+        headers: { cookie: cookies },
+      })
+      const entry = coll.json().cards.find((c: any) => c.id === userCardId)
+      expect(entry.displayedFinish).toBe('BRILLIANT')
+      expect(entry.finishes).toEqual(['BRILLIANT'])
+    })
+
+    it('revient au NORMAL, toujours disponible', async () => {
+      const res = await patchFinish(userCardId, 'NORMAL')
+      expect(res.statusCode).toBe(200)
+      expect(res.json()).toEqual({ displayedFinish: 'NORMAL' })
+    })
+
+    it('refuse un vernis verrouillé (400)', async () => {
+      const res = await patchFinish(userCardId, 'HOLOGRAPHIC')
+      expect(res.statusCode).toBe(400)
+      const { postgresOrm } = (app as any).iocContainer
+      const row = await postgresOrm.prisma.userCard.findUniqueOrThrow({ where: { id: userCardId } })
+      expect(row.displayedFinish).toBe('NORMAL')
+    })
+
+    it("refuse la carte d'un autre joueur (404)", async () => {
+      const res = await patchFinish(otherUserCardId, 'BRILLIANT')
+      expect(res.statusCode).toBe(404)
+    })
   })
 
   it('POST /collection/recycle — incrémente le cumul dustGenerated exposé sur le profil', async () => {
@@ -181,14 +285,14 @@ describe('Collection routes', () => {
       data: { nameFr: `GenRare${suffix}`, nameEn: `GenRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: genSet.id },
     })
     await postgresOrm.prisma.userCard.create({
-      data: { userId, cardId: genCard.id, variant: 'NORMAL', quantity: 1 },
+      data: { userId, cardId: genCard.id, quantity: 1 },
     })
 
     const recycle = await app.inject({
       method: 'POST',
       url: '/collection/recycle',
       headers: { cookie: cookies },
-      payload: { cardId: genCard.id, quantity: 1, variant: 'NORMAL' },
+      payload: { cardId: genCard.id, quantity: 1 },
     })
     expect(recycle.statusCode).toBe(200)
     const earned = recycle.json().dustEarned

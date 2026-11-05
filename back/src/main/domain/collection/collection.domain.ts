@@ -9,7 +9,10 @@ import type {
   RecycleInput,
   RecycleResult,
 } from '../../types/domain/collection/collection.domain.interface'
-import type { CardRarity } from '../../types/domain/gacha/gacha.types'
+import type {
+  CardRarity,
+  CardVariant,
+} from '../../types/domain/gacha/gacha.types'
 import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import type {
   ConfigKey,
@@ -19,6 +22,7 @@ import type { ICardRepository } from '../../types/infra/orm/repositories/card.re
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'
+import { hasFinish } from './finishes'
 
 const RARITY_ORDER: CardRarity[] = [
   'COMMON',
@@ -84,7 +88,7 @@ export class CollectionDomain implements ICollectionDomain {
     userId: string,
     input: RecycleInput,
   ): Promise<RecycleResult> {
-    const { cardId, quantity, variant } = input
+    const { cardId, quantity } = input
 
     const card = await this.#cardRepository.findById(cardId)
     if (!card) {
@@ -109,26 +113,26 @@ export class CollectionDomain implements ICollectionDomain {
           // portant sur une carte qu'on ne possède pas s'entendait répondre
           // « engagée dans un duel », ce qui renseigne sur autrui.
           const uc = await tx.userCard.findUnique({
-            where: { userId_cardId_variant: { userId, cardId, variant } },
+            where: { userId_cardId: { userId, cardId } },
           })
           if (!uc || uc.quantity < quantity) {
             throw Boom.badRequest(errorMessage('collection.cardNotOwned'))
           }
 
-          await this.#duelDomain.assertCardNotEngagedInTx(
-            tx,
-            userId,
-            cardId,
-            variant,
-          )
+          await this.#duelDomain.assertCardNotEngagedInTx(tx, userId, cardId)
 
           if (uc.quantity - quantity <= 0) {
-            await tx.userCard.delete({
-              where: { userId_cardId_variant: { userId, cardId, variant } },
-            })
+            // On recycle des exemplaires, jamais un vernis : supprimer la
+            // ligne effacerait les vernis débloqués.
+            if (uc.finishes.length > 0) {
+              throw Boom.badRequest(
+                errorMessage('collection.lastCopyHasFinish'),
+              )
+            }
+            await tx.userCard.delete({ where: { id: uc.id } })
           } else {
             await tx.userCard.update({
-              where: { userId_cardId_variant: { userId, cardId, variant } },
+              where: { id: uc.id },
               data: { quantity: { decrement: quantity } },
             })
           }
@@ -192,7 +196,6 @@ export class CollectionDomain implements ICollectionDomain {
           const userCards = await tx.userCard.findMany({
             where: {
               userId,
-              variant: 'NORMAL',
               quantity: { gt: 1 },
               card: { rarity: { in: rarities } },
             },
@@ -202,18 +205,16 @@ export class CollectionDomain implements ICollectionDomain {
           // Chargé une seule fois pour tout le lot : une carte engagée est
           // IGNORÉE plutôt que refusée — faire échouer tout le recyclage de
           // masse pour une seule carte verrouillée serait hostile.
-          const engagedKeys = await this.#duelDomain.listEngagedCardKeysInTx(
+          const engaged = await this.#duelDomain.listEngagedCardIdsInTx(
             tx,
             userId,
           )
-          const candidates = userCards.filter(
-            (uc) => !engagedKeys.has(`${uc.cardId}:${uc.variant}`),
-          )
+          const candidates = userCards.filter((uc) => !engaged.has(uc.cardId))
           // Même base que cardsRecycled (copies, pas lignes) : les deux
           // champs sont affichés côte à côte au joueur, ils doivent être
           // comparables un à un.
           const skippedEngaged = userCards
-            .filter((uc) => engagedKeys.has(`${uc.cardId}:${uc.variant}`))
+            .filter((uc) => engaged.has(uc.cardId))
             .reduce((sum, uc) => sum + (uc.quantity - 1), 0)
 
           const { dustEarned, copiesRecycled } = computeBulkRecycle(
@@ -267,5 +268,28 @@ export class CollectionDomain implements ICollectionDomain {
         { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
       ),
     )
+  }
+
+  async setDisplayedFinish(
+    userId: string,
+    userCardId: string,
+    finish: CardVariant,
+  ): Promise<{ displayedFinish: CardVariant }> {
+    const prisma = this.#postgresOrm.prisma
+    const uc = await prisma.userCard.findUnique({
+      where: { id: userCardId },
+      select: { userId: true, finishes: true },
+    })
+    if (!uc || uc.userId !== userId) {
+      throw Boom.notFound(errorMessage('collection.userCardNotFound'))
+    }
+    if (!hasFinish(uc.finishes, finish)) {
+      throw Boom.badRequest(errorMessage('collection.finishLocked'))
+    }
+    await prisma.userCard.update({
+      where: { id: userCardId },
+      data: { displayedFinish: finish },
+    })
+    return { displayedFinish: finish }
   }
 }

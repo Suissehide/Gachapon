@@ -207,7 +207,10 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       for (const userId of team.memberIds) {
         for (const uc of cardsByUser.get(userId) ?? []) {
           distinctCardIds.add(uc.cardId)
-          distinctVariantKeys.add(`${uc.cardId}:${uc.variant}`)
+          distinctVariantKeys.add(`${uc.cardId}:NORMAL`)
+          for (const f of uc.finishes) {
+            distinctVariantKeys.add(`${uc.cardId}:${f}`)
+          }
         }
         pullsTotal += pullsByMember.get(userId) ?? 0
       }
@@ -382,7 +385,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
           baseSpd: c.card.baseSpd,
           level: c.level,
           palier: c.palier,
-          variant: c.variant,
+          finishes: c.finishes,
           baseStats,
           equipment: [...(c.equipmentBonuses as EquipmentBonuses[]), setBonus],
         })

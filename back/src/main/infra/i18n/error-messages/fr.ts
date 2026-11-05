@@ -69,6 +69,9 @@ export const FR_MESSAGES = {
   // --- collection / cartes ---
   'collection.cardNotFound': 'Carte introuvable',
   'collection.cardNotOwned': 'Tu ne possèdes pas cette carte',
+  'collection.finishLocked': "Ce vernis n'est pas encore débloqué",
+  'collection.lastCopyHasFinish':
+    'Impossible de recycler le dernier exemplaire : cette carte porte un vernis',
   'collection.userCardNotFound': 'Carte du joueur introuvable',
   'cardAscension.maxPalierReached': 'Carte déjà au palier maximum ({{max}})',
   'cardAscension.notTopOfPalier':
@@ -278,8 +281,6 @@ export const FR_MESSAGES = {
     "Le comptoir a reçu {{cap}} livraisons aujourd'hui — reviens demain",
   'orders.unknownCard': 'Carte introuvable dans ta collection',
   'orders.badLine': "La ligne {{line}} n'existe pas dans cette commande",
-  'orders.variantNotAllowed':
-    'Seules les cartes normales peuvent être livrées (pas les brillantes ni les holographiques)',
   'orders.invalidAmount': 'La quantité livrée doit être un entier positif',
   'orders.cardDoesNotMatch':
     'Cette carte ne correspond pas aux critères de la ligne {{line}}',
@@ -391,8 +392,6 @@ export const FR_MESSAGES = {
   'alchemy.unknownCard': 'Carte introuvable dans ta collection',
   'alchemy.wrongRarity':
     'Toutes les cartes doivent être de la rareté du cran choisi',
-  'alchemy.variantNotAllowed':
-    'Seules les cartes normales peuvent être transmutées',
   'alchemy.wouldLeaveZeroCopies':
     "Impossible d'utiliser {{amount}} exemplaires — il t'en resterait 0 (tu en as {{quantity}})",
   'alchemy.wrongTotal':

@@ -127,7 +127,7 @@ function playerTeam(opts: {
       baseSpd: opts.base.baseSpd,
       level: opts.level,
       palier: opts.palier,
-      variant: 'NORMAL',
+      finishes: [],
       equipment: [
         { hpPct: GEAR.hpPct, atkPct: GEAR.atkPct, defPct: GEAR.defPct },
       ],
@@ -195,7 +195,7 @@ function enemyUnitsForStage(chapter: number, index: number): SimulatorUnit[] {
       baseSpd: e.baseSpd,
       level: e.level,
       palier: e.palier,
-      variant: 'NORMAL',
+      finishes: [],
       equipment: [],
       baseStats: SIM_BASE_STATS,
     })

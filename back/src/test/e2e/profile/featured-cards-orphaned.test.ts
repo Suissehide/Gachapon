@@ -36,7 +36,7 @@ describe('GET /users/:username/profile/featured-cards — orphaned ids', () => {
         data: { nameFr: `${rarity}-${suffix}`, nameEn: `${rarity}-${suffix}`, rarity, dropWeight: 10, setId: set.id },
       })
       await prisma.userCard.create({
-        data: { userId: user!.id, cardId: card.id, variant: 'NORMAL', quantity: 1 },
+        data: { userId: user!.id, cardId: card.id, quantity: 1 },
       })
       ids.push(card.id)
     }

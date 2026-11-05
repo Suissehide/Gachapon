@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 
-import type { CardVariant, Duel, DuelStatus } from '../../../generated/client'
+import type { Duel, DuelStatus } from '../../../generated/client'
 import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
@@ -409,20 +409,8 @@ export class DuelDomain implements IDuelDomain {
 
     // Lu APRES le règlement paresseux ci-dessus : un duel qui vient de
     // passer SETTLED dans cet appel ne doit plus apparaître comme verrou.
-    const engagedKeys = await this.listEngagedCardKeysInTx(
-      this.#postgresOrm.prisma,
-      userId,
-    )
-    // La variante est DÉLIBÉRÉMENT retirée ici. Le verrou, lui, porte bien
-    // sur la paire `${cardId}:${variant}` (voir `assertCardNotEngagedInTx`) :
-    // c'est seulement le badge de la collection qui retombe sur la carte,
-    // donc qui signale « engagée » sur les trois variantes alors qu'une
-    // seule l'est. Choix assumé — le badge est un avertissement AVANT
-    // tentative, et un avertissement trop large fait perdre un clic là où un
-    // avertissement manquant fait perdre une action. Rendre le badge exact
-    // demanderait de porter la variante jusqu'à l'API et la vue collection.
     const engagedCardIds = [
-      ...new Set([...engagedKeys].map((key) => key.slice(0, key.indexOf(':')))),
+      ...(await this.listEngagedCardIdsInTx(this.#postgresOrm.prisma, userId)),
     ]
 
     return {
@@ -620,14 +608,13 @@ export class DuelDomain implements IDuelDomain {
   }
 
   /**
-   * Verrou des cartes engagées (tâche 7) : les clés `${cardId}:${variant}`
-   * des tirages COMPTÉS (mêmes appel et arguments que `#settle` —
+   * Verrou des cartes engagées (tâche 7) : les cartes des tirages COMPTÉS (mêmes appel et arguments que `#settle` —
    * `findPullsSinceInTx(tx, userId, duel.acceptedAt, duel.pullCount)`) de
    * chaque duel ACTIVE où le joueur est partie. C'est ce même sous-ensemble
    * que le règlement saisira chez le perdant ; verrouiller autre chose
    * protégerait les mauvaises cartes.
    */
-  async listEngagedCardKeysInTx(
+  async listEngagedCardIdsInTx(
     tx: PrimaTransactionClient,
     userId: string,
   ): Promise<Set<string>> {
@@ -649,7 +636,7 @@ export class DuelDomain implements IDuelDomain {
         duel.pullCount,
       )
       for (const pull of pulls) {
-        keys.add(`${pull.cardId}:${pull.variant}`)
+        keys.add(pull.cardId)
       }
     }
     return keys
@@ -659,10 +646,9 @@ export class DuelDomain implements IDuelDomain {
     tx: PrimaTransactionClient,
     userId: string,
     cardId: string,
-    variant: CardVariant,
   ): Promise<void> {
-    const engagedKeys = await this.listEngagedCardKeysInTx(tx, userId)
-    if (engagedKeys.has(`${cardId}:${variant}`)) {
+    const engaged = await this.listEngagedCardIdsInTx(tx, userId)
+    if (engaged.has(cardId)) {
       throw Boom.conflict(errorMessage('wagers.cardEngagedInActiveDuel'))
     }
   }
@@ -994,14 +980,10 @@ export class DuelDomain implements IDuelDomain {
     winnerId: string,
     pull: PullWithRarity,
   ): Promise<boolean> {
+    // Le perdant cède UN exemplaire ; il garde ses vernis, et le vainqueur
+    // débloque celui du tirage (upsertInTx).
     const owned = await tx.userCard.findUnique({
-      where: {
-        userId_cardId_variant: {
-          userId: loserId,
-          cardId: pull.cardId,
-          variant: pull.variant,
-        },
-      },
+      where: { userId_cardId: { userId: loserId, cardId: pull.cardId } },
     })
     if (!owned) {
       return false

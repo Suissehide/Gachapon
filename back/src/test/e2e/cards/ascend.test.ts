@@ -57,7 +57,6 @@ describe('POST /cards/:userCardId/ascend', () => {
       data: {
         userId: user.id,
         cardId: card.id,
-        variant: 'NORMAL',
         quantity: 3,
         level: 10, // at top of palier 1
         palier: 1,
@@ -154,7 +153,6 @@ describe('POST /cards/:userCardId/ascend', () => {
       data: {
         userId: other.id,
         cardId,
-        variant: 'NORMAL',
         quantity: 3,
         level: 10,
         palier: 1,
@@ -196,7 +194,6 @@ describe('POST /cards/:userCardId/ascend', () => {
       data: {
         userId,
         cardId: lockCard.id,
-        variant: 'NORMAL',
         quantity: 2,
         level: 10, // sommet du palier 1
         palier: 1,

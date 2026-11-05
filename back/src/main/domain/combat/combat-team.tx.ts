@@ -36,6 +36,7 @@ export interface TeamUnit {
   cardImageUrl: string | null
   element: string | null
   rarity: string
+  /** Vernis affiché (choix du joueur) ; les stats suivent `finishes`. */
   variant: string
   level: number
   palier: number
@@ -282,7 +283,7 @@ export class CombatTeamTx {
           baseSpd: uc.card.baseSpd,
           level: uc.level,
           palier: uc.palier,
-          variant: uc.variant,
+          finishes: uc.finishes,
           pieces: uc.equipment.map((ue) => ({
             bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
             level: ue.level,
@@ -302,7 +303,7 @@ export class CombatTeamTx {
           cardImageUrl: uc.card.imageUrl,
           element: uc.card.element,
           rarity: uc.card.rarity,
-          variant: uc.variant,
+          variant: uc.displayedFinish,
           level: uc.level,
           palier: uc.palier,
           passiveKey: uc.card.passiveKey,

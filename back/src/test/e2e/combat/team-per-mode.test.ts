@@ -64,7 +64,6 @@ describe('Combat teams per mode routes', () => {
       data: {
         userId: user.id,
         cardId: card1.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 1,
         palier: 1,
@@ -74,7 +73,8 @@ describe('Combat teams per mode routes', () => {
       data: {
         userId: user.id,
         cardId: card2.id,
-        variant: 'HOLOGRAPHIC',
+        finishes: ['HOLOGRAPHIC'],
+        displayedFinish: 'HOLOGRAPHIC',
         quantity: 1,
         level: 5,
         palier: 2,
@@ -250,7 +250,7 @@ describe('Combat teams per mode routes', () => {
     ).toEqual([userCard1Id])
   })
 
-  it('GET /combat/teams rend les six modes', async () => {
+  it('GET /combat/teams rend les sept modes', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/combat/teams',
@@ -260,6 +260,7 @@ describe('Combat teams per mode routes', () => {
     expect(Object.keys(res.json().teams).sort()).toEqual(
       [
         'campaign',
+        'dummy',
         'raid',
         'tower:EARTH',
         'tower:FIRE',

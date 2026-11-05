@@ -234,7 +234,6 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
       data: {
         userId: player.userId,
         cardId: raidCardId,
-        variant: 'NORMAL',
         quantity: 1,
         level: 60,
         palier: 6,

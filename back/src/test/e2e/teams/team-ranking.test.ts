@@ -75,9 +75,9 @@ describe('GET /teams/:id/ranking', () => {
       data: { nameFr: `RankCard${suffix}`, nameEn: `RankCard${suffix}`, rarity: 'LEGENDARY', setId: set.id },
     })
     await prisma.userCard.upsert({
-      where: { userId_cardId_variant: { userId: owner.id, cardId: card.id, variant: 'NORMAL' } },
+      where: { userId_cardId: { userId: owner.id, cardId: card.id } },
       update: {},
-      create: { userId: owner.id, cardId: card.id, variant: 'NORMAL', quantity: 1 },
+      create: { userId: owner.id, cardId: card.id, quantity: 1 },
     })
   })
 

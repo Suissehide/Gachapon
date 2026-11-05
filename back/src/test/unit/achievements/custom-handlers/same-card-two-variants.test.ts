@@ -10,27 +10,17 @@ const event = {
 }
 
 describe('sameCardTwoVariantsHandler', () => {
-  it('unlocked si une cardId possédée avec 2 variants distincts', async () => {
+  it('unlocked si une carte porte un vernis en plus du normal', async () => {
     const tx = {
-      userCard: {
-        findMany: jest.fn().mockResolvedValue([
-          { cardId: 'c1', variant: 'NORMAL' },
-          { cardId: 'c1', variant: 'BRILLIANT' },
-        ]),
-      },
+      userCard: { findFirst: jest.fn().mockResolvedValue({ id: 'uc1' }) },
     } as any
     const result = await sameCardTwoVariantsHandler.evaluate(tx, 'u1', event)
     expect(result.unlocked).toBe(true)
   })
 
-  it("non unlocked si chaque cardId n'a qu'un seul variant", async () => {
+  it("non unlocked si aucune carte n'a de vernis", async () => {
     const tx = {
-      userCard: {
-        findMany: jest.fn().mockResolvedValue([
-          { cardId: 'c1', variant: 'NORMAL' },
-          { cardId: 'c2', variant: 'NORMAL' },
-        ]),
-      },
+      userCard: { findFirst: jest.fn().mockResolvedValue(null) },
     } as any
     const result = await sameCardTwoVariantsHandler.evaluate(tx, 'u1', event)
     expect(result.unlocked).toBe(false)

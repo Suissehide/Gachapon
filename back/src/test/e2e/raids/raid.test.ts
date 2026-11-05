@@ -149,7 +149,7 @@ describe('routes de raid', () => {
       [userIdB, (id: string) => (cardIdB = id)],
     ] as const) {
       const uc = await prisma.userCard.create({
-        data: { userId: uid, cardId: card.id, variant: 'NORMAL', quantity: 1, level: 60, palier: 6 },
+        data: { userId: uid, cardId: card.id, quantity: 1, level: 60, palier: 6 },
       })
       setter(uc.id)
     }
@@ -305,11 +305,26 @@ describe('routes de raid', () => {
     const raidUserCard = await prisma.userCard.findUniqueOrThrow({
       where: { id: cardIdB },
     })
+    const raidCard = await prisma.card.findUniqueOrThrow({ where: { id: raidUserCard.cardId } })
+    const otherCard = await prisma.card.create({
+      data: {
+        nameFr: `RaidCampaignCard${suffix}`,
+        nameEn: `RaidCampaignCard${suffix}`,
+        rarity: 'LEGENDARY',
+        dropWeight: 1,
+        setId: raidCard.setId,
+        baseHp: 5000,
+        baseAtk: 500,
+        baseDef: 100,
+        baseSpd: 200,
+      },
+    })
     const campaignCard = await prisma.userCard.create({
       data: {
         userId: userIdB,
-        cardId: raidUserCard.cardId,
-        variant: 'HOLOGRAPHIC',
+        cardId: otherCard.id,
+        finishes: ['HOLOGRAPHIC'],
+        displayedFinish: 'HOLOGRAPHIC',
         quantity: 1,
         level: 1,
         palier: 1,
@@ -324,8 +339,8 @@ describe('routes de raid', () => {
       headers: { cookie: cookiesB },
     })
     expect(res.statusCode).toBe(200)
-    // Même motif de double-épingle que tower.test.ts : `level` ET `variant`
-    // divergent entre les deux fixtures (60/NORMAL vs 1/HOLOGRAPHIC), un seul
+    // Même motif de double-épingle que tower.test.ts : `level` ET le vernis
+    // affiché (`variant`) divergent entre les deux fixtures (60/NORMAL vs 1/HOLOGRAPHIC), un seul
     // des deux champs pourrait coïncider par accident.
     expect(res.json().teamA).toHaveLength(1)
     expect(res.json().teamA[0].level).toBe(60)

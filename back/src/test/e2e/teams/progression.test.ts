@@ -304,7 +304,6 @@ describe("progression d'équipe : les quatre sources de points", () => {
       data: {
         userId: userIdP,
         cardId: raidCardId,
-        variant: 'NORMAL',
         quantity: 1,
         level: 60,
         palier: 6,

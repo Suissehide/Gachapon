@@ -43,15 +43,20 @@ export class AlchemyDomain implements IAlchemyDomain {
   readonly #configService
   readonly #achievementsDomain
   readonly #duelDomain: IDuelDomain
+  readonly #userCardRepository
 
   constructor({
     postgresOrm,
     configService,
     achievementsDomain,
     duelDomain,
+    userCardRepository,
   }: Pick<
     IocContainer,
-    'postgresOrm' | 'configService' | 'achievementsDomain'
+    | 'postgresOrm'
+    | 'configService'
+    | 'achievementsDomain'
+    | 'userCardRepository'
   > & {
     duelDomain: IDuelDomain
   }) {
@@ -59,6 +64,7 @@ export class AlchemyDomain implements IAlchemyDomain {
     this.#configService = configService
     this.#achievementsDomain = achievementsDomain
     this.#duelDomain = duelDomain
+    this.#userCardRepository = userCardRepository
   }
 
   async board(userId: string): Promise<AlchemyBoard> {
@@ -66,17 +72,13 @@ export class AlchemyDomain implements IAlchemyDomain {
     const [costs, owned, engaged] = await Promise.all([
       this.#configService.getMany(...Object.values(ALCHEMY_COST_KEYS)),
       prisma.userCard.findMany({
-        where: { userId, variant: 'NORMAL', quantity: { gt: 1 } },
+        where: { userId, quantity: { gt: 1 } },
         include: { card: { include: { set: true } } },
       }),
-      this.#duelDomain.listEngagedCardKeysInTx(prisma, userId),
+      this.#duelDomain.listEngagedCardIdsInTx(prisma, userId),
     ])
     const stacks: AlchemyStack[] = owned
-      .filter(
-        (u) =>
-          !engaged.has(`${u.cardId}:${u.variant}`) &&
-          !isAstralElement(u.card.element),
-      )
+      .filter((u) => !engaged.has(u.cardId) && !isAstralElement(u.card.element))
       .map((u) => ({
         userCardId: u.id,
         cardId: u.cardId,
@@ -125,7 +127,6 @@ export class AlchemyDomain implements IAlchemyDomain {
         id: true,
         cardId: true,
         quantity: true,
-        variant: true,
         card: { select: { rarity: true, element: true } },
       },
     })
@@ -138,8 +139,8 @@ export class AlchemyDomain implements IAlchemyDomain {
       new Map(userCards.map((u) => [u.id, u])),
       cost,
     )
-    const engaged = await this.#duelDomain.listEngagedCardKeysInTx(tx, userId)
-    if (userCards.some((u) => engaged.has(`${u.cardId}:${u.variant}`))) {
+    const engaged = await this.#duelDomain.listEngagedCardIdsInTx(tx, userId)
+    if (userCards.some((u) => engaged.has(u.cardId))) {
       throw Boom.conflict(errorMessage('wagers.cardEngagedInActiveDuel'))
     }
     const perCard = new Map<string, number>()
@@ -172,20 +173,13 @@ export class AlchemyDomain implements IAlchemyDomain {
     // Taux de base, sans VARIANT_LUCK : choix de la spec alchimie, le résultat
     // ne doit pas concurrencer le gacha.
     const variant = pickVariant(toRarity, rates)
-    const existing = await tx.userCard.findUnique({
-      where: { userId_cardId_variant: { userId, cardId: target.id, variant } },
-    })
-    if (existing) {
-      await tx.userCard.update({
-        where: { id: existing.id },
-        data: { quantity: { increment: 1 } },
-      })
-    } else {
-      await tx.userCard.create({
-        data: { userId, cardId: target.id, variant, quantity: 1 },
-      })
-    }
-    return { cardId: target.id, variant, isNew: !existing }
+    const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
+      tx,
+      userId,
+      target.id,
+      variant,
+    )
+    return { cardId: target.id, variant, isNew: !wasDuplicate }
   }
 
   transmute(

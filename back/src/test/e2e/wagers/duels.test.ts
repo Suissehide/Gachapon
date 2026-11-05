@@ -643,10 +643,9 @@ describe('cycle de vie du duel', () => {
       // a plus une seule (derniere copie supprimee).
       const aCommonCard = await prisma.userCard.findUnique({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdA,
             cardId: commonCard.id,
-            variant: 'NORMAL',
           },
         },
       })
@@ -655,10 +654,9 @@ describe('cycle de vie du duel', () => {
 
       const bCommonCard = await prisma.userCard.findUnique({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdB,
             cardId: commonCard.id,
-            variant: 'NORMAL',
           },
         },
       })
@@ -755,10 +753,9 @@ describe('cycle de vie du duel', () => {
       })
       const aCardBefore = await prisma.userCard.findUnique({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdA,
             cardId: commonCardId,
-            variant: 'NORMAL',
           },
         },
       })
@@ -786,10 +783,9 @@ describe('cycle de vie du duel', () => {
 
       const aCardAfter = await prisma.userCard.findUnique({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdA,
             cardId: commonCardId,
-            variant: 'NORMAL',
           },
         },
       })
@@ -977,10 +973,9 @@ describe('cycle de vie du duel', () => {
 
       const dCard = await prisma.userCard.findUniqueOrThrow({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdD,
             cardId: equipCard.id,
-            variant: 'NORMAL',
           },
         },
       })
@@ -1037,10 +1032,9 @@ describe('cycle de vie du duel', () => {
 
       const dCardAfter = await prisma.userCard.findUnique({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdD,
             cardId: equipCard.id,
-            variant: 'NORMAL',
           },
         },
       })
@@ -1067,6 +1061,116 @@ describe('cycle de vie du duel', () => {
         expect(row.userCardIds).not.toContain(dCard.id)
         expect(row.userCardIds).toHaveLength(0)
       }
+    })
+
+    it('vernis : le perdant cede un exemplaire et garde ses vernis, le vainqueur debloque le vernis du tirage', async () => {
+      // Tirages ecrits en base pour fixer leur vernis : un tirage reel ne
+      // sort un Holo qu'une fois sur cent.
+      const finishSet = await prisma.cardSet.create({
+        data: { nameFr: `DuelFinishSet${suffix}`, nameEn: `DuelFinishSet${suffix}`, isActive: false },
+      })
+      const rareCard = await prisma.card.create({
+        data: {
+          nameFr: `DuelFinishRare${suffix}`,
+          nameEn: `DuelFinishRare${suffix}`,
+          rarity: 'RARE',
+          dropWeight: 10,
+          setId: finishSet.id,
+        },
+      })
+      const legendaryCard = await prisma.card.create({
+        data: {
+          nameFr: `DuelFinishLegendary${suffix}`,
+          nameEn: `DuelFinishLegendary${suffix}`,
+          rarity: 'LEGENDARY',
+          dropWeight: 10,
+          setId: finishSet.id,
+        },
+      })
+
+      const propose = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels`,
+        headers: { cookie: cookiesD },
+        payload: { opponentId: userIdE },
+      })
+      expect(propose.statusCode).toBe(201)
+      const finishDuelId = propose.json().id as string
+      const accept = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels/${finishDuelId}/accept`,
+        headers: { cookie: cookiesE },
+      })
+      expect(accept.statusCode).toBe(200)
+
+      // Les tirages comptes suivent l'acceptation ; ceux des tests precedents,
+      // anterieurs, restent hors fenetre.
+      const { acceptedAt } = await prisma.duel.findUniqueOrThrow({
+        where: { id: finishDuelId },
+      })
+      const pulledAt = new Date(acceptedAt.getTime() + 1)
+      await new Promise((r) => setTimeout(r, 10))
+      await prisma.duel.update({
+        where: { id: finishDuelId },
+        data: { deadlineAt: new Date(Date.now() - 1) },
+      })
+      await prisma.gachaPull.createMany({
+        data: [
+          {
+            userId: userIdD,
+            cardId: legendaryCard.id,
+            variant: 'NORMAL',
+            pulledAt,
+          },
+          {
+            userId: userIdE,
+            cardId: rareCard.id,
+            variant: 'HOLOGRAPHIC',
+            pulledAt,
+          },
+        ],
+      })
+      await prisma.userCard.createMany({
+        data: [
+          {
+            userId: userIdE,
+            cardId: rareCard.id,
+            quantity: 2,
+            finishes: ['BRILLIANT', 'HOLOGRAPHIC'],
+            displayedFinish: 'HOLOGRAPHIC',
+          },
+          { userId: userIdD, cardId: rareCard.id, quantity: 1 },
+        ],
+      })
+
+      const wagers = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/wagers`,
+        headers: { cookie: cookiesD },
+      })
+      expect(wagers.statusCode).toBe(200)
+      const row = await prisma.duel.findUnique({ where: { id: finishDuelId } })
+      expect(row?.status).toBe('SETTLED')
+      expect(row?.winnerId).toBe(userIdD)
+
+      const loserCard = await prisma.userCard.findUniqueOrThrow({
+        where: { userId_cardId: { userId: userIdE, cardId: rareCard.id } },
+      })
+      expect(loserCard.quantity).toBe(1)
+      expect([...loserCard.finishes].sort()).toEqual(['BRILLIANT', 'HOLOGRAPHIC'])
+      expect(loserCard.displayedFinish).toBe('HOLOGRAPHIC')
+
+      const winnerCard = await prisma.userCard.findUniqueOrThrow({
+        where: { userId_cardId: { userId: userIdD, cardId: rareCard.id } },
+      })
+      expect(winnerCard.quantity).toBe(2)
+      expect(winnerCard.finishes).toEqual(['HOLOGRAPHIC'])
+
+      const transfers = await prisma.duelTransfer.findMany({
+        where: { duelId: finishDuelId },
+      })
+      expect(transfers).toHaveLength(1)
+      expect(transfers[0].variant).toBe('HOLOGRAPHIC')
     })
   })
 
@@ -1098,14 +1202,10 @@ describe('cycle de vie du duel', () => {
         data: {
           nameFr: `LockEngagedCard${suffix}`,
           nameEn: `LockEngagedCard${suffix}`,
-          // UNCOMMON, pas LEGENDARY, et c'est structurel : seules RARE, EPIC
-          // et LEGENDARY sont eligibles aux variantes (pickVariant), avec
-          // 5 % de brillante et 2 % d'holo sur une legendaire. Les
-          // assertions ci-dessous lisent la ligne UserCard en variant
-          // NORMAL, donc une legendaire faisait echouer ce describe environ
-          // une fois sur sept. UNCOMMON rend la variante deterministe sans
-          // rien changer au verdict : 3 points contre 1 pour le COMMON du
-          // perdant, B gagne toujours.
+          // UNCOMMON, pas LEGENDARY : seules RARE, EPIC et LEGENDARY sont
+          // eligibles aux vernis (pickVariant), la ligne UserCard reste donc
+          // deterministe. 3 points contre 1 pour le COMMON du perdant, B
+          // gagne toujours.
           rarity: 'UNCOMMON',
           dropWeight: 10,
           setId: engagedSet.id,
@@ -1180,10 +1280,9 @@ describe('cycle de vie du duel', () => {
       }
       const card = await prisma.userCard.findUniqueOrThrow({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdB,
             cardId: engagedCardId,
-            variant: 'NORMAL',
           },
         },
       })
@@ -1205,16 +1304,15 @@ describe('cycle de vie du duel', () => {
         method: 'POST',
         url: '/collection/recycle',
         headers: { cookie: cookiesB },
-        payload: { cardId: engagedCardId, quantity: 1, variant: 'NORMAL' },
+        payload: { cardId: engagedCardId, quantity: 1 },
       })
       expect(res.statusCode).toBe(409)
 
       const card = await prisma.userCard.findUniqueOrThrow({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdB,
             cardId: engagedCardId,
-            variant: 'NORMAL',
           },
         },
       })
@@ -1236,16 +1334,15 @@ describe('cycle de vie du duel', () => {
         method: 'POST',
         url: '/collection/recycle',
         headers: { cookie: cookiesB },
-        payload: { cardId: extraCardId, quantity: 1, variant: 'NORMAL' },
+        payload: { cardId: extraCardId, quantity: 1 },
       })
       expect(recycle.statusCode).toBe(200)
 
       const card = await prisma.userCard.findUnique({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdB,
             cardId: extraCardId,
-            variant: 'NORMAL',
           },
         },
       })
@@ -1275,7 +1372,6 @@ describe('cycle de vie du duel', () => {
         data: {
           userId: userIdB,
           cardId: dupCard.id,
-          variant: 'NORMAL',
           quantity: 3,
         },
       })
@@ -1296,10 +1392,9 @@ describe('cycle de vie du duel', () => {
 
       const engaged = await prisma.userCard.findUniqueOrThrow({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdB,
             cardId: engagedCardId,
-            variant: 'NORMAL',
           },
         },
       })
@@ -1307,10 +1402,9 @@ describe('cycle de vie du duel', () => {
 
       const dup = await prisma.userCard.findUniqueOrThrow({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdB,
             cardId: dupCard.id,
-            variant: 'NORMAL',
           },
         },
       })
@@ -1347,7 +1441,7 @@ describe('cycle de vie du duel', () => {
         method: 'POST',
         url: '/collection/recycle',
         headers: { cookie: cookiesB },
-        payload: { cardId: engagedCardId, quantity: 1, variant: 'NORMAL' },
+        payload: { cardId: engagedCardId, quantity: 1 },
       })
       expect(recycle.statusCode).toBe(200)
     })
@@ -1682,10 +1776,9 @@ describe('cycle de vie du duel', () => {
       // B possede bien la carte comptee, A ne l'a pas.
       const bBefore = await prisma.userCard.findUnique({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdB,
             cardId: delLoserCardId,
-            variant: 'NORMAL',
           },
         },
       })
@@ -1693,10 +1786,9 @@ describe('cycle de vie du duel', () => {
       expect(
         await prisma.userCard.findUnique({
           where: {
-            userId_cardId_variant: {
+            userId_cardId: {
               userId: userIdA,
               cardId: delLoserCardId,
-              variant: 'NORMAL',
             },
           },
         }),
@@ -1721,20 +1813,18 @@ describe('cycle de vie du duel', () => {
       expect(
         await prisma.userCard.findUnique({
           where: {
-            userId_cardId_variant: {
+            userId_cardId: {
               userId: userIdB,
               cardId: delLoserCardId,
-              variant: 'NORMAL',
             },
           },
         }),
       ).toBeNull()
       const aAfter = await prisma.userCard.findUnique({
         where: {
-          userId_cardId_variant: {
+          userId_cardId: {
             userId: userIdA,
             cardId: delLoserCardId,
-            variant: 'NORMAL',
           },
         },
       })

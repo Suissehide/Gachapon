@@ -76,6 +76,7 @@ describe('Gacha routes', () => {
     expect(body.card).toHaveProperty('name')
     expect(body.card).toHaveProperty('rarity')
     expect(body).toHaveProperty('wasDuplicate')
+    expect(typeof body.newFinish).toBe('boolean')
     expect(body).toHaveProperty('dustEarned')
     expect(body).toHaveProperty('tokensRemaining')
   })

@@ -258,19 +258,8 @@ export class DailyShopDomain implements IDailyShopDomain {
         })
 
         await tx.userCard.upsert({
-          where: {
-            userId_cardId_variant: {
-              userId,
-              cardId: item.card.id,
-              variant: 'NORMAL',
-            },
-          },
-          create: {
-            userId,
-            cardId: item.card.id,
-            variant: 'NORMAL',
-            quantity: 1,
-          },
+          where: { userId_cardId: { userId, cardId: item.card.id } },
+          create: { userId, cardId: item.card.id, quantity: 1 },
           update: {
             quantity: { increment: 1 },
           },

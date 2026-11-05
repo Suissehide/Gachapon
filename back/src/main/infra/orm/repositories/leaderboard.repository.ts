@@ -38,13 +38,13 @@ export class LeaderboardRepository implements ILeaderboardRepository {
    * C'est la plus grosse charge de la requête de classement : une ligne par
    * carte possédée par chaque membre de chaque équipe. On n'y sélectionne
    * donc QUE ce que le score consomme — l'identité de la carte, son
-   * propriétaire, sa variante. La rareté et la quantité étaient jointes
+   * propriétaire, ses vernis. La rareté et la quantité étaient jointes
    * pour personne.
    */
   getUserCardsByUserIds(userIds: string[]): Promise<UserCardForScoring[]> {
     return this.#prisma.userCard.findMany({
       where: { userId: { in: userIds } },
-      select: { cardId: true, userId: true, variant: true },
+      select: { cardId: true, userId: true, finishes: true },
     })
   }
 
@@ -62,12 +62,12 @@ export class LeaderboardRepository implements ILeaderboardRepository {
       SELECT
         uc."userId",
         COUNT(DISTINCT uc."cardId") AS "distinctCards",
-        COUNT(*) AS "totalVariants",
+        COUNT(*) + COALESCE(SUM(cardinality(uc."finishes")), 0) AS "totalVariants",
         u."level"
       FROM "UserCard" uc
       JOIN "User" u ON u."id" = uc."userId"
       GROUP BY uc."userId", u."level"
-      ORDER BY COUNT(DISTINCT uc."cardId") DESC, COUNT(*) DESC, uc."userId" ASC
+      ORDER BY COUNT(DISTINCT uc."cardId") DESC, "totalVariants" DESC, uc."userId" ASC
       LIMIT ${limit}
       OFFSET ${offset}
     `
@@ -80,7 +80,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
       SELECT
         uc."userId",
         COUNT(DISTINCT uc."cardId") AS "distinctCards",
-        COUNT(*) AS "totalVariants",
+        COUNT(*) + COALESCE(SUM(cardinality(uc."finishes")), 0) AS "totalVariants",
         u."level"
       FROM "UserCard" uc
       JOIN "User" u ON u."id" = uc."userId"
@@ -108,7 +108,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
       SELECT COUNT(*)::bigint AS count FROM (
         SELECT "userId",
                COUNT(DISTINCT "cardId") AS "d",
-               COUNT(*) AS "v"
+               COUNT(*) + COALESCE(SUM(cardinality("finishes")), 0) AS "v"
         FROM "UserCard"
         GROUP BY "userId"
       ) sub
@@ -260,7 +260,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
         userId: true,
         level: true,
         palier: true,
-        variant: true,
+        finishes: true,
         card: {
           select: {
             baseHp: true,
@@ -291,7 +291,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
         userCardId: uc.id,
         level: uc.level,
         palier: uc.palier,
-        variant: uc.variant,
+        finishes: uc.finishes,
         card: uc.card,
         equipmentBonuses: uc.equipment.map(
           (e) =>

@@ -537,15 +537,22 @@ model UserCard {
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   cardId     String
   card       Card        @relation(fields: [cardId], references: [id])
-  variant    CardVariant @default(NORMAL)
   quantity   Int         @default(1)
   obtainedAt DateTime    @default(now())
+
+  /// Vernis débloqués en plus du NORMAL, toujours implicite : BRILLIANT et/ou
+  /// HOLOGRAPHIC. Tirer une variante ajoute un exemplaire ET débloque son
+  /// vernis ; les bonus de stats se cumulent (finishMultiplier).
+  finishes        CardVariant[] @default([])
+  /// Vernis affiché, choisi par le joueur parmi NORMAL + finishes. Purement
+  /// visuel : les stats suivent finishes, pas ce champ.
+  displayedFinish CardVariant   @default(NORMAL)
 
   level     Int             @default(1)
   palier    Int             @default(1)
   equipment UserEquipment[]
 
-  @@unique([userId, cardId, variant])
+  @@unique([userId, cardId])
 }
 
 model Equipment {

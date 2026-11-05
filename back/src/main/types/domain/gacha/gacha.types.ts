@@ -28,6 +28,8 @@ export type PullResult = {
   pull: GachaPullEntity
   card: CardWithSet
   wasDuplicate: boolean
+  /** Le tirage a débloqué le vernis de sa variante. */
+  newFinish: boolean
   dustEarned: number
   tokensRemaining: number
   pityCurrent: number
@@ -44,6 +46,7 @@ export type PullBatchResult = {
     pull: GachaPullEntity
     card: CardWithSet
     wasDuplicate: boolean
+    newFinish: boolean
     dustEarned: number
     pityCurrent: number
     wasFreePull: boolean

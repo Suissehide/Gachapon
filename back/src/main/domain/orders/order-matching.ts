@@ -48,9 +48,6 @@ function validatePickAndGetCard(
   if (!userCard) {
     throw Boom.badRequest(errorMessage('orders.unknownCard'))
   }
-  if (userCard.variant !== 'NORMAL') {
-    throw Boom.badRequest(errorMessage('orders.variantNotAllowed'))
-  }
   if (!cardMatchesLine(userCard.card, line)) {
     throw Boom.badRequest(
       errorMessage('orders.cardDoesNotMatch', { line: pick.lineIndex + 1 }),

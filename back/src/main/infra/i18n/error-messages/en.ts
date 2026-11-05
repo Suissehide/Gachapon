@@ -54,6 +54,9 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   // --- collection / cards ---
   'collection.cardNotFound': 'Card not found',
   'collection.cardNotOwned': 'You do not own this card',
+  'collection.finishLocked': 'This finish is not unlocked yet',
+  'collection.lastCopyHasFinish':
+    'Cannot recycle the last copy: this card has a finish unlocked',
   'collection.userCardNotFound': 'UserCard not found',
   'cardAscension.maxPalierReached': 'Card already at max palier ({{max}})',
   'cardAscension.notTopOfPalier':
@@ -243,8 +246,6 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
     'The counter took {{cap}} deliveries today — come back tomorrow',
   'orders.unknownCard': 'Card not found in your collection',
   'orders.badLine': 'Line {{line}} does not exist in this order',
-  'orders.variantNotAllowed':
-    'Only normal cards can be delivered (no brilliant or holographic ones)',
   'orders.invalidAmount': 'Delivered amount must be a positive integer',
   'orders.cardDoesNotMatch': 'This card does not match line {{line}}',
   'orders.wouldLeaveZeroCopies':
@@ -343,7 +344,6 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'alchemy.invalidAmount': 'Amount must be a positive integer',
   'alchemy.unknownCard': 'Card not found in your collection',
   'alchemy.wrongRarity': 'Every card must match the selected tier rarity',
-  'alchemy.variantNotAllowed': 'Only normal cards can be transmuted',
   'alchemy.wouldLeaveZeroCopies':
     'Cannot use {{amount}} copies — you would have 0 left (you have {{quantity}})',
   'alchemy.wrongTotal':

@@ -452,6 +452,7 @@ type StepOutcome = {
   pull: Awaited<ReturnType<IGachaPullRepository['createInTx']>>
   card: CardWithSet
   wasDuplicate: boolean
+  newFinish: boolean
   dustEarned: number
   unlockedAchievements: Awaited<
     ReturnType<AchievementsDomainInterface['track']>
@@ -568,6 +569,7 @@ export class GachaDomain implements GachaDomainInterface {
   ): Promise<{
     pull: StepOutcome['pull']
     wasDuplicate: boolean
+    newFinish: boolean
     unlockedAchievements: Unlocks
   }> {
     const variant = pickVariant(
@@ -575,12 +577,8 @@ export class GachaDomain implements GachaDomainInterface {
       cfg.variantRates,
       cfg.upgrades.variantLuckMultiplier ?? 1,
     )
-    const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
-      tx,
-      userId,
-      card.id,
-      variant,
-    )
+    const { wasDuplicate, newFinish } =
+      await this.#userCardRepository.upsertInTx(tx, userId, card.id, variant)
     const pull = await this.#gachaPullRepository.createInTx(tx, {
       userId,
       cardId: card.id,
@@ -600,7 +598,7 @@ export class GachaDomain implements GachaDomainInterface {
         wasDuplicate,
       },
     )
-    return { pull, wasDuplicate, unlockedAchievements }
+    return { pull, wasDuplicate, newFinish, unlockedAchievements }
   }
 
   async #executeSinglePullStep(
@@ -654,7 +652,7 @@ export class GachaDomain implements GachaDomainInterface {
 
     consumeBoosts(boosts, card)
 
-    const { pull, wasDuplicate, unlockedAchievements } =
+    const { pull, wasDuplicate, newFinish, unlockedAchievements } =
       await this.#recordPullInTx(tx, userId, cfg, card, 'TOKEN')
     const dustEarned = 0
     const isLegendary = card.rarity === 'LEGENDARY'
@@ -663,6 +661,7 @@ export class GachaDomain implements GachaDomainInterface {
       pull,
       card,
       wasDuplicate,
+      newFinish,
       dustEarned,
       unlockedAchievements,
       nextPity,
@@ -838,6 +837,7 @@ export class GachaDomain implements GachaDomainInterface {
       pull: step.pull,
       card: step.card,
       wasDuplicate: step.wasDuplicate,
+      newFinish: step.newFinish,
       dustEarned: step.dustEarned,
       tokensRemaining: finalTokens,
       pityCurrent: step.nextPity,
@@ -961,6 +961,7 @@ export class GachaDomain implements GachaDomainInterface {
         pull: s.pull,
         card: s.card,
         wasDuplicate: s.wasDuplicate,
+        newFinish: s.newFinish,
         dustEarned: s.dustEarned,
         pityCurrent: s.nextPity,
         wasFreePull: stepFreePulls[idx] ?? false,
@@ -1032,7 +1033,7 @@ export class GachaDomain implements GachaDomainInterface {
         capsulePity,
         pity.threshold,
       )
-      const { pull, wasDuplicate, unlockedAchievements } =
+      const { pull, wasDuplicate, newFinish, unlockedAchievements } =
         await this.#recordPullInTx(
           tx,
           userId,
@@ -1048,6 +1049,7 @@ export class GachaDomain implements GachaDomainInterface {
         pull,
         card,
         wasDuplicate,
+        newFinish,
         dustEarned: 0,
         pityCurrent: capsulePity,
         wasFreePull: preRolledFree[i] ?? false,

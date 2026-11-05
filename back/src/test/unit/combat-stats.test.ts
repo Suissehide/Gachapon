@@ -24,7 +24,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 1,
       palier: 1,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
     })
     expect(stats).toEqual({
@@ -45,7 +45,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 10,
       palier: 1,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
     })
     // hp 200 × 1.81 = 362
@@ -53,26 +53,37 @@ describe('combat-stats: computeFinalStats', () => {
     expect(stats.atk).toBe(36) // round(20 × 1.81) = round(36.2)
   })
 
-  it('applies variant multiplier (BRILLIANT ×1.15)', () => {
+  it('applique le vernis brillant (×1,08)', () => {
     const stats = computeFinalStats({
       ...BASE,
       level: 1,
       palier: 1,
-      variant: 'BRILLIANT',
+      finishes: ['BRILLIANT'],
+      baseStats: BASES_COMBAT,
+    })
+    expect(stats.hp).toBe(216) // 200 × 1.08
+  })
+
+  it('applique le vernis holo (×1,15)', () => {
+    const stats = computeFinalStats({
+      ...BASE,
+      level: 1,
+      palier: 1,
+      finishes: ['HOLOGRAPHIC'],
       baseStats: BASES_COMBAT,
     })
     expect(stats.hp).toBe(230) // 200 × 1.15
   })
 
-  it('applies HOLOGRAPHIC ×1.30', () => {
+  it('cumule les vernis brillant et holo (×1,08 × ×1,15)', () => {
     const stats = computeFinalStats({
       ...BASE,
       level: 1,
       palier: 1,
-      variant: 'HOLOGRAPHIC',
+      finishes: ['BRILLIANT', 'HOLOGRAPHIC'],
       baseStats: BASES_COMBAT,
     })
-    expect(stats.hp).toBe(260) // 200 × 1.30
+    expect(stats.hp).toBe(248) // 200 × 1.242 = 248.4
   })
 
   it('compounds palier ascension bonus (+15% per palier)', () => {
@@ -81,7 +92,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 1,
       palier: 2,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
     })
     expect(palier2.hp).toBe(230) // 200 × 1.15
@@ -90,24 +101,24 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 1,
       palier: 6,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
     })
     // 200 × 1.15^5 ≈ 402.27
     expect(palier6.hp).toBe(402)
   })
 
-  it('combines level + variant + palier multiplicatively', () => {
-    // level 10 (+81 %), HOLOGRAPHIC (×1.30), palier 2 (×1.15)
-    // 200 × 1.81 × 1.30 × 1.15 = 541.19 → 541
+  it('combines level + finishes + palier multiplicatively', () => {
+    // level 10 (+81 %), brillant + holo (×1.08 × ×1.15), palier 2 (×1.15)
+    // 200 × 1.81 × 1.242 × 1.15 = 517.04 → 517
     const stats = computeFinalStats({
       ...BASE,
       level: 10,
       palier: 2,
-      variant: 'HOLOGRAPHIC',
+      finishes: ['BRILLIANT', 'HOLOGRAPHIC'],
       baseStats: BASES_COMBAT,
     })
-    expect(stats.hp).toBe(541)
+    expect(stats.hp).toBe(517)
   })
 
   it('adds equipment flat bonuses', () => {
@@ -115,7 +126,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 1,
       palier: 1,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
       equipment: [
         { atkFlat: 5 },
@@ -131,7 +142,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 1,
       palier: 1,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
       equipment: [
         { atkFlat: 10, atkPct: 10 },
@@ -146,7 +157,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 1,
       palier: 1,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
       equipment: [
         { hpPct: 5 },
@@ -162,7 +173,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 1,
       palier: 1,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
     })
     expect(stats.hp).toBe(200)
@@ -173,7 +184,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 1,
       palier: 1,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
       equipment: [{ atkFlat: 10 }],
       skillModifiers: { atkPct: 20 },
@@ -187,7 +198,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 1,
       palier: 1,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
     })
     expect(stats.atk).toBe(20)
@@ -198,7 +209,7 @@ describe('combat-stats: computeFinalStats', () => {
       ...BASE,
       level: 2, // +9 % → 21.8
       palier: 1,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: BASES_COMBAT,
     })
     expect(stats.atk).toBe(22)
@@ -212,7 +223,7 @@ describe('combat-stats: computeFinalStats', () => {
 describe('combat-stats: nouvelles stats', () => {
   it('retourne les valeurs de base sans équipement', () => {
     const s = computeFinalStats({
-      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
     })
     expect(s.critRate).toBe(5)
     expect(s.critDmg).toBe(150)
@@ -220,9 +231,9 @@ describe('combat-stats: nouvelles stats', () => {
     expect(s.lifesteal).toBe(0)
   })
 
-  it('ne les multiplie NI par le niveau NI par le palier NI par la variante', () => {
+  it('ne les multiplie NI par le niveau NI par le palier NI par les vernis', () => {
     const s = computeFinalStats({
-      ...BASE, level: 70, palier: 7, variant: 'HOLOGRAPHIC', baseStats: BASES_COMBAT,
+      ...BASE, level: 70, palier: 7, finishes: ['BRILLIANT', 'HOLOGRAPHIC'], baseStats: BASES_COMBAT,
     })
     expect(s.critRate).toBe(5)
     expect(s.critDmg).toBe(150)
@@ -230,7 +241,7 @@ describe('combat-stats: nouvelles stats', () => {
 
   it('additionne les bonus d équipement en points de pourcentage', () => {
     const s = computeFinalStats({
-      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
       equipment: [{ critRatePct: 12 }, { critRatePct: 8, critDmgPct: 25 }],
     })
     expect(s.critRate).toBe(25) // 5 + 12 + 8
@@ -239,7 +250,7 @@ describe('combat-stats: nouvelles stats', () => {
 
   it('cape critRate à 100', () => {
     const s = computeFinalStats({
-      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
       equipment: [{ critRatePct: 200 }],
     })
     expect(s.critRate).toBe(100)
@@ -247,7 +258,7 @@ describe('combat-stats: nouvelles stats', () => {
 
   it('ne cape ni critDmg ni lifesteal', () => {
     const s = computeFinalStats({
-      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
       equipment: [{ critDmgPct: 500, lifestealPct: 120 }],
     })
     expect(s.critDmg).toBe(650)
@@ -256,7 +267,7 @@ describe('combat-stats: nouvelles stats', () => {
 
   it('cumule armorPen par source, sur la DEF restante', () => {
     const s = computeFinalStats({
-      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
       equipment: [{ armorPenPct: 60 }, { armorPenPct: 60 }],
     })
     expect(s.armorPen).toBeCloseTo(stackArmorPen([BASES_COMBAT.armorPen, 60, 60]))
@@ -292,10 +303,10 @@ describe('bonus de set appliqués aux stats finales', () => {
   it('un set complet de 4 (Fureur) augmente le critDmg de la carte', () => {
     const setBonus = computeSetBonuses(Array(4).fill('FUREUR'), defs)
     const sans = computeFinalStats({
-      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
     })
     const avec = computeFinalStats({
-      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
       equipment: [setBonus],
     })
     expect(avec.critDmg).toBe(sans.critDmg + 35)
@@ -304,7 +315,7 @@ describe('bonus de set appliqués aux stats finales', () => {
   it('un set complet de 3 (Assaut) augmente l ATQ de la carte', () => {
     const setBonus = computeSetBonuses(Array(3).fill('ASSAUT'), defs)
     const avec = computeFinalStats({
-      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
       equipment: [setBonus],
     })
     expect(avec.atk).toBe(23) // 20 × (1 + 16/100) = 23.2
@@ -314,7 +325,7 @@ describe('bonus de set appliqués aux stats finales', () => {
     // Fureur exige 4 pièces : 3 ne déclenchent aucun palier intermédiaire.
     const setBonus = computeSetBonuses(Array(3).fill('FUREUR'), defs)
     const avec = computeFinalStats({
-      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
       equipment: [setBonus],
     })
     expect(avec.atk).toBe(20)
@@ -327,7 +338,7 @@ describe('bonus de set appliqués aux stats finales', () => {
     const bonusCarteB = computeSetBonuses(['FUREUR', 'FUREUR'], defs)
     for (const bonus of [bonusCarteA, bonusCarteB]) {
       const stats = computeFinalStats({
-        ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+        ...BASE, level: 1, palier: 1, finishes: [], baseStats: BASES_COMBAT,
         equipment: [bonus],
       })
       expect(stats.critDmg).toBe(BASES_COMBAT.critDmg)
@@ -337,9 +348,9 @@ describe('bonus de set appliqués aux stats finales', () => {
 
 describe('défense : repères de fin de jeu', () => {
   const DEFENSE_K = 1000
-  const defTank = (variant: 'NORMAL' | 'HOLOGRAPHIC', equipment = [{}]) =>
+  const defTank = (finishes: ('BRILLIANT' | 'HOLOGRAPHIC')[], equipment = [{}]) =>
     computeFinalStats({
-      ...PROFILS.Tank, level: 70, palier: 7, variant, equipment, baseStats: BASES_COMBAT,
+      ...PROFILS.Tank, level: 70, palier: 7, finishes, equipment, baseStats: BASES_COMBAT,
     }).def
   const mainStat = (stat: 'defFlat' | 'defPct', rarity: string) => {
     const piece = buildEquipmentCatalog().find(
@@ -352,12 +363,12 @@ describe('défense : repères de fin de jeu', () => {
   }
 
   it('DEF % bat DEF plate en fin de jeu, pour chaque rareté', () => {
-    const nue = damageReduction(defTank('NORMAL'), DEFENSE_K)
+    const nue = damageReduction(defTank([]), DEFENSE_K)
     for (const rarity of ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']) {
       const gainPct =
-        damageReduction(defTank('NORMAL', [mainStat('defPct', rarity)]), DEFENSE_K) - nue
+        damageReduction(defTank([], [mainStat('defPct', rarity)]), DEFENSE_K) - nue
       const gainFlat =
-        damageReduction(defTank('NORMAL', [mainStat('defFlat', rarity)]), DEFENSE_K) - nue
+        damageReduction(defTank([], [mainStat('defFlat', rarity)]), DEFENSE_K) - nue
       expect(gainPct).toBeGreaterThanOrEqual(2 * gainFlat)
     }
   })
@@ -373,7 +384,7 @@ describe('défense : repères de fin de jeu', () => {
         mainStat('defPct', 'LEGENDARY'), EQUIP_MAX_LEVEL, [{ key: 'defPct', value: 12 }],
       )
     const autres = Array.from({ length: 4 }, () => ({ defPct: 12 }))
-    const def = defTank('HOLOGRAPHIC', [principale(), principale(), principale(), ...autres])
+    const def = defTank(['BRILLIANT', 'HOLOGRAPHIC'], [principale(), principale(), principale(), ...autres])
     expect(damageReduction(def, DEFENSE_K)).toBeLessThanOrEqual(0.8)
   })
 })

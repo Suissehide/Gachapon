@@ -162,29 +162,13 @@ export class ProfileDomain implements ProfileDomainInterface {
       throw Boom.notFound(errorMessage('user.notFound'))
     }
     const owned = await this.#userCardRepository.findByUser(user.id)
-    // Prefer the rarer variant when the same cardId is owned in multiple variants.
-    const variantPriority: Record<string, number> = {
-      HOLOGRAPHIC: 2,
-      BRILLIANT: 1,
-      NORMAL: 0,
-    }
-    const byCardId = new Map<string, (typeof owned)[number]>()
-    for (const uc of owned) {
-      const current = byCardId.get(uc.card.id)
-      if (
-        !current ||
-        (variantPriority[uc.variant] ?? 0) >
-          (variantPriority[current.variant] ?? 0)
-      ) {
-        byCardId.set(uc.card.id, uc)
-      }
-    }
-    const uniqueOwned = Array.from(byCardId.values()).map((uc) => ({
+    // Une ligne par carte : la vitrine montre le vernis choisi par le joueur.
+    const uniqueOwned = owned.map((uc) => ({
       id: uc.card.id,
       name: uc.card.name,
       imageUrl: uc.card.imageUrl,
       rarity: uc.card.rarity,
-      variant: uc.variant,
+      variant: uc.displayedFinish,
       setId: uc.card.set.id,
       setName: uc.card.set.name,
     }))

@@ -50,7 +50,7 @@ describe('Equipment salvage route', () => {
       },
     })
     const uc = await postgresOrm.prisma.userCard.create({
-      data: { userId: user.id, cardId: card.id, variant: 'NORMAL' },
+      data: { userId: user.id, cardId: card.id },
     })
 
     // Une seule pièce est équipée (epic, seule sur la carte) : pas de palier

@@ -1,8 +1,4 @@
-import type {
-  CardElement,
-  CardRarity,
-  CardVariant,
-} from '../../../../generated/client'
+import type { CardElement, CardRarity } from '../../../../generated/client'
 
 /** Une ligne de commande : `quantity` cartes de `rarity`, filtrées au plus par
  *  un élément OU un set. */
@@ -34,7 +30,6 @@ export type MatchableCard = {
 export type MatchableUserCard = {
   id: string
   quantity: number
-  variant: CardVariant
   card: MatchableCard
 }
 

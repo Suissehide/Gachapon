@@ -25,8 +25,8 @@ const MARKET = {
   LEGENDARY: DEFAULTS.dailyShopPriceLegendary,
 } as const
 
-const uc = (id: string, quantity: number, rarity = 'COMMON', variant = 'NORMAL') =>
-  [id, { id, quantity, variant, card: { rarity } }] as const
+const uc = (id: string, quantity: number, rarity = 'COMMON') =>
+  [id, { id, quantity, card: { rarity } }] as const
 const mapOf = (...e: ReturnType<typeof uc>[]) => new Map(e as never)
 
 describe('recettes', () => {
@@ -78,10 +78,9 @@ describe('validateIngredients', () => {
     }
   })
 
-  it('refuse une carte inconnue, d\'une autre rareté, ou non normale', () => {
+  it('refuse une carte inconnue ou d\'une autre rareté', () => {
     expect(() => validateIngredients('COMMON', [{ userCardId: 'z', amount: 5 }], mapOf(uc('a', 9)), 5)).toThrow()
     expect(() => validateIngredients('COMMON', [{ userCardId: 'a', amount: 5 }], mapOf(uc('a', 9, 'RARE')), 5)).toThrow()
-    expect(() => validateIngredients('COMMON', [{ userCardId: 'a', amount: 5 }], mapOf(uc('a', 9, 'COMMON', 'BRILLIANT')), 5)).toThrow()
   })
 
   it('protège le dernier exemplaire, y compris sur des picks répétés (Review Focus 1)', () => {

@@ -73,7 +73,7 @@ export async function buildPlayerSimUnits(
         baseSpd: u.card.baseSpd,
         level: u.level,
         palier: u.palier,
-        variant: u.variant,
+        finishes: u.finishes,
         pieces: u.equipment.map((ue) => ({
           bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
           level: ue.level,
@@ -89,7 +89,7 @@ export async function buildPlayerSimUnits(
         name: u.card.name,
         imageUrl: u.card.imageUrl ? opts.publicUrl(u.card.imageUrl) : null,
         rarity: u.card.rarity,
-        variant: u.variant,
+        variant: u.displayedFinish,
         setName: u.card.set?.name ?? null,
         level: u.level,
         hp: stats.hp,
@@ -125,7 +125,7 @@ export function buildEnemySimUnits(
       baseSpd: e.baseSpd,
       level: e.level,
       palier: e.palier,
-      variant: 'NORMAL',
+      finishes: [],
       baseStats: {
         critRate: e.critRate ?? opts.baseStats.critRate,
         critDmg: e.critDmg ?? opts.baseStats.critDmg,

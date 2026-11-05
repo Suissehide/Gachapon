@@ -211,7 +211,6 @@ export class OrdersDomain implements IOrdersDomain {
           id: true,
           cardId: true,
           quantity: true,
-          variant: true,
           card: {
             select: {
               rarity: true,
@@ -238,13 +237,12 @@ export class OrdersDomain implements IOrdersDomain {
     }
     // Une carte engagée dans un duel actif n'est jamais livrable : elle ne
     // sert donc pas de graine à une commande « faisable ».
-    const engaged = await this.#duelDomain.listEngagedCardKeysInTx(tx, userId)
+    const engaged = await this.#duelDomain.listEngagedCardIdsInTx(tx, userId)
     const duplicates: DuplicateStack[] = owned
       .filter(
         (u) =>
-          u.variant === 'NORMAL' &&
           u.quantity > 1 &&
-          !engaged.has(`${u.cardId}:${u.variant}`) &&
+          !engaged.has(u.cardId) &&
           !isAstralElement(u.card.element),
       )
       .map((u) => ({
@@ -297,7 +295,7 @@ export class OrdersDomain implements IOrdersDomain {
           },
         }),
         prisma.userCard.findMany({
-          where: { userId, variant: 'NORMAL', quantity: { gt: 1 } },
+          where: { userId, quantity: { gt: 1 } },
           include: { card: { include: { set: true } } },
         }),
         Promise.all(
@@ -309,12 +307,12 @@ export class OrdersDomain implements IOrdersDomain {
             }),
           ),
         ),
-        this.#duelDomain.listEngagedCardKeysInTx(prisma, userId),
+        this.#duelDomain.listEngagedCardIdsInTx(prisma, userId),
       ],
     )
     const deliveriesLeft = Math.max(0, cfg['orders.dailyCap'] - delivered)
     const stacks = owned
-      .filter((u) => !engaged.has(`${u.cardId}:${u.variant}`))
+      .filter((u) => !engaged.has(u.cardId))
       .map((u) => ({
         userCardId: u.id,
         cardId: u.cardId,
@@ -508,7 +506,6 @@ export class OrdersDomain implements IOrdersDomain {
               id: true,
               cardId: true,
               quantity: true,
-              variant: true,
               card: { select: { rarity: true, element: true, setId: true } },
             },
           })
@@ -517,11 +514,11 @@ export class OrdersDomain implements IOrdersDomain {
             picks,
             new Map(userCards.map((u) => [u.id, u as MatchableUserCard])),
           )
-          const engaged = await this.#duelDomain.listEngagedCardKeysInTx(
+          const engaged = await this.#duelDomain.listEngagedCardIdsInTx(
             tx,
             userId,
           )
-          if (userCards.some((u) => engaged.has(`${u.cardId}:${u.variant}`))) {
+          if (userCards.some((u) => engaged.has(u.cardId))) {
             throw Boom.conflict(errorMessage('wagers.cardEngagedInActiveDuel'))
           }
           await this.#applyDelivery(tx, userId, order, picks)

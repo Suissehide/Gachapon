@@ -20,18 +20,18 @@ export type TeamForRanking = {
   memberIds: string[]
 }
 
-/** Le strict nécessaire au score d'équipe : cartes distinctes et variantes. */
+/** Le strict nécessaire au score d'équipe : cartes distinctes et vernis. */
 export type UserCardForScoring = {
   cardId: string
   userId: string
-  variant: CardVariant
+  finishes: CardVariant[]
 }
 
 export type CombatTeamCardForPower = {
   userCardId: string
   level: number
   palier: number
-  variant: CardVariant
+  finishes: CardVariant[]
   card: { baseHp: number; baseAtk: number; baseDef: number; baseSpd: number }
   equipmentBonuses: Record<string, number | undefined>[]
   /** Clés de set des pièces portées par cette carte — comptage par carte. */

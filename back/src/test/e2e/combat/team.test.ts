@@ -64,7 +64,6 @@ describe('Combat team routes', () => {
       data: {
         userId: user.id,
         cardId: card1.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 1,
         palier: 1,
@@ -74,7 +73,8 @@ describe('Combat team routes', () => {
       data: {
         userId: user.id,
         cardId: card2.id,
-        variant: 'HOLOGRAPHIC',
+        finishes: ['HOLOGRAPHIC'],
+        displayedFinish: 'HOLOGRAPHIC',
         quantity: 1,
         level: 5,
         palier: 2,
@@ -95,7 +95,6 @@ describe('Combat team routes', () => {
       data: {
         userId: other.id,
         cardId: card1.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 1,
         palier: 1,
