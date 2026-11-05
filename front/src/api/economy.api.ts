@@ -61,6 +61,8 @@ export interface EconomyConfig {
     rarityMult: Record<CardRarityKey, number>
     statGrowthPerLevel: number
     ascensionStatBonus: number
+    /** Bonus de stats de chaque vernis débloqué, cumulés entre eux. */
+    finishMult: { BRILLIANT: number; HOLOGRAPHIC: number }
     maxPalier: number
   }
   combat: {

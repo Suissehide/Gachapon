@@ -17,7 +17,8 @@
       "loadCollection": "Error loading the collection",
       "convertToDust": "Error converting to dust",
       "levelUp": "Error leveling up",
-      "ascend": "Error ascending"
+      "ascend": "Error ascending",
+      "setFinish": "Could not change the finish"
     }
   },
   "filters": {
@@ -35,7 +36,8 @@
     "variant": {
       "normal": "Normal",
       "holographic": "Holo",
-      "brilliant": "Brilliant"
+      "brilliant": "Brilliant",
+      "missing": "Missing finishes"
     },
     "sort": {
       "default": "Default",
@@ -46,14 +48,14 @@
     },
     "labels": {
       "rarity": "Rarity",
-      "variant": "Type",
+      "variant": "Finish",
       "element": "Element",
       "archetype": "Archetype",
       "sort": "Sort"
     }
   },
   "section": {
-    "counts": "CARDS {{distinctCards}}/{{totalCards}} · VARIANTS {{ownedVariants}}/{{totalVariants}}"
+    "counts": "CARDS {{distinctCards}}/{{totalCards}} · FINISHES {{ownedVariants}}/{{totalVariants}}"
   },
   "card": {
     "newBadge": "NEW",
@@ -71,8 +73,6 @@
   },
   "recycleModal": {
     "title": "Recycle cards",
-    "variantHolographic": "🌈 Holographic",
-    "variantBrilliant": "✨ Brilliant",
     "perCopy": "per copy",
     "copiesAvailable_one": "copy",
     "copiesAvailable_other": "copies",
@@ -87,7 +87,7 @@
   },
   "recycleAllModal": {
     "title": "Recycle everything",
-    "intro": "Recycle every duplicate (normal variant) up to the chosen rarity in one go. One copy of each card is kept, brilliants and holographics are left untouched.",
+    "intro": "Recycle every duplicate up to the chosen rarity in one go. One copy of each card is kept, with its finishes.",
     "thresholdLabel": "Up to rarity",
     "youWillGet": "You will get",
     "duplicatesBreakdown_one": "{{count}} duplicate recycled · multiplier bonus excluded",
@@ -206,7 +206,7 @@
     "breadcrumbCollection": "Collection",
     "title": "My collection",
     "statsCards": "Cards:",
-    "statsVariants": "· Variants:",
+    "statsVariants": "· Finishes:",
     "recycleAll": "Recycle everything",
     "noMatch": "No card matches these filters."
   },
@@ -215,5 +215,11 @@
     "title": "{{username}}'s collection",
     "cardsCount_one": "{{owned}} / {{count}} card",
     "cardsCount_other": "{{owned}} / {{count}} cards"
+  },
+  "finish": {
+    "groupLabel": "Displayed finish",
+    "unlocked": "{{label}}: finish unlocked, click to display it",
+    "locked": "{{label}}: pull this variant to unlock this finish",
+    "bonus": "+{{pct}}%"
   }
 }

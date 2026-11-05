@@ -69,7 +69,7 @@ export function RecycleAllModal({
     let copies = 0
     let dust = 0
     for (const uc of userCards) {
-      if (uc.variant !== 'NORMAL' || uc.quantity <= 1) {
+      if (uc.quantity <= 1) {
         continue
       }
       if (!allowed.includes(uc.card.rarity)) {

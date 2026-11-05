@@ -165,7 +165,10 @@ export type Card = {
 export type UserCard = {
   id: string
   card: Card
-  variant: CardVariant
+  /** Vernis débloqués en plus du NORMAL, toujours implicite. */
+  finishes: CardVariant[]
+  /** Vernis affiché, choisi par le joueur ; les stats suivent `finishes`. */
+  displayedFinish: CardVariant
   quantity: number
   level: number
   palier: number

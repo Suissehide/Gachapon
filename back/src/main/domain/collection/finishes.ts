@@ -4,7 +4,7 @@ import type { CardVariant } from '../../types/domain/gacha/gacha.types'
  * Bonus de stats (PV/ATK/DEF de base) de chaque vernis débloqué. Le NORMAL est
  * implicite et neutre ; brillant et holo se CUMULENT (×1,08 × ×1,15 ≈ ×1,242).
  */
-const FINISH_MULT: Record<CardVariant, number> = {
+export const FINISH_MULT: Record<CardVariant, number> = {
   NORMAL: 1,
   BRILLIANT: 1.08,
   HOLOGRAPHIC: 1.15,

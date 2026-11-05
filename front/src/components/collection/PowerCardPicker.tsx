@@ -95,7 +95,8 @@ export function PowerCardPicker({
             <CollectionCard
               key={uc.id}
               card={uc.card}
-              variant={uc.variant}
+              variant={uc.displayedFinish}
+              finishes={uc.finishes}
               // Pas de pastille ×N : les doublons n'ont pas de sens ici.
               quantity={1}
               isOwned

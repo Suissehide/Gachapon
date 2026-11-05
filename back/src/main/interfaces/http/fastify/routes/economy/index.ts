@@ -5,6 +5,7 @@ import {
   MAX_PALIER,
   STAT_GROWTH_PER_LEVEL,
 } from '../../../../../domain/card-leveling/card-leveling.domain'
+import { FINISH_MULT } from '../../../../../domain/collection/finishes'
 import { ASCENSION_STAT_BONUS } from '../../../../../domain/combat/combat-stats.domain'
 import {
   EQUIP_LEVEL_SCALE,
@@ -66,6 +67,7 @@ const economyConfigResponseSchema = z.object({
     rarityMult: rarityRecordSchema,
     statGrowthPerLevel: z.number(),
     ascensionStatBonus: z.number(),
+    finishMult: z.object({ BRILLIANT: z.number(), HOLOGRAPHIC: z.number() }),
     maxPalier: z.number(),
   }),
   combat: z.object({
@@ -260,6 +262,10 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           },
           statGrowthPerLevel: STAT_GROWTH_PER_LEVEL,
           ascensionStatBonus: ASCENSION_STAT_BONUS,
+          finishMult: {
+            BRILLIANT: FINISH_MULT.BRILLIANT,
+            HOLOGRAPHIC: FINISH_MULT.HOLOGRAPHIC,
+          },
           maxPalier: MAX_PALIER,
         },
         combat: {

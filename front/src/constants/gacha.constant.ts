@@ -13,6 +13,8 @@ export type PullResult = {
     set: { id: string; name: string }
   }
   wasDuplicate: boolean
+  /** Le tirage a débloqué le vernis de sa variante (tirages seulement). */
+  newFinish?: boolean
   dustEarned: number
   tokensRemaining: number
   pityCurrent: number
@@ -63,6 +65,7 @@ export type PullBatchEntry = {
     set: { id: string; name: string }
   }
   wasDuplicate: boolean
+  newFinish?: boolean
   dustEarned: number
   pityCurrent: number
   wasFreePull: boolean

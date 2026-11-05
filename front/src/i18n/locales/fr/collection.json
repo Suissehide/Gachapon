@@ -17,7 +17,8 @@
       "loadCollection": "Erreur lors de la récupération de la collection",
       "convertToDust": "Erreur lors de la conversion en poussière",
       "levelUp": "Erreur lors du level up",
-      "ascend": "Erreur lors de l'ascension"
+      "ascend": "Erreur lors de l'ascension",
+      "setFinish": "Erreur lors du changement de vernis"
     }
   },
   "filters": {
@@ -35,7 +36,8 @@
     "variant": {
       "normal": "Normal",
       "holographic": "Holo",
-      "brilliant": "Brillante"
+      "brilliant": "Brillante",
+      "missing": "Vernis manquants"
     },
     "sort": {
       "default": "Par défaut",
@@ -46,14 +48,14 @@
     },
     "labels": {
       "rarity": "Rareté",
-      "variant": "Type",
+      "variant": "Vernis",
       "element": "Élément",
       "archetype": "Archétype",
       "sort": "Tri"
     }
   },
   "section": {
-    "counts": "CARTES {{distinctCards}}/{{totalCards}} · VARIANTES {{ownedVariants}}/{{totalVariants}}"
+    "counts": "CARTES {{distinctCards}}/{{totalCards}} · VERNIS {{ownedVariants}}/{{totalVariants}}"
   },
   "card": {
     "newBadge": "NOUVEAU",
@@ -71,8 +73,6 @@
   },
   "recycleModal": {
     "title": "Recycler des cartes",
-    "variantHolographic": "🌈 Holographique",
-    "variantBrilliant": "✨ Brillante",
     "perCopy": "par copie",
     "copiesAvailable_one": "exemplaire",
     "copiesAvailable_other": "exemplaires",
@@ -87,7 +87,7 @@
   },
   "recycleAllModal": {
     "title": "Tout recycler",
-    "intro": "Recycle d'un coup tous les doublons (variante normale) jusqu'à la rareté choisie. Un exemplaire de chaque carte est conservé, les brillantes et holographiques ne sont pas touchées.",
+    "intro": "Recycle d'un coup tous les doublons jusqu'à la rareté choisie. Un exemplaire de chaque carte est conservé, avec ses vernis.",
     "thresholdLabel": "Jusqu'à la rareté",
     "youWillGet": "Tu obtiendras",
     "duplicatesBreakdown_one": "{{count}} doublon recyclé · hors bonus multiplicateur",
@@ -206,7 +206,7 @@
     "breadcrumbCollection": "Collection",
     "title": "Ma collection",
     "statsCards": "Cartes :",
-    "statsVariants": "· Variantes :",
+    "statsVariants": "· Vernis :",
     "recycleAll": "Tout recycler",
     "noMatch": "Aucune carte ne correspond à ces filtres."
   },
@@ -215,5 +215,11 @@
     "title": "Collection de {{username}}",
     "cardsCount_one": "{{owned}} / {{count}} carte",
     "cardsCount_other": "{{owned}} / {{count}} cartes"
+  },
+  "finish": {
+    "groupLabel": "Vernis affiché",
+    "unlocked": "{{label}} : vernis débloqué, clique pour l'afficher",
+    "locked": "{{label}} : tire cette variante pour débloquer ce vernis",
+    "bonus": "+{{pct}} %"
   }
 }

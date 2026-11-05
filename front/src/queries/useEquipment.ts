@@ -206,7 +206,7 @@ export function useCardsByPower() {
         cardPower(
           uc.card,
           uc.level,
-          uc.variant,
+          uc.finishes,
           uc.palier,
           aggregateEquipmentBonuses(
             items,

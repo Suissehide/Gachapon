@@ -54,7 +54,7 @@ export type LabTotals = Record<LabStat, number> & { power: number }
 export type LabContext = {
   card: Card
   level: number
-  variant: CardVariant
+  finishes: CardVariant[]
   palier: number
   userCardId: string
   levelScale: number
@@ -77,7 +77,7 @@ export function labTotals(
   const s = displayStats(
     ctx.card,
     ctx.level,
-    ctx.variant,
+    ctx.finishes,
     ctx.palier,
     bonuses,
     ctx.curve,
@@ -98,7 +98,7 @@ export function labBase(ctx: LabContext): LabTotals {
   const b = displayStatBases(
     ctx.card,
     ctx.level,
-    ctx.variant,
+    ctx.finishes,
     ctx.palier,
     ctx.curve,
   )

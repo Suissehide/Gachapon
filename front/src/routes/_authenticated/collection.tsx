@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
-import type { Card, CardVariant } from '../../api/collection.api.ts'
+import type { CardVariant } from '../../api/collection.api.ts'
 import { CardViewModal } from '../../components/collection/CardViewModal.tsx'
 import {
   RARITY_LABELS,
@@ -18,12 +18,22 @@ import {
   type OwnershipFilter,
   type RarityFilter,
   type SortMode,
-  type VariantFilter,
 } from '../../components/collection/CollectionFilters.tsx'
 import {
   CollectionSection,
   computeSectionStats,
 } from '../../components/collection/CollectionSection.tsx'
+import {
+  buildDisplayEntries,
+  type DisplayEntry,
+  entryKeyFromSearch,
+  FINISH_FILTER_VALUES,
+  type FinishFilter,
+  finishesPerCard,
+  matchesFinishFilter,
+  ownedFinishCount,
+  sortEntries,
+} from '../../components/collection/collectionEntries.ts'
 import { RecycleAllModal } from '../../components/collection/RecycleAllModal.tsx'
 import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
@@ -36,10 +46,10 @@ import {
   ELEMENT_ORDER,
 } from '../../constants/card.constant.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
-import { currentLocale } from '../../i18n/index.ts'
 import {
   type UserCard,
   useCards,
+  useSetDisplayedFinish,
   useUserCollection,
 } from '../../queries/useCollection'
 import {
@@ -54,69 +64,8 @@ import { useMyDuel } from '../../queries/useMyDuel.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import {
   aggregateEquipmentBonuses,
-  cardPower,
-  emptyStatBonuses,
   type StatBonuses,
-  type StatCurve,
 } from '../../utils/cardStats.ts'
-
-export type DisplayEntry = {
-  key: string
-  card: Card
-  variant: CardVariant
-  quantity: number
-  isOwned: boolean
-  userCard: UserCard | null
-}
-
-// Puissance d'une entrée, équipement inclus. `bonusByCardId` mappe l'id de
-// carte possédée vers ses bonus d'équipement ; absent (ex. collection d'un
-// autre joueur, dont on ne connaît pas l'équipement), on retombe sur la
-// puissance de base. Les non-possédées renvoient -1 pour tomber en fin de
-// groupe sur le tri décroissant.
-function entryPower(
-  e: DisplayEntry,
-  curve: StatCurve,
-  bonusByCardId?: Map<string, StatBonuses>,
-): number {
-  const uc = e.userCard
-  if (!uc) {
-    return -1
-  }
-  const bonuses = bonusByCardId?.get(uc.id) ?? emptyStatBonuses()
-  return cardPower(e.card, uc.level, e.variant, uc.palier, bonuses, curve)
-}
-
-// Tri appliqué à l'intérieur de chaque groupe. `default` préserve l'ordre
-// existant ; les entrées non possédées (level/quantity absents) tombent en
-// fin de groupe pour les tris numériques.
-export function sortEntries(
-  entries: DisplayEntry[],
-  sort: SortMode,
-  curve: StatCurve,
-  bonusByCardId?: Map<string, StatBonuses>,
-): DisplayEntry[] {
-  if (sort === 'default') {
-    return entries
-  }
-  const sorted = [...entries]
-  if (sort === 'power') {
-    sorted.sort(
-      (a, b) =>
-        entryPower(b, curve, bonusByCardId) -
-        entryPower(a, curve, bonusByCardId),
-    )
-  } else if (sort === 'level') {
-    sorted.sort((a, b) => (b.userCard?.level ?? 0) - (a.userCard?.level ?? 0))
-  } else if (sort === 'copies') {
-    sorted.sort((a, b) => b.quantity - a.quantity)
-  } else {
-    sorted.sort((a, b) =>
-      a.card.name.localeCompare(b.card.name, currentLocale()),
-    )
-  }
-  return sorted
-}
 
 export const Route = createFileRoute('/_authenticated/collection')({
   // `card` = clé de l'entrée dont la fiche est ouverte : l'atelier
@@ -141,10 +90,10 @@ function Collection() {
     'all',
     ['all', ...RARITY_ORDER],
   )
-  const [variant, setVariant] = useStoredState<VariantFilter>(
+  const [variant, setVariant] = useStoredState<FinishFilter>(
     'collection-filters/variant',
     'all',
-    ['all', 'NORMAL', 'HOLOGRAPHIC', 'BRILLIANT'],
+    FINISH_FILTER_VALUES,
   )
   const [element, setElement] = useStoredState<ElementFilter>(
     'collection-filters/element',
@@ -208,62 +157,31 @@ function Collection() {
     return map
   }, [equipData?.items, setsData, userCards, economy.equip.levelScale])
 
-  const displayEntries = useMemo((): DisplayEntry[] => {
-    const ownedByCardId = new Map<string, UserCard[]>()
-    for (const uc of userCards) {
-      const existing = ownedByCardId.get(uc.card.id) ?? []
-      existing.push(uc)
-      ownedByCardId.set(uc.card.id, existing)
-    }
-
-    const entries: DisplayEntry[] = []
-    for (const card of allCards) {
-      const owned = ownedByCardId.get(card.id) ?? []
-      if (owned.length === 0) {
-        entries.push({
-          key: `${card.id}-NORMAL`,
-          card,
-          variant: 'NORMAL',
-          quantity: 0,
-          isOwned: false,
-          userCard: null,
-        })
-      } else {
-        for (const uc of owned) {
-          entries.push({
-            key: `${card.id}-${uc.variant}`,
-            card: uc.card,
-            variant: uc.variant,
-            quantity: uc.quantity,
-            isOwned: true,
-            userCard: uc,
-          })
-        }
-      }
-    }
-    return entries
-  }, [allCards, userCards])
+  const displayEntries = useMemo(
+    () => buildDisplayEntries(allCards, userCards),
+    [allCards, userCards],
+  )
 
   const filteredEntries = useMemo(() => {
     return displayEntries
       .filter((e) => rarity === 'all' || e.card.rarity === rarity)
-      .filter((e) => variant === 'all' || e.variant === variant)
+      .filter((e) => matchesFinishFilter(e, variant))
       .filter((e) => element === 'all' || e.card.element === element)
       .filter((e) => archetype === 'all' || e.card.archetype === archetype)
       .filter((e) => ownership === 'all' || e.isOwned)
   }, [displayEntries, rarity, variant, element, archetype, ownership])
 
   const collectionStats = useMemo(() => {
-    const distinctCardIds = new Set(userCards.map((uc) => uc.card.id))
-    const distinctCards = distinctCardIds.size
-    const totalOwnedVariants = userCards.length
-
+    const distinctCards = userCards.length
+    const totalOwnedVariants = userCards.reduce(
+      (sum, uc) => sum + ownedFinishCount(uc),
+      0,
+    )
     const totalCards = allCards.length
-    const variantEligible = allCards.filter((c) =>
-      ['RARE', 'EPIC', 'LEGENDARY'].includes(c.rarity),
-    ).length
-    const totalPossibleVariants =
-      totalCards - variantEligible + variantEligible * 3
+    const totalPossibleVariants = allCards.reduce(
+      (sum, c) => sum + finishesPerCard(c.rarity),
+      0,
+    )
 
     return {
       distinctCards,
@@ -351,9 +269,25 @@ function Collection() {
   const detailTarget = useMemo(
     () =>
       detailKey
-        ? (displayEntries.find((e) => e.key === detailKey) ?? null)
+        ? (displayEntries.find(
+            (e) => e.key === entryKeyFromSearch(detailKey),
+          ) ?? null)
         : null,
     [detailKey, displayEntries],
+  )
+
+  const { mutate: setDisplayedFinish } = useSetDisplayedFinish()
+  const pickFinish = useCallback(
+    (uc: UserCard, finish: CardVariant) => {
+      if (finish !== uc.displayedFinish) {
+        setDisplayedFinish({
+          userCardId: uc.id,
+          finish,
+          previous: uc.displayedFinish,
+        })
+      }
+    },
+    [setDisplayedFinish],
   )
 
   const handleRecycleFromDetail = () => {
@@ -434,6 +368,7 @@ function Collection() {
             entries={section.entries}
             stats={section.stats}
             onDetail={setDetailKey}
+            onPickFinish={pickFinish}
             showWishlist
             engagedCardIds={engagedCardIds}
           />
@@ -444,6 +379,7 @@ function Collection() {
         entry={detailTarget}
         onClose={() => setDetailKey(null)}
         onRecycle={handleRecycleFromDetail}
+        onPickFinish={pickFinish}
       />
       {recycleTarget && (
         <RecycleModal
@@ -458,7 +394,6 @@ function Collection() {
             setDetailKey(null)
           }}
           card={{ ...recycleTarget.card, quantity: recycleTarget.quantity }}
-          variant={recycleTarget.variant}
         />
       )}
       <RecycleAllModal

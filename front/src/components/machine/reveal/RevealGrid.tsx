@@ -875,6 +875,14 @@ function getSpecialBadges(entry: PullBatchEntry): SpecialBadge[] {
       Icon: Star,
       cls: 'bg-emerald-500/95 shadow-emerald-600/40',
     })
+  } else if (entry.newFinish) {
+    // Carte déjà possédée : le tirage ajoute un exemplaire ET débloque le
+    // vernis de sa variante.
+    badges.push({
+      label: i18n.t('machine:badges.newFinish'),
+      Icon: Sparkles,
+      cls: 'bg-emerald-500/95 shadow-emerald-600/40',
+    })
   }
   if (entry.wasBoostGuarantee) {
     badges.push({

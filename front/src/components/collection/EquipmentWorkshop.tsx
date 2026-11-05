@@ -189,12 +189,12 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
     setDefs.map((d) => [d.key, d]),
   )
   const ucId = userCard.id
-  const backKey = `${card.id}-${userCard.variant}`
+  const backKey = card.id
 
   const ctx: LabContext = {
     card,
     level: userCard.level,
-    variant: userCard.variant,
+    finishes: userCard.finishes,
     palier: userCard.palier,
     userCardId: ucId,
     levelScale: economy.equip.levelScale,
@@ -355,7 +355,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
             name={card.name}
             setName={card.set.name}
             imageUrl={card.imageUrl}
-            variant={userCard.variant}
+            variant={userCard.displayedFinish}
             isOwned
             compact
             showName={false}

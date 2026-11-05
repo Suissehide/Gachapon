@@ -70,7 +70,6 @@ export const CollectionApi = {
   recycle: async (
     cardId: string,
     quantity: number,
-    variant: CardVariant,
   ): Promise<{
     dustEarned: number
     newDustTotal: number
@@ -79,10 +78,32 @@ export const CollectionApi = {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.recycle}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cardId, quantity, variant }),
+      body: JSON.stringify({ cardId, quantity }),
     })
     if (!res.ok) {
       handleHttpError(res, {}, i18n.t('collection:recycle.errorTitle'))
+    }
+    return res.json()
+  },
+
+  setDisplayedFinish: async (
+    userCardId: string,
+    finish: CardVariant,
+  ): Promise<{ displayedFinish: CardVariant }> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}/collection/${userCardId}/finish`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ finish }),
+      },
+    )
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        {},
+        i18n.t('collection:apiTitles.operations.setFinish'),
+      )
     }
     return res.json()
   },

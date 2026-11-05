@@ -3,7 +3,6 @@ import { ArrowLeft } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { CardVariant } from '../../../api/collection.api.ts'
 import {
   RARITY_LABELS,
   RARITY_ORDER,
@@ -16,12 +15,18 @@ import {
   type OwnershipFilter,
   type RarityFilter,
   type SortMode,
-  type VariantFilter,
 } from '../../../components/collection/CollectionFilters.tsx'
 import {
   CollectionSection,
   computeSectionStats,
 } from '../../../components/collection/CollectionSection.tsx'
+import {
+  buildDisplayEntries,
+  type DisplayEntry,
+  type FinishFilter,
+  matchesFinishFilter,
+  sortEntries,
+} from '../../../components/collection/collectionEntries.ts'
 import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
@@ -29,17 +34,12 @@ import {
   ELEMENT_LABELS,
   ELEMENT_ORDER,
 } from '../../../constants/card.constant.ts'
-import {
-  type UserCard,
-  useCards,
-  useUserCollection,
-} from '../../../queries/useCollection.ts'
+import { useCards, useUserCollection } from '../../../queries/useCollection.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../../queries/useEconomyConfig.ts'
 import { useUserProfile } from '../../../queries/useProfile.ts'
-import { type DisplayEntry, sortEntries } from '../collection.tsx'
 
 export const Route = createFileRoute(
   '/_authenticated/profile/$username_/collection',
@@ -55,7 +55,7 @@ function UserCollectionPage() {
 
   const [group, setGroup] = useState<GroupMode>('rarity')
   const [rarity, setRarity] = useState<RarityFilter>('all')
-  const [variant, setVariant] = useState<VariantFilter>('all')
+  const [variant, setVariant] = useState<FinishFilter>('all')
   const [element, setElement] = useState<ElementFilter>('all')
   const [archetype, setArchetype] = useState<ArchetypeFilter>('all')
   const [ownership, setOwnership] = useState<OwnershipFilter>('owned')
@@ -67,47 +67,16 @@ function UserCollectionPage() {
   const allCards = catalogData?.cards ?? []
   const userCards = userColl?.cards ?? []
 
-  const displayEntries = useMemo((): DisplayEntry[] => {
-    const ownedByCardId = new Map<string, UserCard[]>()
-    for (const uc of userCards) {
-      const existing = ownedByCardId.get(uc.card.id) ?? []
-      existing.push(uc)
-      ownedByCardId.set(uc.card.id, existing)
-    }
-
-    const entries: DisplayEntry[] = []
-    for (const card of allCards) {
-      const owned = ownedByCardId.get(card.id) ?? []
-      if (owned.length === 0) {
-        entries.push({
-          key: `${card.id}-NORMAL`,
-          card,
-          variant: 'NORMAL',
-          quantity: 0,
-          isOwned: false,
-          userCard: null,
-        })
-      } else {
-        for (const uc of owned) {
-          entries.push({
-            key: `${card.id}-${uc.variant}`,
-            card: uc.card,
-            variant: uc.variant as CardVariant,
-            quantity: uc.quantity,
-            isOwned: true,
-            userCard: uc,
-          })
-        }
-      }
-    }
-    return entries
-  }, [allCards, userCards])
+  const displayEntries = useMemo(
+    () => buildDisplayEntries(allCards, userCards),
+    [allCards, userCards],
+  )
 
   const filteredEntries = useMemo(
     () =>
       displayEntries
         .filter((e) => rarity === 'all' || e.card.rarity === rarity)
-        .filter((e) => variant === 'all' || e.variant === variant)
+        .filter((e) => matchesFinishFilter(e, variant))
         .filter((e) => element === 'all' || e.card.element === element)
         .filter((e) => archetype === 'all' || e.card.archetype === archetype)
         .filter((e) => ownership === 'all' || e.isOwned),
