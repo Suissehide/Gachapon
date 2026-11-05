@@ -8,7 +8,6 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import { finishMultiplier } from '../../utils/cardStats.ts'
-import { Tooltip } from '../ui/tooltip.tsx'
 import { FINISH_ORDER } from './collectionEntries.ts'
 
 const FINISH_BG: Record<CardVariant, string> = {
@@ -52,35 +51,27 @@ export function FinishRow({ finishes, shown, onPick }: Props) {
           const unlocked = finish === 'NORMAL' || finishes.includes(finish)
           const label = t(`collection:filters.variant.${FINISH_KEY[finish]}`)
           return (
-            <Tooltip
+            <button
               key={finish}
-              content={
-                unlocked
-                  ? t('collection:finish.unlocked', { label })
-                  : t('collection:finish.locked', { label })
-              }
+              type="button"
+              aria-pressed={shown === finish}
+              aria-label={label}
+              aria-disabled={!unlocked || !onPick}
+              onClick={() => unlocked && onPick?.(finish)}
+              className={cn(
+                'relative inline-flex h-5 w-5 items-center justify-center rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6),0_0_0_1px_var(--border-dark)] transition-shadow duration-200 ease-out',
+                unlocked &&
+                  onPick &&
+                  'cursor-pointer hover:shadow-[0_0_0_2px_var(--card),0_0_0_3px_color-mix(in_oklab,var(--text)_65%,transparent)]',
+                !onPick && 'cursor-default',
+                !unlocked && 'cursor-not-allowed opacity-40 grayscale',
+                shown === finish &&
+                  'shadow-[0_0_0_2px_var(--card),0_0_0_3px_color-mix(in_oklab,var(--text)_30%,transparent)]',
+              )}
+              style={{ background: FINISH_BG[finish] }}
             >
-              <button
-                type="button"
-                aria-pressed={shown === finish}
-                aria-label={label}
-                // Verrouillée : `aria-disabled` plutôt que `disabled`, pour
-                // garder l'infobulle au survol et au focus.
-                aria-disabled={!unlocked || !onPick}
-                onClick={() => unlocked && onPick?.(finish)}
-                className={cn(
-                  'relative inline-flex h-5 w-5 items-center justify-center rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6),0_0_0_1px_var(--border-dark)] transition-transform duration-150',
-                  unlocked && onPick && 'cursor-pointer hover:scale-112',
-                  !onPick && 'cursor-default',
-                  !unlocked && 'cursor-not-allowed opacity-40 grayscale',
-                  shown === finish &&
-                    'shadow-[0_0_0_2px_var(--card),0_0_0_3.5px_var(--text)]',
-                )}
-                style={{ background: FINISH_BG[finish] }}
-              >
-                {!unlocked && <Lock className="h-2.5 w-2.5 text-text" />}
-              </button>
-            </Tooltip>
+              {!unlocked && <Lock className="h-2.5 w-2.5 text-text" />}
+            </button>
           )
         })}
       </fieldset>

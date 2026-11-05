@@ -101,7 +101,22 @@
      calques brillant et holo de TcgCardFace, en dégradés. */
   --finish-normal: #ece7df;
   --finish-brilliant: linear-gradient(135deg, #fde68a, #f59e0b);
-  --finish-holo: linear-gradient(115deg, #f9a8d4, #93c5fd, #86efac, #fcd34d);
+  /* Holo : argent nacré, un reflet blanc sur des irisations pâles. */
+  --finish-holo:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0) 40%
+    ),
+    conic-gradient(
+      from 200deg,
+      #c7dcff,
+      #e6c9ff,
+      #ffd0e8,
+      #fff0c2,
+      #c6f2e2,
+      #c7dcff
+    );
 
   /* Capsule astrale — aucune teinte déjà tokenisée ne convient : elle mêle
      LIGHT (#E8C23D) et DARK (#7A4FB5), les deux couleurs d'élément qu'elle

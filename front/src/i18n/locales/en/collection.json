@@ -218,8 +218,6 @@
   },
   "finish": {
     "groupLabel": "Displayed finish",
-    "unlocked": "{{label}}: finish unlocked, click to display it",
-    "locked": "{{label}}: pull this variant to unlock this finish",
     "bonus": "+{{pct}}%"
   }
 }

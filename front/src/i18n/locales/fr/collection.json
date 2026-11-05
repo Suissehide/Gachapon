@@ -218,8 +218,6 @@
   },
   "finish": {
     "groupLabel": "Vernis affiché",
-    "unlocked": "{{label}} : vernis débloqué, clique pour l'afficher",
-    "locked": "{{label}} : tire cette variante pour débloquer ce vernis",
     "bonus": "+{{pct}} %"
   }
 }
