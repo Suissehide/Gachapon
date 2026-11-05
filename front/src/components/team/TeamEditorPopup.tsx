@@ -161,7 +161,7 @@ export function TeamEditorPopup({
         cardPower(
           uc.card,
           uc.level,
-          uc.variant,
+          uc.finishes,
           uc.palier,
           equipBonusByCardId.get(uc.id) ?? emptyStatBonuses(),
           economy.card,
@@ -395,7 +395,7 @@ function MiniCardFace({
         name={card.card.name}
         setName={card.card.set.name}
         imageUrl={card.card.imageUrl}
-        variant={card.variant}
+        variant={card.displayedFinish}
         isOwned
         compact
         level={card.level}

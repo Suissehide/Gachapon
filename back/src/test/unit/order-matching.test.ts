@@ -100,14 +100,14 @@ describe('validateDelivery', () => {
     ).not.toThrow()
   })
 
-  it('refuse les variantes brillantes et holographiques', () => {
+  it('accepte les exemplaires d\'une carte qui porte un vernis', () => {
     expect(() =>
       validateDelivery(
         lines,
         [{ lineIndex: 0, userCardId: 'a', amount: 2 }],
-        mapOf(uc('a', 5, {}, 'BRILLIANT')),
+        mapOf(uc('a', 5, {})),
       ),
-    ).toThrow()
+    ).not.toThrow()
   })
 
   it('refuse une carte hors critères, une ligne inconnue, une carte inconnue', () => {

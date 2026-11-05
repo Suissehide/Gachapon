@@ -10,6 +10,19 @@
     "fixed": "Corrigé"
   },
   "releases": {
+    "v4_1": {
+      "title": "Les vernis",
+      "date": "Novembre 2026",
+      "summary": "Brillantes et holos deviennent des vernis de ta carte, l’Alchimie transmute par 10 et les combats gagnent en lisibilité.",
+      "entries": {
+        "e1": "Les brillantes et les holos ne sont plus des cartes à part : chaque carte n’existe qu’une fois dans ta collection. Tirer une variante ajoute un exemplaire, donc un doublon pour l’ascension, et débloque son vernis pour toujours. Les vernis renforcent les PV, l’ATQ et la DEF de la carte et se cumulent : +8 % pour le brillant, +15 % pour l’holo, +24 % avec les deux, quel que soit celui que tu affiches. Sous chaque carte rare ou mieux, des pastilles montrent tes vernis : clique sur l’un d’eux pour l’afficher. Tes anciennes variantes ont été fusionnées : la carte garde son meilleur niveau et son meilleur palier, les exemplaires s’additionnent et les doublons dépensés en ascension sur les variantes te sont rendus ; si deux variantes portaient une pièce au même emplacement, l’une est retournée dans ton inventaire.",
+        "e2": "Alchimie : le bouton « Transmuter ×10 » choisit tes doublons tout seul et révèle les 10 cartes d’affilée.",
+        "e3": "La pénétration d’armure se cumule source par source sur la DEF restante : elle n’atteint jamais 100 % et plus aucun point n’est perdu ; la stat principale des pièces est relevée en conséquence. Régénération, Bénédiction et Sanctuaire soignent une action sur trois avec un soin triplé, enfin visible en combat. Précision gagne +10 % de dégâts critiques par palier, et Célérité rejoue plus souvent à mesure que le palier monte.",
+        "e4": "L’archétype de chaque carte s’affiche sur la collection (avec un filtre), dans la fiche et sur les cartes d’équipe. L’auto-équipe tient compte des adversaires du combat que tu prépares et privilégie les éléments avantagés. En tour, modifier l’équipe depuis la préparation rouvre l’étage à la fermeture de l’éditeur.",
+        "e5": "Le jeton Constellation a sa propre garantie, comme le jeton astral. Le tirage gratuit de l’arbre de compétences s’applique aussi aux jetons spéciaux : un tirage gratuit ne consomme pas de jeton.",
+        "e6": "La collection et l’éditeur d’équipe sont bien plus fluides, et le reflet holographique retrouve son rendu. Sur téléphone, les toasts se ferment au doigt et un seul s’affiche à la fois, en bas de l’écran. « Tout recycler » se trouve en haut à droite de l’encart des filtres."
+      }
+    },
     "v4_0": {
       "title": "Ultimes et jetons astraux",
       "date": "Octobre 2026",

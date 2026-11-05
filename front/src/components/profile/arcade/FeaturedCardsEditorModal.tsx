@@ -60,7 +60,7 @@ export function FeaturedCardsEditorModal({
         rarity: uc.card.rarity,
         setName: uc.card.set.name,
         imageUrl: uc.card.imageUrl,
-        variant: uc.variant ?? 'NORMAL',
+        variant: uc.displayedFinish,
       })
     }
   }

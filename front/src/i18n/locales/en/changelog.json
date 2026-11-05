@@ -10,6 +10,19 @@
     "fixed": "Fixed"
   },
   "releases": {
+    "v4_1": {
+      "title": "Finishes",
+      "date": "November 2026",
+      "summary": "Brilliant and holo cards become finishes of your card, Alchemy transmutes by 10 and battles get easier to read.",
+      "entries": {
+        "e1": "Brilliant and holo cards are no longer separate cards: each card exists only once in your collection. Pulling a variant adds a copy, so a duplicate for ascension, and unlocks its finish for good. Finishes boost the card's HP, ATK and DEF and stack: +8% for brilliant, +15% for holo, +24% with both, whichever one you display. Under every rare or better card, dots show your finishes: click one to display it. Your old variants have been merged: the card keeps its best level and its best tier, copies add up, and the duplicates spent on ascending variants are given back; if two variants wore a piece in the same slot, one goes back to your inventory.",
+        "e2": "Alchemy: the \"Transmute ×10\" button picks your duplicates for you and reveals the 10 cards in a row.",
+        "e3": "Armor penetration stacks source by source on the remaining DEF: it never reaches 100% and no point is wasted anymore; the main stat of pieces is raised to match. Regeneration, Blessing and Sanctuary heal one action out of three with a tripled heal, finally visible in battle. Precision gains +10% crit damage per tier, and Haste replays more often as the tier rises.",
+        "e4": "Each card's archetype shows in the collection (with a filter), on the card sheet and on team cards. Auto-team takes into account the opponents of the battle you're preparing and favors advantaged elements. In the tower, editing the team from the prep screen reopens the floor when the editor closes.",
+        "e5": "The Constellation token has its own guarantee, like the astral token. The skill tree's free pull now also applies to special tokens: a free pull doesn't use up a token.",
+        "e6": "The collection and the team editor are much smoother, and the holographic shine looks as it used to. On phones, toasts close with a tap and only one shows at a time, at the bottom of the screen. \"Recycle everything\" sits at the top right of the filters panel."
+      }
+    },
     "v4_0": {
       "title": "Ultimates and Astral Tokens",
       "date": "October 2026",

@@ -64,7 +64,6 @@ export class CardAscensionTx {
             tx,
             userId,
             userCard.cardId,
-            userCard.variant,
           )
 
           const updated = await tx.userCard.update({

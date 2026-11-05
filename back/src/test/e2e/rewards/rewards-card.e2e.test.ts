@@ -139,7 +139,7 @@ describe('Rewards card grant e2e', () => {
 
     // The card is actually in the user's collection now.
     const owned = await postgresOrm.prisma.userCard.findFirst({
-      where: { userId, cardId, variant: 'NORMAL' },
+      where: { userId, cardId },
     })
     expect(owned).toBeTruthy()
     expect(owned!.quantity).toBe(1)

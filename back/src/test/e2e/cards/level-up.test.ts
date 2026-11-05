@@ -55,7 +55,6 @@ describe('POST /cards/:userCardId/level-up', () => {
       data: {
         userId: user.id,
         cardId: card.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 1,
         palier: 1,
@@ -116,14 +115,26 @@ describe('POST /cards/:userCardId/level-up', () => {
     const set = await postgresOrm.prisma.cardSet.findFirst({
       where: { nameFr: `LvlSet${suffix}` },
     })
-    const card = await postgresOrm.prisma.card.findFirst({
-      where: { setId: set!.id },
+    // Une carte distincte : une seule ligne UserCard par (joueur, carte).
+    const card = await postgresOrm.prisma.card.create({
+      data: {
+        nameFr: `LvlCardHigh${suffix}`,
+        nameEn: `LvlCardHigh${suffix}`,
+        rarity: 'RARE',
+        dropWeight: 10,
+        setId: set!.id,
+        baseHp: 200,
+        baseAtk: 20,
+        baseDef: 10,
+        baseSpd: 100,
+      },
     })
     const highUc = await postgresOrm.prisma.userCard.create({
       data: {
         userId,
-        cardId: card!.id,
-        variant: 'HOLOGRAPHIC',
+        cardId: card.id,
+        finishes: ['HOLOGRAPHIC'],
+        displayedFinish: 'HOLOGRAPHIC',
         quantity: 1,
         level: 61,
         palier: 7,
@@ -179,7 +190,6 @@ describe('POST /cards/:userCardId/level-up', () => {
       data: {
         userId: other.id,
         cardId: card!.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 1,
         palier: 1,
@@ -250,7 +260,6 @@ describe('POST /cards/:userCardId/level-up', () => {
       data: {
         userId,
         cardId: legendCard.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 1,
         palier: 1,

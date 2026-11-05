@@ -7,12 +7,6 @@ import type { CardRarity, CardVariant } from '../constants/card.constant'
 import i18n, { type Locale } from '../i18n/index.ts'
 import { formatNumber } from '../libs/utils.ts'
 
-const VARIANT_MULT: Record<CardVariant, number> = {
-  NORMAL: 1.0,
-  BRILLIANT: 1.15,
-  HOLOGRAPHIC: 1.3,
-}
-
 // Référence de vitesse pour la puissance : une unité à SPD_REF a un multiplicateur
 // de vitesse neutre (×1). Au-dessus, elle agit plus souvent (ATB) → puissance
 // plus élevée ; en dessous, plus faible. Doit rester alignée avec le backend
@@ -26,8 +20,19 @@ const SPD_REF = 100
  */
 export type StatCurve = Pick<
   EconomyConfig['card'],
-  'statGrowthPerLevel' | 'ascensionStatBonus'
+  'statGrowthPerLevel' | 'ascensionStatBonus' | 'finishMult'
 >
+
+/** Bonus cumulé des vernis débloqués (le NORMAL est neutre). */
+export function finishMultiplier(
+  finishes: readonly CardVariant[],
+  curve: Pick<StatCurve, 'finishMult'>,
+): number {
+  return [...new Set(finishes)].reduce(
+    (m, f) => (f === 'NORMAL' ? m : m * curve.finishMult[f]),
+    1,
+  )
+}
 
 export function statAtLevel(
   baseStat: number,
@@ -44,13 +49,13 @@ export function palierMultiplier(palier: number, curve: StatCurve): number {
 export function finalStat(
   baseStat: number,
   level: number,
-  variant: CardVariant,
+  finishes: readonly CardVariant[],
   palier: number,
   curve: StatCurve,
 ): number {
   return (
     statAtLevel(baseStat, level, curve) *
-    VARIANT_MULT[variant] *
+    finishMultiplier(finishes, curve) *
     palierMultiplier(palier, curve)
   )
 }
@@ -437,7 +442,7 @@ export function displayStats(
     baseSpd: number
   },
   level: number,
-  variant: CardVariant,
+  finishes: readonly CardVariant[],
   palier: number,
   bonuses: StatBonuses,
   curve: StatCurve,
@@ -447,7 +452,7 @@ export function displayStats(
       finalStatWithBonuses(
         card.baseHp,
         level,
-        variant,
+        finishes,
         palier,
         bonuses.hp,
         curve,
@@ -457,7 +462,7 @@ export function displayStats(
       finalStatWithBonuses(
         card.baseAtk,
         level,
-        variant,
+        finishes,
         palier,
         bonuses.atk,
         curve,
@@ -467,7 +472,7 @@ export function displayStats(
       finalStatWithBonuses(
         card.baseDef,
         level,
-        variant,
+        finishes,
         palier,
         bonuses.def,
         curve,
@@ -483,7 +488,7 @@ export function displayStats(
  * La grille de la fiche de combat scinde chaque tuile en « socle + apport » au
  * survol ; il lui faut donc les deux.
  *
- * La vitesse n'a ni niveau, ni variante, ni palier (cf. `finalSpeed`) : sa base
+ * La vitesse n'a ni niveau, ni vernis, ni palier (cf. `finalSpeed`) : sa base
  * est celle du catalogue.
  */
 export function displayStatBases(
@@ -494,14 +499,14 @@ export function displayStatBases(
     baseSpd: number
   },
   level: number,
-  variant: CardVariant,
+  finishes: readonly CardVariant[],
   palier: number,
   curve: StatCurve,
 ): { pv: number; atq: number; def: number; vit: number } {
   return {
-    pv: Math.round(finalStat(card.baseHp, level, variant, palier, curve)),
-    atq: Math.round(finalStat(card.baseAtk, level, variant, palier, curve)),
-    def: Math.round(finalStat(card.baseDef, level, variant, palier, curve)),
+    pv: Math.round(finalStat(card.baseHp, level, finishes, palier, curve)),
+    atq: Math.round(finalStat(card.baseAtk, level, finishes, palier, curve)),
+    def: Math.round(finalStat(card.baseDef, level, finishes, palier, curve)),
     vit: Math.round(card.baseSpd),
   }
 }
@@ -513,12 +518,12 @@ export function displayStatBases(
 export function finalStatWithBonuses(
   baseStat: number,
   level: number,
-  variant: CardVariant,
+  finishes: readonly CardVariant[],
   palier: number,
   bonus: StatBonus,
   curve: StatCurve,
 ): number {
-  const raw = finalStat(baseStat, level, variant, palier, curve)
+  const raw = finalStat(baseStat, level, finishes, palier, curve)
   return (raw + bonus.flat) * (1 + bonus.pct / 100)
 }
 
@@ -533,7 +538,7 @@ export function finalStatWithBonuses(
 export function cardPower(
   card: { baseHp: number; baseAtk: number; baseDef: number; baseSpd: number },
   level: number,
-  variant: CardVariant,
+  finishes: readonly CardVariant[],
   palier: number,
   bonuses: StatBonuses,
   curve: StatCurve,
@@ -543,7 +548,7 @@ export function cardPower(
       finalStatWithBonuses(
         card.baseHp,
         level,
-        variant,
+        finishes,
         palier,
         bonuses.hp,
         curve,
@@ -553,7 +558,7 @@ export function cardPower(
       finalStatWithBonuses(
         card.baseAtk,
         level,
-        variant,
+        finishes,
         palier,
         bonuses.atk,
         curve,
@@ -563,7 +568,7 @@ export function cardPower(
       finalStatWithBonuses(
         card.baseDef,
         level,
-        variant,
+        finishes,
         palier,
         bonuses.def,
         curve,

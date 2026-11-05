@@ -97,6 +97,12 @@
      jour où on y touche. */
   --dust: #38bdf8;
 
+  /* Pastilles de vernis (collection, filtre « Vernis ») : les teintes des
+     calques brillant et holo de TcgCardFace, en dégradés. */
+  --finish-normal: #ece7df;
+  --finish-brilliant: linear-gradient(135deg, #fde68a, #f59e0b);
+  --finish-holo: linear-gradient(115deg, #f9a8d4, #93c5fd, #86efac, #fcd34d);
+
   /* Capsule astrale — aucune teinte déjà tokenisée ne convient : elle mêle
      LIGHT (#E8C23D) et DARK (#7A4FB5), les deux couleurs d'élément qu'elle
      seule distribue. Un indigo neutre entre les deux plutôt qu'un hex posé

@@ -216,7 +216,7 @@ export type WagersView = {
   settledDuels: DuelView[]
   bets: BetView[]
   settledBets: BetView[]
-  // Cartes que MES duels ACTIVE verrouillent (voir DuelDomain#listEngagedCardKeysInTx) —
+  // Cartes que MES duels ACTIVE verrouillent (voir DuelDomain#listEngagedCardIdsInTx) —
   // signale au joueur, avant qu'il ne tente un recyclage, pourquoi il serait refusé.
   engagedCardIds: string[]
 }
@@ -270,22 +270,21 @@ export interface IDuelDomain {
    */
   settleTeamWagers(teamId: string, now?: Date): Promise<void>
   /**
-   * Clés `${cardId}:${variant}` des cartes que les tirages comptés (au sens
+   * Identifiants des cartes que les tirages comptés (au sens
    * de `findPullsSinceInTx`) de tous les duels ACTIVE du joueur verrouillent.
    * Utilisé à la fois pour peupler `WagersView#engagedCardIds` et par les
    * quatre chemins de retrait de carte (recyclage unitaire/masse, conversion
    * en poussière, ascension) pour refuser ou ignorer une carte engagée.
    */
-  listEngagedCardKeysInTx(
+  listEngagedCardIdsInTx(
     tx: PrimaTransactionClient,
     userId: string,
   ): Promise<Set<string>>
-  /** Lève `Boom.conflict` si `${cardId}:${variant}` est engagée dans un duel ACTIVE du joueur. */
+  /** Lève `Boom.conflict` si la carte est engagée dans un duel ACTIVE du joueur. */
   assertCardNotEngagedInTx(
     tx: PrimaTransactionClient,
     userId: string,
     cardId: string,
-    variant: CardVariant,
   ): Promise<void>
 }
 

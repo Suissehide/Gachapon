@@ -1515,20 +1515,12 @@ export class CampaignDomain {
     userId: string,
     cardId: string,
   ): Promise<{ wasDuplicate: boolean }> {
-    const existing = await tx.userCard.findUnique({
-      where: { userId_cardId_variant: { userId, cardId, variant: 'NORMAL' } },
-    })
-    if (existing) {
-      await tx.userCard.update({
-        where: { id: existing.id },
-        data: { quantity: { increment: 1 } },
-      })
-      return { wasDuplicate: true }
-    }
-    await tx.userCard.create({
-      data: { userId, cardId, variant: 'NORMAL', quantity: 1 },
-    })
-    return { wasDuplicate: false }
+    return await this.#userCardRepository.upsertInTx(
+      tx,
+      userId,
+      cardId,
+      'NORMAL',
+    )
   }
 
   /**

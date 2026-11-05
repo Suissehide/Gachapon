@@ -6,10 +6,13 @@ import type { CardRarity } from '../../../../../types/domain/gacha/gacha.types'
 import {
   collectionCardIdParamSchema,
   collectionCardsQuerySchema,
+  collectionFinishBodySchema,
+  collectionFinishResponseSchema,
   collectionRecycleAllBodySchema,
   collectionRecycleAllResponseSchema,
   collectionRecycleBodySchema,
   collectionRecycleResponseSchema,
+  collectionUserCardIdParamSchema,
   collectionUserIdParamSchema,
   userCollectionResponseSchema,
 } from '../../schemas/collection.schema'
@@ -118,7 +121,8 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
             passiveKey: uc.card.passiveKey,
             archetype: uc.card.archetype,
           },
-          variant: uc.variant,
+          finishes: uc.finishes,
+          displayedFinish: uc.displayedFinish,
           quantity: uc.quantity,
           level: uc.level,
           palier: uc.palier,
@@ -157,6 +161,26 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
       return collectionDomain.recycleAllBelow(
         request.user.userID,
         request.body.maxRarity,
+      )
+    },
+  )
+
+  fastify.patch(
+    '/collection/:userCardId/finish',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        summary: 'Choose the displayed finish of an owned card',
+        params: collectionUserCardIdParamSchema,
+        body: collectionFinishBodySchema,
+        response: { 200: collectionFinishResponseSchema },
+      },
+    },
+    (request) => {
+      return collectionDomain.setDisplayedFinish(
+        request.user.userID,
+        request.params.userCardId,
+        request.body.finish,
       )
     },
   )

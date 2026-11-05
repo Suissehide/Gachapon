@@ -1,4 +1,4 @@
-import type { CardRarity, CardVariant } from '../../../generated/enums'
+import type { CardRarity } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IQuestsDomain } from '../../types/domain/quests/quests.domain.interface'
@@ -355,7 +355,7 @@ export class AchievementsDomain implements AchievementsDomainInterface {
         tx.userCard.findMany({
           where: { userId },
           select: {
-            variant: true,
+            finishes: true,
             quantity: true,
             level: true,
             palier: true,
@@ -369,16 +369,22 @@ export class AchievementsDomain implements AchievementsDomainInterface {
         }),
       ])
 
-    // Build rarity/variant counts
+    // Exemplaires par rareté ; par vernis, le nombre de CARTES qui le portent
+    // (un vernis se débloque une fois, il n'a pas d'exemplaires). Le NORMAL,
+    // implicite, garde le compte d'exemplaires.
     const ownedByRarity: Record<string, number> = {}
     const ownedByRarityVariant: Record<string, number> = {}
+    const bump = (key: string, n: number) => {
+      ownedByRarityVariant[key] = (ownedByRarityVariant[key] ?? 0) + n
+    }
 
     for (const uc of ownedCards) {
       const rarity = uc.card.rarity as string
-      const variant = uc.variant as string
       ownedByRarity[rarity] = (ownedByRarity[rarity] ?? 0) + uc.quantity
-      const key = `${rarity}_${variant}`
-      ownedByRarityVariant[key] = (ownedByRarityVariant[key] ?? 0) + uc.quantity
+      bump(`${rarity}_NORMAL`, uc.quantity)
+      for (const finish of uc.finishes) {
+        bump(`${rarity}_${finish}`, 1)
+      }
     }
 
     const completedCollections = await this.#computeCompletions(tx, ownedCards)
@@ -419,7 +425,6 @@ export class AchievementsDomain implements AchievementsDomainInterface {
   async #computeCompletions(
     tx: PrimaTransactionClient,
     ownedCards: Array<{
-      variant: CardVariant
       quantity: number
       card: { rarity: CardRarity }
     }>,
@@ -438,8 +443,7 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     const ownedDistinctByRarity: Partial<Record<CardRarity, number>> = {}
     for (const uc of ownedCards) {
       const rarity = uc.card.rarity
-      // Count distinct card/variant combos — but for COLLECTION_COMPLETE we track by card
-      // We use quantity > 0 as "owned" signal; deduplicate by rarity
+      // Une ligne par carte : compter les lignes compte les cartes distinctes.
       if (uc.quantity > 0) {
         ownedDistinctByRarity[rarity] = (ownedDistinctByRarity[rarity] ?? 0) + 1
       }

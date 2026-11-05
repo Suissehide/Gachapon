@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 
-import type { CardRarity, CardVariant } from '../../../generated/client'
+import type { CardRarity } from '../../../generated/client'
 import { errorMessage } from '../../infra/i18n/error-messages'
 import type {
   AlchemyFromRarity,
@@ -33,7 +33,6 @@ export function nextRarity(r: CardRarity): CardRarity | null {
 type IngredientCard = {
   id: string
   quantity: number
-  variant: CardVariant
   card: { rarity: CardRarity }
 }
 
@@ -52,16 +51,13 @@ function checkPick(
   if (userCard.card.rarity !== fromRarity) {
     throw Boom.badRequest(errorMessage('alchemy.wrongRarity'))
   }
-  if (userCard.variant !== 'NORMAL') {
-    throw Boom.badRequest(errorMessage('alchemy.variantNotAllowed'))
-  }
   return userCard
 }
 
 /**
  * Lève un Boom.badRequest si la sélection n'est pas une recette valide :
- * cran inexistant, montant invalide, carte inconnue / d'une autre rareté /
- * non normale, dernier exemplaire entamé (montants sommés par carte), ou
+ * cran inexistant, montant invalide, carte inconnue / d'une autre rareté,
+ * dernier exemplaire entamé (montants sommés par carte), ou
  * total ≠ cost.
  */
 export function validateIngredients(

@@ -13,7 +13,7 @@ const BASE = {
   baseSpd: 100,
   level: 1,
   palier: 1,
-  variant: 'NORMAL' as const,
+  finishes: [],
 }
 
 const BASES_COMBAT = { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 }

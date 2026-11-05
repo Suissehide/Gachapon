@@ -15,7 +15,18 @@ export const collectionUserIdParamSchema = z.object({ id: z.string().uuid() })
 export const collectionRecycleBodySchema = z.object({
   cardId: z.string().uuid(),
   quantity: z.number().int().min(1).default(1),
-  variant: z.enum(['NORMAL', 'BRILLIANT', 'HOLOGRAPHIC']).default('NORMAL'),
+})
+
+const cardVariantEnum = z.enum(['NORMAL', 'BRILLIANT', 'HOLOGRAPHIC'])
+
+export const collectionUserCardIdParamSchema = z.object({
+  userCardId: z.string().uuid(),
+})
+
+export const collectionFinishBodySchema = z.object({ finish: cardVariantEnum })
+
+export const collectionFinishResponseSchema = z.object({
+  displayedFinish: cardVariantEnum,
 })
 
 export const collectionRecycleResponseSchema = z.object({
@@ -54,7 +65,8 @@ export const userCollectionResponseSchema = z.object({
         passiveKey: z.string().nullable(),
         archetype: cardArchetypeEnum,
       }),
-      variant: z.string(),
+      finishes: z.array(cardVariantEnum),
+      displayedFinish: cardVariantEnum,
       quantity: z.number().int(),
       level: z.number().int(),
       palier: z.number().int(),

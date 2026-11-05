@@ -35,8 +35,8 @@ describe('GET /users/:username/profile/sets-progression', () => {
     await prisma.card.create({ data: { nameFr: 'a3', nameEn: 'a3', rarity: 'COMMON', dropWeight: 10, setId: setA.id } })
     await prisma.card.create({ data: { nameFr: 'b1', nameEn: 'b1', rarity: 'COMMON', dropWeight: 10, setId: setB.id } })
     await prisma.card.create({ data: { nameFr: 'b2', nameEn: 'b2', rarity: 'COMMON', dropWeight: 10, setId: setB.id } })
-    await prisma.userCard.create({ data: { userId: user!.id, cardId: a1.id, variant: 'NORMAL', quantity: 1 } })
-    await prisma.userCard.create({ data: { userId: user!.id, cardId: a2.id, variant: 'NORMAL', quantity: 1 } })
+    await prisma.userCard.create({ data: { userId: user!.id, cardId: a1.id, quantity: 1 } })
+    await prisma.userCard.create({ data: { userId: user!.id, cardId: a2.id, quantity: 1 } })
   })
 
   afterAll(async () => {

@@ -6,38 +6,21 @@ import type { PrimaTransactionClient } from '../client'
 
 export interface IUserCardRepository {
   findByUser(userId: string): Promise<UserCardWithCard[]>
-  upsert(
-    userId: string,
-    cardId: string,
-    variant: CardVariant,
-  ): Promise<{ wasDuplicate: boolean }>
-  decrementOrDelete(
-    userId: string,
-    cardId: string,
-    variant: CardVariant,
-  ): Promise<{ quantityLeft: number }>
   upsertInTx(
     tx: PrimaTransactionClient,
     userId: string,
     cardId: string,
     variant: CardVariant,
-  ): Promise<{ wasDuplicate: boolean }>
+  ): Promise<{ wasDuplicate: boolean; newFinish: boolean }>
   countByUser(userId: string): Promise<number>
   countUniqueBySet(userId: string): Promise<Map<string, number>>
   countLegendaryByUser(userId: string): Promise<number>
   findForScoring(userIds: string[]): Promise<
     {
       userId: string
-      variant: string
+      variant: CardVariant
       quantity: number
       card: { rarity: string }
     }[]
   >
-  recycleInTx(
-    tx: PrimaTransactionClient,
-    userId: string,
-    cardId: string,
-    variant: string,
-    quantity: number,
-  ): Promise<void>
 }

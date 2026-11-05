@@ -37,7 +37,7 @@ describe('PUT /users/me/featured-cards', () => {
         data: { nameFr: `C${i}-${suffix}`, nameEn: `C${i}-${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
       })
       await prisma.userCard.create({
-        data: { userId: user!.id, cardId: card.id, variant: 'NORMAL', quantity: 1 },
+        data: { userId: user!.id, cardId: card.id, quantity: 1 },
       })
       ownedIds.push(card.id)
     }

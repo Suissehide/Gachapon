@@ -141,7 +141,6 @@ describe('Campaign battle level-up → refill énergie', () => {
       data: {
         userId: user.id,
         cardId,
-        variant: 'NORMAL',
         quantity: 1,
         level: 60,
         palier: 6,

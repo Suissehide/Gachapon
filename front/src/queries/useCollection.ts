@@ -5,6 +5,7 @@ import {
   type BulkRecycleMaxRarity,
   type CardVariant,
   CollectionApi,
+  type UserCard,
 } from '../api/collection.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
@@ -75,15 +76,8 @@ export const useRecycle = () => {
   const user = useAuthStore((s) => s.user)
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
   return useMutation({
-    mutationFn: ({
-      cardId,
-      quantity,
-      variant,
-    }: {
-      cardId: string
-      quantity: number
-      variant: CardVariant
-    }) => CollectionApi.recycle(cardId, quantity, variant),
+    mutationFn: ({ cardId, quantity }: { cardId: string; quantity: number }) =>
+      CollectionApi.recycle(cardId, quantity),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['collection'] })
       // Recycling fires a CARD_RECYCLED event that also feeds the quest engine
@@ -159,6 +153,55 @@ export const useRecycleAll = () => {
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
+    },
+  })
+}
+
+type CollectionData = { cards: UserCard[] }
+
+/**
+ * Change le vernis affiché d'une carte. Mise à jour optimiste du cache de la
+ * collection : la tuile change tout de suite, et revient en arrière si le
+ * serveur refuse.
+ */
+export const useSetDisplayedFinish = () => {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const { t } = useTranslation('collection')
+  const patch = (userCardId: string, finish: CardVariant) =>
+    qc.setQueriesData<CollectionData>(
+      { queryKey: ['collection'] },
+      (old) =>
+        old && {
+          ...old,
+          cards: old.cards.map((uc) =>
+            uc.id === userCardId ? { ...uc, displayedFinish: finish } : uc,
+          ),
+        },
+    )
+  return useMutation({
+    mutationFn: ({
+      userCardId,
+      finish,
+    }: {
+      userCardId: string
+      finish: CardVariant
+      previous: CardVariant
+    }) => CollectionApi.setDisplayedFinish(userCardId, finish),
+    onMutate: ({ userCardId, finish }) => {
+      patch(userCardId, finish)
+    },
+    onError: (error, { userCardId, previous }) => {
+      patch(userCardId, previous)
+      toast({
+        title: t('apiTitles.operations.setFinish'),
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+    onSuccess: () => {
+      // La vitrine du profil montre le vernis affiché.
+      qc.invalidateQueries({ queryKey: ['profile'] })
     },
   })
 }

@@ -52,7 +52,6 @@ describe('POST /cards/:userCardId/dust', () => {
       data: {
         userId: user.id,
         cardId: card.id,
-        variant: 'NORMAL',
         quantity: 3,
       },
     })
@@ -119,7 +118,7 @@ describe('POST /cards/:userCardId/dust', () => {
       where: { setId: set!.id },
     })
     const otherUc = await postgresOrm.prisma.userCard.create({
-      data: { userId: other.id, cardId: card!.id, variant: 'NORMAL', quantity: 5 },
+      data: { userId: other.id, cardId: card!.id, quantity: 5 },
     })
 
     const res = await app.inject({
@@ -156,7 +155,6 @@ describe('POST /cards/:userCardId/dust', () => {
       data: {
         userId,
         cardId: lockCard.id,
-        variant: 'NORMAL',
         quantity: 3,
       },
     })

@@ -59,7 +59,7 @@ import { Tooltip } from '../ui/tooltip.tsx'
 type Props = {
   userCardId: string
   card: Card
-  variant: CardVariant
+  finishes: CardVariant[]
   quantity: number
   level: number
   palier: number
@@ -68,7 +68,7 @@ type Props = {
 export function CombatPanel({
   userCardId,
   card,
-  variant,
+  finishes,
   quantity,
   level,
   palier,
@@ -117,7 +117,7 @@ export function CombatPanel({
     finalStatWithBonuses(
       card.baseHp,
       level,
-      variant,
+      finishes,
       palier,
       classicBonuses.hp,
       economy.card,
@@ -127,7 +127,7 @@ export function CombatPanel({
     finalStatWithBonuses(
       card.baseAtk,
       level,
-      variant,
+      finishes,
       palier,
       classicBonuses.atk,
       economy.card,
@@ -137,7 +137,7 @@ export function CombatPanel({
     finalStatWithBonuses(
       card.baseDef,
       level,
-      variant,
+      finishes,
       palier,
       classicBonuses.def,
       economy.card,
@@ -146,12 +146,12 @@ export function CombatPanel({
   const spd = Math.round(finalSpeed(card.baseSpd, classicBonuses.spd))
   const power = computePower({ hp, atk, def, spd })
 
-  // Part propre à la CARTE (niveau, variante, palier), équipement exclu. Au
+  // Part propre à la CARTE (niveau, vernis, palier), équipement exclu. Au
   // survol de la grille, chaque tuile se scinde en « base + apport » : le
   // joueur voit ce qu'il doit à son stuff et ce qu'il garde en le retirant.
   // La bascule est en CSS (`group-hover`) et non en état React : un `<div>`
   // porteur de onMouseEnter serait un élément statique rendu interactif.
-  const bases = displayStatBases(card, level, variant, palier, economy.card)
+  const bases = displayStatBases(card, level, finishes, palier, economy.card)
 
   const onLevelUp = async () => {
     setWorking(true)

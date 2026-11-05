@@ -279,7 +279,6 @@ describe('routes de tour', () => {
       data: {
         userId: user.id,
         cardId: card.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 60,
         palier: 6,
@@ -287,13 +286,29 @@ describe('routes de tour', () => {
     })
     userCardId = uc.id
 
-    // Variant différente (contrainte unique [userId, cardId, variant]) : même
-    // carte, même joueur, une ligne UserCard distincte.
+    // Une ligne UserCard par (joueur, carte) : les deux autres équipes
+    // reposent sur des cartes distinctes, aux stats de base identiques.
+    const createTwin = (name: string) =>
+      postgresOrm.prisma.card.create({
+        data: {
+          nameFr: `${name}${suffix}`,
+          nameEn: `${name}${suffix}`,
+          rarity: 'LEGENDARY',
+          dropWeight: 1,
+          setId: set.id,
+          baseHp: 5000,
+          baseAtk: 500,
+          baseDef: 100,
+          baseSpd: 200,
+        },
+      })
+    const card2 = await createTwin('TowerCard2')
     const uc2 = await postgresOrm.prisma.userCard.create({
       data: {
         userId: user.id,
-        cardId: card.id,
-        variant: 'HOLOGRAPHIC',
+        cardId: card2.id,
+        finishes: ['HOLOGRAPHIC'],
+        displayedFinish: 'HOLOGRAPHIC',
         quantity: 1,
         level: 1,
         palier: 1,
@@ -301,14 +316,16 @@ describe('routes de tour', () => {
     })
     otherUserCardId = uc2.id
 
-    // Troisième variant encore : équipe dédiée à la tour de l'ONDE, niveau et
-    // variant distincts des deux autres (30/BRILLIANT vs 60/NORMAL et
-    // 1/HOLOGRAPHIC) pour qu'aucune paire ne puisse se confondre.
+    // Équipe dédiée à la tour de l'ONDE, niveau et vernis affiché distincts
+    // des deux autres (30/BRILLIANT vs 60/NORMAL et 1/HOLOGRAPHIC) pour
+    // qu'aucune paire ne puisse se confondre.
+    const card3 = await createTwin('TowerCard3')
     const uc3 = await postgresOrm.prisma.userCard.create({
       data: {
         userId: user.id,
-        cardId: card.id,
-        variant: 'BRILLIANT',
+        cardId: card3.id,
+        finishes: ['BRILLIANT'],
+        displayedFinish: 'BRILLIANT',
         quantity: 1,
         level: 30,
         palier: 4,
@@ -615,9 +632,9 @@ describe('routes de tour', () => {
     // `SimulatorUnit.id` n'est qu'un label de bataille ('A0', 'A1', …), pas
     // le userCardId — impossible de distinguer les deux équipes dessus. On
     // épingle donc DEUX champs qui divergent entre les deux UserCard de la
-    // fixture ci-dessus (même carte sous-jacente, donc même nom/rareté/
-    // élément — ces champs-là ne distingueraient rien) : `level` (60 contre
-    // 1) ET `variant` ('NORMAL' contre 'HOLOGRAPHIC'). Un seul champ qui
+    // fixture ci-dessus (mêmes stats de base et rareté — ces champs-là ne
+    // distingueraient rien) : `level` (60 contre 1) ET `variant`, le vernis
+    // affiché ('NORMAL' contre 'HOLOGRAPHIC'). Un seul champ qui
     // coïnciderait par accident entre les deux fixtures laisserait passer
     // une résolution d'équipe erronée sans que le test ne morde ; les deux
     // ensemble ne peuvent pas coïncider par accident.

@@ -39,7 +39,7 @@ export interface EquippedCardStatsInput {
   baseSpd: number
   level: number
   palier: number
-  variant: CardVariant
+  finishes: readonly CardVariant[]
   /** Les pièces portées par CETTE carte — le comptage de set est par carte. */
   pieces: EquippedPiece[]
   setDefs: Record<SetKey, SetDefinition>

@@ -1,5 +1,4 @@
-import Boom from '@hapi/boom'
-
+import { hasFinish } from '../../../domain/collection/finishes'
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
   CardVariant,
@@ -7,7 +6,6 @@ import type {
 } from '../../../types/domain/gacha/gacha.types'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { IUserCardRepository } from '../../../types/infra/orm/repositories/user-card.repository.interface'
-import { errorMessage } from '../../i18n/error-messages'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class UserCardRepository implements IUserCardRepository {
@@ -25,69 +23,43 @@ export class UserCardRepository implements IUserCardRepository {
     }) as Promise<UserCardWithCard[]>
   }
 
-  async upsert(
-    userId: string,
-    cardId: string,
-    variant: CardVariant,
-  ): Promise<{ wasDuplicate: boolean }> {
-    const existing = await this.#prisma.userCard.findUnique({
-      where: { userId_cardId_variant: { userId, cardId, variant } },
-    })
-    if (existing) {
-      await this.#prisma.userCard.update({
-        where: { userId_cardId_variant: { userId, cardId, variant } },
-        data: { quantity: { increment: 1 } },
-      })
-      return { wasDuplicate: true }
-    }
-    await this.#prisma.userCard.create({
-      data: { userId, cardId, variant, quantity: 1, obtainedAt: new Date() },
-    })
-    return { wasDuplicate: false }
-  }
-
-  /** Must be called inside a SERIALIZABLE transaction. */
+  /**
+   * Ajoute un exemplaire de la carte, quelle que soit sa variante, et
+   * débloque le vernis tiré s'il est nouveau. Must be called inside a
+   * SERIALIZABLE transaction.
+   */
   async upsertInTx(
     tx: PrimaTransactionClient,
     userId: string,
     cardId: string,
     variant: CardVariant,
-  ): Promise<{ wasDuplicate: boolean }> {
+  ): Promise<{ wasDuplicate: boolean; newFinish: boolean }> {
     const existing = await tx.userCard.findUnique({
-      where: { userId_cardId_variant: { userId, cardId, variant } },
+      where: { userId_cardId: { userId, cardId } },
+      select: { finishes: true },
     })
+    const newFinish = !hasFinish(existing?.finishes ?? [], variant)
     if (existing) {
       await tx.userCard.update({
-        where: { userId_cardId_variant: { userId, cardId, variant } },
-        data: { quantity: { increment: 1 } },
+        where: { userId_cardId: { userId, cardId } },
+        data: {
+          quantity: { increment: 1 },
+          ...(newFinish ? { finishes: { push: variant } } : {}),
+        },
       })
-      return { wasDuplicate: true }
+      return { wasDuplicate: true, newFinish }
     }
     await tx.userCard.create({
-      data: { userId, cardId, variant, quantity: 1, obtainedAt: new Date() },
+      data: {
+        userId,
+        cardId,
+        finishes: newFinish ? [variant] : [],
+        displayedFinish: variant,
+        quantity: 1,
+        obtainedAt: new Date(),
+      },
     })
-    return { wasDuplicate: false }
-  }
-
-  async decrementOrDelete(
-    userId: string,
-    cardId: string,
-    variant: CardVariant,
-  ): Promise<{ quantityLeft: number }> {
-    const uc = await this.#prisma.userCard.findUniqueOrThrow({
-      where: { userId_cardId_variant: { userId, cardId, variant } },
-    })
-    if (uc.quantity <= 1) {
-      await this.#prisma.userCard.delete({
-        where: { userId_cardId_variant: { userId, cardId, variant } },
-      })
-      return { quantityLeft: 0 }
-    }
-    const updated = await this.#prisma.userCard.update({
-      where: { userId_cardId_variant: { userId, cardId, variant } },
-      data: { quantity: { decrement: 1 } },
-    })
-    return { quantityLeft: updated.quantity }
+    return { wasDuplicate: false, newFinish }
   }
 
   countByUser(userId: string): Promise<number> {
@@ -116,40 +88,26 @@ export class UserCardRepository implements IUserCardRepository {
     })
   }
 
-  findForScoring(userIds: string[]) {
-    return this.#prisma.userCard.findMany({
+  /**
+   * Une entrée par vernis possédé (NORMAL implicite compris) : le score de
+   * collection compte chaque vernis d'une carte, comme quand chaque variante
+   * était une ligne.
+   */
+  async findForScoring(userIds: string[]) {
+    const rows = await this.#prisma.userCard.findMany({
       where: { userId: { in: userIds } },
       select: {
         userId: true,
-        variant: true,
+        finishes: true,
         quantity: true,
         card: { select: { rarity: true } },
       },
     })
-  }
-
-  async recycleInTx(
-    tx: PrimaTransactionClient,
-    userId: string,
-    cardId: string,
-    variant: CardVariant,
-    quantity: number,
-  ): Promise<void> {
-    const uc = await tx.userCard.findUnique({
-      where: { userId_cardId_variant: { userId, cardId, variant } },
-    })
-    if (!uc || uc.quantity < quantity) {
-      throw Boom.badRequest(errorMessage('collection.cardNotOwned'))
-    }
-    if (uc.quantity - quantity <= 0) {
-      await tx.userCard.delete({
-        where: { userId_cardId_variant: { userId, cardId, variant } },
-      })
-    } else {
-      await tx.userCard.update({
-        where: { userId_cardId_variant: { userId, cardId, variant } },
-        data: { quantity: { decrement: quantity } },
-      })
-    }
+    return rows.flatMap(({ finishes, ...uc }) =>
+      (['NORMAL', ...finishes] as CardVariant[]).map((variant) => ({
+        ...uc,
+        variant,
+      })),
+    )
   }
 }

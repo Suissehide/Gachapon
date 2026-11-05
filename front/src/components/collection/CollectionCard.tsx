@@ -55,7 +55,10 @@ export const RARITY_CHIP_ACTIVE: Record<string, string> = {
 
 type Props = {
   card: Card
+  /** Vernis affiché sur la face. */
   variant: CardVariant
+  /** Vernis débloqués : ils font la puissance, pas le vernis affiché. */
+  finishes: CardVariant[]
   quantity: number
   isOwned: boolean
   // Identifiant de la carte possédée : sert à récupérer ses bonus d'équipement
@@ -85,7 +88,7 @@ function cardFaceStats(
   input: {
     card: Props['card']
     level: number
-    variant: CardVariant
+    finishes: CardVariant[]
     palier: number
     bonuses: StatBonuses
     curve: StatCurve
@@ -97,8 +100,8 @@ function cardFaceStats(
   if (input === null) {
     return { stats: null, power: null }
   }
-  const { card, level, variant, palier, bonuses, curve } = input
-  const stats = displayStats(card, level, variant, palier, bonuses, curve)
+  const { card, level, finishes, palier, bonuses, curve } = input
+  const stats = displayStats(card, level, finishes, palier, bonuses, curve)
   return {
     stats,
     power: computePower({
@@ -113,6 +116,7 @@ function cardFaceStats(
 export const CollectionCard = memo(function CollectionCard({
   card,
   variant,
+  finishes,
   quantity,
   isOwned,
   userCardId,
@@ -132,7 +136,7 @@ export const CollectionCard = memo(function CollectionCard({
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const { stats, power } = cardFaceStats(
     isOwned && level && palier
-      ? { card, level, variant, palier, bonuses, curve: economy.card }
+      ? { card, level, finishes, palier, bonuses, curve: economy.card }
       : null,
   )
 

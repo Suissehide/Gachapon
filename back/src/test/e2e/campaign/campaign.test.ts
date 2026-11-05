@@ -350,7 +350,6 @@ describe('Campaign routes', () => {
       data: {
         userId: user.id,
         cardId: card.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 60,
         palier: 6,

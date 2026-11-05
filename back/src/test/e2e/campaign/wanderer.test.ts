@@ -71,7 +71,6 @@ describe('GET /campaign/wanderer', () => {
       data: {
         userId: u.id,
         cardId,
-        variant: 'NORMAL',
         quantity: 1,
         level: 10,
         palier: 1,

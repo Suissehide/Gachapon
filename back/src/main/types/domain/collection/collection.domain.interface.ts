@@ -1,10 +1,9 @@
 import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
-import type { CardRarity } from '../gacha/gacha.types'
+import type { CardRarity, CardVariant } from '../gacha/gacha.types'
 
 export type RecycleInput = {
   cardId: string
   quantity: number
-  variant: 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
 }
 
 export type RecycleResult = {
@@ -32,4 +31,10 @@ export interface ICollectionDomain {
     userId: string,
     maxRarity: CardRarity,
   ): Promise<RecycleAllResult>
+  /** Choisit le vernis affiché ; refuse un vernis non débloqué. */
+  setDisplayedFinish(
+    userId: string,
+    userCardId: string,
+    finish: CardVariant,
+  ): Promise<{ displayedFinish: CardVariant }>
 }

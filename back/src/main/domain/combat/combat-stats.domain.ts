@@ -1,10 +1,5 @@
 import type { CardVariant } from '../../types/domain/gacha/gacha.types'
-
-const VARIANT_MULT: Record<CardVariant, number> = {
-  NORMAL: 1.0,
-  BRILLIANT: 1.15,
-  HOLOGRAPHIC: 1.3,
-}
+import { finishMultiplier } from '../collection/finishes'
 
 const STAT_GROWTH_PER_LEVEL = 0.09
 export const ASCENSION_STAT_BONUS = 0.15
@@ -83,7 +78,8 @@ export interface CombatStatsInput {
   baseSpd: number
   level: number
   palier: number
-  variant: CardVariant
+  /** Vernis débloqués (le NORMAL est implicite) : leurs bonus se cumulent. */
+  finishes: readonly CardVariant[]
   /** Optional list of equipped pieces. */
   equipment?: EquipmentBonuses[]
   /** Phase 2 hook — empty object in Phase 1. */
@@ -146,13 +142,13 @@ export function computeFinalStats(input: CombatStatsInput): CombatStats {
     baseSpd,
     level,
     palier,
-    variant,
+    finishes,
     equipment = [],
     skillModifiers = {},
     baseStats,
   } = input
 
-  const variantMult = VARIANT_MULT[variant]
+  const variantMult = finishMultiplier(finishes)
 
   const hp = computeStat(
     baseHp,

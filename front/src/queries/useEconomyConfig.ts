@@ -44,6 +44,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     },
     statGrowthPerLevel: 0.09,
     ascensionStatBonus: 0.15,
+    finishMult: { BRILLIANT: 1.08, HOLOGRAPHIC: 1.15 },
     maxPalier: 7,
   },
   combat: {

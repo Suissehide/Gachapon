@@ -331,7 +331,7 @@ export function referenceTeam(
       baseSpd: base.spd,
       level: profile.level,
       palier,
-      variant: 'NORMAL',
+      finishes: [],
       pieces,
       setDefs: SET_DEFS,
       baseStats: BASE_STATS,

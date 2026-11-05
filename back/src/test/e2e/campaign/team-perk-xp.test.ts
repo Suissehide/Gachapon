@@ -82,7 +82,6 @@ describe('Bonus équipe `xp` — XP de campagne', () => {
       data: {
         userId,
         cardId,
-        variant: 'NORMAL',
         quantity: 1,
         level: 60,
         palier: 6,

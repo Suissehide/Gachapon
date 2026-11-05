@@ -214,7 +214,6 @@ describe('Leaderboard routes', () => {
         data: {
           userId: userA.id,
           cardId: card.id,
-          variant: 'NORMAL',
           quantity: 1,
           level: 1,
           palier: 1,
@@ -244,7 +243,6 @@ describe('Leaderboard routes', () => {
         data: {
           userId: userB.id,
           cardId: card.id,
-          variant: 'NORMAL',
           quantity: 1,
           level: 1,
           palier: 1,
@@ -340,7 +338,7 @@ describe('Leaderboard routes', () => {
       )
       await postgresOrm.prisma.userCard.createMany({
         data: [myUserId, ...tied.map((u: { id: string }) => u.id)].map(
-          (userId) => ({ userId, cardId: card.id, variant: 'NORMAL', quantity: 1 }),
+          (userId) => ({ userId, cardId: card.id, quantity: 1 }),
         ),
       })
     })

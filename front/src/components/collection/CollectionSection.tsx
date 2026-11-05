@@ -1,16 +1,17 @@
 import { useTranslation } from 'react-i18next'
 
-import type { Card } from '../../api/collection.api.ts'
+import type { Card, CardVariant } from '../../api/collection.api.ts'
 import type { UserCard } from '../../queries/useCollection.ts'
 import { useWishlist } from '../../queries/useWishlist.ts'
-import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CollectionCard } from './CollectionCard.tsx'
-
-// Rarities that ship in 3 variants (NORMAL + 2 special) — everything else has 1.
-const VARIANT_RARITIES = ['RARE', 'EPIC', 'LEGENDARY']
-const variantsPerCard = (rarity: string) =>
-  VARIANT_RARITIES.includes(rarity) ? 3 : 1
+import {
+  type DisplayEntry,
+  finishesPerCard,
+  hasFinishes,
+  ownedFinishCount,
+} from './collectionEntries.ts'
+import { FinishRow } from './FinishRow.tsx'
 
 export type SectionStats = {
   distinctCards: number
@@ -29,11 +30,11 @@ export function computeSectionStats(
   const cardIds = new Set(sectionCards.map((c) => c.id))
   const owned = userCards.filter((uc) => cardIds.has(uc.card.id))
   return {
-    distinctCards: new Set(owned.map((uc) => uc.card.id)).size,
+    distinctCards: owned.length,
     totalCards: cardIds.size,
-    ownedVariants: owned.length,
+    ownedVariants: owned.reduce((sum, uc) => sum + ownedFinishCount(uc), 0),
     totalVariants: sectionCards.reduce(
-      (sum, c) => sum + variantsPerCard(c.rarity),
+      (sum, c) => sum + finishesPerCard(c.rarity),
       0,
     ),
   }
@@ -44,11 +45,54 @@ type Props = {
   entries: DisplayEntry[]
   stats: SectionStats
   onDetail: (entryKey: string) => void
+  /** Absent : vernis en lecture seule (collection d'un autre joueur). */
+  onPickFinish?: (userCard: UserCard, finish: CardVariant) => void
   showWishlist?: boolean
   // Identifiants de cartes verrouillées par un duel en cours (`engagedCardIds`
-  // de `useWagers`). Le serveur les renvoie sans la variante : le badge
-  // marque donc toutes les variantes de la carte concernée.
+  // de `useWagers`).
   engagedCardIds?: Set<string>
+}
+
+/** Une tuile : la carte, et sous elle ses vernis si elle en a. */
+function EntryTile({
+  entry,
+  isWishlisted,
+  isEngaged,
+  onDetail,
+  onPickFinish,
+}: {
+  entry: DisplayEntry
+  isWishlisted: boolean
+  isEngaged: boolean
+  onDetail: (entryKey: string) => void
+  onPickFinish?: Props['onPickFinish']
+}) {
+  const uc = entry.userCard
+  return (
+    <div>
+      <CollectionCard
+        card={entry.card}
+        variant={entry.variant}
+        finishes={entry.finishes}
+        quantity={entry.quantity}
+        isOwned={entry.isOwned}
+        userCardId={uc?.id ?? null}
+        level={uc?.level ?? null}
+        palier={uc?.palier ?? null}
+        isWishlisted={isWishlisted}
+        isEngaged={isEngaged}
+        entryKey={entry.key}
+        onClick={onDetail}
+      />
+      {uc && hasFinishes(entry.card.rarity) && (
+        <FinishRow
+          finishes={uc.finishes}
+          shown={uc.displayedFinish}
+          onPick={onPickFinish && ((finish) => onPickFinish(uc, finish))}
+        />
+      )}
+    </div>
+  )
 }
 
 // Isolated subcomponent so useWishlist() is only called when the viewer is
@@ -57,32 +101,27 @@ type Props = {
 function WishlistAwareCards({
   entries,
   onDetail,
+  onPickFinish,
   engagedCardIds,
 }: {
   entries: DisplayEntry[]
   onDetail: (entryKey: string) => void
+  onPickFinish?: Props['onPickFinish']
   engagedCardIds?: Set<string>
 }) {
   const { data: wishlist } = useWishlist()
   return (
     <>
       {entries.map((entry) => (
-        <CollectionCard
+        <EntryTile
           key={entry.key}
-          card={entry.card}
-          variant={entry.variant}
-          quantity={entry.quantity}
-          isOwned={entry.isOwned}
-          userCardId={entry.userCard?.id ?? null}
-          level={entry.userCard?.level ?? null}
-          palier={entry.userCard?.palier ?? null}
+          entry={entry}
           isWishlisted={
-            (wishlist?.cards.some((c) => c.id === entry.card.id) ?? false) &&
-            entry.variant === 'NORMAL'
+            wishlist?.cards.some((c) => c.id === entry.card.id) ?? false
           }
           isEngaged={engagedCardIds?.has(entry.card.id) ?? false}
-          entryKey={entry.key}
-          onClick={onDetail}
+          onDetail={onDetail}
+          onPickFinish={onPickFinish}
         />
       ))}
     </>
@@ -94,6 +133,7 @@ export function CollectionSection({
   entries,
   stats,
   onDetail,
+  onPickFinish,
   showWishlist = false,
   engagedCardIds,
 }: Props) {
@@ -117,28 +157,23 @@ export function CollectionSection({
         <span className="h-px flex-1 bg-[rgba(27,23,38,0.12)]" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 items-start gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {showWishlist ? (
           <WishlistAwareCards
             entries={entries}
             onDetail={onDetail}
+            onPickFinish={onPickFinish}
             engagedCardIds={engagedCardIds}
           />
         ) : (
           entries.map((entry) => (
-            <CollectionCard
+            <EntryTile
               key={entry.key}
-              card={entry.card}
-              variant={entry.variant}
-              quantity={entry.quantity}
-              isOwned={entry.isOwned}
-              userCardId={entry.userCard?.id ?? null}
-              level={entry.userCard?.level ?? null}
-              palier={entry.userCard?.palier ?? null}
+              entry={entry}
               isWishlisted={false}
               isEngaged={engagedCardIds?.has(entry.card.id) ?? false}
-              entryKey={entry.key}
-              onClick={onDetail}
+              onDetail={onDetail}
+              onPickFinish={onPickFinish}
             />
           ))
         )}

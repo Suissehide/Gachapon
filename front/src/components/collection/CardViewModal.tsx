@@ -10,6 +10,7 @@ import {
   describeUltimate,
 } from '../../constants/archetypes.constant.ts'
 import type { CardVariant } from '../../constants/card.constant'
+import type { UserCard } from '../../constants/card.constant.ts'
 import {
   type CardArchetype,
   type CardElement,
@@ -19,7 +20,6 @@ import {
   isAstralElement,
 } from '../../constants/card.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
-import i18n from '../../i18n/index.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -27,7 +27,6 @@ import {
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
 import type { WishlistResponse } from '../../queries/useWishlist.ts'
 import { useToggleWishlist, useWishlist } from '../../queries/useWishlist.ts'
-import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import type { StatBonuses, StatCurve } from '../../utils/cardStats.ts'
 import { displayStats } from '../../utils/cardStats.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
@@ -36,12 +35,15 @@ import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
 import { RARITY_LABELS } from './CollectionCard.tsx'
 import { CombatPanel } from './CombatPanel.tsx'
+import { type DisplayEntry, hasFinishes } from './collectionEntries.ts'
 import { EquipmentSlotsPanel } from './EquipmentSlotsPanel.tsx'
+import { FinishRow } from './FinishRow.tsx'
 
 type Props = {
   entry: DisplayEntry | null
   onClose: () => void
   onRecycle: () => void
+  onPickFinish: (userCard: UserCard, finish: CardVariant) => void
 }
 
 const RARITY_HEX: Record<string, string> = {
@@ -50,19 +52,6 @@ const RARITY_HEX: Record<string, string> = {
   RARE: '#3b82f6',
   EPIC: '#8b5cf6',
   LEGENDARY: '#f59e0b',
-}
-
-// `common:cardVariant.*` : même libellé que sous la carte de l'écran de
-// révélation. « Brillante » partout, accordé à « carte ».
-const VARIANT_LABELS: Record<string, { label: string; className: string }> = {
-  BRILLIANT: {
-    label: i18n.t('common:cardVariant.brilliant'),
-    className: 'bg-amber-400/25 border border-amber-500/50 text-amber-700',
-  },
-  HOLOGRAPHIC: {
-    label: i18n.t('common:cardVariant.holographic'),
-    className: 'bg-cyan-400/20 border border-cyan-500/40 text-cyan-700',
-  },
 }
 
 /**
@@ -158,7 +147,7 @@ function faceStats(
   input: {
     card: DisplayEntry['card']
     level: number
-    variant: CardVariant
+    finishes: CardVariant[]
     palier: number
     bonuses: StatBonuses
     curve: StatCurve
@@ -167,11 +156,16 @@ function faceStats(
   if (input === null) {
     return null
   }
-  const { card, level, variant, palier, bonuses, curve } = input
-  return displayStats(card, level, variant, palier, bonuses, curve)
+  const { card, level, finishes, palier, bonuses, curve } = input
+  return displayStats(card, level, finishes, palier, bonuses, curve)
 }
 
-export function CardViewModal({ entry, onClose, onRecycle }: Props) {
+export function CardViewModal({
+  entry,
+  onClose,
+  onRecycle,
+  onPickFinish,
+}: Props) {
   // Hooks must be called unconditionally — before any early return.
   const { t } = useTranslation(['collection', 'common'])
   const { data: wishlist } = useWishlist()
@@ -204,7 +198,6 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   const { card, variant, quantity, isOwned, userCard } = entry
   const isWishlisted = isWished(wishlist, card.id)
   const rarityHex = RARITY_HEX[card.rarity] ?? RARITY_HEX.COMMON
-  const variantInfo = variant !== 'NORMAL' ? VARIANT_LABELS[variant] : null
 
   const panelStyle = { '--rar': rarityHex } as CSSProperties
 
@@ -213,7 +206,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
       ? {
           card,
           level: userCard.level,
-          variant,
+          finishes: userCard.finishes,
           palier: userCard.palier,
           bonuses,
           curve: economy.card,
@@ -290,14 +283,16 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
                   </span>
                   {card.element && <ElementChip element={card.element} />}
                   <ArchetypeChip archetype={card.archetype} />
-                  {variantInfo && (
-                    <span
-                      className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${variantInfo.className}`}
-                    >
-                      {variantInfo.label}
-                    </span>
-                  )}
                 </div>
+                {userCard && hasFinishes(card.rarity) && (
+                  <div className="w-full min-w-[180px]">
+                    <FinishRow
+                      finishes={userCard.finishes}
+                      shown={userCard.displayedFinish}
+                      onPick={(finish) => onPickFinish(userCard, finish)}
+                    />
+                  </div>
+                )}
               </div>
               <Button
                 variant="ghost"
@@ -352,7 +347,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               <CombatPanel
                 userCardId={entry.userCard.id}
                 card={card}
-                variant={variant}
+                finishes={entry.userCard.finishes}
                 quantity={quantity}
                 level={entry.userCard.level}
                 palier={entry.userCard.palier}

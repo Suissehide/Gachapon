@@ -2,7 +2,7 @@ import { Minus, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { Card, CardVariant } from '../../api/collection.api.ts'
+import type { Card } from '../../api/collection.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useRecycle } from '../../queries/useCollection.ts'
@@ -29,7 +29,6 @@ interface RecycleModalProps {
   onOpenChange: (open: boolean) => void
   onRecycled?: () => void
   card: Card & { quantity: number }
-  variant: CardVariant
 }
 
 export function RecycleModal({
@@ -37,7 +36,6 @@ export function RecycleModal({
   onOpenChange,
   onRecycled,
   card,
-  variant,
 }: RecycleModalProps) {
   const { t } = useTranslation('collection')
   const [quantity, setQuantity] = useState(1)
@@ -68,7 +66,7 @@ export function RecycleModal({
 
   const handleRecycle = () => {
     recycle(
-      { cardId: card.id, quantity, variant },
+      { cardId: card.id, quantity },
       {
         onSuccess: () => {
           onOpenChange(false)
@@ -104,13 +102,6 @@ export function RecycleModal({
               <p className={`text-xs font-medium ${rarityText}`}>
                 {RARITY_LABELS[card.rarity]}
               </p>
-              {variant !== 'NORMAL' && (
-                <p className="mt-0.5 text-xs font-semibold">
-                  {variant === 'HOLOGRAPHIC'
-                    ? t('collection:recycleModal.variantHolographic')
-                    : t('collection:recycleModal.variantBrilliant')}
-                </p>
-              )}
               <p className="mt-1 flex items-center gap-1 text-xs text-text-light">
                 {dustPerCard} <Sparkles className="h-3 w-3 text-primary" />{' '}
                 {t('collection:recycleModal.perCopy')} ·{' '}

@@ -78,7 +78,6 @@ export class CardDustConversionDomain {
             tx,
             userId,
             userCard.cardId,
-            userCard.variant,
           )
           if (userCard.quantity - amount < 1) {
             throw Boom.badRequest(

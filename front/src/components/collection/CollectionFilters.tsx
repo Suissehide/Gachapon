@@ -1,7 +1,7 @@
 import type React from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { Card, CardVariant } from '../../api/collection.api.ts'
+import type { Card } from '../../api/collection.api.ts'
 import {
   ARCHETYPE_ICONS,
   archetypeName,
@@ -20,10 +20,10 @@ import { Select } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
 import { SegmentedControl } from '../ui/segmentedControl.tsx'
 import { RARITY_ORDER } from './CollectionCard.tsx'
+import type { FinishFilter } from './collectionEntries.ts'
 
 type Rarity = Card['rarity']
 export type RarityFilter = Rarity | 'all'
-export type VariantFilter = CardVariant | 'all'
 export type ElementFilter = CardElement | 'all'
 export type ArchetypeFilter = CardArchetype | 'all'
 export type GroupMode = 'rarity' | 'set' | 'element'
@@ -65,17 +65,17 @@ const ARCHETYPE_FILTER_OPTIONS = [
 
 const VARIANT_OPTIONS = [
   { value: 'all', label: i18n.t('collection:filters.allMasculine') },
-  { value: 'NORMAL', label: i18n.t('collection:filters.variant.normal') },
-  {
-    value: 'HOLOGRAPHIC',
-    label: i18n.t('collection:filters.variant.holographic'),
-    icon: <Swatch kind="holo" />,
-  },
   {
     value: 'BRILLIANT',
     label: i18n.t('collection:filters.variant.brilliant'),
     icon: <Swatch kind="dore" />,
   },
+  {
+    value: 'HOLOGRAPHIC',
+    label: i18n.t('collection:filters.variant.holographic'),
+    icon: <Swatch kind="holo" />,
+  },
+  { value: 'missing', label: i18n.t('collection:filters.variant.missing') },
 ]
 
 const OWNERSHIP_OPTIONS = [
@@ -112,8 +112,8 @@ interface Props {
   onGroupChange: (mode: GroupMode) => void
   rarity: RarityFilter
   onRarityChange: (r: RarityFilter) => void
-  variant: VariantFilter
-  onVariantChange: (v: VariantFilter) => void
+  variant: FinishFilter
+  onVariantChange: (v: FinishFilter) => void
   element: ElementFilter
   onElementChange: (e: ElementFilter) => void
   archetype: ArchetypeFilter
@@ -184,7 +184,7 @@ export function CollectionFilters({
             id="filter-variant"
             options={VARIANT_OPTIONS}
             value={variant}
-            onValueChange={(v) => onVariantChange(v as VariantFilter)}
+            onValueChange={(v) => onVariantChange(v as FinishFilter)}
             clearable={false}
           />
         </FilterField>
@@ -255,10 +255,7 @@ function Divider() {
 }
 
 function Swatch({ kind }: { kind: 'holo' | 'dore' }) {
-  const bg =
-    kind === 'holo'
-      ? 'linear-gradient(115deg, #f9a8d4, #93c5fd, #86efac, #fcd34d)'
-      : 'linear-gradient(135deg, #fde68a, #f59e0b)'
+  const bg = kind === 'holo' ? 'var(--finish-holo)' : 'var(--finish-brilliant)'
   return (
     <span
       aria-hidden

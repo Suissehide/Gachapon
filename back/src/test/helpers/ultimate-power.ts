@@ -26,7 +26,7 @@ function unite(
     ...PROFILS[profil],
     level: 70,
     palier: 7,
-    variant: 'NORMAL',
+    finishes: [],
     baseStats: { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 },
   })
   return {

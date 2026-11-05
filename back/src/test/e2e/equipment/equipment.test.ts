@@ -57,7 +57,6 @@ describe('Equipment routes', () => {
       data: {
         userId: user.id,
         cardId: card.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 1,
         palier: 1,
@@ -272,7 +271,6 @@ describe('Equipment routes', () => {
       data: {
         userId: other.id,
         cardId: card!.id,
-        variant: 'NORMAL',
         quantity: 1,
         level: 1,
         palier: 1,
@@ -314,11 +312,24 @@ describe('Equipment routes', () => {
   // libre. On pose l'arme A sur une seconde carte puis on échange.
   it('POST /equipment/swap — exchanges all equipment between two cards', async () => {
     const { postgresOrm } = (app as any).iocContainer
-    const card = await postgresOrm.prisma.card.findFirst({
+    const first = await postgresOrm.prisma.card.findFirst({
       where: { nameFr: `EquipCard${suffix}` },
     })
+    const card = await postgresOrm.prisma.card.create({
+      data: {
+        nameFr: `EquipCard2${suffix}`,
+        nameEn: `EquipCard2${suffix}`,
+        rarity: 'RARE',
+        dropWeight: 10,
+        setId: first!.setId,
+        baseHp: 200,
+        baseAtk: 20,
+        baseDef: 10,
+        baseSpd: 100,
+      },
+    })
     const uc2 = await postgresOrm.prisma.userCard.create({
-      data: { userId, cardId: card!.id, variant: 'HOLOGRAPHIC', quantity: 1, level: 1, palier: 1 },
+      data: { userId, cardId: card.id, quantity: 1, level: 1, palier: 1 },
     })
     await app.inject({
       method: 'POST',
