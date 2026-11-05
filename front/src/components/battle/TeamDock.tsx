@@ -95,6 +95,7 @@ export function TeamDock({
                   unit={u}
                   width="w-[52px]"
                   showName={false}
+                  bare
                 />
               ))
             )}

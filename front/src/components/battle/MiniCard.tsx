@@ -18,16 +18,19 @@ function fmt(n: number): string {
 // size; TcgCardFace fills its aspect-2/3 container. Rarity tone drives the
 // level badge overlay so it inherits the card frame colours.
 // When `showName` is false the family + name band are hidden and a power pill
-// overlays the bottom instead — used by the dock where names would be noise.
+// overlays the bottom instead. `bare` keeps only the art, level and element —
+// the bottom dock, too small for more.
 
 export function MiniCard({
   unit,
   width,
   showName = true,
+  bare = false,
 }: {
   unit: TeamUnit
   width: string
   showName?: boolean
+  bare?: boolean
 }) {
   const power = computePower(unit.stats)
   return (
@@ -49,9 +52,9 @@ export function MiniCard({
           // en colonne.
           level={unit.level}
           element={(unit.element ?? null) as CardElement | null}
-          archetype={unit.archetype}
+          archetype={bare ? null : unit.archetype}
         />
-        {!showName && (
+        {!showName && !bare && (
           <div className="pointer-events-none absolute bottom-1.5 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-1 rounded-sm border-[0.5px] border-white bg-[#1b1726]/92 px-2 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45)]">
             <Swords className="h-2.5 w-2.5 text-primary" />
             {fmt(power)}
