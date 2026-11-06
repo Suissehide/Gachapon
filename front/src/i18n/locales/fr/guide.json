@@ -202,7 +202,7 @@
       "info": "Tu peux <strong>réinitialiser</strong> l'arbre à tout moment contre de la poussière, selon le nombre de points investis : tous tes points te sont rendus."
     },
     "campagne": {
-      "intro": "La <strong>campagne</strong> compte quinze chapitres (Plaines, Forêt des Murmures, Cendres, Océan, Cristaux, Volcan, Toundra, Abysses, Marais, Désert, Ruines, Cimes, Tempête, Citadelle, Faille) de 10 étapes chacun, de plus en plus difficiles.",
+      "intro": "La <strong>campagne</strong> compte vingt chapitres (Plaines, Forêt des Murmures, Cendres, Océan, Cristaux, Volcan, Toundra, Abysses, Marais, Désert, Ruines, Cimes, Tempête, Citadelle, Faille, Néant, Éclipse, Sanctuaire, Nécropole, Trône du Chaos) de 10 étapes chacun, de plus en plus difficiles.",
       "list": {
         "i1": "Tu combats avec une équipe de <strong>trois cartes maximum</strong>. Les boss affrontent seuls tes trois cartes.",
         "i2": "L'écran de <strong>préparation</strong> montre les adversaires, les récompenses, le coût en énergie et un verdict : <pill>Avantage</pill> <pill>Équilibré</pill> <pill>Risqué</pill>.",
@@ -234,7 +234,7 @@
       "tip": "Le guide des éléments s'ouvre depuis l'en-tête de la campagne et des tours, et la collection se filtre par élément."
     },
     "tours": {
-      "intro": "Il y a quatre <strong>tours</strong>, une par élément : Braise (feu), Prisme (eau), Sève (nature) et Monolithe (terre). Chacune a 10 étages, qui se débloquent dans l'ordre.",
+      "intro": "Il y a quatre <strong>tours</strong>, une par élément : Braise (feu), Prisme (eau), Sève (nature) et Monolithe (terre). Chacune a 15 étages, qui se débloquent dans l'ordre.",
       "list": {
         "i1": "Chaque tour lâche un type d'équipement que la campagne ne donne pas : Gants (Braise), Bottes (Prisme), Amulette (Sève), Ceinture (Monolithe).",
         "i2": "Chaque victoire rapporte une pièce ; plus l'étage est haut, meilleure est la rareté.",

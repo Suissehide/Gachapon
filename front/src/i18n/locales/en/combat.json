@@ -97,7 +97,12 @@
       "12": "Peaks",
       "13": "Storm",
       "14": "Citadel",
-      "15": "Rift"
+      "15": "Rift",
+      "16": "Void",
+      "17": "Eclipse",
+      "18": "Sanctum",
+      "19": "Necropolis",
+      "20": "Throne of Chaos"
     },
     "chapterFallback": "Chapter {{n}}",
     "loading": "Loading the campaign…",

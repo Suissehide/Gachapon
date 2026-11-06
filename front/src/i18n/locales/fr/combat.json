@@ -97,7 +97,12 @@
       "12": "Cimes",
       "13": "Tempête",
       "14": "Citadelle",
-      "15": "Faille"
+      "15": "Faille",
+      "16": "Néant",
+      "17": "Éclipse",
+      "18": "Sanctuaire",
+      "19": "Nécropole",
+      "20": "Trône du Chaos"
     },
     "chapterFallback": "Chapitre {{n}}",
     "loading": "Chargement de la campagne…",
