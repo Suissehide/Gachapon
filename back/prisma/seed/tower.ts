@@ -7,7 +7,7 @@ import { buildTowerFloors } from '../../src/main/domain/content/tower.definition
 type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
 
 /**
- * Écrit les 40 étages de tour. Les données elles-mêmes vivent dans
+ * Écrit les 60 étages de tour. Les données elles-mêmes vivent dans
  * `src/main/domain/content/tower.definitions.ts` : elles sont partagées avec
  * le backfill de traductions, qui est du code de production.
  */

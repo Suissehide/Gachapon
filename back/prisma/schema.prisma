@@ -944,7 +944,7 @@ model UserCampaignProgress {
 model TowerFloor {
   id        String      @id @default(uuid())
   element   CardElement // FIRE | WATER | NATURE | EARTH uniquement
-  index     Int // 1..10
+  index     Int // 1..15
   labelFr   String
   labelEn   String
   enemyTeam Json
