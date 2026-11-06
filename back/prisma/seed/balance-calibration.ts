@@ -53,6 +53,7 @@ import {
   towerFloorScale,
 } from '../../src/main/domain/content/tower.definitions'
 import {
+  EQUIP_MAX_LEVEL,
   EQUIP_SUBSTAT_MILESTONE,
   INITIAL_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
@@ -199,6 +200,12 @@ export interface ReferenceProfile {
    * bloc au changement de chapitre.
    */
   cardRarities?: readonly (keyof typeof RARITY_BASE)[]
+  /**
+   * Rareté ET niveau carte par carte (3 entrées), prioritaire sur `level`,
+   * `cardRarity` et `cardRarities`. Sert au chemin de fin de jeu, où une
+   * légendaire n60 côtoie des épiques n70.
+   */
+  cards?: readonly ProfileCard[]
   equipRarity: CardRarity
   /**
    * Rareté des TROIS premiers emplacements (arme, armure, anneau), ceux que
@@ -224,6 +231,48 @@ export interface ReferenceProfile {
   pieces?: readonly { rarity: CardRarity; level: number }[]
   /** Taux de victoire visé pour ce profil. */
   target: number
+}
+
+export interface ProfileCard {
+  rarity: keyof typeof RARITY_BASE
+  level: number
+}
+
+export interface ProfilePiece {
+  rarity: CardRarity
+  level: number
+}
+
+/** Les trois cartes d'un profil, quelle que soit la façon dont il les décrit. */
+function profileCards(profile: ReferenceProfile): ProfileCard[] {
+  return [0, 1, 2].map(
+    (idx) =>
+      profile.cards?.[idx] ?? {
+        rarity: profile.cardRarities?.[idx] ?? profile.cardRarity ?? 'EPIC',
+        level: profile.level,
+      },
+  )
+}
+
+/**
+ * Les pièces portées, préfixe de REFERENCE_BUILD. Les 3 premières entrées
+ * sont les emplacements que droppe la campagne (cf. son commentaire) : elles
+ * prennent `campaignSlotRarity` quand il est fourni.
+ */
+function wornPieces(profile: ReferenceProfile): ProfilePiece[] {
+  if (profile.pieces) {
+    return [...profile.pieces]
+  }
+  return Array.from(
+    { length: profile.equipLevel === 0 ? 0 : profile.gearCount },
+    (_, i) => ({
+      rarity:
+        i < 3
+          ? (profile.campaignSlotRarity ?? profile.equipRarity)
+          : profile.equipRarity,
+      level: profile.equipLevel,
+    }),
+  )
 }
 
 /** Le budget d'équipement d'un palier de progression. */
@@ -292,27 +341,12 @@ export function referenceTeam(
   profile: ReferenceProfile,
   opts: { element: string | null; seed: number },
 ): SimulatorUnit[] {
-  const palier = Math.min(7, Math.ceil(profile.level / 10))
   const rng = mulberry32(opts.seed)
-  // Les 3 premières entrées de REFERENCE_BUILD sont les emplacements que
-  // droppe la campagne (cf. son commentaire) : elles prennent
-  // `campaignSlotRarity` quand il est fourni.
-  const worn =
-    profile.pieces ??
-    Array.from(
-      { length: profile.equipLevel === 0 ? 0 : profile.gearCount },
-      (_, i) => ({
-        rarity:
-          i < 3
-            ? (profile.campaignSlotRarity ?? profile.equipRarity)
-            : profile.equipRarity,
-        level: profile.equipLevel,
-      }),
-    )
+  const worn = wornPieces(profile)
   const build = REFERENCE_BUILD.slice(0, worn.length)
-  return [0, 1, 2].map((idx) => {
-    const base =
-      RARITY_BASE[profile.cardRarities?.[idx] ?? profile.cardRarity ?? 'EPIC']
+  return profileCards(profile).map((card, idx) => {
+    const base = RARITY_BASE[card.rarity]
+    const palier = Math.min(7, Math.ceil(card.level / 10))
     const pieces = build.map((b, i) => {
       const { rarity, level } = worn[i] ?? { rarity: 'COMMON', level: 0 }
       const row = catalogPiece(b.slot, b.setKey, rarity, b.mainStat)
@@ -329,7 +363,7 @@ export function referenceTeam(
       baseAtk: base.atk,
       baseDef: base.def,
       baseSpd: base.spd,
-      level: profile.level,
+      level: card.level,
       palier,
       finishes: [],
       pieces,
@@ -736,4 +770,89 @@ export function wandererWinRate(opts: {
     }
   }
   return wins / opts.runs
+}
+
+// --- Fin de jeu ------------------------------------------------------------
+
+/**
+ * Une étape du joueur de fin de jeu : une carte ou une pièce change.
+ * `slot` est l'index de la carte (0..2) ou de la pièce (préfixe de
+ * REFERENCE_BUILD).
+ */
+export interface EndgameStep {
+  kind: 'card' | 'piece'
+  slot: number
+  rarity: CardRarity
+  level: number
+}
+
+/**
+ * Niveaux par lesquels une légendaire remplace une épique n70 p7 : elle ne
+ * la dépasse qu'au niveau 60 (PV ×1,28, ATQ ×1,22 ; ×0,95 au niveau 50),
+ * puis monte au plafond.
+ */
+const LEGENDARY_CARD_LEVELS = [60, 70] as const
+
+/**
+ * Le chemin du joueur qui a fini le contenu d'origine vers la cible de fin
+ * de jeu : 3 légendaires n70 et 7 pièces légendaires n12. Chaque carte passe
+ * par LEGENDARY_CARD_LEVELS, chaque pièce non légendaire passe LEGENDARY n12.
+ * Les étapes de cartes sont réparties à intervalles réguliers parmi celles
+ * des pièces, et la première est une pièce : remplacer une carte est la plus
+ * grosse marche, on ne la fait pas d'entrée.
+ */
+export function endgameSteps(start: ReferenceProfile): EndgameStep[] {
+  const cards: EndgameStep[] = LEGENDARY_CARD_LEVELS.flatMap((level) =>
+    [0, 1, 2].map((slot) => ({
+      kind: 'card' as const,
+      slot,
+      rarity: 'LEGENDARY' as const,
+      level,
+    })),
+  )
+  const pieces: EndgameStep[] = wornPieces(start).flatMap((piece, slot) =>
+    piece.rarity === 'LEGENDARY' && piece.level >= EQUIP_MAX_LEVEL
+      ? []
+      : [
+          {
+            kind: 'piece' as const,
+            slot,
+            rarity: 'LEGENDARY' as const,
+            level: EQUIP_MAX_LEVEL,
+          },
+        ],
+  )
+  // Fusion de Bresenham : la k-ième carte passe après la pièce de rang
+  // ceil((k + 1) × pièces / (cartes + 1)).
+  const steps: EndgameStep[] = []
+  let placed = 0
+  pieces.forEach((piece, i) => {
+    steps.push(piece)
+    while (
+      placed < cards.length &&
+      i + 1 >= ((placed + 1) * pieces.length) / (cards.length + 1)
+    ) {
+      steps.push(cards[placed] as EndgameStep)
+      placed++
+    }
+  })
+  return [...steps, ...cards.slice(placed)]
+}
+
+/** Le joueur de départ après les `applied` premières étapes du chemin. */
+export function endgameProfileAt(
+  start: ReferenceProfile,
+  applied: number,
+  target: number,
+): ReferenceProfile {
+  const cards = profileCards(start)
+  const pieces = wornPieces(start)
+  for (const step of endgameSteps(start).slice(0, applied)) {
+    if (step.kind === 'card') {
+      cards[step.slot] = { rarity: step.rarity, level: step.level }
+    } else {
+      pieces[step.slot] = { rarity: step.rarity, level: step.level }
+    }
+  }
+  return { ...start, cards, pieces, target }
 }
