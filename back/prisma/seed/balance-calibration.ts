@@ -38,7 +38,9 @@ import { computeEquippedCardStats } from '../../src/main/domain/combat/equipped-
 import { buildEnemySimUnits } from '../../src/main/domain/combat/sim-units'
 import {
   bossEnemyTeam,
+  CHAPTER_COUNT,
   curvePosition,
+  LEGACY_CHAPTERS,
   normalEnemyTeam,
   RARITY_BASE,
   REFERENCE_CHAPTERS,
@@ -449,6 +451,9 @@ export function towerWinRate(opts: {
  * PROPRE à la tour — le niveau et l'équipement du joueur de référence, eux,
  * sortent du barème commun (GEAR_LADDER).
  */
+/** Le sommet d'origine des tours, d'où part le chemin de fin de jeu. */
+const ORIGINAL_TOWER_FLOORS = 10
+
 const TOWER_FLOOR_TARGETS: Record<number, number> = {
   1: 0.8,
   2: 0.7,
@@ -460,6 +465,11 @@ const TOWER_FLOOR_TARGETS: Record<number, number> = {
   8: 0.5,
   9: 0.45,
   10: 0.4,
+  11: 0.6,
+  12: 0.55,
+  13: 0.5,
+  14: 0.45,
+  15: 0.4,
 }
 
 /**
@@ -476,6 +486,19 @@ export function towerFloorProfile(floor: number): ReferenceProfile {
   if (target === undefined) {
     throw new Error(
       `Aucune cible pour l'étage de tour ${floor} (attendu 1..${TOWER_FLOOR_COUNT})`,
+    )
+  }
+  // Fin de jeu : l'étage 11 accueille le grimpeur qui vient de franchir le
+  // 10, tel quel — sinon le premier étage nouveau est un mur. Il avance
+  // ensuite sur le chemin de fin de jeu et l'a parcouru en entier au sommet.
+  if (floor > ORIGINAL_TOWER_FLOORS) {
+    const depart = towerFloorProfile(ORIGINAL_TOWER_FLOORS)
+    const etapes = endgameSteps(depart).length
+    const pas = TOWER_FLOOR_COUNT - ORIGINAL_TOWER_FLOORS - 1
+    return endgameProfileAt(
+      depart,
+      Math.round(((floor - ORIGINAL_TOWER_FLOORS - 1) * etapes) / pas),
+      target,
     )
   }
   return {
@@ -617,6 +640,19 @@ export function campaignProfile(
   chapter: number,
   index: number,
 ): ReferenceProfile {
+  const target =
+    index === STAGES_PER_CHAPTER
+      ? CAMPAIGN_TARGETS.boss
+      : CAMPAIGN_TARGETS.normal
+  // Fin de jeu : le joueur qui a battu 15-10 avance sur le chemin de fin de
+  // jeu au fil des 50 étages, et l'a parcouru en entier au boss 20-10.
+  if (chapter > LEGACY_CHAPTERS) {
+    const depart = campaignProfile(LEGACY_CHAPTERS, STAGES_PER_CHAPTER)
+    const etapes = endgameSteps(depart).length
+    const fins = (CHAPTER_COUNT - LEGACY_CHAPTERS) * STAGES_PER_CHAPTER
+    const s = (chapter - LEGACY_CHAPTERS - 1) * STAGES_PER_CHAPTER + index
+    return endgameProfileAt(depart, Math.round((s * etapes) / fins), target)
+  }
   // Le joueur d'un étage est celui de son étage ÉQUIVALENT sur la courbe de
   // référence de 90 étages (`curvePosition`) : cartes, équipement et niveau
   // sont exprimés en chapitres et étages de RÉFÉRENCE.
@@ -631,10 +667,7 @@ export function campaignProfile(
     ...gearTier(refChapter),
     pieces: campaignPieces(refChapter, refIndex),
     campaignSlotRarity: campaignSlotRarityAt(refChapter),
-    target:
-      index === STAGES_PER_CHAPTER
-        ? CAMPAIGN_TARGETS.boss
-        : CAMPAIGN_TARGETS.normal,
+    target,
   }
 }
 

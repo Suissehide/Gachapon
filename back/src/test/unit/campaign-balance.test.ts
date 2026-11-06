@@ -1,5 +1,6 @@
 import { damageReduction } from '../../main/domain/combat/combat-stats.domain'
 import { ELEMENTS } from '../../main/domain/combat/element'
+import { ACHIEVEMENT_DEFINITIONS } from '../../main/domain/content/achievements.definitions'
 import { raidBossSpec } from '../../main/domain/content/raid.definitions'
 import {
   FAMILY_ELEMENTS,
@@ -22,6 +23,7 @@ import {
   RARITY_BASE,
   ENEMY_DEF_MULT,
   enemyScale,
+  LEGACY_CHAPTERS,
   lootTableNormal,
   normalEnemyTeam,
   referenceChapter,
@@ -32,6 +34,9 @@ const TOTAL_STAGES = CHAPTER_COUNT * STAGES_PER_CHAPTER
 const DEFENSE_K = 1000
 
 const chapitres = Array.from({ length: CHAPTER_COUNT }, (_, i) => i + 1)
+/** La campagne d'origine, avant les chapitres de fin de jeu. */
+const chapitresOrigine = chapitres.filter((c) => c <= LEGACY_CHAPTERS)
+const LEGACY_STAGES = LEGACY_CHAPTERS * STAGES_PER_CHAPTER
 const etagesNormaux = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 /** Chapitre et étage d'un numéro d'étage global. */
 const coord = (n: number) =>
@@ -145,7 +150,7 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
   it('premier passage = barème × difficulté^0,75 × 81/135 (total de référence)', () => {
     // Les 135 étages normaux paient ce que payaient les 81 de la campagne de
     // référence : chaque premier passage en touche la part 81/135.
-    for (const [c, i] of [[1, 1], [4, 6], [CHAPTER_COUNT, 9]] as const) {
+    for (const [c, i] of [[1, 1], [4, 6], [LEGACY_CHAPTERS, 9]] as const) {
       const fc = lootTableNormal(c, i).firstClear
       const echelle = difficultyMult(c, i) ** 0.75 * (81 / 135)
       expect(fc.gold).toBe(Math.round(120 * echelle))
@@ -168,7 +173,7 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
   it('autant de pièces garanties que la campagne de référence (88)', () => {
     // 79 étages normaux (3 à 89) + 9 boss dans la campagne de référence.
     let pieces = 0
-    for (let n = 1; n <= TOTAL_STAGES; n++) {
+    for (let n = 1; n <= LEGACY_STAGES; n++) {
       const [c, i] = coord(n)
       const fc =
         i === STAGES_PER_CHAPTER
@@ -206,7 +211,7 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
 
   it('les communes décroissent strictement du début à la fin de la campagne', () => {
     const communes: number[] = []
-    for (const c of chapitres) {
+    for (const c of chapitresOrigine) {
       for (const i of etagesNormaux) {
         communes.push(lootTableNormal(c, i).farm.equipmentWeights.COMMON ?? 0)
       }
@@ -219,7 +224,7 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
     // à chaque chapitre.
     expect(communes[communes.length - 1]).toBeLessThanOrEqual(1)
     expect(
-      lootTableNormal(CHAPTER_COUNT, 10).farm.equipmentWeights.COMMON ?? 0,
+      lootTableNormal(LEGACY_CHAPTERS, 10).farm.equipmentWeights.COMMON ?? 0,
     ).toBe(0)
   })
 
@@ -289,12 +294,12 @@ describe('bossLoot — farm du boss calé sur le chapitre suivant', () => {
     for (let k = 1; k <= 9; k++) {
       reference += 1650 * 1.5 ** (k - 1)
     }
-    const total = chapitres.reduce((s, c) => s + bossLoot(c).firstClear.gold, 0)
+    const total = chapitresOrigine.reduce((s, c) => s + bossLoot(c).firstClear.gold, 0)
     expect(total / reference).toBeCloseTo(1, 2)
   })
 
   it('cartes garanties : 3 rares, 5 épiques, 1 légendaire au boss final', () => {
-    const cartes = chapitres
+    const cartes = chapitresOrigine
       .map((c) => bossLoot(c).firstClear.guaranteedCard?.minRarity)
       .filter((r) => r !== undefined)
     expect(cartes).toEqual([
@@ -308,7 +313,7 @@ describe('bossLoot — farm du boss calé sur le chapitre suivant', () => {
       'EPIC',
       'LEGENDARY',
     ])
-    expect(bossLoot(CHAPTER_COUNT).firstClear.guaranteedCard).toEqual({
+    expect(bossLoot(LEGACY_CHAPTERS).firstClear.guaranteedCard).toEqual({
       minRarity: 'LEGENDARY',
     })
     expect(bossLoot(1).firstClear.guaranteedEquipment).toEqual({
@@ -394,9 +399,14 @@ describe('boss de chapitre', () => {
     }
   })
 
-  it('sprites de boss distincts, existants, jamais ceux du raid (BOSS-010..013)', () => {
+  it('sprites de boss existants, jamais ceux du raid (BOSS-010..013)', () => {
     const sprites = chapitres.map((c) => bossEnemyTeam(c, 10)[0].appearance)
-    expect(new Set(sprites).size).toBe(CHAPTER_COUNT)
+    // Distincts sur la campagne d'origine ; les chapitres de fin de jeu
+    // reprennent les boss des cinq premiers.
+    expect(new Set(sprites.slice(0, LEGACY_CHAPTERS)).size).toBe(LEGACY_CHAPTERS)
+    expect(sprites.slice(LEGACY_CHAPTERS)).toEqual(
+      [1, 2, 3, 4, 5].map((n) => `monsters/bosses/BOSS-00${n}`),
+    )
     for (const sprite of sprites) {
       const numero = Number(sprite.match(/BOSS-(\d{3})$/)?.[1])
       expect(numero).toBeGreaterThanOrEqual(1)
@@ -498,9 +508,85 @@ describe("compensation d'équipement — la campagne mesurée contre un joueur �
     // pas l'économie. Le boss final est à la position 90, comme le 9-10 de la
     // campagne de référence.
     expect(lootTableNormal(1, 1).farm.gold).toBe(50)
-    expect(lootTableNormal(CHAPTER_COUNT, 10).farm.gold).toBe(
+    expect(lootTableNormal(LEGACY_CHAPTERS, 10).farm.gold).toBe(
       Math.round(50 * ((1 + 0.08 * 89) ** 2.5) ** 0.585),
     )
   })
 
+})
+
+describe('fin de jeu — chapitres 16 à 20', () => {
+  const nouveaux = Array.from(
+    { length: (CHAPTER_COUNT - LEGACY_CHAPTERS) * STAGES_PER_CHAPTER },
+    (_, k) => LEGACY_STAGES + 1 + k,
+  )
+  const loot = (n: number) => {
+    const [c, i] = coord(n)
+    return i === STAGES_PER_CHAPTER ? bossLoot(c) : lootTableNormal(c, i)
+  }
+
+  it('vingt chapitres, la courbe d’origine finit toujours à 15-10', () => {
+    expect(CHAPTER_COUNT).toBe(20)
+    expect(LEGACY_CHAPTERS).toBe(15)
+    expect(curvePosition(LEGACY_STAGES)).toBe(90)
+    expect(curvePosition(LEGACY_STAGES + 1)).toBeGreaterThan(90)
+  })
+
+  it('le farm des étages 151-200 est celui du boss 15-10, sans plus', () => {
+    // Le boss 15-10 farme comme l'étage 152 : 151 est un cran en dessous,
+    // tout ce qui suit est au plafond.
+    const plafond = bossLoot(LEGACY_CHAPTERS).farm
+    for (const n of nouveaux) {
+      const farm = loot(n).farm
+      if (n >= LEGACY_STAGES + 2) {
+        expect(farm).toEqual(plafond)
+      } else {
+        expect(farm.gold).toBeLessThanOrEqual(plafond.gold)
+        expect(farm.dust).toBeLessThanOrEqual(plafond.dust)
+        expect(farm.xp).toBeLessThanOrEqual(plafond.xp)
+      }
+    }
+  })
+
+  it('le premier passage des étages normaux ne dépasse pas celui de 16-2', () => {
+    const plafond = lootTableNormal(LEGACY_CHAPTERS + 1, 2).firstClear
+    for (const n of nouveaux.filter((n) => n % STAGES_PER_CHAPTER !== 0)) {
+      const fc = loot(n).firstClear
+      expect(fc.gold).toBeLessThanOrEqual(plafond.gold)
+      expect(fc.dust).toBeLessThanOrEqual(plafond.dust)
+      expect(fc.xp).toBeLessThanOrEqual(plafond.xp)
+    }
+  })
+
+  it('les boss 16-20 paient comme le 15, plus une carte et une pièce légendaires', () => {
+    const quinze = bossLoot(LEGACY_CHAPTERS).firstClear
+    for (let c = LEGACY_CHAPTERS + 1; c <= CHAPTER_COUNT; c++) {
+      const fc = bossLoot(c).firstClear
+      expect([fc.gold, fc.dust, fc.xp]).toEqual([
+        quinze.gold,
+        quinze.dust,
+        quinze.xp,
+      ])
+      expect(fc.guaranteedEquipment).toEqual({ minRarity: 'LEGENDARY' })
+      expect(fc.guaranteedCard).toEqual({ minRarity: 'LEGENDARY' })
+    }
+  })
+
+  it('le joueur de référence de 20-10 est la cible : 3 légendaires n70, 7 pièces légendaires n12', () => {
+    const p = campaignProfile(CHAPTER_COUNT, STAGES_PER_CHAPTER)
+    expect(p.cards).toEqual(
+      [0, 1, 2].map(() => ({ rarity: 'LEGENDARY', level: 70 })),
+    )
+    expect(p.pieces).toEqual(
+      Array.from({ length: 7 }, () => ({ rarity: 'LEGENDARY', level: 12 })),
+    )
+    expect(p.target).toBe(CAMPAIGN_TARGETS.boss)
+  })
+
+  it('des succès marquent l’entrée aux chapitres 17 et 20', () => {
+    const seuils = ACHIEVEMENT_DEFINITIONS.filter(
+      (a) => a.criterion.type === 'CAMPAIGN_CHAPTER_REACHED',
+    ).map((a) => (a.criterion as { threshold: number }).threshold)
+    expect(seuils).toEqual(expect.arrayContaining([17, CHAPTER_COUNT]))
+  })
 })

@@ -20,8 +20,17 @@ export const TOWER_ELEMENTS = [
 
 export type TowerElement = (typeof TOWER_ELEMENTS)[number]
 
-/** Nombre d'étages par tour (§6 design spec). */
-export const TOWER_FLOOR_COUNT = 10
+/** Nombre d'étages par tour (§6 design spec, étages 11-15 de fin de jeu). */
+export const TOWER_FLOOR_COUNT = 15
+
+/**
+ * Étages de boss : le sommet d'origine (10) et le sommet de fin de jeu (15).
+ * Ils alignent une unité AOE_3 et comptent comme boss pour les succès et les
+ * quêtes — l'étage 10 garde ce statut pour qui le farme.
+ */
+export function isTowerBossFloor(floor: number): boolean {
+  return floor === 10 || floor === TOWER_FLOOR_COUNT
+}
 
 /**
  * Tour = slot (une tour alimente un slot, tous sets confondus — §6/§8 design

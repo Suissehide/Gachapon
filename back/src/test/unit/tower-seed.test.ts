@@ -25,6 +25,7 @@ import {
 import { EquipmentSlot } from '../../generated/client'
 import {
   CAMPAIGN_EQUIPMENT_SLOTS,
+  isTowerBossFloor,
   TOWER_EQUIPMENT_SLOTS,
   TOWER_SLOT_BY_ELEMENT,
 } from '../../main/domain/tower/tower-slots'
@@ -32,8 +33,64 @@ import {
 describe('seed des tours', () => {
   const etages = buildTowerFloors()
 
-  it('produit 40 étages (4 tours x 10)', () => {
-    expect(etages).toHaveLength(40)
+  it('produit 60 étages (4 tours x 15)', () => {
+    expect(TOWER_FLOOR_COUNT).toBe(15)
+    expect(etages).toHaveLength(60)
+  })
+
+  it('les étages 10 et 15 sont les boss, et eux seuls', () => {
+    // L'étage 10 reste un boss après l'ajout des étages 11 à 15 : succès et
+    // quêtes « battre un boss de tour » ne doivent pas changer pour ceux qui
+    // le farment.
+    const boss = Array.from({ length: TOWER_FLOOR_COUNT }, (_, i) => i + 1).filter(
+      isTowerBossFloor,
+    )
+    expect(boss).toEqual([10, 15])
+  })
+
+  it('les ordres des étages 1 à 10 sont ceux d’avant, les 11 à 15 viennent après', () => {
+    const anciens = etages.filter((e) => e.index <= 10)
+    expect(anciens.map((e) => e.order)).toEqual(
+      Array.from({ length: 40 }, (_, i) => i),
+    )
+    for (const e of etages.filter((e) => e.index > 10)) {
+      expect(e.order).toBeGreaterThanOrEqual(40)
+    }
+    expect(new Set(etages.map((e) => e.order)).size).toBe(60)
+  })
+
+  it('les étages 11 à 15 farment comme le 10 et garantissent une épique', () => {
+    const dix = towerFloorLoot(10)
+    for (let f = 11; f <= TOWER_FLOOR_COUNT; f++) {
+      const loot = towerFloorLoot(f)
+      expect([loot.farm.gold, loot.farm.dust, loot.farm.xp]).toEqual([
+        dix.farm.gold,
+        dix.farm.dust,
+        dix.farm.xp,
+      ])
+      expect([loot.firstClear.gold, loot.firstClear.dust, loot.firstClear.xp]).toEqual([
+        dix.firstClear.gold,
+        dix.firstClear.dust,
+        dix.firstClear.xp,
+      ])
+      expect(loot.firstClear.guaranteedEquipment).toEqual({ minRarity: 'EPIC' })
+    }
+  })
+
+  it('la part de légendaire monte de 7 à 15 % sur les étages 11 à 15', () => {
+    expect(
+      [11, 12, 13, 14, 15].map(
+        (f) => (towerFloorLoot(f).farm.equipmentWeights as Record<string, number>).LEGENDARY,
+      ),
+    ).toEqual([7, 9, 11, 13, 15])
+  })
+
+  it('le joueur de référence du sommet est la cible : 3 légendaires n70, 7 pièces légendaires n12', () => {
+    const p = towerFloorProfile(TOWER_FLOOR_COUNT)
+    expect(p.cards).toEqual([0, 1, 2].map(() => ({ rarity: 'LEGENDARY', level: 70 })))
+    expect(p.pieces).toEqual(
+      Array.from({ length: 7 }, () => ({ rarity: 'LEGENDARY', level: 12 })),
+    )
   })
 
   it('ne couvre que les 4 éléments du cycle, jamais LIGHT ni DARK', () => {
@@ -52,7 +109,7 @@ describe('seed des tours', () => {
   })
 
   it('les poids de rareté somment à 100 à chaque étage', () => {
-    for (let f = 1; f <= 10; f++) {
+    for (let f = 1; f <= TOWER_FLOOR_COUNT; f++) {
       const total = Object.values(towerFloorLoot(f).farm.equipmentWeights).reduce(
         (a, b) => a + (b as number),
         0,
@@ -62,7 +119,7 @@ describe('seed des tours', () => {
   })
 
   it('droppe une pièce garantie à chaque étage', () => {
-    for (let f = 1; f <= 10; f++) {
+    for (let f = 1; f <= TOWER_FLOOR_COUNT; f++) {
       expect(towerFloorLoot(f).farm.equipmentDropChance).toBe(1)
     }
   })
@@ -72,7 +129,7 @@ describe('seed des tours', () => {
       const w = towerFloorLoot(f).farm.equipmentWeights as Record<string, number>
       return (w.EPIC ?? 0) + (w.LEGENDARY ?? 0)
     }
-    for (let f = 2; f <= 10; f++) {
+    for (let f = 2; f <= TOWER_FLOOR_COUNT; f++) {
       expect(partEpicPlus(f)).toBeGreaterThanOrEqual(partEpicPlus(f - 1))
     }
     expect(partEpicPlus(10)).toBeGreaterThan(partEpicPlus(1))
@@ -95,19 +152,18 @@ describe('seed des tours', () => {
     }
   })
 
-  it('un seul ennemi frappe en AOE_3, et seulement au dernier étage', () => {
+  it('un seul ennemi frappe en AOE_3, et seulement aux étages de boss', () => {
     // Trois AOE_3 simultanés, c'est neuf fois les dégâts entrants d'un trio
     // normal : mesuré au simulateur, une équipe épique n12 gagne 100 % contre
     // trois BASIC et 0 % contre trois AOE_3 AUX MÊMES STATS. Ce n'était pas un
     // cran de difficulté mais un interrupteur — et c'est lui, pas la courbe,
     // qui produisait le saut de 98 % à 0 % entre les étages 9 et 10.
-    for (let f = 1; f < TOWER_FLOOR_COUNT; f++) {
-      expect(towerAoeUnitCount(f)).toBe(0)
+    for (let f = 1; f <= TOWER_FLOOR_COUNT; f++) {
+      expect(towerAoeUnitCount(f)).toBe(isTowerBossFloor(f) ? 1 : 0)
     }
-    expect(towerAoeUnitCount(TOWER_FLOOR_COUNT)).toBe(1)
     for (const etage of etages) {
       const aoe = etage.enemyTeam.filter((e) => e.attackPattern === 'AOE_3')
-      expect(aoe).toHaveLength(etage.index === TOWER_FLOOR_COUNT ? 1 : 0)
+      expect(aoe).toHaveLength(isTowerBossFloor(etage.index) ? 1 : 0)
     }
   })
 
@@ -139,7 +195,13 @@ describe('seed des tours', () => {
       const apres = towerFloorProfile(f)
       expect(apres.level).toBeGreaterThanOrEqual(avant.level)
       expect(apres.gearCount).toBeGreaterThanOrEqual(avant.gearCount)
-      expect(apres.target).toBeLessThanOrEqual(avant.target)
+      // Les étages de fin de jeu (11 à 15) repartent d'une cible plus haute :
+      // c'est une nouvelle série, que le joueur de l'étage 10 doit pouvoir
+      // entamer. La difficulté, elle, reste strictement croissante (test
+      // ci-dessus).
+      if (f !== 11) {
+        expect(apres.target).toBeLessThanOrEqual(avant.target)
+      }
     }
     // Au-delà de l'étage 6 le joueur est au plafond de niveau : la tour ne
     // demande plus que de l'ÉQUIPEMENT, comme la phase 2 de la campagne.
@@ -183,7 +245,7 @@ describe('seed des tours', () => {
     // sinon l'étage supérieur n'apporte rien.
     const table = (f: number) =>
       JSON.stringify(towerFloorLoot(f).farm.equipmentWeights)
-    for (let f = 2; f <= 10; f++) {
+    for (let f = 2; f <= TOWER_FLOOR_COUNT; f++) {
       expect(table(f)).not.toBe(table(f - 1))
     }
   })
@@ -230,7 +292,7 @@ describe('apparences des monstres de tour', () => {
   // placeholder sans rien signaler. Cf. seed/campaign.ts, qui lui seede bien
   // ses sprites.
   it('chaque ennemi de tour porte un sprite', () => {
-    expect(etages).toHaveLength(40)
+    expect(etages).toHaveLength(60)
     for (const etage of etages) {
       expect(etage.enemyTeam).toHaveLength(3)
       for (const ennemi of etage.enemyTeam) {
@@ -291,7 +353,7 @@ describe('apparences des monstres de tour', () => {
   })
 
   it('tient la répartition mesurée à la conception', () => {
-    // Une tour = 30 emplacements. La rotation `(étage + slot) % familles`
+    // Une tour = 45 emplacements. La rotation `(étage + slot) % familles`
     // (celle de la campagne, reprise telle quelle) donne la répartition
     // ci-dessous. Elle est VERROUILLÉE ici : c'est le compromis retenu —
     // 3 familles différentes par étage plutôt qu'un maximum de sprites
@@ -307,16 +369,16 @@ describe('apparences des monstres de tour', () => {
       (typeof TOWER_ELEMENTS)[number],
       { distincts: number; max: number }
     > = {
-      FIRE: { distincts: 29, max: 2 },
-      WATER: { distincts: 24, max: 2 },
-      NATURE: { distincts: 16, max: 4 },
-      EARTH: { distincts: 7, max: 5 },
+      FIRE: { distincts: 40, max: 2 },
+      WATER: { distincts: 26, max: 3 },
+      NATURE: { distincts: 19, max: 5 },
+      EARTH: { distincts: 7, max: 7 },
     }
     for (const element of TOWER_ELEMENTS) {
       const sprites = etages
         .filter((e) => e.element === element)
         .flatMap((e) => e.enemyTeam.map((x) => x.appearance))
-      expect(sprites).toHaveLength(30)
+      expect(sprites).toHaveLength(45)
       const compte = new Map<string, number>()
       for (const sprite of sprites) {
         compte.set(sprite, (compte.get(sprite) ?? 0) + 1)
@@ -340,7 +402,7 @@ describe('apparences des monstres de tour', () => {
           .filter((e) => e.element === element)
           .flatMap((e) => e.enemyTeam.map((x) => x.appearance)),
       ).size
-      expect(distincts).toBeLessThanOrEqual(Math.min(dispo, 30))
+      expect(distincts).toBeLessThanOrEqual(Math.min(dispo, 45))
     }
   })
 })

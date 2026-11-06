@@ -12,6 +12,7 @@
 // tirage de drop doivent lire la MÊME source, sinon une tour peut dropper
 // un slot différent de celui que l'écran annonce.
 import {
+  isTowerBossFloor,
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
   TOWER_NAME_BY_ELEMENT,
@@ -52,7 +53,8 @@ export type { TowerElement }
  * La jauge reste un outil d'AFFICHAGE. Pour calibrer, le simulateur.
  */
 const FLOOR_SCALE = [
-  2.4, 5.7, 10.7, 16.6, 36.5, 59.4, 70, 81.6, 97, 117.3,
+  2.4, 5.7, 10.7, 16.6, 36.5, 59.4, 70, 81.6, 97, 117.3, 142.1, 163.6, 196.2,
+  231.5, 235.3,
 ] as const
 
 /**
@@ -70,7 +72,11 @@ const FLOOR_SCALE = [
  * option rentable. Même principe que `FARM_EXP` en campagne, obtenu ici par
  * deux courbes séparées plutôt que par un exposant.
  */
-const LOOT_SCALE = [1, 2.2, 4, 6.2, 8.6, 11, 13, 14.6, 15.9, 16.9] as const
+// Les étages 11 à 15 (fin de jeu) restent au niveau du 10 : ils paient en
+// raretés (RARITY_WEIGHTS), pas en or, poussière ou XP.
+const LOOT_SCALE = [
+  1, 2.2, 4, 6.2, 8.6, 11, 13, 14.6, 15.9, 16.9, 16.9, 16.9, 16.9, 16.9, 16.9,
+] as const
 
 // Profil épique de campagne (source unique : RARITY_BASE.EPIC dans
 // campaign.ts) — pas de littéral recopié, sinon un futur rééquilibrage de
@@ -146,7 +152,7 @@ export function towerEnemyPower(floor: number) {
  */
 export function towerAoeUnitCount(floor: number): number {
   assertFloorInRange(floor)
-  return floor === TOWER_FLOOR_COUNT ? 1 : 0
+  return isTowerBossFloor(floor) ? 1 : 0
 }
 
 // Un triplet, pas un `string[]` : l'étage a EXACTEMENT trois ennemis, et le
@@ -236,6 +242,11 @@ const RARITY_WEIGHTS: Record<number, Record<string, number>> = {
   8: { COMMON: 9, UNCOMMON: 30, RARE: 41, EPIC: 17, LEGENDARY: 3 },
   9: { COMMON: 4, UNCOMMON: 22, RARE: 45, EPIC: 25, LEGENDARY: 4 },
   10: { UNCOMMON: 15, RARE: 45, EPIC: 35, LEGENDARY: 5 },
+  11: { UNCOMMON: 10, RARE: 42, EPIC: 41, LEGENDARY: 7 },
+  12: { UNCOMMON: 6, RARE: 38, EPIC: 47, LEGENDARY: 9 },
+  13: { UNCOMMON: 3, RARE: 34, EPIC: 52, LEGENDARY: 11 },
+  14: { RARE: 31, EPIC: 56, LEGENDARY: 13 },
+  15: { RARE: 27, EPIC: 58, LEGENDARY: 15 },
 }
 
 export function towerFloorLoot(floor: number) {
@@ -247,7 +258,9 @@ export function towerFloorLoot(floor: number) {
       // ÷3 avec le premier passage de campagne (2026-09-15) : les 4 tours
       // offraient 22 416 XP de one-shot, plus que le coût du niveau 30.
       xp: Math.round(20 * s),
-      guaranteedEquipment: { minRarity: floor >= 7 ? 'RARE' : 'UNCOMMON' },
+      guaranteedEquipment: {
+        minRarity: floor >= 11 ? 'EPIC' : floor >= 7 ? 'RARE' : 'UNCOMMON',
+      },
     },
     farm: {
       gold: Math.round(40 * s),
@@ -260,10 +273,23 @@ export function towerFloorLoot(floor: number) {
   }
 }
 
+// Étages d'origine : leurs `order` (0..39, tour par tour) ne bougent pas ;
+// ceux de fin de jeu sont numérotés après.
+const ORIGINAL_FLOOR_COUNT = 10
+
+function floorOrder(elementIndex: number, index: number): number {
+  return index <= ORIGINAL_FLOOR_COUNT
+    ? elementIndex * ORIGINAL_FLOOR_COUNT + index - 1
+    : TOWER_ELEMENTS.length * ORIGINAL_FLOOR_COUNT +
+        elementIndex * (TOWER_FLOOR_COUNT - ORIGINAL_FLOOR_COUNT) +
+        index -
+        ORIGINAL_FLOOR_COUNT -
+        1
+}
+
 export function buildTowerFloors() {
   const etages = []
-  let ordre = 0
-  for (const element of TOWER_ELEMENTS) {
+  for (const [elementIndex, element] of TOWER_ELEMENTS.entries()) {
     for (let index = 1; index <= TOWER_FLOOR_COUNT; index++) {
       etages.push({
         element,
@@ -272,7 +298,7 @@ export function buildTowerFloors() {
         labelEn: `${TOWER_NAME_EN_BY_ELEMENT[element]} — floor ${index}`,
         enemyTeam: towerEnemyTeam(element, index),
         lootTable: towerFloorLoot(index),
-        order: ordre++,
+        order: floorOrder(elementIndex, index),
       })
     }
   }

@@ -4,7 +4,7 @@ import {
   nextRarity,
 } from '../../main/domain/alchemy/alchemy-rules'
 import {
-  CHAPTER_COUNT,
+  LEGACY_CHAPTERS,
   STAGES_PER_CHAPTER,
   bossLoot,
   curvePosition,
@@ -56,7 +56,10 @@ const XP_SLOPE = DEFAULTS['xp.slope']
 // Dérivé du seed, jamais recopié. La simulation s'arrêtait à 50 étages en dur
 // alors que la campagne en compte 90 depuis le passage à 9 chapitres : tout le
 // butin des chapitres 6 à 9 — le plus gros — était ignoré.
-const LAST_STAGE = CHAPTER_COUNT * STAGES_PER_CHAPTER
+// Borné à la campagne d'ORIGINE : au-delà, la porte n'est plus le niveau
+// (plafonné à 70) mais la montée des légendaires, que ce modèle ne représente
+// pas, et le rythme de la fin de jeu n'est pas une cible.
+const LAST_STAGE = LEGACY_CHAPTERS * STAGES_PER_CHAPTER
 
 // ── Knobs MODEL: (ajustables dans les bornes commentées, PAS au-delà) ─────────
 const SKILL_MATURITY_DAY = 15 // MODEL: jour où le build skills est mature [10..25]

@@ -127,7 +127,7 @@ function fit(): void {
     const aoeUnits = towerAoeUnitCount(floor)
     // Dichotomie : le taux de victoire décroît avec l'échelle.
     let lo = 0.5
-    let hi = 200
+    let hi = 1000
     for (let i = 0; i < 18; i++) {
       const mid = (lo + hi) / 2
       const win = towerWinRate({

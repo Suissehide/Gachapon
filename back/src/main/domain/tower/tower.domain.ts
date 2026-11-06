@@ -50,6 +50,7 @@ import { retryOnSerialization } from '../shared/retry-serialization'
 import { levelAfterXpGain } from '../shared/xp'
 import { rollTowerDrop, rollTowerFirstClearDrop } from './tower-drop'
 import {
+  isTowerBossFloor,
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
   type TowerElement,
@@ -263,7 +264,7 @@ export class TowerDomain {
       return {
         index: f.index,
         label: f.label,
-        isBoss: f.index === TOWER_FLOOR_COUNT,
+        isBoss: isTowerBossFloor(f.index),
         status,
         recommendedPower: computeTeamPower(enemyTeam),
         rewardPreview: {
@@ -528,7 +529,7 @@ export class TowerDomain {
             await this.#achievementsDomain.track(tx, userId, {
               kind: 'STAGE_CLEARED',
               source: 'TOWER',
-              isBoss: floor === TOWER_FLOOR_COUNT,
+              isBoss: isTowerBossFloor(floor),
               viaSweep: true,
               flawless: false,
               understaffed: false,
@@ -696,7 +697,7 @@ export class TowerDomain {
     await this.#achievementsDomain.track(tx, userId, {
       kind: 'STAGE_CLEARED',
       source: 'TOWER',
-      isBoss: floor === TOWER_FLOOR_COUNT,
+      isBoss: isTowerBossFloor(floor),
       viaSweep: false,
       flawless: deriveFlawless(log, teamUnits),
       understaffed: teamUnits.length < 3,

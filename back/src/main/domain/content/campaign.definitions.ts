@@ -35,9 +35,15 @@ function at<T>(table: readonly T[], index: number, what: string): T {
   return value
 }
 
-export const CHAPTER_COUNT = 15
+export const CHAPTER_COUNT = 20
 export const STAGES_PER_CHAPTER = 10
-const TOTAL_STAGES = CHAPTER_COUNT * STAGES_PER_CHAPTER
+
+// La campagne d'ORIGINE : les 15 chapitres calibrés sur la courbe de
+// référence. Les chapitres suivants sont du contenu de fin de jeu qui
+// prolonge la courbe sans la réétirer — toute la calibration et le butin des
+// 150 premiers étages restent exprimés sur ces 15 chapitres.
+export const LEGACY_CHAPTERS = 15
+const LEGACY_STAGES = LEGACY_CHAPTERS * STAGES_PER_CHAPTER
 
 // --- Courbe de RÉFÉRENCE ----------------------------------------------------
 //
@@ -50,10 +56,13 @@ const TOTAL_STAGES = CHAPTER_COUNT * STAGES_PER_CHAPTER
 export const REFERENCE_CHAPTERS = 9
 const REFERENCE_STAGES = REFERENCE_CHAPTERS * STAGES_PER_CHAPTER
 
-/** Position d'un étage global (1..150) sur la courbe de référence (1..90). */
+/**
+ * Position d'un étage global sur la courbe de référence : 1..90 pour les 150
+ * étages d'origine, au-delà de 90 à la même pente pour la fin de jeu.
+ */
 export function curvePosition(globalStageNumber: number): number {
   return (
-    1 + ((globalStageNumber - 1) * (REFERENCE_STAGES - 1)) / (TOTAL_STAGES - 1)
+    1 + ((globalStageNumber - 1) * (REFERENCE_STAGES - 1)) / (LEGACY_STAGES - 1)
   )
 }
 
@@ -280,6 +289,55 @@ export const NORMAL_HP_ANCHORS: readonly (readonly [number, number])[] = [
   [88.21, 39481],
   [88.81, 39520],
   [89.4, 39815],
+  // Fin de jeu (chapitres 16 à 20), mêmes règles d'enveloppe. 16-1 prolonge
+  // la croissance d'après la dernière ancre d'origine (39815 × 1,003^1,2) au
+  // lieu de la mesure (39185) : les PV restent croissants depuis 15-9 et le
+  // boss 15-10, interpolé entre les deux, garde exactement ses PV.
+  [90.6, 39958.6],
+  [91.19, 39998],
+  [91.79, 40468],
+  [92.39, 40508],
+  [92.99, 40692],
+  [93.58, 43703],
+  [94.18, 43746],
+  [94.78, 43790],
+  [95.38, 44103],
+  [96.57, 44990],
+  [97.17, 45035],
+  [97.77, 45670],
+  [98.36, 49497],
+  [98.96, 49547],
+  [99.56, 49596],
+  [100.15, 49646],
+  [100.75, 51630],
+  [101.35, 51681],
+  [102.54, 51733],
+  [103.14, 54932],
+  [103.74, 54987],
+  [104.34, 55042],
+  [104.93, 61664],
+  [105.53, 61726],
+  [106.13, 62116],
+  [106.72, 62178],
+  [107.32, 71658],
+  [108.52, 71743],
+  [109.11, 72003],
+  [109.71, 80207],
+  [110.31, 81205],
+  [110.91, 81286],
+  [111.5, 81367],
+  [112.1, 92207],
+  [112.7, 92300],
+  [113.3, 92392],
+  [114.49, 100158],
+  [115.09, 100258],
+  [115.68, 100358],
+  [116.28, 101197],
+  [116.88, 107974],
+  [117.48, 108662],
+  [118.07, 110196],
+  [118.67, 111391],
+  [119.27, 120727],
 ]
 const GROWTH_AFTER_LAST_ANCHOR = 1.003
 
@@ -334,7 +392,7 @@ export function enemyScale(globalStageNumber: number): number {
 // chapitre 1.
 const BOSS_GEAR_COMPENSATION: readonly number[] = [
   0.92, 1.05, 0.9, 0.93, 1.05, 0.91, 0.85, 1.27, 1.36, 1.14, 0.95, 0.92, 1.2,
-  1.23, 1.19,
+  1.23, 1.19, 0.91, 0.91, 1.25, 1.24, 1.28,
 ]
 
 export function bossGearCompensation(chapter: number): number {
@@ -374,6 +432,11 @@ const WANDERER_SCALE: readonly (readonly number[])[] = [
   [1.18, 0.87, 0.87, 1.17, 0.86, 0.86, 1.17, 0.86, 0.85],
   [0.87, 1.19, 1.21, 0.88, 1.2, 1.19, 0.88, 1.17, 1.19],
   [0.87, 1.18, 1.2, 0.87, 1.19, 1.18, 0.86, 1.18, 1.17],
+  [1.16, 0.88, 1.2, 1.2, 0.87, 1.21, 1.2, 0.89, 1.2],
+  [1.21, 0.89, 1.2, 1.24, 0.9, 1.22, 1.22, 0.91, 1.23],
+  [1.23, 1.22, 1.21, 1.22, 1.25, 1.23, 1.23, 1.22, 1.21],
+  [0.89, 1.22, 1.24, 0.91, 1.24, 1.23, 0.92, 1.26, 1.27],
+  [1.25, 0.9, 1.24, 1.23, 0.89, 1.23, 1.22, 0.87, 1.23],
 ]
 
 export function wandererSoloScale(chapter: number, index: number): number {
@@ -426,8 +489,15 @@ export function difficultyMult(chapter: number, stageIndex: number): number {
   return lootMult(globalStage(chapter, stageIndex))
 }
 
+// Le butin plafonne à l'étage dont farme le boss final d'origine (15-10) :
+// la fin de jeu paie en raretés (équipement, cartes légendaires), pas en or,
+// poussière ou XP — sinon son farm dépasserait le prix des packs d'énergie
+// (energy-pack-pricing.test.ts).
+const LOOT_CAP_STAGE = LEGACY_STAGES + BOSS_FARM_STAGE_LEAD
+
 function lootMult(globalStageNumber: number): number {
-  return (1 + CURVE_A * (curvePosition(globalStageNumber) - 1)) ** CURVE_B
+  const position = curvePosition(Math.min(globalStageNumber, LOOT_CAP_STAGE))
+  return (1 + CURVE_A * (position - 1)) ** CURVE_B
 }
 
 // Le bestiaire (familles, sprites, élément par famille) vit dans
@@ -459,6 +529,11 @@ export const BOSS_ELEMENT_BY_CHAPTER: readonly Element[] = [
   'NATURE', // ch.13 mobs : LIGHT · WATER · DARK
   'EARTH', // ch.14 mobs : FIRE · DARK · NATURE
   'FIRE', // ch.15 mobs : EARTH · DARK · WATER
+  'DARK', // ch.16 mobs : FIRE · WATER · LIGHT
+  'LIGHT', // ch.17 mobs : NATURE · EARTH · DARK
+  'EARTH', // ch.18 mobs : WATER · FIRE · NATURE
+  'WATER', // ch.19 mobs : NATURE · DARK · EARTH
+  'NATURE', // ch.20 mobs : FIRE · WATER · DARK
 ]
 
 // Familles peuplant chaque chapitre (difficulté croissante), étages 1-9.
@@ -478,15 +553,22 @@ const CHAPTER_FAMILIES: FamilySlug[][] = [
   ['wisps', 'hydras', 'gnolls'], // LIGHT · WATER · DARK
   ['minotaurs', 'specters', 'wolves'], // FIRE · DARK · NATURE
   ['basilisks', 'specters', 'krakens'], // EARTH · DARK · WATER
+  ['kobolds', 'hydras', 'wisps'], // FIRE · WATER · LIGHT
+  ['mushrooms', 'basilisks', 'gnolls'], // NATURE · EARTH · DARK
+  ['slimes', 'wyverns', 'mimics'], // WATER · FIRE · NATURE
+  ['wolves', 'specters', 'basilisks'], // NATURE · DARK · EARTH
+  ['elementals', 'krakens', 'specters'], // FIRE · WATER · DARK
 ]
 
 // Boss (étage 10 de chaque chapitre) : cards/monsters/bosses/BOSS-NNN.
 // BOSS-010..013 sont les boss de RAID (raid.definitions.ts) : la campagne ne
 // les prend jamais. Les chapitres 9 à 14 prennent les six images libres
-// (014..019), le 15 prend la 009.
+// (014..019), le 15 prend la 009. Il n'en reste plus : les chapitres de fin
+// de jeu (16 à 20) reprennent les boss des chapitres 1 à 5, les plus loin
+// dans la mémoire du joueur.
 const BOSS_SLUG = 'bosses'
 const BOSS_SPRITE_BY_CHAPTER: readonly number[] = [
-  1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16, 17, 18, 19, 9,
+  1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16, 17, 18, 19, 9, 1, 2, 3, 4, 5,
 ]
 
 // Apparence cosmétique ET élément par étage : clé `${chapter}-${index}`, valeur
@@ -619,7 +701,10 @@ const RARITY_LADDER = [
  * pour le plancher et « index >= 3 » pour la présence du drop se recoupent).
  */
 function campaignProgress(chapter: number, stageIndex: number): number {
-  return (globalStage(chapter, stageIndex) - 1) / (TOTAL_STAGES - 1)
+  return Math.min(
+    1,
+    (globalStage(chapter, stageIndex) - 1) / (LEGACY_STAGES - 1),
+  )
 }
 
 /**
@@ -688,13 +773,19 @@ function firstClearFloorAt(progress: number): string {
 //   des 9 de référence. Carte garantie seulement aux boss où le chapitre de
 //   référence franchit un entier : 9 cartes (3 rares, 5 épiques,
 //   1 légendaire).
-const NORMAL_STAGES = TOTAL_STAGES - CHAPTER_COUNT
+const NORMAL_STAGES = LEGACY_STAGES - LEGACY_CHAPTERS
 const FIRST_CLEAR_SHARE =
   (REFERENCE_STAGES - REFERENCE_CHAPTERS) / NORMAL_STAGES
 
-/** Chapitre de référence FRACTIONNAIRE d'un boss : 1 au chapitre 1, 9 au 15. */
+/**
+ * Chapitre de référence FRACTIONNAIRE d'un boss : 1 au chapitre 1, 9 au 15,
+ * et 9 au-delà — les boss de fin de jeu paient comme le boss final d'origine.
+ */
 function bossReferenceChapter(chapter: number): number {
-  return 1 + ((chapter - 1) * (REFERENCE_CHAPTERS - 1)) / (CHAPTER_COUNT - 1)
+  return Math.min(
+    REFERENCE_CHAPTERS,
+    1 + ((chapter - 1) * (REFERENCE_CHAPTERS - 1)) / (LEGACY_CHAPTERS - 1),
+  )
 }
 
 const BOSS_LOOT_SHARE = (() => {
@@ -703,7 +794,7 @@ const BOSS_LOOT_SHARE = (() => {
     reference += 1.5 ** (k - 1)
   }
   let stretched = 0
-  for (let c = 1; c <= CHAPTER_COUNT; c++) {
+  for (let c = 1; c <= LEGACY_CHAPTERS; c++) {
     stretched += 1.5 ** (bossReferenceChapter(c) - 1)
   }
   return reference / stretched
@@ -755,7 +846,7 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
 function farmAt(globalStageNumber: number) {
   const farmScale = lootMult(globalStageNumber) ** FARM_EXP
   // Le boss final farme au-delà du dernier étage : l'avancement plafonne.
-  const progress = Math.min(1, (globalStageNumber - 1) / (TOTAL_STAGES - 1))
+  const progress = Math.min(1, (globalStageNumber - 1) / (LEGACY_STAGES - 1))
   return {
     gold: Math.round(FARM_GOLD_BASE * farmScale),
     dust: Math.round(FARM_DUST_BASE * farmScale),
@@ -783,6 +874,7 @@ function bossFloor(chapter: number): string {
 function bossGivesCard(chapter: number): boolean {
   return (
     chapter === 1 ||
+    chapter > LEGACY_CHAPTERS ||
     Math.floor(bossReferenceChapter(chapter)) >
       Math.floor(bossReferenceChapter(chapter - 1))
   )

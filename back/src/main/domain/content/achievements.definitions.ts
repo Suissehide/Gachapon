@@ -773,6 +773,32 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     criterion: { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 15 },
     reward: { tokens: 25, dust: 600, xp: 0, cardRarity: 'EPIC' },
   },
+  {
+    key: 'chapter_reached_17',
+    nameFr: 'Éclipse',
+    nameEn: 'Eclipse',
+    descriptionFr: 'Atteindre le chapitre 17.',
+    descriptionEn: 'Reach chapter 17.',
+    family: 'campaign',
+    tier: 3,
+    hidden: false,
+    sortOrder: 14,
+    criterion: { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 17 },
+    reward: { tokens: 15, dust: 400, xp: 0, cardRarity: 'RARE' },
+  },
+  {
+    key: 'chapter_reached_20',
+    nameFr: 'Trône du Chaos',
+    nameEn: 'Throne of Chaos',
+    descriptionFr: 'Atteindre le chapitre 20.',
+    descriptionEn: 'Reach chapter 20.',
+    family: 'campaign',
+    tier: 4,
+    hidden: false,
+    sortOrder: 15,
+    criterion: { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 20 },
+    reward: { tokens: 30, dust: 800, xp: 0, cardRarity: 'EPIC' },
+  },
 
   // mastery
   {
