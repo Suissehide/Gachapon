@@ -49,8 +49,8 @@ type CustomColumnDef<TData, TValue = unknown> = ColumnDef<TData, TValue> & {
   meta?: CustomMeta<TData, TValue>
 }
 
-type ReactTableProps<TData extends { id: string }> = {
-  columns: CustomColumnDef<TData, any>[]
+type ReactTableProps<TData extends { id: string }, TValue> = {
+  columns: CustomColumnDef<TData, TValue>[]
   data: TData[]
   customButtons?: ReactNode[]
   title?: string
@@ -61,7 +61,7 @@ type ReactTableProps<TData extends { id: string }> = {
   onSelectionChange?: (ids: string[]) => void
 }
 
-export function ReactTable<TData extends { id: string }>({
+export function ReactTable<TData extends { id: string }, TValue>({
   columns,
   data,
   title,
@@ -70,7 +70,7 @@ export function ReactTable<TData extends { id: string }>({
   infiniteScroll = true,
   onRowClick,
   onSelectionChange,
-}: ReactTableProps<TData>) {
+}: ReactTableProps<TData, TValue>) {
   const initialColumnFilters = safeParse(
     localStorage.getItem(`filters/${filterId}`),
     [],

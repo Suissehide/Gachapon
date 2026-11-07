@@ -30,6 +30,16 @@ export const Route = createFileRoute('/_admin/admin/media')({
 
 type Filter = 'all' | 'used' | 'orphan'
 
+const matchesFilter = (item: MediaItem, filter: Filter) => {
+  if (filter === 'used') {
+    return !item.orphan
+  }
+  if (filter === 'orphan') {
+    return item.orphan
+  }
+  return true
+}
+
 function AdminMediaPage() {
   const { t } = useTranslation('admin')
   const { data: items = [], isLoading, isError } = useAdminMedia()
@@ -64,15 +74,7 @@ function AdminMediaPage() {
     }
   }, [selected.size])
 
-  const filtered = items.filter((item) => {
-    if (filter === 'used') {
-      return !item.orphan
-    }
-    if (filter === 'orphan') {
-      return item.orphan
-    }
-    return true
-  })
+  const filtered = items.filter((item) => matchesFilter(item, filter))
 
   const counts = {
     all: items.length,
@@ -224,33 +226,13 @@ function AdminMediaPage() {
             <span className="text-sm text-text-light">
               {t('media.selectedCount', { count: selected.size })}
             </span>
-            {confirmBulk ? (
-              <>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleBulkDelete}
-                  disabled={deleteMutation.isPending}
-                >
-                  {t('media.confirmDelete')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setConfirmBulk(false)}
-                >
-                  {t('media.cancel')}
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleBulkDelete}
-              >
-                {t('media.deleteWithCount', { count: selected.size })}
-              </Button>
-            )}
+            <BulkDeleteActions
+              count={selected.size}
+              confirming={confirmBulk}
+              isDeleting={deleteMutation.isPending}
+              onDelete={handleBulkDelete}
+              onCancel={() => setConfirmBulk(false)}
+            />
           </div>
         )}
         {errorMessage && (
@@ -259,17 +241,8 @@ function AdminMediaPage() {
       </div>
 
       {/* Grille + panneau */}
-      {isLoading ? (
-        <div className="flex h-64 items-center justify-center text-text-light">
-          {t('media.loading')}
-        </div>
-      ) : isError ? (
-        <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 text-center">
-          <p className="text-sm font-medium text-destructive">
-            {t('media.loadErrorTitle')}
-          </p>
-          <p className="text-xs text-text-light">{t('media.loadErrorHint')}</p>
-        </div>
+      {isLoading || isError ? (
+        <MediaLoadStatus isLoading={isLoading} />
       ) : (
         <>
           {filtered.length === 0 ? (
@@ -327,5 +300,64 @@ function AdminMediaPage() {
         </>
       )}
     </div>
+  )
+}
+
+function MediaLoadStatus({ isLoading }: { isLoading: boolean }) {
+  const { t } = useTranslation('admin')
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center text-text-light">
+        {t('media.loading')}
+      </div>
+    )
+  }
+  return (
+    <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 text-center">
+      <p className="text-sm font-medium text-destructive">
+        {t('media.loadErrorTitle')}
+      </p>
+      <p className="text-xs text-text-light">{t('media.loadErrorHint')}</p>
+    </div>
+  )
+}
+
+type BulkDeleteActionsProps = {
+  count: number
+  confirming: boolean
+  isDeleting: boolean
+  onDelete: () => void
+  onCancel: () => void
+}
+
+function BulkDeleteActions({
+  count,
+  confirming,
+  isDeleting,
+  onDelete,
+  onCancel,
+}: BulkDeleteActionsProps) {
+  const { t } = useTranslation('admin')
+  if (!confirming) {
+    return (
+      <Button variant="destructive" size="sm" onClick={onDelete}>
+        {t('media.deleteWithCount', { count })}
+      </Button>
+    )
+  }
+  return (
+    <>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={onDelete}
+        disabled={isDeleting}
+      >
+        {t('media.confirmDelete')}
+      </Button>
+      <Button variant="ghost" size="sm" onClick={onCancel}>
+        {t('media.cancel')}
+      </Button>
+    </>
   )
 }

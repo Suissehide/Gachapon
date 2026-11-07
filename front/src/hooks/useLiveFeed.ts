@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 const LIVE_ENTRIES_CAP = 50
 
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { skipToken, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 import { GachaApi } from '../api/gacha.api'
 import { TeamsApi } from '../api/teams.api'
@@ -55,8 +55,7 @@ export function useLiveFeed(opts?: { teamId?: string; rarities?: string[] }) {
   // Membres de la team pour filtrer les events WS
   const { data: teamData } = useQuery({
     queryKey: ['team', teamId],
-    queryFn: () => TeamsApi.getTeam(teamId!),
-    enabled: !!teamId,
+    queryFn: teamId ? () => TeamsApi.getTeam(teamId) : skipToken,
     staleTime: 5 * 60_000,
   })
 

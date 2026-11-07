@@ -25,9 +25,7 @@ export interface FirstClearLoot {
   guaranteedCard?: { minRarity: Rarity } | null
 }
 
-export interface PRNG {
-  (): number // 0..1
-}
+export type PRNG = () => number // 0..1
 
 /**
  * Base rarity weights for guaranteed first-clear drops. `minRarity` is only a
@@ -130,7 +128,7 @@ export function pickEquipmentForRarity<
       return c
     }
   }
-  return matching[matching.length - 1]!
+  return matching.at(-1) ?? null
 }
 
 function pickWeightedRarity(

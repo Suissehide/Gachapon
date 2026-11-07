@@ -1,5 +1,5 @@
 import { Handle, type NodeProps, Position } from '@xyflow/react'
-import * as Icons from 'lucide-react'
+import { icons, Lock } from 'lucide-react'
 import { type ComponentType, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
@@ -21,7 +21,7 @@ export type SkillNodeData = {
 }
 
 function LucideIcon({ name, size = 16 }: { name: string; size?: number }) {
-  const Icon = Icons[name as keyof typeof Icons] as
+  const Icon = icons[name as keyof typeof icons] as
     | ComponentType<{ size?: number }>
     | undefined
   return Icon ? <Icon size={size} /> : null
@@ -214,10 +214,7 @@ export function SkillNodeComponent({ data }: NodeProps) {
       </span>
       <div className="flex gap-0.5">{dots}</div>
       {isLocked && (
-        <Icons.Lock
-          size={10}
-          className="absolute right-1 top-1 text-gray-500"
-        />
+        <Lock size={10} className="absolute right-1 top-1 text-gray-500" />
       )}
 
       {/* Tooltip joueur — rendu via portal pour échapper au z-index des noeuds React Flow */}

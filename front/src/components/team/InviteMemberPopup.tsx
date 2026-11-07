@@ -2,7 +2,13 @@ import type { ColumnDef } from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import { Ban, RefreshCw, Send, Trash2, UserPlus, X } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { type SyntheticEvent, useMemo, useRef, useState } from 'react'
+import {
+  type KeyboardEvent,
+  type SyntheticEvent,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { TeamInvitation } from '../../queries/useTeams.ts'
@@ -52,6 +58,46 @@ type SelectedTarget =
   | { type: 'username'; value: string }
   | { type: 'email'; value: string }
 
+const toTarget = (value: string): SelectedTarget =>
+  value.includes('@') ? { type: 'email', value } : { type: 'username', value }
+
+const sameTarget = (a: SelectedTarget, b: SelectedTarget) =>
+  a.type === b.type && a.value === b.value
+
+// If user typed something but didn't add it as a chip, try to add it.
+const collectTargets = (selected: SelectedTarget[], identifier: string) => {
+  const pending = identifier.trim()
+  const targets: SelectedTarget[] = [...selected]
+  if (pending) {
+    const target = toTarget(pending)
+    if (!targets.some((t) => sameTarget(t, target))) {
+      targets.push(target)
+    }
+  }
+  return targets
+}
+
+const inviteTargets = async (
+  targets: SelectedTarget[],
+  invite: (body: { email: string } | { username: string }) => Promise<unknown>,
+  genericError: string,
+) => {
+  const errs: string[] = []
+  for (const target of targets) {
+    try {
+      await invite(
+        target.type === 'email'
+          ? { email: target.value }
+          : { username: target.value },
+      )
+    } catch (err) {
+      const message = err instanceof Error ? err.message : genericError
+      errs.push(`${target.value}: ${message}`)
+    }
+  }
+  return errs
+}
+
 export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
   const { t } = useTranslation('team')
   const { mutateAsync: invite, isPending } = useInviteMember(teamId)
@@ -99,19 +145,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    // If user typed something but didn't add it as a chip, try to add it.
-    const pending = identifier.trim()
-    const targets: SelectedTarget[] = [...selected]
-    if (pending) {
-      const target: SelectedTarget = pending.includes('@')
-        ? { type: 'email', value: pending }
-        : { type: 'username', value: pending }
-      if (
-        !targets.some((t) => t.type === target.type && t.value === target.value)
-      ) {
-        targets.push(target)
-      }
-    }
+    const targets = collectTargets(selected, identifier)
 
     if (targets.length === 0) {
       return
@@ -120,20 +154,11 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
     setErrors([])
     setShowDropdown(false)
 
-    const errs: string[] = []
-    for (const target of targets) {
-      try {
-        await invite(
-          target.type === 'email'
-            ? { email: target.value }
-            : { username: target.value },
-        )
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : t('invitePopup.genericError')
-        errs.push(`${target.value}: ${message}`)
-      }
-    }
+    const errs = await inviteTargets(
+      targets,
+      invite,
+      t('invitePopup.genericError'),
+    )
 
     if (errs.length === targets.length) {
       setErrors(errs)
@@ -177,14 +202,50 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
     if (!trimmed) {
       return
     }
-    addTarget(
-      trimmed.includes('@')
-        ? { type: 'email', value: trimmed }
-        : { type: 'username', value: trimmed },
-    )
+    addTarget(toTarget(trimmed))
     setIdentifier('')
     setActiveIndex(-1)
     setShowDropdown(false)
+  }
+
+  // Returns true when the key was consumed by the suggestions dropdown.
+  const handleDropdownKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveIndex((i) => Math.min(i + 1, searchResults.length - 1))
+      return true
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveIndex((i) => Math.max(i - 1, 0))
+      return true
+    }
+    if (e.key === 'Enter' && activeIndex >= 0) {
+      e.preventDefault()
+      handleSelectUser(searchResults[activeIndex].username)
+      return true
+    }
+    if (e.key === 'Escape') {
+      setShowDropdown(false)
+      setActiveIndex(-1)
+      return true
+    }
+    return false
+  }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && identifier === '' && selected.length > 0) {
+      e.preventDefault()
+      setSelected((prev) => prev.slice(0, -1))
+      return
+    }
+    if (showDropdown && searchResults.length > 0 && handleDropdownKey(e)) {
+      return
+    }
+    if (e.key === 'Enter' && identifier.trim()) {
+      e.preventDefault()
+      handleAddCurrentInput()
+    }
   }
 
   const invitations = invitationsData?.invitations ?? []
@@ -232,62 +293,16 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
         id: 'actions',
         header: '',
         size: 200,
-        cell: ({ row }) => {
-          const inv = row.original
-          const emailSent = inv.emailSentAt ? new Date(inv.emailSentAt) : null
-          const cooldownActive = emailSent
-            ? Date.now() - emailSent.getTime() < RESEND_COOLDOWN_MS
-            : false
-          const isThisResending = isResending && resendToken === inv.token
-          const canResend = inv.status === 'PENDING'
-          const canCancel = isOwner && inv.status === 'PENDING'
-          const canDelete = isOwner && inv.status !== 'PENDING'
-          return (
-            <div className="flex items-center justify-end gap-1">
-              {canResend && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-xs"
-                  disabled={cooldownActive || isThisResending}
-                  onClick={() => resend(inv.token)}
-                >
-                  <RefreshCw
-                    className={`h-3 w-3 ${isThisResending ? 'animate-spin' : ''}`}
-                  />
-                  {cooldownActive
-                    ? t('invitePopup.waitButton')
-                    : t('invitePopup.resendButton')}
-                </Button>
-              )}
-              {canCancel && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-xs text-destructive hover:text-destructive"
-                  onClick={() => cancel(inv.token)}
-                >
-                  <Ban className="h-3 w-3" />
-                  {t('invitePopup.cancelButton')}
-                </Button>
-              )}
-              {canDelete && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-xs text-destructive hover:text-destructive"
-                  onClick={() => deleteInv(inv.id)}
-                >
-                  <Trash2 className="h-3 w-3" />
-                  {t('invitePopup.deleteButton')}
-                </Button>
-              )}
-            </div>
-          )
-        },
+        cell: ({ row }) => (
+          <InvitationActions
+            inv={row.original}
+            isOwner={isOwner}
+            isResending={isResending && resendToken === row.original.token}
+            onResend={resend}
+            onCancel={cancel}
+            onDelete={deleteInv}
+          />
+        ),
       },
     ],
     [isResending, resendToken, isOwner, resend, cancel, deleteInv, t],
@@ -330,45 +345,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
                         e.target.value.trim().length >= 2,
                     )
                   }}
-                  onKeyDown={(e) => {
-                    if (
-                      e.key === 'Backspace' &&
-                      identifier === '' &&
-                      selected.length > 0
-                    ) {
-                      e.preventDefault()
-                      setSelected((prev) => prev.slice(0, -1))
-                      return
-                    }
-                    if (showDropdown && searchResults.length > 0) {
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault()
-                        setActiveIndex((i) =>
-                          Math.min(i + 1, searchResults.length - 1),
-                        )
-                        return
-                      }
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault()
-                        setActiveIndex((i) => Math.max(i - 1, 0))
-                        return
-                      }
-                      if (e.key === 'Enter' && activeIndex >= 0) {
-                        e.preventDefault()
-                        handleSelectUser(searchResults[activeIndex].username)
-                        return
-                      }
-                      if (e.key === 'Escape') {
-                        setShowDropdown(false)
-                        setActiveIndex(-1)
-                        return
-                      }
-                    }
-                    if (e.key === 'Enter' && identifier.trim()) {
-                      e.preventDefault()
-                      handleAddCurrentInput()
-                    }
-                  }}
+                  onKeyDown={handleKeyDown}
                   onBlur={() =>
                     setTimeout(() => {
                       setShowDropdown(false)
@@ -476,5 +453,75 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
         </form>
       </PopupContent>
     </Popup>
+  )
+}
+
+type InvitationActionsProps = {
+  inv: TeamInvitation
+  isOwner: boolean
+  isResending: boolean
+  onResend: (token: string) => void
+  onCancel: (token: string) => void
+  onDelete: (id: string) => void
+}
+
+function InvitationActions({
+  inv,
+  isOwner,
+  isResending,
+  onResend,
+  onCancel,
+  onDelete,
+}: InvitationActionsProps) {
+  const { t } = useTranslation('team')
+  const emailSent = inv.emailSentAt ? new Date(inv.emailSentAt) : null
+  const cooldownActive = emailSent
+    ? Date.now() - emailSent.getTime() < RESEND_COOLDOWN_MS
+    : false
+  const isPendingStatus = inv.status === 'PENDING'
+  return (
+    <div className="flex items-center justify-end gap-1">
+      {isPendingStatus && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs"
+          disabled={cooldownActive || isResending}
+          onClick={() => onResend(inv.token)}
+        >
+          <RefreshCw
+            className={`h-3 w-3 ${isResending ? 'animate-spin' : ''}`}
+          />
+          {cooldownActive
+            ? t('invitePopup.waitButton')
+            : t('invitePopup.resendButton')}
+        </Button>
+      )}
+      {isOwner && isPendingStatus && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+          onClick={() => onCancel(inv.token)}
+        >
+          <Ban className="h-3 w-3" />
+          {t('invitePopup.cancelButton')}
+        </Button>
+      )}
+      {isOwner && !isPendingStatus && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+          onClick={() => onDelete(inv.id)}
+        >
+          <Trash2 className="h-3 w-3" />
+          {t('invitePopup.deleteButton')}
+        </Button>
+      )}
+    </div>
   )
 }

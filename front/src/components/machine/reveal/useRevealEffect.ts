@@ -167,29 +167,71 @@ function getCanvasCtx(
   return ctx
 }
 
+function drawPtCanvas(ctx: CanvasRenderingContext2D, s: EffectState): void {
+  if (s.particles.some((p) => p.life > 0)) {
+    drawParticles(ctx, s.particles)
+  }
+  if (s.sparkles.some((sp) => sp.life > 0)) {
+    drawStarSparkles(ctx, s.sparkles)
+  }
+}
+
+function drawSpeedCanvas(
+  ctx: CanvasRenderingContext2D,
+  s: EffectState,
+  W: number,
+  H: number,
+): void {
+  if (s.speedLine && s.speedLine.life > 0) {
+    drawSpeedLines(ctx, s.speedLine, s.cx, s.cy, W, H)
+  }
+  if (s.prismRays && s.prismRays.life > 0) {
+    drawPrismRays(ctx, s.prismRays, s.cx, s.cy, W, H)
+  }
+}
+
+function drawDotsCanvas(
+  ctx: CanvasRenderingContext2D,
+  s: EffectState,
+  W: number,
+  H: number,
+): void {
+  for (const h of s.halftones.filter((h) => h.life > 0)) {
+    drawHalftone(ctx, h, s.cx, s.cy, Math.max(W, H) * 0.85)
+  }
+}
+
+function drawChromCanvas(
+  ctx: CanvasRenderingContext2D,
+  s: EffectState,
+  W: number,
+  H: number,
+): void {
+  if (s.chrom && s.chrom.life > 0) {
+    drawChromAberration(ctx, s.chrom, s.cx, s.cy, W, H)
+  }
+  if (s.tearBands && s.tearBands.life > 0) {
+    drawTearBands(ctx, s.tearBands, W, H)
+  }
+}
+
 function drawTick(
   s: EffectState,
   canvasRefs: CanvasRefs,
   W: number,
   H: number,
 ): void {
-  const { cx, cy } = s
   const get = (key: keyof CanvasRefs) => getCanvasCtx(canvasRefs, key, W, H)
 
   const waveCtx = get('wave')
   if (waveCtx && s.waves.some((w) => w.active)) {
-    drawWaves(waveCtx, s.waves, cx, cy)
+    drawWaves(waveCtx, s.waves, s.cx, s.cy)
   }
 
   // Canvas partagé pt : particules classiques + star sparkles
   const ptCtx = get('pt')
   if (ptCtx) {
-    if (s.particles.some((p) => p.life > 0)) {
-      drawParticles(ptCtx, s.particles)
-    }
-    if (s.sparkles.some((sp) => sp.life > 0)) {
-      drawStarSparkles(ptCtx, s.sparkles)
-    }
+    drawPtCanvas(ptCtx, s)
   }
 
   const inkCtx = get('ink')
@@ -200,30 +242,18 @@ function drawTick(
   // Canvas partagé speed : speed lines + prism rays (même famille radiale)
   const speedCtx = get('speed')
   if (speedCtx) {
-    if (s.speedLine && s.speedLine.life > 0) {
-      drawSpeedLines(speedCtx, s.speedLine, cx, cy, W, H)
-    }
-    if (s.prismRays && s.prismRays.life > 0) {
-      drawPrismRays(speedCtx, s.prismRays, cx, cy, W, H)
-    }
+    drawSpeedCanvas(speedCtx, s, W, H)
   }
 
   const dotsCtx = get('dots')
   if (dotsCtx) {
-    for (const h of s.halftones.filter((h) => h.life > 0)) {
-      drawHalftone(dotsCtx, h, cx, cy, Math.max(W, H) * 0.85)
-    }
+    drawDotsCanvas(dotsCtx, s, W, H)
   }
 
   // Canvas partagé chrom : aberration chromatique + tear bands (famille glitch)
   const chromCtx = get('chrom')
   if (chromCtx) {
-    if (s.chrom && s.chrom.life > 0) {
-      drawChromAberration(chromCtx, s.chrom, cx, cy, W, H)
-    }
-    if (s.tearBands && s.tearBands.life > 0) {
-      drawTearBands(chromCtx, s.tearBands, W, H)
-    }
+    drawChromCanvas(chromCtx, s, W, H)
   }
 }
 

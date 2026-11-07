@@ -27,11 +27,42 @@ import {
   branchOrderForHandleKey,
   CenterNode,
   handleKeyForBranchOrder,
-  pickHandles,
 } from '../shared/CenterNode.tsx'
 import { SkillNodeComponent } from '../shared/SkillNode.tsx'
+import { buildTreeEdges } from '../shared/treeEdges.ts'
 
 const nodeTypes = { skillNode: SkillNodeComponent, centerNode: CenterNode }
+
+function centerConnectionTarget(connection: Connection) {
+  const isCenterSource = connection.source === 'center'
+  const nodeId = isCenterSource ? connection.target : connection.source
+  const handleId = isCenterSource
+    ? connection.sourceHandle
+    : connection.targetHandle
+  const handleKey = handleId?.replace(/^[st]-/, '')
+  if (nodeId === 'center' || !handleKey) {
+    return null
+  }
+  return { nodeId, handleKey }
+}
+
+function centerEdge(
+  nodeId: string,
+  handleKey: string,
+  connection: Connection,
+  color: string,
+): Edge {
+  return {
+    id: `center-${nodeId}`,
+    source: 'center',
+    sourceHandle: `s-${handleKey}`,
+    target: nodeId,
+    targetHandle:
+      connection.targetHandle ?? connection.sourceHandle ?? undefined,
+    style: { stroke: color },
+    reconnectable: false,
+  }
+}
 
 type Props = {
   branches: SkillBranch[]
@@ -226,49 +257,17 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
     return map
   }, [branches])
 
-  const initialEdges: Edge[] = useMemo(() => {
-    const result: Edge[] = []
-    for (const branch of branches) {
-      const handleKey = handleKeyForBranchOrder(branch.order)
-      for (const node of branch.nodes) {
-        const color = colorByNodeId.get(node.id) ?? branch.color
-        // Root nodes → visual link to center via their branch handle
-        if (node.edgesTo.length === 0 && handleKey) {
-          result.push({
-            id: `center-${node.id}`,
-            source: 'center',
-            sourceHandle: `s-${handleKey}`,
-            target: node.id,
-            targetHandle: pickHandles(0, 0, node.posX, node.posY).targetHandle,
-            style: { stroke: color },
-            reconnectable: false,
-          })
-        }
-        for (const edge of node.edgesFrom) {
-          const childColor = colorByNodeId.get(edge.toNodeId) ?? color
-          // Use DB-stored handles if available, otherwise compute from position
-          let { sourceHandle, targetHandle } = edge
-          if (!sourceHandle || !targetHandle) {
-            const fromPos = nodePositions.get(edge.fromNodeId) ?? { x: 0, y: 0 }
-            const toPos = nodePositions.get(edge.toNodeId) ?? { x: 0, y: 0 }
-            const computed = pickHandles(fromPos.x, fromPos.y, toPos.x, toPos.y)
-            sourceHandle = sourceHandle ?? computed.sourceHandle
-            targetHandle = targetHandle ?? computed.targetHandle
-          }
-          result.push({
-            id: `${edge.fromNodeId}-${edge.toNodeId}`,
-            source: edge.fromNodeId,
-            target: edge.toNodeId,
-            sourceHandle,
-            targetHandle,
-            style: { stroke: childColor },
-            reconnectable: 'target' as const,
-          })
-        }
-      }
-    }
-    return result
-  }, [branches, colorByNodeId, nodePositions])
+  const initialEdges: Edge[] = useMemo(
+    () =>
+      buildTreeEdges(branches, colorByNodeId, nodePositions, {
+        root: (color) => ({ style: { stroke: color }, reconnectable: false }),
+        child: (_, childColor) => ({
+          style: { stroke: childColor },
+          reconnectable: 'target' as const,
+        }),
+      }),
+    [branches, colorByNodeId, nodePositions],
+  )
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
@@ -344,32 +343,14 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
 
       // Center connection → assign branch + show edge immediately
       if (source === 'center' || target === 'center') {
-        const isCenterSource = source === 'center'
-        const nodeId = isCenterSource ? target : source
-        const handleId = isCenterSource
-          ? connection.sourceHandle
-          : connection.targetHandle
-        const handleKey = handleId?.replace(/^[st]-/, '')
-        if (nodeId !== 'center' && handleKey) {
-          const branch = branchByHandle[handleKey]
-          setEdges((eds) => {
-            const filtered = eds.filter((e) => e.id !== `center-${nodeId}`)
-            return [
-              ...filtered,
-              {
-                id: `center-${nodeId}`,
-                source: 'center',
-                sourceHandle: `s-${handleKey}`,
-                target: nodeId,
-                targetHandle:
-                  connection.targetHandle ??
-                  connection.sourceHandle ??
-                  undefined,
-                style: { stroke: branch?.color ?? '#6c47ff' },
-                reconnectable: false,
-              },
-            ]
-          })
+        const center = centerConnectionTarget(connection)
+        if (center) {
+          const { nodeId, handleKey } = center
+          const color = branchByHandle[handleKey]?.color ?? '#6c47ff'
+          setEdges((eds) => [
+            ...eds.filter((e) => e.id !== `center-${nodeId}`),
+            centerEdge(nodeId, handleKey, connection, color),
+          ])
           handleCenterConnection(nodeId, handleKey)
         }
         return

@@ -186,6 +186,54 @@ function StatusRow({ unit }: { unit: SceneUnit }) {
   )
 }
 
+/** Three-tier HP color: green (>60%) → orange (30–60%) → red (<30%). */
+function getHpBarClass(hpPct: number, isAlly: boolean): string {
+  if (hpPct <= 30) {
+    return 'bg-gradient-to-r from-rose-500 to-red-600'
+  }
+  if (hpPct <= 60) {
+    return 'bg-gradient-to-r from-orange-400 to-amber-500'
+  }
+  return isAlly
+    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600'
+    : 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+}
+
+function getStrikeKind(
+  isActing: boolean,
+  isTargeted: boolean,
+): 'lunge' | 'shake' | null {
+  if (isActing) {
+    return 'lunge'
+  }
+  return isTargeted ? 'shake' : null
+}
+
+function UnitCard({
+  unit,
+  isAlly,
+  setFallback,
+}: {
+  unit: SceneUnit
+  isAlly: boolean
+  setFallback: string
+}) {
+  return (
+    <CardDisplay
+      rarity={unit.rarity ?? PLACEHOLDER_RARITY}
+      name={unit.name ?? unit.id}
+      setName={unit.setName ?? setFallback}
+      imageUrl={unit.imageUrl ?? null}
+      variant={unit.variant ?? 'NORMAL'}
+      isOwned
+      interactive={false}
+      compact
+      level={isAlly ? unit.level : null}
+      element={(unit.element ?? null) as CardElement | null}
+    />
+  )
+}
+
 export function UnitPortrait({
   unit,
   isActing,
@@ -200,18 +248,10 @@ export function UnitPortrait({
   const isDead = !unit.alive
   const isAlly = unit.side === 'A'
 
-  // Three-tier HP color: green (>60%) → orange (30–60%) → red (<30%).
-  const hpBarClass =
-    hpPct <= 30
-      ? 'bg-gradient-to-r from-rose-500 to-red-600'
-      : hpPct <= 60
-        ? 'bg-gradient-to-r from-orange-400 to-amber-500'
-        : isAlly
-          ? 'bg-gradient-to-r from-emerald-500 to-emerald-600'
-          : 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+  const hpBarClass = getHpBarClass(hpPct, isAlly)
 
   const rootRef = useStrikeAnimation(
-    isActing ? 'lunge' : isTargeted ? 'shake' : null,
+    getStrikeKind(isActing, isTargeted),
     strikeSeq,
     speed,
     isAlly,
@@ -245,18 +285,7 @@ export function UnitPortrait({
         } rounded-[14px]`}
       >
         <div className="relative aspect-[2/3] w-full">
-          <CardDisplay
-            rarity={unit.rarity ?? PLACEHOLDER_RARITY}
-            name={unit.name ?? unit.id}
-            setName={unit.setName ?? setFallback}
-            imageUrl={unit.imageUrl ?? null}
-            variant={unit.variant ?? 'NORMAL'}
-            isOwned
-            interactive={false}
-            compact
-            level={isAlly ? unit.level : null}
-            element={(unit.element ?? null) as CardElement | null}
-          />
+          <UnitCard unit={unit} isAlly={isAlly} setFallback={setFallback} />
           <StatusRow unit={unit} />
           {isDead && (
             <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center animate-[battleSkullIn_0.3s_ease]">

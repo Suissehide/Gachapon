@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import type { TFunction } from 'i18next'
 import {
   ArrowRight,
   Check,
@@ -19,6 +20,7 @@ import type { TeamUnit } from '../../api/combat.api.ts'
 import type {
   TowerBattleResult,
   TowerFloorView,
+  TowerSummary,
   TowerSweepResult,
 } from '../../api/tower.api.ts'
 import {
@@ -152,27 +154,12 @@ function TowerFloorsPage() {
     setSceneDone(false)
   }
 
-  // Éléments valides : dérivés de la liste des tours (`useTowers`), jamais
-  // recopiés en dur — la source unique reste TOWER_ELEMENTS côté back.
-  const segmentOptions = (towers.data?.towers ?? []).map((t) => ({
-    value: t.element,
-    label: ELEMENT_LABELS[t.element],
-  }))
-
-  // Slot alimenté par cette tour — vient de `useTowers()` (TowerSummary.slot),
-  // jamais recopié : `useTower(element)` ne renvoie pas ce champ.
-  const currentTower = towers.data?.towers.find((t) => t.element === element)
-  const elementLabel = ELEMENT_LABELS[element as CardElement] ?? element
-  // Nom propre de la tour, renvoyé par le back. Le titre disait « Tour Feu »
-  // pendant que ses étages s'appelaient « Tour de Braise — étage 1 ».
-  const towerName =
-    currentTower?.name ??
-    tower.data?.name ??
-    t('combat:towerFloors.nameFallback', { element: elementLabel })
-  const slotLabel = currentTower ? SLOT_LABELS[currentTower.slot] : null
-  const subtitle = slotLabel
-    ? t('combat:towerFloors.subtitleWithSlot', { slot: slotLabel })
-    : t('combat:towerFloors.subtitleNoSlot')
+  const { segmentOptions, towerName, subtitle } = describeTower(
+    t,
+    element,
+    towers.data?.towers ?? [],
+    tower.data?.name,
+  )
 
   return (
     <PageShell>
@@ -296,6 +283,36 @@ function TowerFloorsPage() {
       )}
     </PageShell>
   )
+}
+
+function describeTower(
+  t: TFunction<'combat'>,
+  element: string,
+  towers: TowerSummary[],
+  fetchedName: string | undefined,
+) {
+  // Éléments valides : dérivés de la liste des tours (`useTowers`), jamais
+  // recopiés en dur — la source unique reste TOWER_ELEMENTS côté back.
+  const segmentOptions = towers.map((tw) => ({
+    value: tw.element,
+    label: ELEMENT_LABELS[tw.element],
+  }))
+
+  // Slot alimenté par cette tour — vient de `useTowers()` (TowerSummary.slot),
+  // jamais recopié : `useTower(element)` ne renvoie pas ce champ.
+  const currentTower = towers.find((tw) => tw.element === element)
+  const elementLabel = ELEMENT_LABELS[element as CardElement] ?? element
+  // Nom propre de la tour, renvoyé par le back. Le titre disait « Tour Feu »
+  // pendant que ses étages s'appelaient « Tour de Braise — étage 1 ».
+  const towerName =
+    currentTower?.name ??
+    fetchedName ??
+    t('combat:towerFloors.nameFallback', { element: elementLabel })
+  const slotLabel = currentTower ? SLOT_LABELS[currentTower.slot] : null
+  const subtitle = slotLabel
+    ? t('combat:towerFloors.subtitleWithSlot', { slot: slotLabel })
+    : t('combat:towerFloors.subtitleNoSlot')
+  return { segmentOptions, towerName, subtitle }
 }
 
 /**

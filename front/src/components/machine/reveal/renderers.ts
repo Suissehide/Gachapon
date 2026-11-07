@@ -66,6 +66,78 @@ export function drawWaves(
 const GRAVITY = 0.12
 const LIFE_DECAY = 0.018
 
+function drawStreakParticle(
+  ctx: CanvasRenderingContext2D,
+  p: ParticleState,
+  a: number,
+  col: string,
+): void {
+  const spd = Math.hypot(p.vx, p.vy) || 1
+  const len = spd * 4
+  const nx = p.vx / spd
+  const ny = p.vy / spd
+
+  // Red misprint shadow — pas en hue-shift (rendu doux, non cartoon)
+  if (p.baseHue == null) {
+    ctx.globalAlpha = a * 0.2
+    ctx.strokeStyle = '#ff0055'
+    ctx.lineWidth = p.size
+    ctx.beginPath()
+    ctx.moveTo(p.x + 3 - nx * len, p.y + 3 - ny * len)
+    ctx.lineTo(p.x + 3, p.y + 3)
+    ctx.stroke()
+  }
+
+  // Main streak
+  ctx.globalAlpha = a
+  ctx.strokeStyle = col
+  ctx.lineWidth = p.size
+  ctx.beginPath()
+  ctx.moveTo(p.x - nx * len, p.y - ny * len)
+  ctx.lineTo(p.x, p.y)
+  ctx.stroke()
+}
+
+function traceParticleShape(
+  ctx: CanvasRenderingContext2D,
+  p: ParticleState,
+  ox: number,
+  oy: number,
+): void {
+  ctx.beginPath()
+  if (p.type === 'square') {
+    ctx.rect(ox - p.size / 2, oy - p.size / 2, p.size, p.size)
+  } else {
+    ctx.arc(ox, oy, p.size / 2, 0, Math.PI * 2)
+  }
+}
+
+function drawShapeParticle(
+  ctx: CanvasRenderingContext2D,
+  p: ParticleState,
+  a: number,
+  col: string,
+): void {
+  // Red misprint shadow at (+3, +3) — pas en hue-shift
+  if (p.baseHue == null) {
+    ctx.globalAlpha = a * 0.2
+    traceParticleShape(ctx, p, p.x + 3, p.y + 3)
+    ctx.fillStyle = '#ff0055'
+    ctx.fill()
+  }
+
+  // Main shape — le contour noir BD saute en hue-shift (non cartoon)
+  ctx.globalAlpha = a
+  traceParticleShape(ctx, p, p.x, p.y)
+  ctx.fillStyle = col
+  ctx.fill()
+  if (p.baseHue == null) {
+    ctx.strokeStyle = '#000'
+    ctx.lineWidth = 2
+    ctx.stroke()
+  }
+}
+
 export function drawParticles(
   ctx: CanvasRenderingContext2D,
   particles: ParticleState[],
@@ -93,58 +165,9 @@ export function drawParticles(
         : `hsl(${(p.baseHue + (1 - p.life) * 240) % 360}, 90%, 60%)`
 
     if (p.type === 'streak') {
-      const spd = Math.hypot(p.vx, p.vy) || 1
-      const len = spd * 4
-      const nx = p.vx / spd
-      const ny = p.vy / spd
-
-      // Red misprint shadow — pas en hue-shift (rendu doux, non cartoon)
-      if (p.baseHue == null) {
-        ctx.globalAlpha = a * 0.2
-        ctx.strokeStyle = '#ff0055'
-        ctx.lineWidth = p.size
-        ctx.beginPath()
-        ctx.moveTo(p.x + 3 - nx * len, p.y + 3 - ny * len)
-        ctx.lineTo(p.x + 3, p.y + 3)
-        ctx.stroke()
-      }
-
-      // Main streak
-      ctx.globalAlpha = a
-      ctx.strokeStyle = col
-      ctx.lineWidth = p.size
-      ctx.beginPath()
-      ctx.moveTo(p.x - nx * len, p.y - ny * len)
-      ctx.lineTo(p.x, p.y)
-      ctx.stroke()
+      drawStreakParticle(ctx, p, a, col)
     } else {
-      const drawShape = (ox: number, oy: number) => {
-        ctx.beginPath()
-        if (p.type === 'square') {
-          ctx.rect(ox - p.size / 2, oy - p.size / 2, p.size, p.size)
-        } else {
-          ctx.arc(ox, oy, p.size / 2, 0, Math.PI * 2)
-        }
-      }
-
-      // Red misprint shadow at (+3, +3) — pas en hue-shift
-      if (p.baseHue == null) {
-        ctx.globalAlpha = a * 0.2
-        drawShape(p.x + 3, p.y + 3)
-        ctx.fillStyle = '#ff0055'
-        ctx.fill()
-      }
-
-      // Main shape — le contour noir BD saute en hue-shift (non cartoon)
-      ctx.globalAlpha = a
-      drawShape(p.x, p.y)
-      ctx.fillStyle = col
-      ctx.fill()
-      if (p.baseHue == null) {
-        ctx.strokeStyle = '#000'
-        ctx.lineWidth = 2
-        ctx.stroke()
-      }
+      drawShapeParticle(ctx, p, a, col)
     }
   }
   ctx.globalAlpha = 1

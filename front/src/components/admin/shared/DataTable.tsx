@@ -27,8 +27,8 @@ export function selectionColumn<TData>(): ColumnDef<TData, unknown> {
   }
 }
 
-type DataTableProps<TData extends { id: string }> = {
-  columns: ColumnDef<TData, any>[]
+type DataTableProps<TData extends { id: string }, TValue> = {
+  columns: ColumnDef<TData, TValue>[]
   data: TData[]
   isLoading?: boolean
   emptyIcon: LucideIcon
@@ -43,14 +43,14 @@ type DataTableProps<TData extends { id: string }> = {
 
 const SKELETON_KEYS = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`)
 
-export function DataTable<TData extends { id: string }>({
+export function DataTable<TData extends { id: string }, TValue>({
   isLoading,
   emptyIcon,
   emptyTitle,
   emptyDescription,
   data,
   ...tableProps
-}: DataTableProps<TData>) {
+}: DataTableProps<TData, TValue>) {
   if (isLoading) {
     return (
       <div className="space-y-2 p-5">

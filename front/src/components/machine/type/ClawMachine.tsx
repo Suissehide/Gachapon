@@ -194,6 +194,66 @@ function DispensingRampCollider() {
   )
 }
 
+const JIGGLE_HALF_W = BOX_W / 2 - CAPSULE_RADIUS - 0.02
+const JIGGLE_HALF_D = BOX_D / 2 - CAPSULE_RADIUS - 0.02
+const JIGGLE_MIN_Y = BOX_Y - BOX_H / 2 + CAPSULE_RADIUS
+const JIGGLE_MAX_Y = BOX_Y + BOX_H / 2 - CAPSULE_RADIUS
+const JIGGLE_MAX_SPEED = 1.5
+
+// Speed cap + keep the capsule inside the box
+function containBody(body: RapierRigidBody): void {
+  const vel = body.linvel()
+  const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
+  if (speed > JIGGLE_MAX_SPEED) {
+    const s = JIGGLE_MAX_SPEED / speed
+    body.setLinvel({ x: vel.x * s, y: vel.y * s, z: vel.z * s }, true)
+  }
+  const pos = body.translation()
+  const clamped =
+    pos.x < -JIGGLE_HALF_W ||
+    pos.x > JIGGLE_HALF_W ||
+    pos.y < JIGGLE_MIN_Y ||
+    pos.y > JIGGLE_MAX_Y ||
+    pos.z < -JIGGLE_HALF_D ||
+    pos.z > JIGGLE_HALF_D
+  if (clamped) {
+    body.setTranslation(
+      {
+        x: THREE.MathUtils.clamp(pos.x, -JIGGLE_HALF_W, JIGGLE_HALF_W),
+        y: THREE.MathUtils.clamp(pos.y, JIGGLE_MIN_Y, JIGGLE_MAX_Y),
+        z: THREE.MathUtils.clamp(pos.z, -JIGGLE_HALF_D, JIGGLE_HALF_D),
+      },
+      true,
+    )
+    body.setLinvel({ x: 0, y: vel.y, z: 0 }, true)
+  }
+}
+
+function jiggleBody(body: RapierRigidBody, strength: number): void {
+  const vel = body.linvel()
+  const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
+  if (speed > 1.0) {
+    return
+  }
+  body.applyImpulse(
+    {
+      x: (Math.random() - 0.5) * strength,
+      y: 0,
+      z: (Math.random() - 0.5) * strength,
+    },
+    true,
+  )
+}
+
+function jiggleBodies(bodies: (RapierRigidBody | null)[], delta: number): void {
+  const strength = Math.min(Math.abs(delta) * 0.3, 0.015)
+  for (const body of bodies) {
+    if (body) {
+      jiggleBody(body, strength)
+    }
+  }
+}
+
 // Camera jiggle + box containment
 function CameraJiggle({
   bodies,
@@ -201,82 +261,20 @@ function CameraJiggle({
   bodies: React.RefObject<(RapierRigidBody | null)[]>
 }) {
   const prevAzimuth = useRef(0)
-  const halfW = BOX_W / 2 - CAPSULE_RADIUS - 0.02
-  const halfD = BOX_D / 2 - CAPSULE_RADIUS - 0.02
-  const minY = BOX_Y - BOX_H / 2 + CAPSULE_RADIUS
-  const maxY = BOX_Y + BOX_H / 2 - CAPSULE_RADIUS
 
   useFrame(({ camera }) => {
     const azimuth = Math.atan2(camera.position.x, camera.position.z)
     const delta = azimuth - prevAzimuth.current
     prevAzimuth.current = azimuth
 
-    const maxSpeed = 1.5
     for (const body of bodies.current ?? []) {
-      if (!body) {
-        continue
-      }
-      const vel = body.linvel()
-      const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
-      if (speed > maxSpeed) {
-        const s = maxSpeed / speed
-        body.setLinvel({ x: vel.x * s, y: vel.y * s, z: vel.z * s }, true)
-      }
-      const pos = body.translation()
-      let clamped = false
-      let cx = pos.x,
-        cy = pos.y,
-        cz = pos.z
-      if (cx < -halfW) {
-        cx = -halfW
-        clamped = true
-      }
-      if (cx > halfW) {
-        cx = halfW
-        clamped = true
-      }
-      if (cy < minY) {
-        cy = minY
-        clamped = true
-      }
-      if (cy > maxY) {
-        cy = maxY
-        clamped = true
-      }
-      if (cz < -halfD) {
-        cz = -halfD
-        clamped = true
-      }
-      if (cz > halfD) {
-        cz = halfD
-        clamped = true
-      }
-      if (clamped) {
-        body.setTranslation({ x: cx, y: cy, z: cz }, true)
-        body.setLinvel({ x: 0, y: vel.y, z: 0 }, true)
+      if (body) {
+        containBody(body)
       }
     }
 
     if (Math.abs(delta) > 0.005) {
-      const strength = Math.min(Math.abs(delta) * 0.3, 0.015)
-      for (const body of bodies.current ?? []) {
-        if (!body) {
-          continue
-        }
-        const vel = body.linvel()
-        const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
-        if (speed > 1.0) {
-          continue
-        }
-        body.applyImpulse(
-          {
-            x: (Math.random() - 0.5) * strength,
-            y: 0,
-            z: (Math.random() - 0.5) * strength,
-          },
-          true,
-        )
-      }
+      jiggleBodies(bodies.current ?? [], delta)
     }
   })
   return null
@@ -472,6 +470,28 @@ function ActionButton({ pressed }: { pressed: boolean }) {
   )
 }
 
+function inputDirX(keys: Set<string>): number {
+  let dx = 0
+  if (keys.has('arrowleft') || keys.has('a') || keys.has('q')) {
+    dx -= 1
+  }
+  if (keys.has('arrowright') || keys.has('d')) {
+    dx += 1
+  }
+  return dx
+}
+
+function inputDirZ(keys: Set<string>): number {
+  let dz = 0
+  if (keys.has('arrowup') || keys.has('w') || keys.has('z')) {
+    dz -= 1
+  }
+  if (keys.has('arrowdown') || keys.has('s')) {
+    dz += 1
+  }
+  return dz
+}
+
 type ClawPhase =
   | 'idle'
   | 'positioning'
@@ -572,20 +592,8 @@ export const ClawMachine = forwardRef<
     if (phase === 'positioning') {
       // Player controls X/Z directly
       const keys = keysRef.current
-      let dx = 0,
-        dz = 0
-      if (keys.has('arrowleft') || keys.has('a') || keys.has('q')) {
-        dx -= 1
-      }
-      if (keys.has('arrowright') || keys.has('d')) {
-        dx += 1
-      }
-      if (keys.has('arrowup') || keys.has('w') || keys.has('z')) {
-        dz -= 1
-      }
-      if (keys.has('arrowdown') || keys.has('s')) {
-        dz += 1
-      }
+      const dx = inputDirX(keys)
+      const dz = inputDirZ(keys)
 
       pos.x = THREE.MathUtils.clamp(
         pos.x + dx * CLAW_SPEED * delta,
@@ -616,18 +624,8 @@ export const ClawMachine = forwardRef<
   let tiltX = 0,
     tiltZ = 0
   if (phase === 'positioning') {
-    if (keys.has('arrowleft') || keys.has('a') || keys.has('q')) {
-      tiltX -= 1
-    }
-    if (keys.has('arrowright') || keys.has('d')) {
-      tiltX += 1
-    }
-    if (keys.has('arrowup') || keys.has('w') || keys.has('z')) {
-      tiltZ -= 1
-    }
-    if (keys.has('arrowdown') || keys.has('s')) {
-      tiltZ += 1
-    }
+    tiltX = inputDirX(keys)
+    tiltZ = inputDirZ(keys)
   }
 
   const capsules = useMemo(() => {

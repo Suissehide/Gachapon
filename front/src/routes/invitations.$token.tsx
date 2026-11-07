@@ -5,6 +5,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { Navbar } from '../components/custom/Navbar.tsx'
 import { Button } from '../components/ui/button.tsx'
+import type { Invitation } from '../constants/teams.constant.ts'
 import { isApiError } from '../libs/httpErrorHandler.ts'
 import {
   useAcceptInvitation,
@@ -69,25 +70,7 @@ function InvitationPage() {
 
   // Not authenticated → prompt login
   if (!isLoadingAuth && !isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        <LandingNavbar />
-        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
-          <div className="w-full max-w-md text-center">
-            <Users className="mx-auto mb-4 h-12 w-12 text-primary" />
-            <h1 className="mb-2 text-2xl font-black text-text">
-              {t('invitations.unauthenticated.title')}
-            </h1>
-            <p className="mb-6 text-text-light">
-              {t('invitations.unauthenticated.description')}
-            </p>
-            <Button onClick={openLogin}>
-              {t('invitations.unauthenticated.loginButton')}
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
+    return <UnauthenticatedPrompt onLogin={openLogin} />
   }
 
   return (
@@ -145,71 +128,116 @@ function InvitationPage() {
             )}
 
             {invitation && invitation.status !== 'PENDING' && (
-              <>
-                <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-                <h1 className="mb-2 text-2xl font-black text-text">
-                  {t('invitations.unavailable.title')}
-                </h1>
-                <p className="text-text-light">
-                  {invitation.status === 'ACCEPTED' &&
-                    t('invitations.unavailable.accepted')}
-                  {invitation.status === 'DECLINED' &&
-                    t('invitations.unavailable.declined')}
-                  {invitation.status === 'CANCELLED' &&
-                    t('invitations.unavailable.cancelled')}
-                  {invitation.status === 'EXPIRED' &&
-                    t('invitations.unavailable.expired')}
-                </p>
-              </>
+              <UnavailableInvitation status={invitation.status} />
             )}
 
             {invitation && invitation.status === 'PENDING' && (
-              <div className="rounded-2xl border border-border bg-background/60 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white">
-                  <Users className="h-7 w-7" />
-                </div>
-                <p className="mb-1 text-sm text-text-light">
-                  {invitation.invitedBy ? (
-                    <Trans
-                      t={t}
-                      i18nKey="invitations.pending.invitedByLead"
-                      values={{ username: invitation.invitedBy.username }}
-                      components={{ Strong: <strong className="text-text" /> }}
-                    />
-                  ) : (
-                    t('invitations.pending.noInviterLead')
-                  )}
-                </p>
-                <h1 className="mb-6 text-2xl font-black text-text">
-                  {invitation.team?.name ??
-                    t('invitations.pending.teamFallbackName')}
-                </h1>
-                <div className="flex items-center justify-center gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={handleDecline}
-                    disabled={accept.isPending || decline.isPending}
-                  >
-                    <X className="h-4 w-4" />
-                    {t('invitations.pending.declineButton')}
-                  </Button>
-                  <Button
-                    onClick={handleAccept}
-                    disabled={accept.isPending || decline.isPending}
-                  >
-                    {accept.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4" />
-                    )}
-                    {t('invitations.pending.joinButton')}
-                  </Button>
-                </div>
-              </div>
+              <PendingInvitation
+                invitation={invitation}
+                isAccepting={accept.isPending}
+                isBusy={accept.isPending || decline.isPending}
+                onAccept={handleAccept}
+                onDecline={handleDecline}
+              />
             )}
           </div>
         </div>
       </main>
+    </div>
+  )
+}
+
+function UnauthenticatedPrompt({ onLogin }: { onLogin: () => void }) {
+  const { t } = useTranslation('auth')
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <LandingNavbar />
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <Users className="mx-auto mb-4 h-12 w-12 text-primary" />
+          <h1 className="mb-2 text-2xl font-black text-text">
+            {t('invitations.unauthenticated.title')}
+          </h1>
+          <p className="mb-6 text-text-light">
+            {t('invitations.unauthenticated.description')}
+          </p>
+          <Button onClick={onLogin}>
+            {t('invitations.unauthenticated.loginButton')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function UnavailableInvitation({ status }: { status: Invitation['status'] }) {
+  const { t } = useTranslation('auth')
+  return (
+    <>
+      <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
+      <h1 className="mb-2 text-2xl font-black text-text">
+        {t('invitations.unavailable.title')}
+      </h1>
+      <p className="text-text-light">
+        {status === 'ACCEPTED' && t('invitations.unavailable.accepted')}
+        {status === 'DECLINED' && t('invitations.unavailable.declined')}
+        {status === 'CANCELLED' && t('invitations.unavailable.cancelled')}
+        {status === 'EXPIRED' && t('invitations.unavailable.expired')}
+      </p>
+    </>
+  )
+}
+
+type PendingInvitationProps = {
+  invitation: Invitation
+  isAccepting: boolean
+  isBusy: boolean
+  onAccept: () => void
+  onDecline: () => void
+}
+
+function PendingInvitation({
+  invitation,
+  isAccepting,
+  isBusy,
+  onAccept,
+  onDecline,
+}: PendingInvitationProps) {
+  const { t } = useTranslation('auth')
+  return (
+    <div className="rounded-2xl border border-border bg-background/60 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white">
+        <Users className="h-7 w-7" />
+      </div>
+      <p className="mb-1 text-sm text-text-light">
+        {invitation.invitedBy ? (
+          <Trans
+            t={t}
+            i18nKey="invitations.pending.invitedByLead"
+            values={{ username: invitation.invitedBy.username }}
+            components={{ Strong: <strong className="text-text" /> }}
+          />
+        ) : (
+          t('invitations.pending.noInviterLead')
+        )}
+      </p>
+      <h1 className="mb-6 text-2xl font-black text-text">
+        {invitation.team?.name ?? t('invitations.pending.teamFallbackName')}
+      </h1>
+      <div className="flex items-center justify-center gap-3">
+        <Button variant="outline" onClick={onDecline} disabled={isBusy}>
+          <X className="h-4 w-4" />
+          {t('invitations.pending.declineButton')}
+        </Button>
+        <Button onClick={onAccept} disabled={isBusy}>
+          {isAccepting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Check className="h-4 w-4" />
+          )}
+          {t('invitations.pending.joinButton')}
+        </Button>
+      </div>
     </div>
   )
 }

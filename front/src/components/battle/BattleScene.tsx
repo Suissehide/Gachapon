@@ -141,6 +141,79 @@ function countActionsUpTo(
   return r
 }
 
+type PushFloat = (
+  unitId: string,
+  value: number | string,
+  kind: FloatItem['kind'],
+  elementMult?: number,
+) => void
+type PushBadge = (
+  unitId: string,
+  passiveKey: string,
+  kind?: BadgeItem['kind'],
+  label?: string,
+) => void
+
+type PassivePayload = { healed?: number; damage?: number; shield?: number }
+
+function showUltimateFeedback(
+  unitId: string,
+  targetId: string | undefined,
+  payload: PassivePayload,
+  initialUnits: SceneUnit[],
+  pushBadge: PushBadge,
+  pushFloat: PushFloat,
+) {
+  // Bouclier / soin d'équipe : le badge sur l'entrée d'en-tête
+  // seulement, les entrées par allié portent les chiffres.
+  if (targetId === undefined) {
+    const archetype = initialUnits.find((u) => u.id === unitId)?.archetype as
+      | CardArchetype
+      | null
+      | undefined
+    pushBadge(
+      unitId,
+      'ULTIMATE',
+      'ultimate',
+      archetype ? ultimateName(archetype) : undefined,
+    )
+  }
+  if (targetId && payload.shield && payload.shield > 0) {
+    pushFloat(targetId, payload.shield, 'shield')
+  }
+}
+
+function showPassiveFeedback(
+  entry: BattleLogEntry,
+  initialUnits: SceneUnit[],
+  pushBadge: PushBadge,
+  pushFloat: PushFloat,
+) {
+  const unitId = entry.unitId as string
+  const passive = entry.passive as string
+  const targetId = entry.targetId as string | undefined
+  const payload = (entry.payload as PassivePayload) ?? {}
+  if (passive === 'ULTIMATE') {
+    showUltimateFeedback(
+      unitId,
+      targetId,
+      payload,
+      initialUnits,
+      pushBadge,
+      pushFloat,
+    )
+  } else {
+    pushBadge(unitId, passive)
+  }
+  const receiverId = targetId ?? unitId
+  if (payload.healed && payload.healed > 0) {
+    pushFloat(receiverId, payload.healed, 'heal')
+  }
+  if (payload.damage && payload.damage > 0) {
+    pushFloat(receiverId, payload.damage, 'damage')
+  }
+}
+
 export function BattleScene({
   teamA,
   teamB,
@@ -326,41 +399,7 @@ export function BattleScene({
   const runPassiveEntry = useCallback(
     (entry: BattleLogEntry, index: number, delay: number) => {
       if (claimEntry(index)) {
-        const unitId = entry.unitId as string
-        const passive = entry.passive as string
-        const targetId = entry.targetId as string | undefined
-        const payload =
-          (entry.payload as {
-            healed?: number
-            damage?: number
-            shield?: number
-          }) ?? {}
-        if (passive === 'ULTIMATE') {
-          // Bouclier / soin d'équipe : le badge sur l'entrée d'en-tête
-          // seulement, les entrées par allié portent les chiffres.
-          if (targetId === undefined) {
-            const archetype = initialUnits.find((u) => u.id === unitId)
-              ?.archetype as CardArchetype | null | undefined
-            pushBadge(
-              unitId,
-              'ULTIMATE',
-              'ultimate',
-              archetype ? ultimateName(archetype) : undefined,
-            )
-          }
-          if (targetId && payload.shield && payload.shield > 0) {
-            pushFloat(targetId, payload.shield, 'shield')
-          }
-        } else {
-          pushBadge(unitId, passive)
-        }
-        const receiverId = targetId ?? unitId
-        if (payload.healed && payload.healed > 0) {
-          pushFloat(receiverId, payload.healed, 'heal')
-        }
-        if (payload.damage && payload.damage > 0) {
-          pushFloat(receiverId, payload.damage, 'damage')
-        }
+        showPassiveFeedback(entry, initialUnits, pushBadge, pushFloat)
         setUnits((cur) => applyEntry(entry, cur))
       }
       const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)

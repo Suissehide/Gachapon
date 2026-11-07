@@ -8,15 +8,32 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useCallback, useMemo } from 'react'
 
-import type { SkillTreeState } from '../../../api/skills.api.ts'
-import {
-  CenterNode,
-  handleKeyForBranchOrder,
-  pickHandles,
-} from '../shared/CenterNode.tsx'
+import type { SkillNode, SkillTreeState } from '../../../api/skills.api.ts'
+import { CenterNode, handleKeyForBranchOrder } from '../shared/CenterNode.tsx'
 import { SkillNodeComponent, type SkillNodeData } from '../shared/SkillNode.tsx'
+import { buildTreeEdges } from '../shared/treeEdges.ts'
 
 const nodeTypes = { skillNode: SkillNodeComponent, centerNode: CenterNode }
+
+function lockState(
+  node: SkillNode,
+  skillMap: Record<string, number>,
+  allNodes: SkillNode[],
+) {
+  const missingPrereqs: string[] = []
+  let isLocked = false
+  for (const edge of node.edgesTo) {
+    const parentLevel = skillMap[edge.fromNodeId] ?? 0
+    if (parentLevel < edge.minLevel) {
+      isLocked = true
+      const parentNode = allNodes.find((n) => n.id === edge.fromNodeId)
+      if (parentNode) {
+        missingPrereqs.push(`${parentNode.name} niv.${edge.minLevel}`)
+      }
+    }
+  }
+  return { isLocked, missingPrereqs }
+}
 
 type Props = {
   state: SkillTreeState
@@ -100,19 +117,7 @@ export function SkillTreeCanvas({ state, onInvest, onUninvest }: Props) {
     for (const branch of state.branches) {
       for (const node of branch.nodes) {
         const userLevel = skillMap[node.id] ?? 0
-        const missingPrereqs: string[] = []
-        let isLocked = false
-
-        for (const edge of node.edgesTo) {
-          const parentLevel = skillMap[edge.fromNodeId] ?? 0
-          if (parentLevel < edge.minLevel) {
-            isLocked = true
-            const parentNode = allNodes.find((n) => n.id === edge.fromNodeId)
-            if (parentNode) {
-              missingPrereqs.push(`${parentNode.name} niv.${edge.minLevel}`)
-            }
-          }
-        }
+        const { isLocked, missingPrereqs } = lockState(node, skillMap, allNodes)
 
         result.push({
           id: node.id,
@@ -145,58 +150,23 @@ export function SkillTreeCanvas({ state, onInvest, onUninvest }: Props) {
     return map
   }, [state.branches])
 
-  const edges: Edge[] = useMemo(() => {
-    const result: Edge[] = []
-
-    for (const branch of state.branches) {
-      const handleKey = handleKeyForBranchOrder(branch.order)
-      for (const node of branch.nodes) {
-        const color = colorByNodeId.get(node.id) ?? branch.color
-
-        // Root nodes → center edge
-        if (node.edgesTo.length === 0 && handleKey) {
-          result.push({
-            id: `center-${node.id}`,
-            source: 'center',
-            sourceHandle: `s-${handleKey}`,
-            target: node.id,
-            targetHandle: pickHandles(0, 0, node.posX, node.posY).targetHandle,
-            style: { stroke: color, strokeWidth: 2 },
-          })
-        }
-
-        // Node-to-node edges
-        for (const edge of node.edgesFrom) {
+  const edges: Edge[] = useMemo(
+    () =>
+      buildTreeEdges(state.branches, colorByNodeId, nodePositions, {
+        root: (color) => ({ style: { stroke: color, strokeWidth: 2 } }),
+        child: (edge, childColor) => {
           const isUnlocked = (skillMap[edge.fromNodeId] ?? 0) >= edge.minLevel
-          const childColor = colorByNodeId.get(edge.toNodeId) ?? color
-
-          let { sourceHandle, targetHandle } = edge
-          if (!sourceHandle || !targetHandle) {
-            const fromPos = nodePositions.get(edge.fromNodeId) ?? { x: 0, y: 0 }
-            const toPos = nodePositions.get(edge.toNodeId) ?? { x: 0, y: 0 }
-            const computed = pickHandles(fromPos.x, fromPos.y, toPos.x, toPos.y)
-            sourceHandle = sourceHandle ?? computed.sourceHandle
-            targetHandle = targetHandle ?? computed.targetHandle
-          }
-
-          result.push({
-            id: `${edge.fromNodeId}-${edge.toNodeId}`,
-            source: edge.fromNodeId,
-            target: edge.toNodeId,
-            sourceHandle,
-            targetHandle,
+          return {
             style: {
               stroke: isUnlocked ? childColor : '#374151',
               strokeWidth: 1.5,
               strokeDasharray: isUnlocked ? undefined : '4',
             },
-          })
-        }
-      }
-    }
-
-    return result
-  }, [state.branches, skillMap, colorByNodeId, nodePositions])
+          }
+        },
+      }),
+    [state.branches, skillMap, colorByNodeId, nodePositions],
+  )
 
   // Invest is driven from here (not the SkillNode button) so a single click
   // fires onInvest exactly once. onNodeClick also keeps the node interactive,

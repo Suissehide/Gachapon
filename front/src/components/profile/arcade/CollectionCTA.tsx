@@ -41,14 +41,15 @@ export function CollectionCTA({
         </div>
       </div>
       <Button asChild variant="gradient" size="lg">
-        <Link
-          to={isOwnProfile ? '/collection' : '/profile/$username/collection'}
-          params={isOwnProfile ? undefined : ({ username } as any)}
-        >
-          {isOwnProfile
-            ? t('collectionCTA.viewMyCollectionButton')
-            : t('collectionCTA.exploreButton')}
-        </Link>
+        {isOwnProfile ? (
+          <Link to="/collection">
+            {t('collectionCTA.viewMyCollectionButton')}
+          </Link>
+        ) : (
+          <Link to="/profile/$username/collection" params={{ username }}>
+            {t('collectionCTA.exploreButton')}
+          </Link>
+        )}
       </Button>
     </div>
   )
