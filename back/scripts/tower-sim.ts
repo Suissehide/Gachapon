@@ -55,7 +55,6 @@ import {
 } from '../src/main/domain/content/campaign.definitions'
 import {
   TOWER_FLOOR_COUNT,
-  towerAoeUnitCount,
   towerFloorScale,
 } from '../src/main/domain/content/tower.definitions'
 
@@ -99,7 +98,7 @@ function grid(): void {
             towerWinRate({
               floor,
               scale: towerFloorScale(floor),
-              aoeUnits: towerAoeUnitCount(floor),
+              aoeUnits: 0,
               profile: p,
               runs: RUNS,
             }),
@@ -124,7 +123,7 @@ function fit(): void {
   const fitted: number[] = []
   for (let floor = 1; floor <= TOWER_FLOOR_COUNT; floor++) {
     const p = towerFloorProfile(floor)
-    const aoeUnits = towerAoeUnitCount(floor)
+    const aoeUnits = 0
     // Dichotomie : le taux de victoire décroît avec l'échelle.
     let lo = 0.5
     let hi = 1000

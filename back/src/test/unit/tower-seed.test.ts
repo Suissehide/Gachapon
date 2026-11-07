@@ -11,6 +11,8 @@ import {
   RARITY_BASE,
 } from '../../main/domain/content/campaign.definitions'
 import {
+  endgameProfileAt,
+  endgameSteps,
   towerFloorProfile,
   towerReferenceWinRate,
 } from '../../../prisma/seed/balance-calibration'
@@ -18,14 +20,13 @@ import {
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
   buildTowerFloors,
-  towerAoeUnitCount,
   towerEnemyPower,
   towerFloorLoot,
+  towerFloorScale,
 } from '../../main/domain/content/tower.definitions'
 import { EquipmentSlot } from '../../generated/client'
 import {
   CAMPAIGN_EQUIPMENT_SLOTS,
-  isTowerBossFloor,
   TOWER_EQUIPMENT_SLOTS,
   TOWER_SLOT_BY_ELEMENT,
 } from '../../main/domain/tower/tower-slots'
@@ -33,22 +34,21 @@ import {
 describe('seed des tours', () => {
   const etages = buildTowerFloors()
 
-  it('produit 60 étages (4 tours x 15)', () => {
-    expect(TOWER_FLOOR_COUNT).toBe(15)
-    expect(etages).toHaveLength(60)
+  it('produit 80 étages (4 tours x 20)', () => {
+    expect(TOWER_FLOOR_COUNT).toBe(20)
+    expect(etages).toHaveLength(80)
   })
 
-  it('les étages 10 et 15 sont les boss, et eux seuls', () => {
-    // L'étage 10 reste un boss après l'ajout des étages 11 à 15 : succès et
-    // quêtes « battre un boss de tour » ne doivent pas changer pour ceux qui
-    // le farment.
-    const boss = Array.from({ length: TOWER_FLOOR_COUNT }, (_, i) => i + 1).filter(
-      isTowerBossFloor,
-    )
-    expect(boss).toEqual([10, 15])
+  it('aucun boss : aucun ennemi ne frappe en AOE_3, à aucun étage', () => {
+    // Une unité AOE_3 vaut ~×1,45 de stats à elle seule : c'était une marche
+    // dans la courbe, puis un creux à l'étage suivant. Les tours montent
+    // désormais d'un cran à chaque étage, de 1 à 20.
+    for (const etage of etages) {
+      expect(etage.enemyTeam.every((e) => e.attackPattern === 'BASIC')).toBe(true)
+    }
   })
 
-  it('les ordres des étages 1 à 10 sont ceux d’avant, les 11 à 15 viennent après', () => {
+  it('les ordres des étages 1 à 10 sont ceux d’avant, les 11 à 20 viennent après', () => {
     const anciens = etages.filter((e) => e.index <= 10)
     expect(anciens.map((e) => e.order)).toEqual(
       Array.from({ length: 40 }, (_, i) => i),
@@ -56,10 +56,10 @@ describe('seed des tours', () => {
     for (const e of etages.filter((e) => e.index > 10)) {
       expect(e.order).toBeGreaterThanOrEqual(40)
     }
-    expect(new Set(etages.map((e) => e.order)).size).toBe(60)
+    expect(new Set(etages.map((e) => e.order)).size).toBe(80)
   })
 
-  it('les étages 11 à 15 farment comme le 10 et garantissent une épique', () => {
+  it('les étages 11 à 20 farment comme le 10 et garantissent une épique', () => {
     const dix = towerFloorLoot(10)
     for (let f = 11; f <= TOWER_FLOOR_COUNT; f++) {
       const loot = towerFloorLoot(f)
@@ -77,12 +77,39 @@ describe('seed des tours', () => {
     }
   })
 
-  it('la part de légendaire monte de 7 à 15 % sur les étages 11 à 15', () => {
+  it('la part de légendaire monte de 6 à 15 % sur les étages 11 à 20', () => {
     expect(
-      [11, 12, 13, 14, 15].map(
+      [11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(
         (f) => (towerFloorLoot(f).farm.equipmentWeights as Record<string, number>).LEGENDARY,
       ),
-    ).toEqual([7, 9, 11, 13, 15])
+    ).toEqual([6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+  })
+
+  it('de 11 à 20, le joueur de référence avance d’au moins une étape par étage', () => {
+    // Départ : le grimpeur de l'étage 10 (épiques n70, 7 pièces épiques
+    // n12) ; ses 13 étapes (6 cartes, 7 pièces) se répartissent sur 10
+    // étages, toutes faites au 20.
+    const depart = towerFloorProfile(10)
+    const etapes = endgameSteps(depart)
+    expect(etapes).toHaveLength(13)
+    let avant = 0
+    for (let f = 11; f <= TOWER_FLOOR_COUNT; f++) {
+      const n = Math.round(((f - 10) * etapes.length) / (TOWER_FLOOR_COUNT - 10))
+      expect(n).toBeGreaterThan(avant)
+      expect(towerFloorProfile(f)).toEqual(
+        endgameProfileAt(depart, n, towerFloorProfile(f).target),
+      )
+      avant = n
+    }
+  })
+
+  it('linéaire de 9 à 20 : le même pas à chaque étage (+10 % environ)', () => {
+    const pas = (f: number) =>
+      towerFloorScale(f) / towerFloorScale(f - 1)
+    for (let f = 10; f <= TOWER_FLOOR_COUNT; f++) {
+      expect(pas(f)).toBeGreaterThan(1.09)
+      expect(pas(f)).toBeLessThan(1.12)
+    }
   })
 
   it('le joueur de référence du sommet est la cible : 3 légendaires n70, 7 pièces légendaires n12', () => {
@@ -152,21 +179,6 @@ describe('seed des tours', () => {
     }
   })
 
-  it('un seul ennemi frappe en AOE_3, et seulement aux étages de boss', () => {
-    // Trois AOE_3 simultanés, c'est neuf fois les dégâts entrants d'un trio
-    // normal : mesuré au simulateur, une équipe épique n12 gagne 100 % contre
-    // trois BASIC et 0 % contre trois AOE_3 AUX MÊMES STATS. Ce n'était pas un
-    // cran de difficulté mais un interrupteur — et c'est lui, pas la courbe,
-    // qui produisait le saut de 98 % à 0 % entre les étages 9 et 10.
-    for (let f = 1; f <= TOWER_FLOOR_COUNT; f++) {
-      expect(towerAoeUnitCount(f)).toBe(isTowerBossFloor(f) ? 1 : 0)
-    }
-    for (const etage of etages) {
-      const aoe = etage.enemyTeam.filter((e) => e.attackPattern === 'AOE_3')
-      expect(aoe).toHaveLength(isTowerBossFloor(etage.index) ? 1 : 0)
-    }
-  })
-
   it('chaque étage tient la cible de victoire de son profil de référence', () => {
     // LE test d'équilibrage de la tour : pour chaque étage, le joueur que cet
     // étage vise doit le gagner à peu près `target` fois sur dix. C'est ce
@@ -178,11 +190,17 @@ describe('seed des tours', () => {
     // Bande large (±15 points) : 80 combats donnent un écart-type
     // d'échantillonnage d'environ 5,6 points, et le test doit signaler une
     // DÉRIVE, pas du bruit.
+    //
+    // Les étages 10 à 19 suivent une courbe géométrique posée SOUS leur fit
+    // (FLOOR_SCALE) : plus faciles que la cible par construction, le plafond
+    // haut ne s'y applique pas ; le plancher, si.
     for (let f = 1; f <= TOWER_FLOOR_COUNT; f++) {
       const { target } = towerFloorProfile(f)
       const mesure = towerReferenceWinRate(f, 80)
       expect(mesure).toBeGreaterThanOrEqual(target - 0.15)
-      expect(mesure).toBeLessThanOrEqual(target + 0.15)
+      if (f < 10 || f === TOWER_FLOOR_COUNT) {
+        expect(mesure).toBeLessThanOrEqual(target + 0.15)
+      }
     }
   })
 
@@ -195,13 +213,7 @@ describe('seed des tours', () => {
       const apres = towerFloorProfile(f)
       expect(apres.level).toBeGreaterThanOrEqual(avant.level)
       expect(apres.gearCount).toBeGreaterThanOrEqual(avant.gearCount)
-      // Les étages de fin de jeu (11 à 15) repartent d'une cible plus haute :
-      // c'est une nouvelle série, que le joueur de l'étage 10 doit pouvoir
-      // entamer. La difficulté, elle, reste strictement croissante (test
-      // ci-dessus).
-      if (f !== 11) {
-        expect(apres.target).toBeLessThanOrEqual(avant.target)
-      }
+      expect(apres.target).toBeLessThanOrEqual(avant.target)
     }
     // Au-delà de l'étage 6 le joueur est au plafond de niveau : la tour ne
     // demande plus que de l'ÉQUIPEMENT, comme la phase 2 de la campagne.
@@ -292,7 +304,7 @@ describe('apparences des monstres de tour', () => {
   // placeholder sans rien signaler. Cf. seed/campaign.ts, qui lui seede bien
   // ses sprites.
   it('chaque ennemi de tour porte un sprite', () => {
-    expect(etages).toHaveLength(60)
+    expect(etages).toHaveLength(80)
     for (const etage of etages) {
       expect(etage.enemyTeam).toHaveLength(3)
       for (const ennemi of etage.enemyTeam) {
@@ -353,7 +365,7 @@ describe('apparences des monstres de tour', () => {
   })
 
   it('tient la répartition mesurée à la conception', () => {
-    // Une tour = 45 emplacements. La rotation `(étage + slot) % familles`
+    // Une tour = 60 emplacements. La rotation `(étage + slot) % familles`
     // (celle de la campagne, reprise telle quelle) donne la répartition
     // ci-dessous. Elle est VERROUILLÉE ici : c'est le compromis retenu —
     // 3 familles différentes par étage plutôt qu'un maximum de sprites
@@ -369,16 +381,16 @@ describe('apparences des monstres de tour', () => {
       (typeof TOWER_ELEMENTS)[number],
       { distincts: number; max: number }
     > = {
-      FIRE: { distincts: 40, max: 2 },
-      WATER: { distincts: 26, max: 3 },
-      NATURE: { distincts: 19, max: 5 },
-      EARTH: { distincts: 7, max: 7 },
+      FIRE: { distincts: 49, max: 3 },
+      WATER: { distincts: 26, max: 4 },
+      NATURE: { distincts: 19, max: 7 },
+      EARTH: { distincts: 7, max: 9 },
     }
     for (const element of TOWER_ELEMENTS) {
       const sprites = etages
         .filter((e) => e.element === element)
         .flatMap((e) => e.enemyTeam.map((x) => x.appearance))
-      expect(sprites).toHaveLength(45)
+      expect(sprites).toHaveLength(60)
       const compte = new Map<string, number>()
       for (const sprite of sprites) {
         compte.set(sprite, (compte.get(sprite) ?? 0) + 1)
@@ -402,7 +414,7 @@ describe('apparences des monstres de tour', () => {
           .filter((e) => e.element === element)
           .flatMap((e) => e.enemyTeam.map((x) => x.appearance)),
       ).size
-      expect(distincts).toBeLessThanOrEqual(Math.min(dispo, 45))
+      expect(distincts).toBeLessThanOrEqual(Math.min(dispo, 60))
     }
   })
 })

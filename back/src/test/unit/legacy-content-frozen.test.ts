@@ -43,17 +43,21 @@ describe('contenu existant figé', () => {
   })
 
   it('les étages 1 à 10 des quatre tours sont identiques', () => {
+    // Seule exception voulue : les ennemis de l'étage 10, qui a perdu son
+    // unité AOE_3 (plus de boss dans les tours) et suit la courbe linéaire
+    // 9 → 20. Son butin et ses libellés ne bougent pas.
     const floors = buildTowerFloors().filter((f) => f.index <= 10)
     expect(floors).toHaveLength(Object.keys(legacy.tower).length)
     for (const f of floors) {
       const key = `${f.element}-${f.index}`
+      const expected = legacy.tower[key as keyof typeof legacy.tower]
       expect({
         key,
-        enemyTeam: f.enemyTeam,
+        enemyTeam: f.index === 10 ? expected.enemyTeam : f.enemyTeam,
         lootTable: f.lootTable,
         labelFr: f.labelFr,
         labelEn: f.labelEn,
-      }).toEqual({ key, ...legacy.tower[key as keyof typeof legacy.tower] })
+      }).toEqual({ key, ...expected })
     }
   })
 })

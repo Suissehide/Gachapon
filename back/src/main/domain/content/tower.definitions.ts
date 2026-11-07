@@ -12,7 +12,6 @@
 // tirage de drop doivent lire la MÊME source, sinon une tour peut dropper
 // un slot différent de celui que l'écran annonce.
 import {
-  isTowerBossFloor,
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
   TOWER_NAME_BY_ELEMENT,
@@ -40,7 +39,14 @@ export type { TowerElement }
  *
  * La montée suit la campagne : +10 niveaux de joueur par étage jusqu'au
  * plafond de 70 (étages 1-6), puis c'est l'équipement seul qui décide
- * (étages 7-10) — la phase 2 de `seed/campaign.ts`, transposée.
+ * (étages 7-20) — la phase 2 de `seed/campaign.ts`, transposée.
+ *
+ * Étages 10 à 20 : une courbe GÉOMÉTRIQUE (+10,2 % par étage) entre le 9 et
+ * le 20, pas les valeurs fittées une à une. Les étapes du joueur de référence
+ * n'ont pas le même poids (une légendaire qui remplace une épique pèse bien
+ * plus qu'une pièce) : fittés à 40 % chacun, les étages montaient de +2 % à
+ * +27 %. La courbe reste sous le fit de chaque étage (au plus +1 %, au 14)
+ * et le rejoint au 20, calibré sur l'équipe cible complète.
  *
  * POURQUOI ces valeurs et pas les précédentes ([1, 2.2, … 16.9]) : l'ancienne
  * courbe était ancrée sur la JAUGE affichée (`campaign-power.ts`) et non sur
@@ -53,8 +59,8 @@ export type { TowerElement }
  * La jauge reste un outil d'AFFICHAGE. Pour calibrer, le simulateur.
  */
 const FLOOR_SCALE = [
-  2.4, 5.7, 10.7, 16.6, 36.5, 59.4, 70, 81.6, 97, 117.3, 142.1, 163.6, 196.2,
-  231.5, 235.3,
+  2.4, 5.7, 10.7, 16.6, 36.5, 59.4, 70, 81.6, 97, 107.1, 118.0, 130.1, 143.3,
+  157.9, 174.0, 191.7, 211.3, 232.8, 256.6, 282.7,
 ] as const
 
 /**
@@ -72,10 +78,11 @@ const FLOOR_SCALE = [
  * option rentable. Même principe que `FARM_EXP` en campagne, obtenu ici par
  * deux courbes séparées plutôt que par un exposant.
  */
-// Les étages 11 à 15 (fin de jeu) restent au niveau du 10 : ils paient en
+// Les étages 11 à 20 (fin de jeu) restent au niveau du 10 : ils paient en
 // raretés (RARITY_WEIGHTS), pas en or, poussière ou XP.
 const LOOT_SCALE = [
   1, 2.2, 4, 6.2, 8.6, 11, 13, 14.6, 15.9, 16.9, 16.9, 16.9, 16.9, 16.9, 16.9,
+  16.9, 16.9, 16.9, 16.9, 16.9,
 ] as const
 
 // Profil épique de campagne (source unique : RARITY_BASE.EPIC dans
@@ -140,21 +147,6 @@ export function towerEnemyPower(floor: number) {
   return towerEnemyStatsAtScale(towerFloorScale(floor), floor)
 }
 
-/**
- * Combien des trois ennemis d'un étage frappent en AOE_3.
- *
- * Une unité AOE_3 touche les trois cartes du joueur à chaque tour : en
- * aligner trois, c'est neuf fois les dégâts entrants d'un trio normal. Ce
- * n'est pas un cran de difficulté, c'est un interrupteur — mesuré au
- * simulateur, une équipe épique n12 gagne 100 % contre trois BASIC et 0 %
- * contre trois AOE_3 AUX MÊMES STATS. D'où une seule unité AOE_3 au sommet :
- * le dernier étage reste distinct sans être binaire.
- */
-export function towerAoeUnitCount(floor: number): number {
-  assertFloorInRange(floor)
-  return isTowerBossFloor(floor) ? 1 : 0
-}
-
 // Un triplet, pas un `string[]` : l'étage a EXACTEMENT trois ennemis, et le
 // dire au type évite que `appearance` remonte en `string | undefined` jusque
 // dans le JSON seedé — c'est précisément ce champ optionnel qui a permis au
@@ -212,12 +204,14 @@ export function towerEnemyTeam(element: TowerElement, floor: number) {
   if (!sprites) {
     throw new Error(`Aucun sprite pour la tour ${element}, étage ${floor}.`)
   }
-  const aoeUnits = towerAoeUnitCount(floor)
-  return sprites.map((appearance, slot) => ({
+  return sprites.map((appearance) => ({
     ...p,
     level: 1,
     palier: 1,
-    attackPattern: slot < aoeUnits ? 'AOE_3' : 'BASIC',
+    // Aucune unité AOE_3 : une seule vaut ~×1,45 de stats et faisait de
+    // l'étage une marche, suivie d'un creux. La tour monte d'un cran par
+    // étage, sans boss.
+    attackPattern: 'BASIC',
     appearance,
     // L'élément de la tour, qui est aussi celui de la famille du sprite
     // (voir TOWER_LOOKS) : aucune restriction sur l'équipe du joueur, mais
@@ -242,11 +236,16 @@ const RARITY_WEIGHTS: Record<number, Record<string, number>> = {
   8: { COMMON: 9, UNCOMMON: 30, RARE: 41, EPIC: 17, LEGENDARY: 3 },
   9: { COMMON: 4, UNCOMMON: 22, RARE: 45, EPIC: 25, LEGENDARY: 4 },
   10: { UNCOMMON: 15, RARE: 45, EPIC: 35, LEGENDARY: 5 },
-  11: { UNCOMMON: 10, RARE: 42, EPIC: 41, LEGENDARY: 7 },
-  12: { UNCOMMON: 6, RARE: 38, EPIC: 47, LEGENDARY: 9 },
-  13: { UNCOMMON: 3, RARE: 34, EPIC: 52, LEGENDARY: 11 },
-  14: { RARE: 31, EPIC: 56, LEGENDARY: 13 },
-  15: { RARE: 27, EPIC: 58, LEGENDARY: 15 },
+  11: { UNCOMMON: 10, RARE: 43, EPIC: 41, LEGENDARY: 6 },
+  12: { UNCOMMON: 8, RARE: 41, EPIC: 44, LEGENDARY: 7 },
+  13: { UNCOMMON: 6, RARE: 39, EPIC: 47, LEGENDARY: 8 },
+  14: { UNCOMMON: 4, RARE: 37, EPIC: 50, LEGENDARY: 9 },
+  15: { UNCOMMON: 2, RARE: 36, EPIC: 52, LEGENDARY: 10 },
+  16: { RARE: 35, EPIC: 54, LEGENDARY: 11 },
+  17: { RARE: 33, EPIC: 55, LEGENDARY: 12 },
+  18: { RARE: 31, EPIC: 56, LEGENDARY: 13 },
+  19: { RARE: 29, EPIC: 57, LEGENDARY: 14 },
+  20: { RARE: 27, EPIC: 58, LEGENDARY: 15 },
 }
 
 export function towerFloorLoot(floor: number) {

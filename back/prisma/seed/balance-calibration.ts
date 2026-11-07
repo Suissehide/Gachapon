@@ -50,7 +50,6 @@ import {
 import { buildEquipmentCatalog } from '../../src/main/domain/content/equipment.definitions'
 import {
   TOWER_FLOOR_COUNT,
-  towerAoeUnitCount,
   towerEnemyStatsAtScale,
   towerFloorScale,
 } from '../../src/main/domain/content/tower.definitions'
@@ -312,13 +311,10 @@ export const GEAR_LADDER: readonly GearTier[] = [
   { equipRarity: 'RARE', equipLevel: 6, gearCount: 7 },
   { equipRarity: 'RARE', equipLevel: 9, gearCount: 7 },
   { equipRarity: 'RARE', equipLevel: 12, gearCount: 7 },
-  // Palier 10 — tour uniquement (la campagne s'arrête au 9). Légendaire :
-  // c'est ce que la table de drop de l'étage 10 propose (5 % légendaire,
-  // 35 % épique), et il FAUT que ce joueur soit nettement au-dessus de celui
-  // de l'étage 9, sinon l'unité AOE_3 du sommet — qui vaut ~1,45× en échelle
-  // équivalente — force l'étage 10 à des stats INFÉRIEURES au 9 pour tenir sa
-  // cible, et la courbe cesse d'être croissante.
-  { equipRarity: 'LEGENDARY', equipLevel: 12, gearCount: 7 },
+  // Palier 10 — tour uniquement (la campagne s'arrête au 9). Épique : la
+  // marche suivante après RARE n12, sans saut au légendaire — les étages 11
+  // à 20 montent ensuite vers le légendaire pièce par pièce (endgameSteps).
+  { equipRarity: 'EPIC', equipLevel: 12, gearCount: 7 },
 ]
 
 export function gearTier(tier: number): GearTier {
@@ -465,11 +461,16 @@ const TOWER_FLOOR_TARGETS: Record<number, number> = {
   8: 0.5,
   9: 0.45,
   10: 0.4,
-  11: 0.6,
-  12: 0.55,
-  13: 0.5,
-  14: 0.45,
+  11: 0.4,
+  12: 0.4,
+  13: 0.4,
+  14: 0.4,
   15: 0.4,
+  16: 0.4,
+  17: 0.4,
+  18: 0.4,
+  19: 0.4,
+  20: 0.4,
 }
 
 /**
@@ -488,16 +489,17 @@ export function towerFloorProfile(floor: number): ReferenceProfile {
       `Aucune cible pour l'étage de tour ${floor} (attendu 1..${TOWER_FLOOR_COUNT})`,
     )
   }
-  // Fin de jeu : l'étage 11 accueille le grimpeur qui vient de franchir le
-  // 10, tel quel — sinon le premier étage nouveau est un mur. Il avance
-  // ensuite sur le chemin de fin de jeu et l'a parcouru en entier au sommet.
+  // Fin de jeu : le grimpeur de l'étage 10 avance d'au moins une étape du
+  // chemin de fin de jeu par étage, à cible constante — chaque étage est un
+  // cran plus dur que le précédent pour le même joueur — et l'a parcouru en
+  // entier au sommet.
   if (floor > ORIGINAL_TOWER_FLOORS) {
     const depart = towerFloorProfile(ORIGINAL_TOWER_FLOORS)
     const etapes = endgameSteps(depart).length
-    const pas = TOWER_FLOOR_COUNT - ORIGINAL_TOWER_FLOORS - 1
+    const fins = TOWER_FLOOR_COUNT - ORIGINAL_TOWER_FLOORS
     return endgameProfileAt(
       depart,
-      Math.round(((floor - ORIGINAL_TOWER_FLOORS - 1) * etapes) / pas),
+      Math.round(((floor - ORIGINAL_TOWER_FLOORS) * etapes) / fins),
       target,
     )
   }
@@ -521,7 +523,7 @@ export function towerReferenceWinRate(floor: number, runs = 80): number {
   return towerWinRate({
     floor,
     scale: towerFloorScale(floor),
-    aoeUnits: towerAoeUnitCount(floor),
+    aoeUnits: 0,
     profile: towerFloorProfile(floor),
     runs,
   })

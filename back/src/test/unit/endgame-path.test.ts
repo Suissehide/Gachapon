@@ -42,9 +42,9 @@ describe('chemin de fin de jeu', () => {
     tour: towerFloorProfile(10),
   }
 
-  it('campagne : 6 étapes de cartes + 7 pièces ; tour : 6 + 3', () => {
+  it('6 étapes de cartes + 7 pièces, en campagne comme en tour', () => {
     expect(endgameSteps(departs.campagne)).toHaveLength(13)
-    expect(endgameSteps(departs.tour)).toHaveLength(9)
+    expect(endgameSteps(departs.tour)).toHaveLength(13)
   })
 
   it('les étapes de cartes passent par la légendaire n60 puis n70', () => {

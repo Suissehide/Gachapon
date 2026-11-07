@@ -434,7 +434,7 @@ describe('routes de tour', () => {
     ])
     const fire = body.towers.find((t) => t.element === 'FIRE')
     expect(fire?.highestFloor).toBe(0)
-    expect(fire?.totalFloors).toBe(15)
+    expect(fire?.totalFloors).toBe(20)
     expect(fire?.slot).toBe('GLOVES')
   })
 

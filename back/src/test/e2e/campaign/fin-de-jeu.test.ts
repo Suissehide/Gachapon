@@ -1,14 +1,29 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import {
+  bossEnemyTeam,
+  bossLoot,
+} from '../../../main/domain/content/campaign.definitions'
 import { buildTestApp } from '../../helpers/build-test-app'
 import { randomTestIpv6 } from '../../helpers/guest'
 
 /**
  * Le contenu de fin de jeu arrive par migration de données : les chapitres
- * 16 à 20 et les étages 11 à 15 des tours sont en base dès le démarrage.
+ * 16 à 20 et les étages 11 à 20 des tours sont en base dès le démarrage.
  * Un joueur qui avait tout fini (15-10, étage 10 de chaque tour) doit les
  * voir s'ouvrir sans aucune intervention.
+ *
+ * La migration est REJOUÉE ici : d'autres suites vident `CampaignStage` au
+ * démarrage, si bien que les lignes posées par `migrate deploy` peuvent
+ * avoir disparu selon l'ordre des suites. La rejouer vérifie au passage
+ * qu'elle est idempotente.
  */
+// Les suites tournent depuis back/ (scripts npm), comme `migrate deploy`.
+const MIGRATION = resolve(
+  'prisma/migrations/20261106120000_fin_de_jeu_chapitres_16_20_tours_20/migration.sql',
+)
 describe('fin de jeu — déblocage après la migration', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let prisma: any
@@ -18,6 +33,30 @@ describe('fin de jeu — déblocage après la migration', () => {
   beforeAll(async () => {
     app = await buildTestApp()
     prisma = (app as any).iocContainer.postgresOrm.prisma
+    const statements = readFileSync(MIGRATION, 'utf8')
+      .replace(/^--.*$/gm, '')
+      .split(/;\s*\n/)
+      .map((sql) => sql.trim())
+      .filter(Boolean)
+    for (const sql of statements) {
+      await prisma.$executeRawUnsafe(sql)
+    }
+    // Le déblocage de 16-1 exige que le boss 15-10 existe (et soit battu) :
+    // présent en production, il a pu être effacé ici par les mêmes suites.
+    await prisma.campaignStage.upsert({
+      where: { chapter_index: { chapter: 15, index: 10 } },
+      create: {
+        chapter: 15,
+        index: 10,
+        labelFr: '15-10 Boss',
+        labelEn: '15-10 Boss',
+        isBoss: true,
+        enemyTeam: bossEnemyTeam(15, 10),
+        lootTable: bossLoot(15),
+        order: 150,
+      },
+      update: {},
+    })
     const name = `fdj${suffix}`
     const email = `${name}@test.com`
     await app.inject({
@@ -76,7 +115,7 @@ describe('fin de jeu — déblocage après la migration', () => {
     expect(vingt?.stages.find((s) => s.index === 10)?.isBoss).toBe(true)
   })
 
-  it('un joueur à l’étage 10 voit le 11 ouvert, et le 10 reste un boss', async () => {
+  it('un joueur à l’étage 10 voit le 11 ouvert, et les tours n’ont plus de boss', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/tower/FIRE',
@@ -89,7 +128,6 @@ describe('fin de jeu — déblocage après la migration', () => {
     const etage = (i: number) => body.floors.find((f) => f.index === i)
     expect(etage(11)?.status).toBe('current')
     expect(etage(12)?.status).toBe('locked')
-    expect(etage(15)?.isBoss).toBe(true)
-    expect(etage(11)?.isBoss).toBe(false)
+    expect(body.floors.some((f) => f.isBoss)).toBe(false)
   })
 })

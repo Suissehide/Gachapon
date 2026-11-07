@@ -234,7 +234,7 @@
       "tip": "The element guide opens from the campaign and tower headers, and the collection can be filtered by element."
     },
     "tours": {
-      "intro": "There are four <strong>towers</strong>, one per element: Ember (fire), Prism (water), Sap (nature) and Monolith (earth). Each has 15 floors that unlock in order.",
+      "intro": "There are four <strong>towers</strong>, one per element: Ember (fire), Prism (water), Sap (nature) and Monolith (earth). Each has 20 floors that unlock in order.",
       "list": {
         "i1": "Each tower drops one type of equipment the campaign doesn't: Gloves (Ember), Boots (Prism), Amulet (Sap), Belt (Monolith).",
         "i2": "Every win gives you a piece; the higher the floor, the better the rarity.",
