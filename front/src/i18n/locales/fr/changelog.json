@@ -17,7 +17,9 @@
       "entries": {
         "e1": "La campagne s’agrandit de cinq chapitres après la Faille : Néant, Éclipse, Sanctuaire, Nécropole et Trône du Chaos, soit 50 étapes de plus. Ils reprennent au niveau d’une équipe d’épiques au plafond et mènent jusqu’à une équipe de légendaires niveau 70 en équipement légendaire. Chaque nouveau boss garantit une carte et une pièce légendaires au premier passage, et deux succès marquent l’arrivée aux chapitres 17 et 20. L’or, la poussière et l’XP y restent ceux de 15-10 : ce qui progresse, c’est la rareté du butin. Ta progression est conservée : si tu as battu le boss 15-10, le chapitre 16 t’attend.",
         "e2": "Les quatre tours montent à 20 étages, sans boss : chaque étage est un peu plus dur que le précédent, et l’étage 10 perd son monstre qui frappait toute l’équipe. Les étages 11 à 20 lâchent de plus en plus d’épique et de légendaire (de 6 à 15 % de légendaire) et garantissent au moins une pièce épique au premier passage.",
-        "e3": "Les pastilles de vernis de la collection sont plus discrètes, et le bandeau d’équipe en combat n’affiche plus que le niveau et l’élément de chaque carte."
+        "e3": "Les pastilles de vernis de la collection sont plus discrètes, et le bandeau d’équipe en combat n’affiche plus que le niveau et l’élément de chaque carte.",
+        "e4": "Alchimie : les cartes de doublons affichent leur archétype et leur passif, pour choisir quoi transmuter sans ouvrir chaque fiche.",
+        "e5": "Sur téléphone, les toasts s’affichent en haut de l’écran : en bas, ils masquaient les boutons du jeu. Les achats successifs en boutique sont plus rapides."
       }
     },
     "v4_1": {
