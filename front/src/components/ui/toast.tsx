@@ -21,9 +21,10 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      // Sur téléphone, un seul toast visible (le plus récent, dernier monté) :
-      // les autres gardent leur minuteur et se ferment sans couvrir l'écran.
-      'fixed bottom-0 z-[9999] flex max-h-screen w-full flex-col p-4 sm:right-0 md:max-w-[420px] max-sm:[&>li:not(:last-child)]:hidden',
+      // Sur téléphone, en haut (en bas, ils cachent les boutons d'action) et un
+      // seul toast visible (le plus récent, dernier monté) : les autres gardent
+      // leur minuteur et se ferment sans couvrir l'écran.
+      'fixed top-0 sm:top-auto sm:bottom-0 z-[9999] flex max-h-screen w-full flex-col p-4 sm:right-0 md:max-w-[420px] max-sm:[&>li:not(:last-child)]:hidden',
       className,
     )}
     {...props}
@@ -32,7 +33,7 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastClassName =
-  'group relative mt-3 flex w-full items-start gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3.5 pr-11 text-text shadow-[var(--shadow-toast)] transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-bottom-full'
+  'group relative mt-3 flex w-full items-start gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3.5 pr-11 text-text shadow-[var(--shadow-toast)] transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full max-sm:data-[state=open]:slide-in-from-top-full sm:data-[state=open]:slide-in-from-bottom-full'
 
 // La sévérité ne se lit que sur la tuile : la surface reste celle d'une
 // carte du site, quelle que soit la variante.
