@@ -10,6 +10,16 @@
     "fixed": "Fixed"
   },
   "releases": {
+    "v4_2": {
+      "title": "Beyond the Rift",
+      "date": "November 2026",
+      "summary": "Five new campaign chapters and ten more floors in every tower, for those who had reached the end.",
+      "entries": {
+        "e1": "The campaign grows by five chapters after the Rift: Void, Eclipse, Sanctum, Necropolis and Throne of Chaos, 50 more stages. They pick up at the level of a team of maxed epics and lead to a team of level 70 legendaries in legendary gear. Every new boss guarantees a legendary card and a legendary piece on first clear, and two achievements mark reaching chapters 17 and 20. Gold, dust and XP stay at the 15-10 level: what grows is the rarity of the loot. Your progress is kept: if you beat the 15-10 boss, chapter 16 is waiting for you.",
+        "e2": "The four towers now have 20 floors and no bosses: each floor is a little harder than the one before, and floor 10 loses the monster that hit your whole team. Floors 11 to 20 drop more and more epic and legendary gear (from 6 to 15% legendary) and guarantee at least an epic piece on first clear.",
+        "e3": "Finish dots in the collection are more discreet, and the team bar in battle now only shows each card's level and element."
+      }
+    },
     "v4_1": {
       "title": "Finishes",
       "date": "November 2026",

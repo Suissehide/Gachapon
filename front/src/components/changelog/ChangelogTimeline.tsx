@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: 35043706cba6f955daa73a482da1ad9c1d1da050
+// last-synced-commit: 163ea40af05b1ffe7d38c54f91476e8ed601f65e
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../libs/utils.ts'
@@ -38,6 +38,10 @@ const TYPE_META: Record<ChangeType, { className: string }> = {
  * les deux fichiers de locale, jamais ce fichier.
  */
 export const RELEASES: ChangelogRelease[] = [
+  {
+    version: '4.2',
+    entries: [{ type: 'new' }, { type: 'new' }, { type: 'improved' }],
+  },
   {
     version: '4.1',
     entries: [
