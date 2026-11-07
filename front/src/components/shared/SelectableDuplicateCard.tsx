@@ -1,7 +1,11 @@
 import { Minus, Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import type { CardElement, CardRarity } from '../../constants/card.constant.ts'
+import type {
+  CardArchetype,
+  CardElement,
+  CardRarity,
+} from '../../constants/card.constant.ts'
 import { cn } from '../../libs/utils.ts'
 import { Button } from '../ui/button.tsx'
 import { CardDisplay } from './tcg-card/CardDisplay.tsx'
@@ -13,7 +17,10 @@ type Props = {
     rarity: CardRarity
     element: CardElement | null
     setName: string
+    archetype?: CardArchetype
   }
+  /** Texte du bas de carte (passif ou ultime), déjà traduit. */
+  description?: string | null
   /** Exemplaires choisis de cette pile. */
   selected: number
   canAdd: boolean
@@ -37,6 +44,7 @@ export function SelectableCardGrid({ children }: { children: ReactNode }) {
 export function SelectableDuplicateCard({
   card,
   selected,
+  description,
   canAdd,
   onAdd,
   onRemove,
@@ -66,6 +74,8 @@ export function SelectableDuplicateCard({
           imageUrl={card.imageUrl}
           variant="NORMAL"
           element={card.element}
+          archetype={card.archetype}
+          description={description}
         />
         {selected > 0 && (
           <span className="absolute -top-2 -right-2 z-[6] grid h-8 min-w-8 place-items-center rounded-full bg-primary px-[9px] font-display text-[15px] font-extrabold text-foreground shadow-[0_0_0_3px_var(--card),0_6px_14px_-4px_rgba(245,158,11,0.7)]">

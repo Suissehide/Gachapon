@@ -1,5 +1,10 @@
 import type { UnlockedAchievement } from './achievements.constant.ts'
-import type { CardElement, CardRarity, CardVariant } from './card.constant.ts'
+import type {
+  CardArchetype,
+  CardElement,
+  CardRarity,
+  CardVariant,
+} from './card.constant.ts'
 
 /** Rareté de départ d'un cran (LEGENDARY exclue). */
 export type AlchemyFromRarity = Exclude<CardRarity, 'LEGENDARY'>
@@ -13,6 +18,9 @@ export type AlchemyStack = {
   rarity: CardRarity
   element: CardElement | null
   setName: string
+  archetype: CardArchetype
+  passiveKey: string | null
+  palier: number
   available: number
 }
 

@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next'
 
 import type { AlchemyTier } from '../../constants/alchemy.constant.ts'
+import { describeUltimate } from '../../constants/archetypes.constant.ts'
+import { describePassive } from '../../constants/passives.constant.ts'
 import {
   SelectableCardGrid,
   SelectableDuplicateCard,
@@ -50,6 +52,10 @@ export function DuplicatesPanel({ tier, amounts, picked, onBump }: Props) {
               <SelectableDuplicateCard
                 key={c.userCardId}
                 card={c}
+                description={
+                  describePassive(c.passiveKey, c.palier) ??
+                  describeUltimate(c.archetype, c.palier)
+                }
                 selected={mine}
                 canAdd={mine < c.available && picked < tier.cost}
                 onAdd={() => onBump(c.userCardId, 1)}

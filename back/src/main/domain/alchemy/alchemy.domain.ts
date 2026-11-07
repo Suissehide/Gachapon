@@ -87,6 +87,9 @@ export class AlchemyDomain implements IAlchemyDomain {
         rarity: u.card.rarity,
         element: u.card.element,
         setName: u.card.set.name,
+        archetype: u.card.archetype,
+        passiveKey: u.card.passiveKey,
+        palier: u.palier,
         available: u.quantity - 1,
       }))
     return {

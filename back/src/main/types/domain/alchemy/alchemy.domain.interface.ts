@@ -1,4 +1,5 @@
 import type {
+  CardArchetype,
   CardElement,
   CardRarity,
   CardVariant,
@@ -18,6 +19,9 @@ export type AlchemyStack = {
   element: CardElement | null
   /** Nom localisé du set (client Prisma étendu). */
   setName: string
+  archetype: CardArchetype
+  passiveKey: string | null
+  palier: number
   available: number
 }
 
