@@ -27,6 +27,7 @@ import {
   RewardPill,
 } from '../../components/battle/BattlePrepModal.tsx'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
+import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
 import {
   DropRail,
   FarmResultPopup,
@@ -39,6 +40,7 @@ import {
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
 import { SLOT_LABELS } from '../../components/collection/EquipmentSlotsPanel.tsx'
 import { EquipmentDropReward } from '../../components/equipment/EquipmentDropCard.tsx'
+import { InfoButton } from '../../components/shared/InfoButton.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
@@ -81,6 +83,7 @@ function TowerFloorsPage() {
   const celebrateLevelUp = useLevelUpCelebration()
 
   const [editorOpen, setEditorOpen] = useState(false)
+  const [elementsOpen, setElementsOpen] = useState(false)
   // Étage dont la préparation a ouvert l'éditeur : on y revient à sa fermeture.
   const [prepBeforeEditor, setPrepBeforeEditor] =
     useState<TowerFloorView | null>(null)
@@ -181,7 +184,17 @@ function TowerFloorsPage() {
         ]}
         title={towerName}
         subtitle={subtitle}
+        right={
+          <InfoButton
+            icon={Swords}
+            onClick={() => setElementsOpen(true)}
+            title={t('combat:campaign.understandElements')}
+          >
+            {t('combat:elementGuide.title')}
+          </InfoButton>
+        }
       />
+      <ElementGuidePopup open={elementsOpen} onOpenChange={setElementsOpen} />
 
       {inBattle ? (
         <BattleScene
