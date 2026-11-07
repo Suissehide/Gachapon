@@ -905,14 +905,13 @@ export function bossLoot(chapter: number) {
 /**
  * Libellé d'un étage de campagne — le gabarit, jamais l'occurrence.
  *
- * Il ne dépend PAS de la langue : « 3-10 Boss » s'écrit de la même façon en
- * français et en anglais (« boss » est le mot anglais, emprunté tel quel par
- * le français). Le seed écrit donc la même valeur dans `labelFr` et
+ * Il ne dépend PAS de la langue : « 3-10 » s'écrit de la même façon en
+ * français et en anglais. Le seed écrit donc la même valeur dans `labelFr` et
  * `labelEn` — ce n'est pas une traduction oubliée, et
  * `content-translations.test.ts` l'inscrit à ce titre dans ses exceptions.
+ *
+ * Le boss n'y est pas nommé : l'écran le marque déjà (`isBoss`).
  */
 export function campaignStageLabel(chapter: number, index: number): string {
-  return index === STAGES_PER_CHAPTER
-    ? `${chapter}-${index} Boss`
-    : `${chapter}-${index}`
+  return `${chapter}-${index}`
 }

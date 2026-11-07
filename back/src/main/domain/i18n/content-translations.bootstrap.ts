@@ -655,7 +655,7 @@ export class ContentTranslationsBootstrap {
   // ---------------------------------------------------------------------
   // CampaignStage — clé stable : [chapter, index]. Pas de table de
   // définitions bilingues séparée : `campaignStageLabel(chapter, index)`
-  // EST la source, volontairement identique FR/EN (« 3-10 Boss » se lit
+  // EST la source, volontairement identique FR/EN (« 3-10 » se lit
   // pareil dans les deux langues, voir campaign.definitions.ts). On
   // recalcule donc la cible à partir des coordonnées de chaque ligne
   // existante plutôt que d'itérer une liste séparée.

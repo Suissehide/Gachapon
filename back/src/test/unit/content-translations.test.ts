@@ -334,9 +334,8 @@ describe('traductions du contenu — tours', () => {
 describe('traductions du contenu — campagne', () => {
   // Exception nommée et documentée : `campaignStageLabel` (voir
   // campaign.definitions.ts) est un gabarit VOLONTAIREMENT identique dans
-  // les deux langues — « 3-10 Boss » se lit pareil en français et en
-  // anglais, « boss » étant le mot anglais emprunté tel quel par le
-  // français. Ce n'est pas une recopie oubliée : c'est testé ici pour que
+  // les deux langues — « 3-10 » se lit pareil en français et en anglais.
+  // Ce n'est pas une recopie oubliée : c'est testé ici pour que
   // ça le reste consciemment, pas par défaut.
   it('donne un libellé non vide à chaque étage, identique FR/EN par construction', () => {
     for (let chapter = 1; chapter <= CHAPTER_COUNT; chapter++) {
@@ -347,8 +346,8 @@ describe('traductions du contenu — campagne', () => {
     }
   })
 
-  it('marque le boss de fin de chapitre', () => {
-    expect(campaignStageLabel(3, STAGES_PER_CHAPTER)).toBe('3-10 Boss')
+  it('ne répète pas « Boss » : l’écran le marque déjà (isBoss)', () => {
+    expect(campaignStageLabel(3, STAGES_PER_CHAPTER)).toBe('3-10')
     expect(campaignStageLabel(3, 1)).toBe('3-1')
   })
 })

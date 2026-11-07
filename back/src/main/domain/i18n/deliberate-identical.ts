@@ -30,7 +30,7 @@ import { TOWER_ELEMENTS } from '../tower/tower-slots'
  * tout import qui envoie `nameEn = nameFr`. Mais l'identité n'est pas
  * toujours une faute : un prénom nu (« Aldric »), un cognat (« Expert »,
  * « Flux »), un gabarit volontairement bilingue (`campaignStageLabel`,
- * « 3-10 Boss ») se lisent pareil dans les deux langues. Une liste qui crie
+ * « 3-10 ») se lisent pareil dans les deux langues. Une liste qui crie
  * au loup sur ces trente entrées-là ne sera pas plus lue qu'une liste vide.
  *
  * POURQUOI dériver des définitions plutôt qu'écrire une liste d'exclusion :
@@ -110,7 +110,7 @@ export function deliberateIdenticalValues(): ReadonlySet<string> {
   }
 
   // CampaignStage n'a pas de table de définitions : `campaignStageLabel` EST
-  // la source, et son gabarit (« 3-10 Boss ») est identique dans les deux
+  // la source, et son gabarit (« 3-10 ») est identique dans les deux
   // langues par construction — les 150 étages seraient donc 150 faux positifs.
   // On énumère les coordonnées connues du code plutôt que d'exclure
   // `campaignStage.label` en bloc : si un dixième chapitre arrive,
