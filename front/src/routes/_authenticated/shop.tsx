@@ -49,8 +49,8 @@ export const Route = createFileRoute('/_authenticated/shop')({
 })
 
 // Minimum visible spinner before showing "Acheté", and success display duration.
-const MIN_SPIN_MS = 500
-const SUCCESS_MS = 1500
+const MIN_SPIN_MS = 150
+const SUCCESS_MS = 400
 
 // ── Countdowns ──────────────────────────────────────────────────────────────
 
