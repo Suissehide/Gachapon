@@ -70,12 +70,12 @@ describe('GET /economy/config', () => {
     expect(body.equip.salvageGold.LEGENDARY).toBe(800)
     // substatRanges est désormais dérivé de SUBSTAT_KEYS (11 clés) : une
     // plage par clé, plus de "pct" partagé.
-    expect(body.equip.substatRanges.hpFlat).toEqual({ min: 20, max: 60 })
+    expect(body.equip.substatRanges.hpFlat).toEqual({ min: 60, max: 180 })
     expect(body.equip.substatRanges.hpPct).toEqual({ min: 3, max: 8 })
     expect(body.equip.substatRanges.critRatePct).toEqual({ min: 2, max: 5 })
     expect(body.equip.substatRanges.critDmgPct).toEqual({ min: 4, max: 10 })
     expect(body.equip.substatRanges.armorPenPct).toEqual({ min: 2, max: 6 })
-    expect(body.equip.substatRanges.lifestealPct).toEqual({ min: 1, max: 4 })
+    expect(body.equip.substatRanges.lifestealPct).toEqual({ min: 1, max: 2 })
   })
 
   it('expose les tunables de raid', async () => {

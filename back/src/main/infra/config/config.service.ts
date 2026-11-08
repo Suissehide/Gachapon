@@ -113,16 +113,22 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'equip.salvageGoldRare': 80,
   'equip.salvageGoldEpic': 240,
   'equip.salvageGoldLegendary': 800,
-  'equip.substatHpFlatMin': 20,
-  'equip.substatHpFlatMax': 60,
-  'equip.substatAtkFlatMin': 5,
-  'equip.substatAtkFlatMax': 15,
+  // Plat vs % : le rapport (milieu plat) / (milieu %) suit celui de la stat
+  // principale légendaire (equipment.definitions.ts, MAIN_STAT_SCALE) :
+  // ATQ 115/24 ≈ 4,8 · PV 540/24 ≈ 22,5 · DEF 50/24 ≈ 2,1. Une sous-stat plate
+  // ne suit pas le niveau de la carte, c'est ce rapport qui fixe jusqu'où elle
+  // reste compétitive face au %. Invariant gardé par equipment-progression.test.ts.
+  'equip.substatHpFlatMin': 60,
+  'equip.substatHpFlatMax': 180,
+  'equip.substatAtkFlatMin': 13,
+  'equip.substatAtkFlatMax': 38,
   'equip.substatDefFlatMin': 5,
   'equip.substatDefFlatMax': 15,
-  // Ramenées avec le barème principal : la vitesse ne suivant plus le niveau,
-  // quatre sous-stats à 9 auraient dépassé la stat principale légendaire (12).
-  'equip.substatSpdFlatMin': 1,
-  'equip.substatSpdFlatMax': 3,
+  // Base de vitesse ~100, sans niveau : un point plat vaut un point de %, et
+  // le banc donne la même valeur à +10 % de VIT qu'à +10 % d'ATQ. Même plage
+  // que les sous-stats en %.
+  'equip.substatSpdFlatMin': 3,
+  'equip.substatSpdFlatMax': 8,
   'equip.substatPctMin': 3,
   'equip.substatPctMax': 8,
   // Stats de stuff — bornes calibrées pour rester comparables aux substats
@@ -136,7 +142,7 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'equip.substatArmorPenPctMin': 2,
   'equip.substatArmorPenPctMax': 6,
   'equip.substatLifestealPctMin': 1,
-  'equip.substatLifestealPctMax': 4,
+  'equip.substatLifestealPctMax': 2,
   // Bonus de set. Le 2-pièces donne une stat classique, le 4-pièces une stat
   // de stuff. critRate et critDmg sont volontairement sur deux sets différents :
   // ils sont multiplicatifs, donc un build critique doit choisir lequel pousser.
@@ -168,9 +174,10 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // rendements décroissants en approchant 100 %. D'où la magnitude inchangée
   // au passage de 4 à 3 pièces : la monter n'aiderait que les builds qui en
   // ont le moins besoin, la baisser punirait ceux qui démarrent.
-  // Sangsue, elle, reste sous sa cible de set de 4, volontairement : 27 pt.
+  // Sangsue est tenue sous sa cible : en % des dégâts, le vol de vie grandit
+  // avec tout le build offensif (un coup équipé vaut ~70 % des PV max).
   'set.affutCritRatePct': 25,
-  'set.sangsueLifestealPct': 16,
+  'set.sangsueLifestealPct': 8,
   'set.perceeArmorPenPct': 25,
   'set.assautAtkPct': 16,
   'set.colosseHpPct': 10,

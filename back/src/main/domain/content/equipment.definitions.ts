@@ -125,20 +125,20 @@ const SLOT_MAIN_STATS: Record<EquipmentSlot, (keyof EquipmentBonuses)[]> = {
 // Barème de la stat principale, par rareté.
 //
 // Elle doit DOMINER les sous-stats : c'est l'identité de la pièce, les
-// sous-stats n'en sont que l'assaisonnement. L'ancien barème faisait
-// l'inverse — à légendaire, quatre sous-stats d'attaque au maximum totalisaient
-// 60 pour une principale à 40, et 36 contre 18 en vitesse. Les valeurs
-// ci-dessous placent la principale à environ 2× la somme des quatre
-// sous-stats maximales, et ~7× une sous-stat seule.
+// sous-stats n'en sont que l'assaisonnement. Les clés de sous-stat sont
+// distinctes sur une pièce, la comparaison utile est donc principale contre
+// UNE sous-stat de même clé : à légendaire, la principale vaut ~3× la
+// sous-stat maximale (ATQ 115 contre 38, PV 540 contre 180, DEF 50 contre 15).
 //
 // Bornes de sous-stat de référence (config.service.ts, DEFAULTS) :
-//   hpFlat 20-60 · atkFlat/defFlat 5-15 · spdFlat 3-9
-//   critRate 2-5 · critDmg 4-10 · armorPen 2-6 · lifesteal 1-4
+//   hpFlat 60-180 · atkFlat 13-38 · defFlat 5-15 · spdFlat 3-8
+//   critRate 2-5 · critDmg 4-10 · armorPen 2-6 · lifesteal 1-2
+// Le rapport plat/% des sous-stats suit celui de ce barème (voir DEFAULTS).
 //
-// La vitesse ne figure QUE sous forme plate, ici comme en sous-stat : sous
-// ATB elle multiplie le rendement de l'unité au lieu de s'y ajouter, donc un
-// pourcentage y serait hors-échelle face aux autres stats. Le seul %VIT du jeu
-// est le bonus du set Célérité, dont la magnitude est fixe.
+// La vitesse ne figure QUE sous forme plate, ici comme en sous-stat : la
+// base d'une carte vaut ~100 et ne suit pas le niveau, donc le plat EST un
+// pourcentage, et deux écritures de la même chose n'apporteraient rien. Le
+// seul %VIT du jeu est le bonus du set Célérité, dont la magnitude est fixe.
 //
 // Les barèmes en pourcentage (hpPct/atkPct/defPct) valent 24 % à légendaire
 // niveau 1, 50 % au niveau 12. Avec les stats de base différenciées par
@@ -150,14 +150,14 @@ const SLOT_MAIN_STATS: Record<EquipmentSlot, (keyof EquipmentBonuses)[]> = {
 // de dégâts vaut DEF / (K + DEF) avec un seuil K fixe (`damageReduction`) :
 // un point de DEF plate vaut le même partout, tandis qu'un bonus en % grandit
 // avec la DEF de la carte — la DEF % est la voie du Tank en fin de jeu.
-const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
+export const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
   atkFlat: { COMMON: 18, UNCOMMON: 28, RARE: 45, EPIC: 72, LEGENDARY: 115 },
   defFlat: { COMMON: 8, UNCOMMON: 12, RARE: 20, EPIC: 32, LEGENDARY: 50 },
-  // Divisé par ~5 : la vitesse ne suivant plus le niveau, une pièce se compare
-  // désormais à une base d'environ 100 et non à une base gonflée par la
-  // progression. À l'ancien barème, un seul anneau légendaire niveau 12
-  // donnait +130, soit plus du double de la vitesse d'une carte.
-  spdFlat: { COMMON: 2, UNCOMMON: 3, RARE: 5, EPIC: 8, LEGENDARY: 12 },
+  // La vitesse ne suit pas le niveau de la carte (base ~100), donc un point
+  // plat vaut un point de %. Au banc (scripts/tower-sim.ts, équipe de référence
+  // face aux étages 10/15/20), +10 % de VIT vaut +10 % d'ATQ ou de PV : le
+  // barème suit donc celui des stats en %, ni plus ni moins.
+  spdFlat: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },
   hpFlat: { COMMON: 80, UNCOMMON: 130, RARE: 210, EPIC: 340, LEGENDARY: 540 },
   hpPct: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },
   atkPct: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },

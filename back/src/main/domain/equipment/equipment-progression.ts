@@ -22,10 +22,9 @@ export const SUBSTAT_KEYS = [
   'atkPct',
   'defFlat',
   'defPct',
-  // La vitesse n'existe qu'en valeur plate : sous ATB elle multiplie le
-  // rendement de l'unité au lieu de s'y ajouter, donc un pourcentage y serait
-  // hors-échelle face aux autres sous-stats. Elle reste disponible en
-  // pourcentage via le set Célérité, dont la magnitude est fixe.
+  // La vitesse n'existe qu'en valeur plate : la base d'une carte vaut ~100 et
+  // ne suit pas le niveau, donc le plat est déjà un pourcentage. Le set
+  // Célérité donne le seul %VIT du jeu, à magnitude fixe.
   'spdFlat',
   // Stats de stuff — pourcentage uniquement, une valeur plate n'aurait pas de sens.
   'critRatePct',

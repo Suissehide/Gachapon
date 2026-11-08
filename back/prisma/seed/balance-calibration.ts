@@ -78,24 +78,24 @@ const SET_DEFS = setBonusesFromConfig({
   'set.fureurCritDmgPct': 55,
   'set.affutCritRatePct': 25,
   'set.perceeArmorPenPct': 25,
-  'set.sangsueLifestealPct': 16,
+  'set.sangsueLifestealPct': 8,
   'set.assautAtkPct': 16,
   'set.colosseHpPct': 10,
   'set.celeriteSpdPct': 10,
 })
 
 const SUBSTAT_RANGES: SubstatRanges = {
-  hpFlat: { min: 20, max: 60 },
-  atkFlat: { min: 5, max: 15 },
+  hpFlat: { min: 60, max: 180 },
+  atkFlat: { min: 13, max: 38 },
   defFlat: { min: 5, max: 15 },
-  spdFlat: { min: 1, max: 3 },
+  spdFlat: { min: 3, max: 8 },
   hpPct: { min: 3, max: 8 },
   atkPct: { min: 3, max: 8 },
   defPct: { min: 3, max: 8 },
   critRatePct: { min: 2, max: 5 },
   critDmgPct: { min: 4, max: 10 },
   armorPenPct: { min: 2, max: 6 },
-  lifestealPct: { min: 1, max: 4 },
+  lifestealPct: { min: 1, max: 2 },
 }
 
 /** PRNG déterministe — le harnais ne doit jamais dépendre de Math.random. */

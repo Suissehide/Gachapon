@@ -42,8 +42,8 @@ describe('catalogue d équipement', () => {
     for (const k of ['atkPct', 'hpPct', 'defPct']) {
       expect(toutes.has(k as never)).toBe(true)
     }
-    // La vitesse ne se donne qu'en plat : en pourcentage elle multiplierait le
-    // rendement sous ATB. Elle reste une sous-stat.
+    // La vitesse ne se donne qu'en plat : sa base (~100) ne suit pas le niveau,
+    // le plat est déjà un pourcentage.
     expect(toutes.has('spdPct' as never)).toBe(false)
   })
 

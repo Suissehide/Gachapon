@@ -293,7 +293,7 @@ describe('bonus de set appliqués aux stats finales', () => {
   const defs = setBonusesFromConfig({
     'set.fureurCritDmgPct': 35,
     'set.affutCritRatePct': 25,
-    'set.sangsueLifestealPct': 16,
+    'set.sangsueLifestealPct': 8,
     'set.perceeArmorPenPct': 20,
     'set.assautAtkPct': 16,
     'set.colosseHpPct': 12,

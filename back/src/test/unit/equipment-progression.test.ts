@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 
+import { MAIN_STAT_SCALE } from '../../main/domain/content/equipment.definitions'
 import {
   effectiveEquipmentBonuses,
   EQUIP_MAX_SUBSTATS,
@@ -15,6 +16,7 @@ import {
   type SubstatRanges,
   upgradeGoldCost,
 } from '../../main/domain/equipment/equipment-progression'
+import { DEFAULTS } from '../../main/infra/config/config.service'
 
 const RANGES: SubstatRanges = {
   hpFlat: { min: 20, max: 60 },
@@ -27,7 +29,7 @@ const RANGES: SubstatRanges = {
   critRatePct: { min: 2, max: 5 },
   critDmgPct: { min: 4, max: 10 },
   armorPenPct: { min: 2, max: 6 },
-  lifestealPct: { min: 1, max: 4 },
+  lifestealPct: { min: 1, max: 2 },
 }
 
 // RNG déterministe : rejoue la séquence donnée.
@@ -221,7 +223,7 @@ describe('equipment-progression: substatRangesFromConfig', () => {
       'equip.substatArmorPenPctMin': 2,
       'equip.substatArmorPenPctMax': 6,
       'equip.substatLifestealPctMin': 1,
-      'equip.substatLifestealPctMax': 4,
+      'equip.substatLifestealPctMax': 2,
     })
     expect(ranges).toEqual(RANGES)
   })
@@ -298,5 +300,36 @@ describe('substats étendues', () => {
       expect(plages[k]).toBeDefined()
       expect(plages[k].min).toBeLessThanOrEqual(plages[k].max)
     }
+  })
+})
+
+describe('equipment-progression: bornes plat vs % des sous-stats', () => {
+  // Une sous-stat plate ne suit pas le niveau de la carte ; elle reste
+  // compétitive face au % tant que le rapport (milieu plat)/(milieu %) des
+  // sous-stats suit celui de la stat principale légendaire. Sinon, le plat
+  // devient un tirage mort en fin de jeu.
+  const mid = (min: number, max: number) => (min + max) / 2
+  const pctMid = mid(DEFAULTS['equip.substatPctMin'], DEFAULTS['equip.substatPctMax'])
+
+  it.each([
+    ['hp', 'equip.substatHpFlatMin', 'equip.substatHpFlatMax'],
+    ['atk', 'equip.substatAtkFlatMin', 'equip.substatAtkFlatMax'],
+    ['def', 'equip.substatDefFlatMin', 'equip.substatDefFlatMax'],
+  ] as const)('%s : même rapport plat/%% que la stat principale (±20 %%)', (stat, minKey, maxKey) => {
+    const main = MAIN_STAT_SCALE[`${stat}Flat`]?.LEGENDARY as number
+    const mainPct = MAIN_STAT_SCALE[`${stat}Pct`]?.LEGENDARY as number
+    const mainRatio = main / mainPct
+    const subRatio = mid(DEFAULTS[minKey], DEFAULTS[maxKey]) / pctMid
+    expect(subRatio).toBeGreaterThan(mainRatio * 0.8)
+    expect(subRatio).toBeLessThan(mainRatio * 1.2)
+  })
+
+  // Base de vitesse ~100 sans niveau : un point plat vaut un point de %, et le
+  // banc donne à +10 % de VIT la valeur de +10 % d'ATQ. Le barème VIT est donc
+  // celui des % — en principale comme en sous-stat.
+  it('vitesse : même barème que les stats en %', () => {
+    expect(MAIN_STAT_SCALE.spdFlat).toEqual(MAIN_STAT_SCALE.atkPct)
+    expect(DEFAULTS['equip.substatSpdFlatMin']).toBe(DEFAULTS['equip.substatPctMin'])
+    expect(DEFAULTS['equip.substatSpdFlatMax']).toBe(DEFAULTS['equip.substatPctMax'])
   })
 })

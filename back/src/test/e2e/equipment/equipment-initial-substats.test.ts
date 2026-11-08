@@ -4,17 +4,17 @@ import { buildTestApp } from '../../helpers/build-test-app'
 import { EQUIPMENT_INITIAL_SUBSTATS } from '../../helpers/equipment-fixture-slots'
 
 const SUBSTAT_RANGES: Record<string, { min: number; max: number }> = {
-  hpFlat: { min: 20, max: 60 },
+  hpFlat: { min: 60, max: 180 },
   hpPct: { min: 3, max: 8 },
-  atkFlat: { min: 5, max: 15 },
+  atkFlat: { min: 13, max: 38 },
   atkPct: { min: 3, max: 8 },
   defFlat: { min: 5, max: 15 },
   defPct: { min: 3, max: 8 },
-  spdFlat: { min: 1, max: 3 },
+  spdFlat: { min: 3, max: 8 },
   critRatePct: { min: 2, max: 5 },
   critDmgPct: { min: 4, max: 10 },
   armorPenPct: { min: 2, max: 6 },
-  lifestealPct: { min: 1, max: 4 },
+  lifestealPct: { min: 1, max: 2 },
 }
 
 describe('Equipment initial substats on grant', () => {

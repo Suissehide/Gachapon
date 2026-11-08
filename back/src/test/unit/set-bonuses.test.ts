@@ -9,7 +9,7 @@ import {
 const CONF = {
   'set.fureurCritDmgPct': 35,
   'set.affutCritRatePct': 25,
-  'set.sangsueLifestealPct': 16,
+  'set.sangsueLifestealPct': 8,
   'set.perceeArmorPenPct': 20,
   'set.assautAtkPct': 16,
   'set.colosseHpPct': 12,
@@ -70,7 +70,7 @@ describe('bonus de set', () => {
         [...q('SANGSUE', 4), ...q('COLOSSE', 2), 'PERCEE'],
         DEFS,
       ),
-    ).toEqual({ lifestealPct: 16, hpPct: 12 })
+    ).toEqual({ lifestealPct: 8, hpPct: 12 })
   })
 
   // La raison d'être du passage d'Affût de 4 à 3 pièces : les deux moitiés du

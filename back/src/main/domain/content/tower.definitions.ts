@@ -41,7 +41,7 @@ export type { TowerElement }
  * plafond de 70 (étages 1-6), puis c'est l'équipement seul qui décide
  * (étages 7-20) — la phase 2 de `seed/campaign.ts`, transposée.
  *
- * Étages 10 à 20 : une courbe GÉOMÉTRIQUE (+10,2 % par étage) entre le 9 et
+ * Étages 10 à 20 : une courbe GÉOMÉTRIQUE (+10,6 % par étage) entre le 9 et
  * le 20, pas les valeurs fittées une à une. Les étapes du joueur de référence
  * n'ont pas le même poids (une légendaire qui remplace une épique pèse bien
  * plus qu'une pièce) : fittés à 40 % chacun, les étages montaient de +2 % à
@@ -59,8 +59,8 @@ export type { TowerElement }
  * La jauge reste un outil d'AFFICHAGE. Pour calibrer, le simulateur.
  */
 const FLOOR_SCALE = [
-  2.4, 5.7, 10.7, 16.6, 36.5, 59.4, 70, 81.6, 97, 107.1, 118.0, 130.1, 143.3,
-  157.9, 174.0, 191.7, 211.3, 232.8, 256.6, 282.7,
+  2.4, 5.7, 10.7, 16.6, 36.5, 59.4, 70, 81.6, 97, 107.1, 118.5, 131.1, 145,
+  160.4, 177.5, 196.4, 217.3, 240.4, 265.9, 294.2,
 ] as const
 
 /**
