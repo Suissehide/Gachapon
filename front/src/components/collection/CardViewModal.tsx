@@ -222,8 +222,8 @@ export function CardViewModal({
       : null
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[var(--topbar-h)] z-[100] overflow-y-auto bg-black/55 backdrop-blur-md">
-      <div className="relative flex min-h-full items-center justify-center px-4 py-10">
+    <div className="fixed inset-x-0 bottom-0 top-[var(--topbar-h)] z-[100] overflow-y-auto bg-black/65">
+      <div className="relative flex min-h-full items-center justify-center overflow-clip px-4 py-10">
         {/* Backdrop as a button: clicking beside the card closes. Out of the
          * tab order and hidden from screen readers — Escape and the X button
          * already cover the keyboard. */}
@@ -258,7 +258,7 @@ export function CardViewModal({
           </div>
 
           <Card
-            className="pointer-events-auto flex max-h-[calc(100dvh-var(--topbar-h)-5rem)] w-full max-w-[400px] flex-col overflow-y-auto overscroll-contain rounded-[22px] border-[rgba(27,23,38,0.06)] p-6 shadow-[0_2px_0_rgba(27,23,38,0.03),0_30px_60px_-28px_rgba(27,23,38,0.4)] md:w-[400px]"
+            className="pointer-events-auto relative z-[1] flex max-h-[calc(100dvh-var(--topbar-h)-5rem)] w-full max-w-[400px] flex-col overflow-y-auto overscroll-contain rounded-[22px] border-[rgba(27,23,38,0.06)] p-6 shadow-[0_2px_0_rgba(27,23,38,0.03),0_30px_60px_-28px_rgba(27,23,38,0.4)] md:w-[400px]"
             style={panelStyle}
           >
             {/* Header */}

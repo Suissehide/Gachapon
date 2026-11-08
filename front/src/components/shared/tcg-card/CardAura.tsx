@@ -19,10 +19,7 @@ const RARITY_STRENGTH: Record<string, number> = {
 const GOLD_COLORS = ['#fde68a', '#fcd34d', '#f59e0b']
 const HOLO_COLORS = ['#22d3ee', '#a855f7', '#f59e0b', '#ec4899', '#38bdf8']
 
-const HOLO_GRADIENT =
-  'conic-gradient(from 0deg, #22d3ee, #a855f7, #f59e0b, #ec4899, #38bdf8, #22d3ee)'
-const GOLD_GRADIENT =
-  'conic-gradient(from 0deg, #fbbf24, #fde68a, #f59e0b, #b45309, #fde68a, #fbbf24)'
+const GOLD_BLOBS = ['#fbbf24', '#fde68a', '#f59e0b', '#b45309']
 
 // Each particle spawns just *inside* one edge (behind the opaque face) and
 // drifts outward past that edge, so it reads as emerging from behind the card.
@@ -105,29 +102,33 @@ function AuraHalo({
   haloOpacity: number
   large: boolean
 }) {
-  // Only transform/opacity animate here: anything else under the blur would
-  // re-blur the whole halo every frame. Colors cycle by spinning the conic.
   if (isVariant) {
+    const colors = isHolo ? HOLO_COLORS : GOLD_BLOBS
     return (
       <div
-        className="absolute -inset-[18%]"
+        className="absolute -inset-[12%]"
         style={
           {
-            filter: `blur(${large ? 34 : 22}px)`,
             '--aura-halo-opacity': haloOpacity,
             animation: 'cardAuraPulse 3.4s ease-in-out infinite',
           } as CSSProperties
         }
       >
-        <div className="absolute inset-0 [animation:cardAuraBlob_9s_ease-in-out_infinite]">
-          <div
-            className="absolute inset-0 rounded-[45%]"
-            style={{
-              background: isHolo ? HOLO_GRADIENT : GOLD_GRADIENT,
-              animation: `foilSpin ${isHolo ? 6 : 8}s linear infinite`,
-            }}
-          />
-        </div>
+        {colors.map((color, i) => {
+          const angle = (i / colors.length) * 2 * Math.PI
+          return (
+            <div
+              key={color}
+              className="absolute h-[80%] w-[80%] rounded-full"
+              style={{
+                left: `${10 + 18 * Math.cos(angle)}%`,
+                top: `${10 + 18 * Math.sin(angle)}%`,
+                background: `radial-gradient(closest-side, ${color} 0%, ${color} 35%, transparent 100%)`,
+                animation: `cardAuraBlob ${7 + i * 2.3}s ease-in-out ${-i * 1.7}s infinite ${i % 2 ? 'reverse' : 'normal'}`,
+              }}
+            />
+          )
+        })}
       </div>
     )
   }

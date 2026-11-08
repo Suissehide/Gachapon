@@ -68,8 +68,10 @@ function EntryTile({
   onPickFinish?: Props['onPickFinish']
 }) {
   const uc = entry.userCard
+  // -m-4 p-4 : content-visibility coupe le rendu à la boîte, les pastilles et
+  // le survol débordent. pointer-events-none : la marge chevauche les voisines.
   return (
-    <div>
+    <div className="pointer-events-none -m-4 p-4 [content-visibility:auto] [contain-intrinsic-block-size:auto_290px] [&>*]:pointer-events-auto">
       <CollectionCard
         card={entry.card}
         variant={entry.variant}

@@ -635,21 +635,22 @@ h6 {
   }
 }
 
-/* Organic multicolor blob for the holographic aura: drifts
- * randomly (cardAuraBlob) while the conic colors turn (foilSpin). */
 @keyframes cardAuraBlob {
   0%,
   100% {
     transform: translate(0%, 0%) scale(1);
   }
-  25% {
-    transform: translate(5%, -4%) scale(1.06);
+  20% {
+    transform: translate(16%, -10%) scale(1.15);
   }
-  50% {
-    transform: translate(-4%, 5%) scale(0.95);
+  45% {
+    transform: translate(-8%, 14%) scale(0.85);
   }
-  75% {
-    transform: translate(4%, 3%) scale(1.03);
+  70% {
+    transform: translate(-15%, -6%) scale(1.1);
+  }
+  85% {
+    transform: translate(7%, 9%) scale(0.92);
   }
 }
 
