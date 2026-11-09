@@ -3,6 +3,9 @@ import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
+/** Plafond de `equipmentSalvageBodySchema` côté back. */
+const SALVAGE_BATCH_SIZE = 200
+
 // Miroir de EquipmentSlot (prisma/schema.prisma) : étendre ici en même temps que là-bas.
 export type EquipmentSlot =
   | 'WEAPON'
@@ -209,14 +212,27 @@ export const EquipmentApi = {
     newGold: number
     destroyedCount: number
   }> => {
-    const res = await fetchWithAuth(`${apiUrl}/equipment/salvage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userEquipmentIds }),
-    })
-    if (!res.ok) {
-      handleHttpError(res, {}, i18n.t('equipment:apiTitles.operations.destroy'))
+    const total = { goldEarned: 0, newGold: 0, destroyedCount: 0 }
+    for (let i = 0; i < userEquipmentIds.length; i += SALVAGE_BATCH_SIZE) {
+      const res = await fetchWithAuth(`${apiUrl}/equipment/salvage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEquipmentIds: userEquipmentIds.slice(i, i + SALVAGE_BATCH_SIZE),
+        }),
+      })
+      if (!res.ok) {
+        handleHttpError(
+          res,
+          {},
+          i18n.t('equipment:apiTitles.operations.destroy'),
+        )
+      }
+      const batch = await res.json()
+      total.goldEarned += batch.goldEarned
+      total.newGold = batch.newGold
+      total.destroyedCount += batch.destroyedCount
     }
-    return res.json()
+    return total
   },
 }

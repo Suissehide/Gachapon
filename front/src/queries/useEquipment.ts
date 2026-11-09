@@ -274,7 +274,8 @@ export function useSalvageItems() {
   return useMutation({
     mutationFn: (userEquipmentIds: string[]) =>
       EquipmentApi.salvage(userEquipmentIds),
-    onSuccess: () => {
+    // Par lots : un échec en cours de route laisse les lots précédents détruits.
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
       qc.invalidateQueries({ queryKey: ['quests'] })
       void useAuthStore.getState().fetchMe()
