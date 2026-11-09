@@ -10,6 +10,19 @@
     "fixed": "Corrigé"
   },
   "releases": {
+    "v4_3": {
+      "title": "La Marque du chasseur",
+      "date": "Novembre 2026",
+      "summary": "Les passifs reprennent du poids face à l’équipement : soins et poisons relevés, vol de vie divisé par deux, et la fin de jeu recalibrée.",
+      "entries": {
+        "e1": "Sur la page d’une tour, un bouton « Comprendre les éléments » ouvre le guide de la roue élémentaire, comme en campagne.",
+        "e2": "Les passifs étaient réglés sur des combats sans équipement, bien plus longs que les vrais : face à un vrai stuff, soins et poisons ne pesaient presque rien. Régénération, Bénédiction et Sanctuaire soignent trois fois plus, Poison et Puissance montent, Brûlure brûle en part des dégâts du coup qui l’a posée plutôt que de l’attaque, et Riposte devient une vraie contre-attaque, critique compris.",
+        "e3": "Quatre passifs changent de mécanique. Précision multiplie les dégâts critiques de son coup garanti au lieu d’en ajouter quelques points, inutiles quand le critique est déjà au plafond. Brise-armure rend la cible vulnérable (+8 à +29 % de dégâts subis) au lieu de retirer une défense déjà percée. Marque du chasseur fait frapper toute l’équipe 15 % plus fort sur la cible marquée, et le chasseur rejoue aussitôt quand elle tombe. Provocation et Garde du corps encaissent une plus grande part des coups qu’ils détournent, et Entrave comme Étourdissement sont un peu moins fréquents.",
+        "e4": "Le vol de vie est divisé par deux : le set Sangsue passe à 8 %, les sous-stats de 1 à 2 %, et les pièces que tu possèdes déjà sont ajustées. En fin de jeu un coup vaut près des trois quarts des PV de l’attaquant, et un tank avec du vol de vie sur les DPS rendait tout le reste inutile.",
+        "e5": "Les sous-stats plates d’attaque, de PV et de vitesse sont relevées pour valoir autant que leurs équivalents en pourcentage, et tes pièces existantes suivent. Les chapitres 16 à 20 et les étages 11 à 20 des tours sont recalibrés pour cet équipement ; tout ce qui précède devient un peu plus facile.",
+        "e6": "La collection est plus fluide à l’inspection d’une carte, et le halo des vernis devient des taches de couleur qui ne font plus apparaître de barre de défilement. Le nom d’un boss de campagne ne répète plus « Boss »."
+      }
+    },
     "v4_2": {
       "title": "Au-delà de la Faille",
       "date": "Novembre 2026",

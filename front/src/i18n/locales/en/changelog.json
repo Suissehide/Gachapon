@@ -10,6 +10,19 @@
     "fixed": "Fixed"
   },
   "releases": {
+    "v4_3": {
+      "title": "Hunter's Mark",
+      "date": "November 2026",
+      "summary": "Passives carry their weight against gear again: heals and poisons raised, lifesteal halved, and the endgame recalibrated.",
+      "entries": {
+        "e1": "On a tower's page, an \"Understand the elements\" button opens the element wheel guide, as in the campaign.",
+        "e2": "Passives were tuned on fights without equipment, far longer than real ones: against real gear, heals and poisons barely mattered. Regeneration, Blessing and Sanctuary heal three times as much, Poison and Empowerment go up, Burn now burns for a share of the hit that applied it rather than of ATK, and Riposte becomes a real counter-attack, crit included.",
+        "e3": "Four passives change mechanics. Precision multiplies the critical damage of its guaranteed hit instead of adding a few points, useless once crit is already maxed. Sunder leaves the target vulnerable (+8 to +29% damage taken) instead of stripping defense that is already pierced. Hunter's Mark makes the whole team hit the marked target 15% harder, and the hunter acts again at once when it falls. Taunt and Bodyguard take a larger share of the hits they redirect, and Shackle and Stun trigger a little less often.",
+        "e4": "Lifesteal is halved: the Leech set drops to 8%, substats to 1-2%, and the pieces you already own are adjusted. In the endgame a hit is worth nearly three quarters of the attacker's HP, and a tank plus lifesteal on the DPS made everything else pointless.",
+        "e5": "Flat attack, HP and speed substats are raised to be worth as much as their percentage counterparts, and your existing pieces follow. Chapters 16 to 20 and tower floors 11 to 20 are recalibrated for this gear; everything before gets a little easier.",
+        "e6": "The collection is smoother when inspecting a card, and the finish halo becomes drifting color patches that no longer bring up a scrollbar. A campaign boss's name no longer repeats \"Boss\"."
+      }
+    },
     "v4_2": {
       "title": "Beyond the Rift",
       "date": "November 2026",
