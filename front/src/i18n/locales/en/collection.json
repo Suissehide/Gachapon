@@ -156,6 +156,7 @@
     "countFiltered_other": "{{count}} of {{total}} pieces · sorted by your target stats",
     "destroyMode": "Destroy items",
     "cancel": "Cancel",
+    "allMainStats": "All main stats",
     "allSets": "All sets",
     "emptyFilter": "No piece matches the filters.",
     "hideWornElsewhere": "Hide pieces worn by other characters",

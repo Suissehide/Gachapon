@@ -8,6 +8,7 @@ import type {
   EquipmentMilestone,
   EquipmentSetDefinition,
   EquipmentSlot,
+  SubstatKey,
 } from '../../api/equipment.api.ts'
 import type { UserCard } from '../../constants/card.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
@@ -33,6 +34,7 @@ import { useAuthStore } from '../../stores/auth.store.ts'
 import {
   activeSetsForCard,
   defReductionHint,
+  formatBonusKey,
   scaledBaseBonus,
   statColorVar,
 } from '../../utils/cardStats.ts'
@@ -175,6 +177,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
   const advice = adviceFor(card)
   const [prio, setPrio] = useState<LabStat[]>(advice.prio)
   const [setFilter, setSetFilter] = useState<string[]>([])
+  const [mainStatFilter, setMainStatFilter] = useState<SubstatKey[]>([])
   const [hideWornElsewhere, setHideWornElsewhere] = useState(false)
   const [selId, setSelId] = useState<string | null>(null)
   const [hovId, setHovId] = useState<string | null>(null)
@@ -218,6 +221,9 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
   const slotItems = items.filter((i) => i.slot === slot)
   const rows = slotItems
     .filter((i) => setFilter.length === 0 || setFilter.includes(i.setKey))
+    .filter(
+      (i) => mainStatFilter.length === 0 || mainStatFilter.includes(i.mainStat),
+    )
     .filter(
       (i) =>
         !hideWornElsewhere ||
@@ -515,6 +521,12 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
               items.filter((i) => i.equippedOnId === ucId && i.setKey === k)
                 .length
             }
+          />
+
+          <MainStatFilter
+            slotItems={slotItems}
+            selected={mainStatFilter}
+            onChange={setMainStatFilter}
           />
 
           <div className="mb-1.5 flex items-center gap-2">
@@ -917,6 +929,75 @@ function PieceSummary({
   )
 }
 
+const FILTER_CHIP =
+  'h-8 gap-[7px] rounded-full border-[rgba(27,23,38,0.1)] bg-card pl-3 pr-2.5 text-[13px] text-[rgba(27,23,38,0.65)] hover:bg-card hover:text-text disabled:opacity-35'
+const FILTER_CHIP_ALL =
+  'border-text bg-text text-white hover:bg-text hover:text-white'
+
+// Stats principales présentes dans le slot, dans l'ordre de première
+// apparition : la liste se déduit des pièces, pas d'un barème à maintenir.
+function MainStatFilter({
+  slotItems,
+  selected,
+  onChange,
+}: {
+  slotItems: EquipmentInstance[]
+  selected: SubstatKey[]
+  onChange: (next: SubstatKey[]) => void
+}) {
+  const { t } = useTranslation('collection')
+  const counts = new Map<SubstatKey, number>()
+  for (const i of slotItems) {
+    counts.set(i.mainStat, (counts.get(i.mainStat) ?? 0) + 1)
+  }
+  if (counts.size < 2) {
+    return null
+  }
+  return (
+    <div className="mb-1.5 flex flex-wrap gap-1.5">
+      <Button
+        variant="outline"
+        aria-pressed={selected.length === 0}
+        onClick={() => onChange([])}
+        className={cn(
+          FILTER_CHIP,
+          'px-3',
+          selected.length === 0 && FILTER_CHIP_ALL,
+        )}
+      >
+        {t('collection:workshop.allMainStats')}
+      </Button>
+      {[...counts].map(([key, n]) => {
+        const on = selected.includes(key)
+        return (
+          <Button
+            key={key}
+            variant="outline"
+            aria-pressed={on}
+            onClick={() =>
+              onChange(
+                on ? selected.filter((k) => k !== key) : [...selected, key],
+              )
+            }
+            style={{ '--s': statColorVar(key) } as React.CSSProperties}
+            className={cn(
+              FILTER_CHIP,
+              'hover:border-[var(--s)]',
+              on &&
+                'border-[color-mix(in_oklab,var(--s)_50%,white)] bg-[color-mix(in_oklab,var(--s)_12%,white)] text-text hover:bg-[color-mix(in_oklab,var(--s)_12%,white)]',
+            )}
+          >
+            {formatBonusKey(key)}
+            <span className="h-[18px] min-w-[18px] rounded-full bg-[rgba(27,23,38,0.06)] px-1 text-center font-mono text-[11px] leading-[18px] text-[rgba(27,23,38,0.55)]">
+              {n}
+            </span>
+          </Button>
+        )
+      })}
+    </div>
+  )
+}
+
 function SetFilter({
   slotItems,
   setDefs,
@@ -933,20 +1014,14 @@ function SetFilter({
   wornCount: (key: string) => number
 }) {
   const { t } = useTranslation('collection')
-  const chip =
-    'h-8 gap-[7px] rounded-full border-[rgba(27,23,38,0.1)] bg-card pl-3 pr-2.5 text-[13px] text-[rgba(27,23,38,0.65)] hover:bg-card hover:text-text disabled:opacity-35'
+  const chip = FILTER_CHIP
   return (
     <div className="mb-1.5 flex flex-wrap gap-1.5">
       <Button
         variant="outline"
         aria-pressed={selected.length === 0}
         onClick={() => onChange([])}
-        className={cn(
-          chip,
-          'px-3',
-          selected.length === 0 &&
-            'border-text bg-text text-white hover:bg-text hover:text-white',
-        )}
+        className={cn(chip, 'px-3', selected.length === 0 && FILTER_CHIP_ALL)}
       >
         {t('collection:workshop.allSets')}
       </Button>
