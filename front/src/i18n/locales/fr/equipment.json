@@ -48,7 +48,8 @@
     "selectAll": "Tout sélectionner",
     "selectedCount_one": "{{count}} pièce sélectionnée",
     "selectedCount_other": "{{count}} pièces sélectionnées",
-    "sellSelection": "Vendre la sélection"
+    "sellSelection": "Vendre la sélection",
+    "selling": "Vente… {{done}} / {{total}}"
   },
   "sellConfirm": {
     "subtitle": "Cette action est définitive.",

@@ -161,4 +161,15 @@ describe('Equipment salvage route', () => {
     })
     expect(user?.gold).toBe(90)
   })
+  it('ignore une pièce déjà détruite (vente par lots relancée)', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/equipment/salvage',
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { userEquipmentIds: [commonId] },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().destroyedCount).toBe(0)
+    expect(res.json().goldEarned).toBe(0)
+  })
 })

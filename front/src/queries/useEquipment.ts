@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
-import { EquipmentApi } from '../api/equipment.api'
+import { EquipmentApi, type EquipmentInstance } from '../api/equipment.api'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
 import i18n from '../i18n/index.ts'
@@ -22,6 +22,9 @@ import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 import { useSkillTree } from './useSkills.ts'
 
 const EQUIPMENT_KEY = ['equipment']
+
+/** Plafond de `equipmentSalvageBodySchema` côté back. */
+const SALVAGE_BATCH_SIZE = 200
 
 /**
  * Or rendu par le recyclage de pièces, bonus SALVAGE_BONUS compris. Même règle
@@ -271,11 +274,31 @@ export function useUpgradeItem() {
 export function useSalvageItems() {
   const qc = useQueryClient()
   const { toast } = useToast()
-  return useMutation({
-    mutationFn: (userEquipmentIds: string[]) =>
-      EquipmentApi.salvage(userEquipmentIds),
-    // Par lots : un échec en cours de route laisse les lots précédents détruits.
+  // Pièces déjà vendues sur le total demandé, tant qu'une vente par lots court.
+  const [progress, setProgress] = useState<{
+    done: number
+    total: number
+  } | null>(null)
+  const mutation = useMutation({
+    mutationFn: async (userEquipmentIds: string[]) => {
+      const total = { goldEarned: 0, newGold: 0, destroyedCount: 0 }
+      setProgress({ done: 0, total: userEquipmentIds.length })
+      for (let i = 0; i < userEquipmentIds.length; i += SALVAGE_BATCH_SIZE) {
+        const batch = userEquipmentIds.slice(i, i + SALVAGE_BATCH_SIZE)
+        const res = await EquipmentApi.salvage(batch)
+        total.goldEarned += res.goldEarned
+        total.newGold = res.newGold
+        total.destroyedCount += res.destroyedCount
+        const sold = new Set(batch)
+        qc.setQueryData<{ items: EquipmentInstance[] }>(EQUIPMENT_KEY, (old) =>
+          old ? { items: old.items.filter((it) => !sold.has(it.id)) } : old,
+        )
+        setProgress({ done: i + batch.length, total: userEquipmentIds.length })
+      }
+      return total
+    },
     onSettled: () => {
+      setProgress(null)
       qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
       qc.invalidateQueries({ queryKey: ['quests'] })
       void useAuthStore.getState().fetchMe()
@@ -288,4 +311,5 @@ export function useSalvageItems() {
       })
     },
   })
+  return { ...mutation, progress }
 }

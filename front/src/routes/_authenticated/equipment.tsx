@@ -4,6 +4,7 @@ import {
   ChevronsUp,
   CircleHelp,
   Coins,
+  Loader2,
   ShieldOff,
   Sword,
   Zap,
@@ -444,13 +445,25 @@ function EquipmentPage() {
             disabled={selected.size === 0 || salvageItems.isPending}
             onClick={handleSellSelection}
           >
-            <Coins className="h-3.5 w-3.5" />
-            {t('equipment:bulk.sellSelection')}
-            <span className="font-mono text-[10px] opacity-70">
-              {t('common:gold.amountPlus', {
-                amount: formatNumber(selectionGold, locale),
-              })}
-            </span>
+            {salvageItems.progress ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                {t('equipment:bulk.selling', {
+                  done: formatNumber(salvageItems.progress.done, locale),
+                  total: formatNumber(salvageItems.progress.total, locale),
+                })}
+              </>
+            ) : (
+              <>
+                <Coins className="h-3.5 w-3.5" />
+                {t('equipment:bulk.sellSelection')}
+                <span className="font-mono text-[10px] opacity-70">
+                  {t('common:gold.amountPlus', {
+                    amount: formatNumber(selectionGold, locale),
+                  })}
+                </span>
+              </>
+            )}
           </Button>
         </div>
       )}

@@ -578,7 +578,9 @@ export class EquipmentDomain {
 
   /**
    * Détruit des objets non équipés contre de l'or (selon la rareté).
-   * Tout ou rien : la moindre violation annule l'ensemble.
+   * Tout ou rien : la moindre violation annule l'ensemble. Un identifiant
+   * qui n'existe plus est ignoré : le front vend par lots, et relancer une
+   * vente interrompue renvoie des pièces déjà détruites.
    */
   async salvage(
     userId: string,
@@ -603,10 +605,7 @@ export class EquipmentDomain {
             where: { id: { in: ids } },
             include: { equipment: true },
           })
-          if (
-            items.length !== ids.length ||
-            items.some((i) => i.userId !== userId)
-          ) {
+          if (items.some((i) => i.userId !== userId)) {
             throw Boom.notFound(errorMessage('equipment.userEquipmentNotFound'))
           }
           if (items.some((i) => i.equippedOnId !== null)) {
@@ -623,17 +622,21 @@ export class EquipmentDomain {
               ),
             0,
           )
-          await tx.userEquipment.deleteMany({ where: { id: { in: ids } } })
+          await tx.userEquipment.deleteMany({
+            where: { id: { in: items.map((i) => i.id) } },
+          })
           const updatedUser = await tx.user.update({
             where: { id: userId },
             data: { gold: { increment: goldEarned } },
             select: { gold: true },
           })
 
-          await this.#achievementsDomain.track(tx, userId, {
-            kind: 'EQUIPMENT_SALVAGED',
-            amount: items.length,
-          })
+          if (items.length > 0) {
+            await this.#achievementsDomain.track(tx, userId, {
+              kind: 'EQUIPMENT_SALVAGED',
+              amount: items.length,
+            })
+          }
 
           return {
             goldEarned,

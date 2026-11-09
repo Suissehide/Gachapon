@@ -48,7 +48,8 @@
     "selectAll": "Select all",
     "selectedCount_one": "{{count}} piece selected",
     "selectedCount_other": "{{count}} pieces selected",
-    "sellSelection": "Sell selection"
+    "sellSelection": "Sell selection",
+    "selling": "Selling… {{done}} / {{total}}"
   },
   "sellConfirm": {
     "subtitle": "This action is final.",
