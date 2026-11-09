@@ -190,8 +190,10 @@ const ACTION_THRESHOLD = 1000
  * valeurs calibrées au banc d'essai (scripts/passive-bench.ts). Les textes
  * de passives.definitions.ts et du front les citent : les garder alignés.
  */
-const TAUNT_DAMAGE_MULT = 0.45
-const GUARDIAN_DAMAGE_MULT = 0.2
+const TAUNT_DAMAGE_MULT = 0.5
+const GUARDIAN_DAMAGE_MULT = 0.4
+/** HUNT : dégâts supplémentaires de toute l'équipe sur la cible marquée. */
+const HUNT_MARK_DAMAGE_PCT = 15
 const BASE_SPD_REF = 100
 /** Plafond d'empilement des passifs de charges (FORTIFY, EMPOWER). */
 const MAX_STACKS = 5
@@ -613,6 +615,11 @@ function applyPassiveDamageModifiers(
     })
   }
 
+  // HUNT (cible marquée) — toute l'équipe du chasseur la frappe plus fort.
+  if (target.huntedBy === attacker.side) {
+    out *= 1 + HUNT_MARK_DAMAGE_PCT / 100
+  }
+
   // RAMPART (target) — atténuation plate des dégâts subis.
   if (target.passiveKey === 'RAMPART') {
     out *= 1 - target.passiveValuePct / 100
@@ -643,13 +650,7 @@ function resolveFortifyMult(target: BattleUnit): number {
 
 function resolveEffectiveDef(attacker: BattleUnit, target: BattleUnit): number {
   const armorPenPct = Math.max(0, Math.min(100, attacker.armorPen))
-  const sunderPct = target.sunder?.pct ?? 0
-  return (
-    target.def *
-    resolveFortifyMult(target) *
-    (1 - sunderPct / 100) *
-    (1 - armorPenPct / 100)
-  )
+  return target.def * resolveFortifyMult(target) * (1 - armorPenPct / 100)
 }
 
 /**
@@ -678,8 +679,10 @@ function resolveCrit(
   if (!(cadenceCrit || tirageCrit)) {
     return { crit: false, mult: 1 }
   }
-  const bonus = cadenceCrit ? attacker.passiveValuePct : 0
-  return { crit: true, mult: (attacker.critDmg + bonus) / 100 }
+  // Le critique de cadence multiplie les dégâts critiques du porteur : il
+  // garde sa valeur quand le stuff a déjà porté le crit près de 100 %.
+  const ampli = cadenceCrit ? 1 + attacker.passiveValuePct / 100 : 1
+  return { crit: true, mult: (attacker.critDmg / 100) * ampli }
 }
 
 /**
@@ -866,6 +869,9 @@ function resolveAttackOnTarget(
   raw *= mult
 
   raw = applyPassiveDamageModifiers(attacker, target, raw, log)
+  // SUNDER (cible) — vulnérabilité : la cible subit +X % de toutes les
+  // attaques. Une DEF retirée ne valait rien face à la pénétration d'armure.
+  raw *= 1 + (target.sunder?.pct ?? 0) / 100
   if (attire) {
     raw *= TAUNT_DAMAGE_MULT
   }
@@ -911,7 +917,7 @@ function resolveAttackOnTarget(
 
   // BURN / POISON (attacker) — applique un effet de dégâts sur la durée à la cible.
   if (final > 0) {
-    applyDotOnHit(attacker, target, log)
+    applyDotOnHit(attacker, target, final, log)
     applyHamper(attacker, target, log)
     applyControlOnHit(attacker, target, prng, log)
   }
@@ -940,13 +946,14 @@ function resolveAttackOnTarget(
 /**
  * Applique (ou rafraîchit) un effet de dégâts sur la durée quand l'attaquant
  * possède BURN ou POISON.
- * - BURN : dégâts par tour = % de l'ATQ de l'attaquant.
+ * - BURN : dégâts par tour = % des dégâts du coup qui l'a posée.
  * - POISON : dégâts par tour = % des PV max de la cible.
  * Durée fixe de 2 tours ; un nouvel effet de même source remplace le précédent.
  */
 function applyDotOnHit(
   attacker: BattleUnit,
   target: BattleUnit,
+  hitDamage: number,
   log: LogEntry[],
 ): void {
   let source: DotEffect['source']
@@ -955,7 +962,7 @@ function applyDotOnHit(
     source = 'BURN'
     dmgPerTurn = Math.max(
       1,
-      Math.round((attacker.effectiveAtk * attacker.passiveValuePct) / 100),
+      Math.round((hitDamage * attacker.passiveValuePct) / 100),
     )
   } else if (attacker.passiveKey === 'POISON') {
     source = 'POISON'
@@ -985,7 +992,7 @@ function applyDotOnHit(
 function applyRiposte(
   attacker: BattleUnit,
   target: BattleUnit,
-  damageDealt: number,
+  defenseK: number,
   log: LogEntry[],
 ): void {
   if (target.passiveKey !== 'RIPOSTE') {
@@ -997,7 +1004,21 @@ function applyRiposte(
   if (!attacker.alive) {
     return
   }
-  const reflected = Math.round((damageDealt * target.passiveValuePct) / 100)
+  // Une contre-attaque du porteur à X % : sans variance ni tirage, avec le
+  // critique à sa valeur attendue (la riposte ne consomme pas de PRNG).
+  const critAttendu = 1 + (target.critRate / 100) * (target.critDmg / 100 - 1)
+  const reflected = Math.round(
+    (computeRawDamage(
+      resolveAttackerAtk(target),
+      resolveEffectiveDef(target, attacker),
+      defenseK,
+      () => 0.5,
+      1,
+    ) *
+      critAttendu *
+      target.passiveValuePct) /
+      100,
+  )
   if (reflected <= 0) {
     return
   }
@@ -1034,6 +1055,7 @@ function processRiposteOnSurvivors(
   attacker: BattleUnit,
   targets: BattleUnit[],
   damages: DamageEntry[],
+  defenseK: number,
   log: LogEntry[],
 ): void {
   for (let i = 0; i < targets.length; i++) {
@@ -1046,7 +1068,7 @@ function processRiposteOnSurvivors(
       continue
     }
     if (target.currentHp > 0) {
-      applyRiposte(attacker, target, dmg.final, log)
+      applyRiposte(attacker, target, defenseK, log)
     }
   }
 }
@@ -1115,9 +1137,45 @@ function performStrike(ctx: StrikeContext): void {
     }
   }
 
-  processRiposteOnSurvivors(attacker, targets, damages, log)
+  processRiposteOnSurvivors(attacker, targets, damages, rules.defenseK, log)
   processDeaths(attacker, targets, log)
+  applyHuntKillTurn(targets, units, log)
   applyHuntMark(attacker, targets, damages, units, log)
+}
+
+/**
+ * HUNT — la cible marquée tombe : chaque chasseur de l'équipe qui l'avait
+ * marquée rejoue aussitôt (jauge remise au seuil, comme HASTE), et marquera
+ * sa prochaine cible au coup suivant. Aucun tirage PRNG.
+ */
+function applyHuntKillTurn(
+  targets: BattleUnit[],
+  units: BattleUnit[],
+  log: LogEntry[],
+): void {
+  for (const target of targets) {
+    if (target.alive || target.huntedBy === null) {
+      continue
+    }
+    const side = target.huntedBy
+    target.huntedBy = null
+    for (const hunter of units) {
+      if (
+        hunter.side !== side ||
+        !hunter.alive ||
+        hunter.passiveKey !== 'HUNT'
+      ) {
+        continue
+      }
+      hunter.gauge = Math.max(hunter.gauge, ACTION_THRESHOLD)
+      log.push({
+        type: 'PASSIVE',
+        unitId: hunter.id,
+        passive: 'HUNT',
+        payload: { bonusTurn: 1 },
+      })
+    }
+  }
 }
 
 /**
@@ -1185,8 +1243,8 @@ function applyHamper(
  * Contrôle sur un coup qui inflige des dégâts :
  * - STUN : X % de chance que la cible saute sa prochaine action (tirage
  *   prng() seulement pour un porteur, et jamais sur une cible insensible) ;
- * - WEAKEN / SUNDER : -X % d'ATQ / de DEF pendant DEBUFF_TURNS actions de la
- *   cible, durée renouvelée à chaque coup.
+ * - WEAKEN : -X % d'ATQ, SUNDER : +X % de dégâts subis, pendant DEBUFF_TURNS
+ *   actions de la cible, durée renouvelée à chaque coup.
  */
 function applyControlOnHit(
   attacker: BattleUnit,

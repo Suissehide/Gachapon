@@ -1,7 +1,7 @@
 {
   "TAUNT": {
     "name": "Provocation",
-    "describe": "Les attaques ennemies à cible unique le visent avec {{value}} % de chance, et ces coups lui font 55 % de dégâts en moins."
+    "describe": "Les attaques ennemies à cible unique le visent avec {{value}} % de chance, et ces coups lui font moitié moins de dégâts."
   },
   "AEGIS": {
     "name": "Égide",
@@ -13,7 +13,7 @@
   },
   "RIPOSTE": {
     "name": "Riposte",
-    "describe": "Renvoie {{value}} % des dégâts subis."
+    "describe": "Contre-attaque chaque coup encaissé à {{value}} % de son attaque."
   },
   "REBIRTH": {
     "name": "Renaissance",
@@ -49,7 +49,7 @@
   },
   "CRIT": {
     "name": "Précision",
-    "describe": "Toutes les 2 attaques, inflige un coup critique garanti avec +{{value}} % de dégâts critiques."
+    "describe": "Toutes les 2 attaques, inflige un coup critique garanti dont les dégâts critiques sont amplifiés de {{value}} %."
   },
   "HAMPER": {
     "name": "Entrave",
@@ -77,7 +77,7 @@
   },
   "BURN": {
     "name": "Brûlure",
-    "describe": "Inflige une brûlure : {{value}} % de l'ATQ par tour pendant 2 tours."
+    "describe": "Inflige une brûlure : {{value}} % des dégâts du coup par tour pendant 2 tours."
   },
   "POISON": {
     "name": "Poison",
@@ -89,11 +89,11 @@
   },
   "GUARDIAN": {
     "name": "Garde du corps",
-    "describe": "Détourne sur lui {{value}} % des dégâts subis par ses alliés, et n'en subit qu'un cinquième."
+    "describe": "Détourne sur lui {{value}} % des dégâts subis par ses alliés, et n'en subit que 40 %."
   },
   "HUNT": {
     "name": "Marque du chasseur",
-    "describe": "Marque la cible de son premier coup : tant qu'elle vit, les attaques de son équipe la visent avec {{value}} % de chance."
+    "describe": "Marque la cible de son premier coup : son équipe la vise avec {{value}} % de chance et lui inflige 15 % de dégâts en plus ; quand elle tombe, il rejoue aussitôt."
   },
   "STUN": {
     "name": "Étourdissement",
@@ -105,6 +105,6 @@
   },
   "SUNDER": {
     "name": "Brise-armure",
-    "describe": "Chaque coup réduit de {{value}} % la DEF de la cible pendant ses 2 prochaines actions."
+    "describe": "Chaque coup rend la cible vulnérable : elle subit {{value}} % de dégâts en plus pendant ses 2 prochaines actions."
   }
 }

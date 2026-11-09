@@ -50,7 +50,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:RIPOSTE.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:RIPOSTE.describe', { value: 8 + 4 * p })
+      return i18n.t('passives:RIPOSTE.describe', { value: 18 + 9 * p })
     },
   },
   REBIRTH: {
@@ -94,7 +94,9 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:EMPOWER.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:EMPOWER.describe', { value: 3 + p })
+      return i18n.t('passives:EMPOWER.describe', {
+        value: formatPct(5 + 2.5 * p, currentLocale()),
+      })
     },
   },
   BULWARK: {
@@ -115,14 +117,14 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:CRIT.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:CRIT.describe', { value: 10 * p })
+      return i18n.t('passives:CRIT.describe', { value: 15 + 5 * p })
     },
   },
   HAMPER: {
     name: i18n.t('passives:HAMPER.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:HAMPER.describe', { value: 25 + 8 * p })
+      return i18n.t('passives:HAMPER.describe', { value: 19 + 6 * p })
     },
   },
   NEMESIS: {
@@ -144,7 +146,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:REGEN.describe', {
-        value: formatPct(((2 + p) * 3) / 2, currentLocale()),
+        value: formatPct((2 + p) * 4.5, currentLocale()),
       })
     },
   },
@@ -153,7 +155,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:BLESSING.describe', {
-        value: formatPct(((3 + p) * 6) / 5, currentLocale()),
+        value: formatPct(((3 + p) * 18) / 5, currentLocale()),
       })
     },
   },
@@ -162,7 +164,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:SANCTUARY.describe', {
-        value: formatPct(((3 + 2 * p) * 6) / 25, currentLocale()),
+        value: formatPct(((3 + 2 * p) * 9) / 10, currentLocale()),
       })
     },
   },
@@ -170,7 +172,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:BURN.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:BURN.describe', { value: 4 + 2 * p })
+      return i18n.t('passives:BURN.describe', { value: 6 + 3 * p })
     },
   },
   POISON: {
@@ -178,7 +180,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
       return i18n.t('passives:POISON.describe', {
-        value: formatPct((2 + 3 * p) / 10, currentLocale()),
+        value: formatPct((2 + 3 * p) / 4, currentLocale()),
       })
     },
   },
@@ -207,7 +209,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:STUN.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:STUN.describe', { value: 23 + 7 * p })
+      return i18n.t('passives:STUN.describe', { value: 17 + 5 * p })
     },
   },
   WEAKEN: {
@@ -221,7 +223,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: i18n.t('passives:SUNDER.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return i18n.t('passives:SUNDER.describe', { value: 30 + 9 * p })
+      return i18n.t('passives:SUNDER.describe', { value: 8 + 3 * p })
     },
   },
 }

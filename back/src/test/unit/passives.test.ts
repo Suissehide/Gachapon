@@ -23,29 +23,29 @@ describe('passives', () => {
     })
   })
   describe('famille contrôle / affaiblissement', () => {
-    it('STUN : 30% at P1, 65% at P6 (chance d étourdir)', () => {
-      expect(PASSIVES.STUN.compute(1).valuePct).toBe(30)
-      expect(PASSIVES.STUN.compute(6).valuePct).toBe(65)
+    it('STUN : 22% at P1, 47% at P6 (chance d étourdir)', () => {
+      expect(PASSIVES.STUN.compute(1).valuePct).toBe(22)
+      expect(PASSIVES.STUN.compute(6).valuePct).toBe(47)
     })
     it('WEAKEN : 12% at P1, 22% at P6 (ATQ retirée)', () => {
       expect(PASSIVES.WEAKEN.compute(1).valuePct).toBe(12)
       expect(PASSIVES.WEAKEN.compute(6).valuePct).toBe(22)
     })
-    it('SUNDER : 39% at P1, 84% at P6 (DEF retirée)', () => {
-      expect(PASSIVES.SUNDER.compute(1).valuePct).toBe(39)
-      expect(PASSIVES.SUNDER.compute(6).valuePct).toBe(84)
+    it('SUNDER : 11% at P1, 26% at P6 (dégâts supplémentaires subis)', () => {
+      expect(PASSIVES.SUNDER.compute(1).valuePct).toBe(11)
+      expect(PASSIVES.SUNDER.compute(6).valuePct).toBe(26)
     })
   })
   describe('CRIT', () => {
-    it('+10 % de dégâts critiques à P1, +60 % à P6 sur le critique garanti', () => {
-      expect(PASSIVES.CRIT.compute(1).valuePct).toBe(10)
-      expect(PASSIVES.CRIT.compute(6).valuePct).toBe(60)
+    it('dégâts critiques amplifiés de 20 % à P1, 45 % à P6 sur le critique garanti', () => {
+      expect(PASSIVES.CRIT.compute(1).valuePct).toBe(20)
+      expect(PASSIVES.CRIT.compute(6).valuePct).toBe(45)
     })
   })
   describe('HAMPER', () => {
-    it('33% at P1, 73% at P6 (part du seuil d action retirée)', () => {
-      expect(PASSIVES.HAMPER.compute(1).valuePct).toBe(33)
-      expect(PASSIVES.HAMPER.compute(6).valuePct).toBe(73)
+    it('25% at P1, 55% at P6 (part du seuil d action retirée)', () => {
+      expect(PASSIVES.HAMPER.compute(1).valuePct).toBe(25)
+      expect(PASSIVES.HAMPER.compute(6).valuePct).toBe(55)
     })
   })
   describe('AEGIS', () => {
@@ -61,9 +61,9 @@ describe('passives', () => {
     })
   })
   describe('RIPOSTE', () => {
-    it('12% at P1, 32% at P6', () => {
-      expect(PASSIVES.RIPOSTE.compute(1).valuePct).toBe(12)
-      expect(PASSIVES.RIPOSTE.compute(6).valuePct).toBe(32)
+    it('27% at P1, 72% at P6', () => {
+      expect(PASSIVES.RIPOSTE.compute(1).valuePct).toBe(27)
+      expect(PASSIVES.RIPOSTE.compute(6).valuePct).toBe(72)
     })
   })
   describe('REBIRTH', () => {
@@ -101,34 +101,34 @@ describe('passives', () => {
     })
   })
   describe('EMPOWER', () => {
-    it('4% at P1, 9% at P6 (ATQ gagnée par charge)', () => {
-      expect(PASSIVES.EMPOWER.compute(1).valuePct).toBe(4)
-      expect(PASSIVES.EMPOWER.compute(6).valuePct).toBe(9)
+    it('7.5% at P1, 20% at P6', () => {
+      expect(PASSIVES.EMPOWER.compute(1).valuePct).toBe(7.5)
+      expect(PASSIVES.EMPOWER.compute(6).valuePct).toBe(20)
     })
   })
 
   describe('BLESSING', () => {
-    it('4.8% at P1, 10.8% at P6', () => {
-      expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(4.8)
-      expect(PASSIVES.BLESSING.compute(6).valuePct).toBe(10.8)
+    it('14.4% at P1, 32.4% at P6', () => {
+      expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(14.4)
+      expect(PASSIVES.BLESSING.compute(6).valuePct).toBe(32.4)
     })
   })
   describe('SANCTUARY', () => {
-    it('1.2% at P1, 3.6% at P6', () => {
-      expect(PASSIVES.SANCTUARY.compute(1).valuePct).toBe(1.2)
-      expect(PASSIVES.SANCTUARY.compute(6).valuePct).toBe(3.6)
+    it('4.5% at P1, 13.5% at P6', () => {
+      expect(PASSIVES.SANCTUARY.compute(1).valuePct).toBe(4.5)
+      expect(PASSIVES.SANCTUARY.compute(6).valuePct).toBe(13.5)
     })
   })
   describe('BURN', () => {
-    it('0.5% at P1, 2% at P6', () => {
-      expect(PASSIVES.BURN.compute(1).valuePct).toBe(6)
-      expect(PASSIVES.BURN.compute(6).valuePct).toBe(16)
+    it('9% at P1, 24% at P6 (part des dégâts du coup)', () => {
+      expect(PASSIVES.BURN.compute(1).valuePct).toBe(9)
+      expect(PASSIVES.BURN.compute(6).valuePct).toBe(24)
     })
   })
   describe('POISON', () => {
-    it('6% at P1, 16% at P6', () => {
-      expect(PASSIVES.POISON.compute(1).valuePct).toBe(0.5)
-      expect(PASSIVES.POISON.compute(6).valuePct).toBe(2)
+    it('1.25% at P1, 5% at P6', () => {
+      expect(PASSIVES.POISON.compute(1).valuePct).toBe(1.25)
+      expect(PASSIVES.POISON.compute(6).valuePct).toBe(5)
     })
   })
   describe('MOMENTUM', () => {
@@ -184,7 +184,7 @@ describe('passives', () => {
     it('CRIT décrit la cadence et le bonus de dégâts critiques', () => {
       runWithLocale('FR', () => {
         expect(PASSIVES.CRIT.describe(1)).toBe(
-          'Toutes les 2 attaques, inflige un coup critique garanti avec +10 % de dégâts critiques',
+          'Toutes les 2 attaques, inflige un coup critique garanti dont les dégâts critiques sont amplifiés de 20 %',
         )
       })
     })
@@ -212,7 +212,7 @@ describe('passives', () => {
     it('EN explicite sous runWithLocale', () => {
       runWithLocale('EN', () => {
         expect(PASSIVES.CRIT.describe(1)).toBe(
-          'Every 2 attacks, deals a guaranteed critical hit with +10% critical damage',
+          'Every 2 attacks, deals a guaranteed critical hit whose critical damage is amplified by 20%',
         )
       })
     })

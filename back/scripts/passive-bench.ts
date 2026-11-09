@@ -3,7 +3,8 @@
  * Usage : npx tsx scripts/passive-bench.ts [CLE,CLE…]
  * SCALE=CLE:1.5,… multiplie la valeur du passif, pour calibrer avant d'éditer passives.ts.
  * BENCH=tower mesure sur le banc équipé (équipe de référence de l'étage 15 face à
- * l'étage) au lieu du miroir sans stuff — les deux divergent, voir passive-power.ts.
+ * l'étage), BENCH=campaign sur le joueur de mi-parcours (10-5) — le miroir sans
+ * stuff diverge des deux, voir passive-power.ts.
  */
 import { PASSIVES } from '../src/main/domain/combat/passives'
 import {
@@ -22,11 +23,12 @@ for (const pair of process.env.SCALE?.split(',') ?? []) {
 
 const keys = (process.argv[2]?.split(',') ??
   Object.keys(PASSIVES)) as (keyof typeof PASSIVES)[]
-if (process.env.BENCH === 'tower') {
+const bench = process.env.BENCH
+if (bench === 'tower' || bench === 'campaign') {
   console.log('passif        Mage   Soutien')
   for (const key of keys) {
-    const m = gearedPassiveValuePct(key, 0)
-    const s = gearedPassiveValuePct(key, 2)
+    const m = gearedPassiveValuePct(key, 0, 300, bench)
+    const s = gearedPassiveValuePct(key, 2, 300, bench)
     console.log(
       `${key.padEnd(12)} ${m.toFixed(1).padStart(5)} %  ${s.toFixed(1).padStart(5)} %  ${PASSIVES[key].rarityHint}`,
     )

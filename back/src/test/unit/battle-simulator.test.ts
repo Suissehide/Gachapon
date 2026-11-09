@@ -283,7 +283,7 @@ describe('simulateBattle', () => {
   })
 
   // 10. RIPOSTE reflects damage
-  it('RIPOSTE reflects damage back to the attacker', () => {
+  it('RIPOSTE contre-attaque l attaquant à une part de son attaque', () => {
     const attacker = makeUnit('A0', {
       hp: 500,
       atk: 100,
@@ -292,7 +292,7 @@ describe('simulateBattle', () => {
     })
     const target = makeUnit('B0', {
       hp: 1000,
-      atk: 1,
+      atk: 200,
       def: 0,
       spd: 1,
       passiveKey: 'RIPOSTE',
@@ -892,7 +892,7 @@ describe('simulateBattle', () => {
       expect(entries.some((e) => 'damage' in e.payload)).toBe(true)
     })
 
-    it('BURN applique une brûlure basée sur l’ATQ', () => {
+    it('BURN applique une brûlure basée sur les dégâts du coup', () => {
       const result = simulateBattle({
         teamA: [
           makeUnit('A0', { atk: 100, spd: 999, passiveKey: 'BURN' }),
@@ -1545,7 +1545,7 @@ describe('passifs dynamiques — collision avec les stats', () => {
     ).toBe(true)
   })
 
-  it('GUARDIAN détourne une part des dégâts d un allié et n en subit qu un cinquième', () => {
+  it('GUARDIAN détourne une part des dégâts d un allié et n en subit que 40 %', () => {
     // GUARDIAN ne consomme aucun tirage prng() : même seed, mêmes coups.
     const build = (passiveKey: string | null) =>
       simulateBattle({
@@ -1575,7 +1575,7 @@ describe('passifs dynamiques — collision avec les stats', () => {
       throw new Error('GUARDIAN non journalisé')
     }
     expect(garde.payload.damage).toBe(
-      Math.round(Math.round(sans[0]!.final * 0.61) * 0.2),
+      Math.round(Math.round(sans[0]!.final * 0.61) * 0.4),
     )
   })
 

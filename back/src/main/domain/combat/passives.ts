@@ -55,11 +55,11 @@ export interface PassiveDefinition {
   describe(palier: number): string
 }
 
-/** Les soins de passif (REGEN, BLESSING, SANCTUARY) partent une action sur trois. */
-export const PASSIVE_HEAL_CADENCE = 3
-
 /** CRIT : un critique garanti toutes les deux actions. */
 export const CRIT_CADENCE = 2
+
+/** Les soins de passif (REGEN, BLESSING, SANCTUARY) partent une action sur trois. */
+export const PASSIVE_HEAL_CADENCE = 3
 
 export function clampPalier(palier: number): number {
   if (palier < 1) {
@@ -142,7 +142,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 8 + 4 * p }
+      return { valuePct: 18 + 9 * p } // % d'une attaque de base du porteur
     },
     describe(palier) {
       return localizedDescribe('RIPOSTE', clampPalier(palier))
@@ -236,7 +236,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 3 + p } // ATQ gagnée par charge
+      return { valuePct: 5 + 2.5 * p } // ATQ gagnée par charge
     },
     describe(palier) {
       return localizedDescribe('EMPOWER', clampPalier(palier))
@@ -280,11 +280,11 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     get label() {
       return localizedLabel('CRIT')
     },
-    // Un critique garanti toutes les CRIT_CADENCE actions, amplifié de
-    // valuePct points de dégâts critiques.
+    // Un critique garanti toutes les CRIT_CADENCE actions, dont les dégâts
+    // critiques sont multipliés par (1 + valuePct %).
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 10 * p }
+      return { valuePct: 15 + 5 * p }
     },
     describe(palier) {
       return localizedDescribe('CRIT', clampPalier(palier))
@@ -299,7 +299,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 25 + 8 * p } // part du seuil d'action retirée à la cible
+      return { valuePct: 19 + 6 * p } // part du seuil d'action retirée à la cible
     },
     describe(palier) {
       return localizedDescribe('HAMPER', clampPalier(palier))
@@ -345,7 +345,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: ((2 + p) * 3) / 2 }
+      return { valuePct: (2 + p) * 4.5 }
     },
     describe(palier) {
       return localizedDescribe('REGEN', clampPalier(palier))
@@ -365,7 +365,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: ((3 + p) * 6) / 5 }
+      return { valuePct: ((3 + p) * 18) / 5 }
     },
     describe(palier) {
       return localizedDescribe('BLESSING', clampPalier(palier))
@@ -379,7 +379,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: ((3 + 2 * p) * 6) / 25 }
+      return { valuePct: ((3 + 2 * p) * 9) / 10 }
     },
     describe(palier) {
       return localizedDescribe('SANCTUARY', clampPalier(palier))
@@ -395,7 +395,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 4 + 2 * p }
+      return { valuePct: 6 + 3 * p }
     },
     describe(palier) {
       return localizedDescribe('BURN', clampPalier(palier))
@@ -409,7 +409,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: (2 + 3 * p) / 10 }
+      return { valuePct: (2 + 3 * p) / 4 }
     },
     describe(palier) {
       return localizedDescribe('POISON', clampPalier(palier))
@@ -476,7 +476,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 23 + 7 * p } // chance d'étourdir la cible
+      return { valuePct: 17 + 5 * p } // chance d'étourdir la cible
     },
     describe(palier) {
       return localizedDescribe('STUN', clampPalier(palier))
@@ -504,7 +504,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 30 + 9 * p } // DEF retirée à la cible
+      return { valuePct: 8 + 3 * p } // dégâts supplémentaires subis par la cible
     },
     describe(palier) {
       return localizedDescribe('SUNDER', clampPalier(palier))

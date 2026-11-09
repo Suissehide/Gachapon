@@ -14,6 +14,9 @@ import {
 import { computeFinalStats } from '../../main/domain/combat/combat-stats.domain'
 import { towerFloorScale } from '../../main/domain/content/tower.definitions'
 import {
+  campaignEnemies,
+  campaignProfile,
+  counterPickElement,
   referenceTeam,
   towerEnemiesAtScale,
   towerFloorProfile,
@@ -101,18 +104,46 @@ export function passiveValuePct(key: string, comp: Comp, battles = 300): number 
  * redirection vers un tank) et surestime les pourcentages fixes (soins, DoT).
  */
 export const GEARED_FLOOR = 15
+/**
+ * Point de mi-parcours : le joueur de référence de 10-5 (niveau 57, pièces
+ * peu communes n12) face à cet étage relevé de 16 % pour partir de 50 % de
+ * victoire. Les combats y sont plus longs qu'au sommet, les effets par
+ * action y pèsent plus.
+ */
+export const MIDGAME_STAGE = { chapter: 10, index: 5, mult: 1.16 } as const
+
+export type GearedBench = 'tower' | 'campaign'
+
+function gearedMatchup(bench: GearedBench, seed: number) {
+  if (bench === 'campaign') {
+    const { chapter, index, mult } = MIDGAME_STAGE
+    const enemies = campaignEnemies(chapter, index, mult)
+    return {
+      profile: campaignProfile(chapter, index),
+      element: counterPickElement(enemies),
+      enemies,
+      seed: `midgame-${seed}`,
+    }
+  }
+  return {
+    profile: towerFloorProfile(GEARED_FLOOR),
+    element: 'WATER',
+    enemies: towerEnemiesAtScale(GEARED_FLOOR, towerFloorScale(GEARED_FLOOR), 0),
+    seed: `geared-${seed}`,
+  }
+}
 
 export function gearedWinRate(
   key: string | null,
   slot: number,
   h: number,
   battles: number,
+  bench: GearedBench = 'tower',
 ): number {
-  const profile = towerFloorProfile(GEARED_FLOOR)
-  const scale = towerFloorScale(GEARED_FLOOR)
   let wins = 0
   for (let i = 0; i < battles; i++) {
-    const teamA = referenceTeam(profile, { element: 'WATER', seed: 1000 + i }).map(
+    const { profile, element, enemies, seed } = gearedMatchup(bench, i)
+    const teamA = referenceTeam(profile, { element, seed: 1000 + i }).map(
       (u, idx): SimulatorUnit => ({
         ...u,
         hp: Math.round(u.hp * h),
@@ -121,9 +152,9 @@ export function gearedWinRate(
       }),
     )
     const r = simulateBattle({
-      seed: `geared-${i}`,
+      seed,
       teamA,
-      teamB: towerEnemiesAtScale(GEARED_FLOOR, scale, 0),
+      teamB: enemies,
       elementAdvantageMult: 1.3,
       elementDisadvantageMult: 1 / 1.3,
       defenseK: 1000,
@@ -140,16 +171,17 @@ export function gearedPassiveValuePct(
   key: string,
   slot: number,
   battles = 300,
+  bench: GearedBench = 'tower',
 ): number {
-  const base = gearedWinRate(null, slot, 1, battles)
-  if (gearedWinRate(key, slot, 1, battles) <= base) {
+  const base = gearedWinRate(null, slot, 1, battles, bench)
+  if (gearedWinRate(key, slot, 1, battles, bench) <= base) {
     return 0
   }
   let lo = 0.4
   let hi = 1
   for (let k = 0; k < 9; k++) {
     const m = (lo + hi) / 2
-    if (gearedWinRate(key, slot, m, battles) >= base) {
+    if (gearedWinRate(key, slot, m, battles, bench) >= base) {
       hi = m
     } else {
       lo = m

@@ -35,9 +35,9 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Provocation',
     labelEn: 'Taunt',
     describeFr: (p) =>
-      `Les attaques ennemies à cible unique le visent avec ${20 + 5 * p} % de chance, et ces coups lui font 55 % de dégâts en moins`,
+      `Les attaques ennemies à cible unique le visent avec ${20 + 5 * p} % de chance, et ces coups lui font moitié moins de dégâts`,
     describeEn: (p) =>
-      `Single-target enemy attacks target it with a ${20 + 5 * p}% chance, and those hits deal 55% less damage to it`,
+      `Single-target enemy attacks target it with a ${20 + 5 * p}% chance, and those hits deal half damage to it`,
   },
   AEGIS: {
     labelFr: 'Égide',
@@ -54,8 +54,10 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
   RIPOSTE: {
     labelFr: 'Riposte',
     labelEn: 'Riposte',
-    describeFr: (p) => `Renvoie ${8 + 4 * p} % des dégâts subis`,
-    describeEn: (p) => `Reflects ${8 + 4 * p}% of damage taken`,
+    describeFr: (p) =>
+      `Contre-attaque chaque coup encaissé à ${18 + 9 * p} % de son attaque`,
+    describeEn: (p) =>
+      `Counters every hit taken with ${18 + 9 * p}% of its attack`,
   },
   REBIRTH: {
     labelFr: 'Renaissance',
@@ -103,9 +105,9 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Puissance',
     labelEn: 'Empowerment',
     describeFr: (p) =>
-      `Chaque attaque portée lui donne +${3 + p} % d'attaque, cumulable 5 fois`,
+      `Chaque attaque portée lui donne +${pct(5 + 2.5 * p, 'fr')} % d'attaque, cumulable 5 fois`,
     describeEn: (p) =>
-      `Each attack landed grants +${3 + p}% ATK, stacking up to 5 times`,
+      `Each attack landed grants +${pct(5 + 2.5 * p, 'en')}% ATK, stacking up to 5 times`,
   },
 
   BULWARK: {
@@ -127,17 +129,17 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Précision',
     labelEn: 'Precision',
     describeFr: (p) =>
-      `Toutes les 2 attaques, inflige un coup critique garanti avec +${10 * p} % de dégâts critiques`,
+      `Toutes les 2 attaques, inflige un coup critique garanti dont les dégâts critiques sont amplifiés de ${15 + 5 * p} %`,
     describeEn: (p) =>
-      `Every 2 attacks, deals a guaranteed critical hit with +${10 * p}% critical damage`,
+      `Every 2 attacks, deals a guaranteed critical hit whose critical damage is amplified by ${15 + 5 * p}%`,
   },
   HAMPER: {
     labelFr: 'Entrave',
     labelEn: 'Shackle',
     describeFr: (p) =>
-      `Chaque coup repousse de ${25 + 8 * p} % la jauge d'action de la cible`,
+      `Chaque coup repousse de ${19 + 6 * p} % la jauge d'action de la cible`,
     describeEn: (p) =>
-      `Each hit pushes the target's action gauge back by ${25 + 8 * p}%`,
+      `Each hit pushes the target's action gauge back by ${19 + 6 * p}%`,
   },
   NEMESIS: {
     labelFr: 'Vengeance',
@@ -159,9 +161,9 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Régénération',
     labelEn: 'Regeneration',
     describeFr: (p) =>
-      `Toutes les 3 actions, soigne ${pct(((2 + p) * 3) / 2, 'fr')} % de ses PV max`,
+      `Toutes les 3 actions, soigne ${pct((2 + p) * 4.5, 'fr')} % de ses PV max`,
     describeEn: (p) =>
-      `Every 3 actions, heals ${pct(((2 + p) * 3) / 2, 'en')}% of its max HP`,
+      `Every 3 actions, heals ${pct((2 + p) * 4.5, 'en')}% of its max HP`,
   },
 
   // -------------------------------------------------------------------------
@@ -171,34 +173,34 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Bénédiction',
     labelEn: 'Blessing',
     describeFr: (p) =>
-      `Toutes les 3 actions, soigne l'allié le plus faible de ${pct(((3 + p) * 6) / 5, 'fr')} % de ses PV max`,
+      `Toutes les 3 actions, soigne l'allié le plus faible de ${pct(((3 + p) * 18) / 5, 'fr')} % de ses PV max`,
     describeEn: (p) =>
-      `Every 3 actions, heals the weakest ally for ${pct(((3 + p) * 6) / 5, 'en')}% of their max HP`,
+      `Every 3 actions, heals the weakest ally for ${pct(((3 + p) * 18) / 5, 'en')}% of their max HP`,
   },
   SANCTUARY: {
     labelFr: 'Sanctuaire',
     labelEn: 'Sanctuary',
     describeFr: (p) =>
-      `Toutes les 3 actions, soigne toute l'équipe de ${pct(((3 + 2 * p) * 6) / 25, 'fr')} % des PV max`,
+      `Toutes les 3 actions, soigne toute l'équipe de ${pct(((3 + 2 * p) * 9) / 10, 'fr')} % des PV max`,
     describeEn: (p) =>
-      `Every 3 actions, heals the whole team for ${pct(((3 + 2 * p) * 6) / 25, 'en')}% of max HP`,
+      `Every 3 actions, heals the whole team for ${pct(((3 + 2 * p) * 9) / 10, 'en')}% of max HP`,
   },
 
   BURN: {
     labelFr: 'Brûlure',
     labelEn: 'Burn',
     describeFr: (p) =>
-      `Inflige une brûlure : ${4 + 2 * p} % de l'ATQ par tour pendant 2 tours`,
+      `Inflige une brûlure : ${6 + 3 * p} % des dégâts du coup par tour pendant 2 tours`,
     describeEn: (p) =>
-      `Inflicts a burn: ${4 + 2 * p}% of ATK per turn for 2 turns`,
+      `Inflicts a burn: ${6 + 3 * p}% of the hit's damage per turn for 2 turns`,
   },
   POISON: {
     labelFr: 'Poison',
     labelEn: 'Poison',
     describeFr: (p) =>
-      `Empoisonne la cible : ${pct((2 + 3 * p) / 10, 'fr')} % de ses PV max par tour pendant 2 tours`,
+      `Empoisonne la cible : ${pct((2 + 3 * p) / 4, 'fr')} % de ses PV max par tour pendant 2 tours`,
     describeEn: (p) =>
-      `Poisons the target: ${pct((2 + 3 * p) / 10, 'en')}% of its max HP per turn for 2 turns`,
+      `Poisons the target: ${pct((2 + 3 * p) / 4, 'en')}% of its max HP per turn for 2 turns`,
   },
 
   MOMENTUM: {
@@ -217,17 +219,17 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Garde du corps',
     labelEn: 'Bodyguard',
     describeFr: (p) =>
-      `Détourne sur lui ${25 + 6 * p} % des dégâts subis par ses alliés, et n'en subit qu'un cinquième`,
+      `Détourne sur lui ${25 + 6 * p} % des dégâts subis par ses alliés, et n'en subit que 40 %`,
     describeEn: (p) =>
-      `Redirects ${25 + 6 * p}% of the damage dealt to its allies onto itself, and takes only a fifth of it`,
+      `Redirects ${25 + 6 * p}% of the damage dealt to its allies onto itself, and takes only 40% of it`,
   },
   HUNT: {
     labelFr: 'Marque du chasseur',
     labelEn: "Hunter's Mark",
     describeFr: (p) =>
-      `Marque la cible de son premier coup : tant qu'elle vit, les attaques de son équipe la visent avec ${28 + 7 * p} % de chance`,
+      `Marque la cible de son premier coup : son équipe la vise avec ${28 + 7 * p} % de chance et lui inflige 15 % de dégâts en plus ; quand elle tombe, il rejoue aussitôt`,
     describeEn: (p) =>
-      `Marks the target of its first hit: while it lives, its team's attacks target it with a ${28 + 7 * p}% chance`,
+      `Marks the target of its first hit: its team targets it with a ${28 + 7 * p}% chance and deals 15% more damage to it; when it falls, it acts again at once`,
   },
 
   // -------------------------------------------------------------------------
@@ -237,9 +239,9 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Étourdissement',
     labelEn: 'Stun',
     describeFr: (p) =>
-      `Chaque coup a ${23 + 7 * p} % de chance d'étourdir la cible, qui saute sa prochaine action`,
+      `Chaque coup a ${17 + 5 * p} % de chance d'étourdir la cible, qui saute sa prochaine action`,
     describeEn: (p) =>
-      `Each hit has a ${23 + 7 * p}% chance to stun the target, which skips its next action`,
+      `Each hit has a ${17 + 5 * p}% chance to stun the target, which skips its next action`,
   },
   WEAKEN: {
     labelFr: 'Affaiblissement',
@@ -253,8 +255,8 @@ export const PASSIVE_TEXT: Record<PassiveKey, PassiveTextDefinition> = {
     labelFr: 'Brise-armure',
     labelEn: 'Sunder',
     describeFr: (p) =>
-      `Chaque coup réduit de ${30 + 9 * p} % la DEF de la cible pendant ses 2 prochaines actions`,
+      `Chaque coup rend la cible vulnérable : elle subit ${8 + 3 * p} % de dégâts en plus pendant ses 2 prochaines actions`,
     describeEn: (p) =>
-      `Each hit lowers the target's DEF by ${30 + 9 * p}% for its next 2 actions`,
+      `Each hit leaves the target vulnerable: it takes ${8 + 3 * p}% more damage for its next 2 actions`,
   },
 }
