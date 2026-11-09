@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { RAID_TIERS } from '../../../main/domain/content/raid.definitions'
+import { MAX_TEAMS_PER_USER } from '../../../main/domain/team/team.domain'
 import {
   raidElementForWeek,
   raidWeekKey,
@@ -425,14 +426,15 @@ describe('routes de raid', () => {
 
     for (const uid of [userIdA, userIdB]) {
       const rewards = await prisma.userReward.findMany({
-        where: { userId: uid, source: 'RAID', sourceId: { startsWith: `${raid.id}:` } },
+        where: { userId: uid, source: 'RAID', sourceId: { contains: `:${raid.id}:` } },
         orderBy: { sourceId: 'asc' },
       })
+      const weekKey = raidWeekKey(new Date())
       expect(rewards.map((r: any) => r.sourceId)).toEqual([
-        `${raid.id}:100`,
-        `${raid.id}:25`,
-        `${raid.id}:50`,
-        `${raid.id}:75`,
+        `${weekKey}:${raid.id}:100`,
+        `${weekKey}:${raid.id}:25`,
+        `${weekKey}:${raid.id}:50`,
+        `${weekKey}:${raid.id}:75`,
       ])
       expect(rewards.every((r: any) => r.claimedAt === null)).toBe(true)
     }
@@ -480,7 +482,7 @@ describe('routes de raid', () => {
     expect(after.killedAt.toISOString()).toBe(raid.killedAt.toISOString())
 
     const rewards = await prisma.userReward.findMany({
-      where: { userId: userIdC, source: 'RAID', sourceId: { startsWith: `${raid.id}:` } },
+      where: { userId: userIdC, source: 'RAID', sourceId: { contains: `:${raid.id}:` } },
     })
     expect(rewards).toHaveLength(4)
 
@@ -491,5 +493,48 @@ describe('routes de raid', () => {
       headers: { cookie: cookiesC },
     })
     expect(again.statusCode).toBe(409)
+  })
+
+  it('POST attack : recréer des équipes ne paie pas plus de MAX_TEAMS_PER_USER raids par semaine', async () => {
+    // Faille fermée : la clé des lots est par raid et un raid naît avec
+    // chaque équipe. Créer, tuer, supprimer, recréer donnait des lots
+    // neufs à chaque cycle — le plafond d'équipes ne borne que les
+    // équipes simultanées. Les lots sont désormais bornés à
+    // MAX_TEAMS_PER_USER raids distincts par semaine et par joueur.
+    const d = await registerAndLogin('D')
+    const card = await prisma.card.findFirst({ where: { nameFr: `RaidCard${suffix}` } })
+    const uc = await prisma.userCard.create({
+      data: { userId: d.userId, cardId: card.id, quantity: 1, level: 60, palier: 6 },
+    })
+    await setCombatTeam(app, d.cookies, 'raid', [uc.id])
+
+    async function cycle(i: number) {
+      const team = await app.inject({
+        method: 'POST',
+        url: '/teams',
+        headers: { cookie: d.cookies },
+        payload: { name: `Churn${i}${suffix}` },
+      })
+      expect(team.statusCode).toBe(201)
+      const id = team.json().id as string
+      await app.inject({ method: 'GET', url: `/teams/${id}/raid`, headers: { cookie: d.cookies } })
+      const raid = await prisma.teamRaid.findFirst({ where: { teamId: id } })
+      await prisma.teamRaid.update({ where: { id: raid.id }, data: { hp: 1 } })
+      const res = await app.inject({
+        method: 'POST',
+        url: `/teams/${id}/raid/attack`,
+        headers: { cookie: d.cookies },
+      })
+      expect(res.statusCode).toBe(200)
+      await prisma.team.delete({ where: { id } })
+      return res.json().newTiers.length as number
+    }
+
+    for (let i = 0; i < MAX_TEAMS_PER_USER; i++) {
+      expect(await cycle(i)).toBe(4)
+    }
+    expect(await cycle(MAX_TEAMS_PER_USER)).toBe(0)
+    const rewards = await prisma.userReward.count({ where: { userId: d.userId, source: 'RAID' } })
+    expect(rewards).toBe(4 * MAX_TEAMS_PER_USER)
   })
 })

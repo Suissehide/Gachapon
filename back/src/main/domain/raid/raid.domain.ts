@@ -47,6 +47,7 @@ import {
   setBonusesFromConfig,
 } from '../equipment/set-bonuses'
 import { retryOnSerialization } from '../shared/retry-serialization'
+import { MAX_TEAMS_PER_USER } from '../team/team.domain'
 import type { TowerElement } from '../tower/tower-slots'
 import {
   attacksRemaining,
@@ -273,6 +274,7 @@ export class RaidDomain implements IRaidDomain {
           const newTiers = await this.#grantCrossedTiers(
             tx,
             raid,
+            userId,
             hpBefore,
             hpAfter,
             prior === 0,
@@ -381,10 +383,12 @@ export class RaidDomain implements IRaidDomain {
    * Verse aux participants les paliers franchis (idempotent) et renvoie
    * ceux que ce coup vient de franchir — ou, pour la PREMIÈRE attaque du
    * joueur sur ce raid, tous ceux qu'il vient de recevoir en rattrapage.
+   * Vide si l'attaquant a épuisé ses raids payés de la semaine.
    */
   async #grantCrossedTiers(
     tx: PrimaTransactionClient,
-    raid: { id: string; level: number; maxHp: number },
+    raid: { id: string; weekKey: string; level: number; maxHp: number },
+    attackerId: string,
     hpBefore: number,
     hpAfter: number,
     firstAttack: boolean,
@@ -405,23 +409,52 @@ export class RaidDomain implements IRaidDomain {
       // Clé sur le RAID (raid.id), qui est unique par équipe ET par
       // semaine : les lots de palier se gagnent DANS une équipe, donc un
       // joueur qui joue le raid de plusieurs équipes les gagne dans
-      // chacune. Le plafond d'équipes par joueur (MAX_TEAMS_PER_USER,
-      // team.domain.ts) borne volontairement ce cumul — c'est lui le
-      // levier, pas la clé. Avec la contrainte unique
-      // [userId, source, sourceId], un palier donné d'un raid donné
-      // n'est jamais versé deux fois, et un joueur arrivé après coup
-      // reçoit d'un coup tous les paliers déjà franchis.
+      // chacune. Avec la contrainte unique [userId, source, sourceId], un
+      // palier donné d'un raid donné n'est jamais versé deux fois, et un
+      // joueur arrivé après coup reçoit d'un coup tous les paliers déjà
+      // franchis.
+      //
+      // Le cumul est borné à MAX_TEAMS_PER_USER raids DISTINCTS par
+      // semaine, compté sur les lots déjà versés et non sur les équipes :
+      // une équipe supprimée emporte son raid et ses attaques (cascade),
+      // donc créer, tuer, dissoudre et recréer une équipe offrait un boss
+      // neuf de niveau 0 et des lots neufs à chaque cycle. La semaine est
+      // dans la clé pour que ce comptage ne dépende d'aucune ligne
+      // supprimable.
+      const weekPrefix = `${raid.weekKey}:`
+      const held = await tx.userReward.findMany({
+        where: {
+          userId: { in: participants.map((p) => p.userId) },
+          source: 'RAID',
+          sourceId: { startsWith: weekPrefix },
+        },
+        select: { userId: true, sourceId: true },
+      })
+      const raidsByUser = new Map<string, Set<string>>()
+      for (const r of held) {
+        const raidId = (r.sourceId ?? '').split(':')[1] ?? ''
+        const set = raidsByUser.get(r.userId) ?? new Set<string>()
+        set.add(raidId)
+        raidsByUser.set(r.userId, set)
+      }
+      const eligible = participants.filter((p) => {
+        const raids = raidsByUser.get(p.userId)
+        return !raids || raids.has(raid.id) || raids.size < MAX_TEAMS_PER_USER
+      })
       await tx.userReward.createMany({
-        data: participants.flatMap((p) =>
+        data: eligible.flatMap((p) =>
           after.map((t) => ({
             userId: p.userId,
             rewardId: t.rewardId,
             source: 'RAID' as const,
-            sourceId: `${raid.id}:${t.pct}`,
+            sourceId: `${weekPrefix}${raid.id}:${t.pct}`,
           })),
         ),
         skipDuplicates: true,
       })
+      if (!eligible.some((p) => p.userId === attackerId)) {
+        return []
+      }
     }
     const beforePcts = new Set(before.map((t) => t.pct))
     return after
