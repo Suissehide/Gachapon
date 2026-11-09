@@ -57,6 +57,7 @@ export const Route = createFileRoute('/_authenticated/team/$id_/raid')({
 function getFightLabel(
   hasTeam: boolean,
   killed: boolean,
+  claimable: boolean,
   remaining: number,
   t: TFunction<'team'>,
 ): string {
@@ -64,7 +65,9 @@ function getFightLabel(
     return t('raidPage.fightLabelTeamRequired')
   }
   if (killed) {
-    return t('raidPage.fightLabelDefeated')
+    return claimable
+      ? t('raidPage.fightLabelClaim')
+      : t('raidPage.fightLabelDefeated')
   }
   if (remaining === 0) {
     return t('raidPage.fightLabelNoAttacksToday')
@@ -124,6 +127,19 @@ function RaidAttackPage() {
   )
 }
 
+/**
+ * Boss mort : encore une attaque pour qui n'a jamais frappé ce raid, afin de
+ * toucher les paliers (règle serveur, voir raid.domain#attack).
+ */
+function attackState(view: RaidView) {
+  const killed = view.killedAt != null
+  return {
+    killed,
+    claimable: killed && view.me.attacks === 0,
+    remaining: view.me.attacksRemainingToday,
+  }
+}
+
 function RaidAttackPageContent() {
   const { t } = useTranslation('team')
   const { id } = Route.useParams()
@@ -162,9 +178,9 @@ function RaidAttackPageContent() {
   }
 
   const hasTeam = (combatTeam.data?.team.length ?? 0) > 0
-  const remaining = raid.data?.me.attacksRemainingToday ?? 0
-  const killed = raid.data?.killedAt != null
-  const canAttack = hasTeam && remaining > 0 && !killed && !attack.isPending
+  const { killed, claimable, remaining } = attackState(raid.data)
+  const canAttack =
+    hasTeam && remaining > 0 && (!killed || claimable) && !attack.isPending
 
   const handleAttack = () => {
     setPrepOpen(false)
@@ -187,7 +203,7 @@ function RaidAttackPageContent() {
     }
   }
 
-  const fightLabel = getFightLabel(hasTeam, killed, remaining, t)
+  const fightLabel = getFightLabel(hasTeam, killed, claimable, remaining, t)
 
   return (
     <PageShell>
@@ -347,6 +363,19 @@ function RaidRewardPreview({ raid }: { raid: RaidView }) {
   )
 }
 
+/** Titre du résultat : kill, coup sur un boss déjà mort (lots de rattrapage), ou dégâts. */
+function resultTitle(result: RaidAttackResult, t: TFunction<'team'>): string {
+  if (result.killed) {
+    return t('raidPage.bossDefeatedExclaim')
+  }
+  if (result.hpBefore === 0) {
+    return t('raidPage.rewardsClaimed')
+  }
+  return t('raidPage.damageDealt', {
+    count: formatNumber(result.damage, currentLocale()),
+  })
+}
+
 function RaidResultPopup({
   result,
   onClose,
@@ -381,11 +410,7 @@ function RaidResultPopup({
             }
           />
           <h2 className="mt-4 font-display text-3xl font-bold text-text">
-            {result.killed
-              ? t('raidPage.bossDefeatedExclaim')
-              : t('raidPage.damageDealt', {
-                  count: formatNumber(result.damage, currentLocale()),
-                })}
+            {resultTitle(result, t)}
           </h2>
 
           <div className="mt-5 w-full">

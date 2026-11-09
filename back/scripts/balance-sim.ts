@@ -542,8 +542,11 @@ function raidReferenceTeam(
 
 // Mode raid : mesure les dégâts infligés au boss (et les tours survécus) par
 // l'équipe de référence, pour chaque boss × palier × niveau de contre-pick.
-// Sert à dériver `raid.baseHpPerMember` = 11 × D_ref (11 attaques ≈ 5,5
-// jours à 2 attaques/jour) et à vérifier que le palier 5 survit ~7-9 tours.
+// Sert à dériver `raid.baseHpPerMember` = 16,5 × D_ref (5,5 jours à 3
+// attaques/jour, bonus d'équipe `raid` compris) et à vérifier que le palier 5
+// survit ~7-9 tours. PÉRIMÉ pour la mesure de D_ref : `playerTeam` ignore
+// crit et pénétration ; mesurer avec referenceTeam(towerFloorProfile(n)) du
+// harnais prisma/seed/balance-calibration.ts.
 function mainRaid(): void {
   // eslint-disable-next-line no-console
   console.log('boss\tpalier\tcounterpick\tmean\tp10\tp90\tturns')

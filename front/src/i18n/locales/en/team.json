@@ -316,14 +316,15 @@
     "attackDefeated": "Boss defeated",
     "attackNoneLeft": "No attacks left today",
     "attackAvailable": "Attack ({{remaining}}/{{perDay}})",
+    "attackClaim": "Claim rewards",
     "viewBossCardAriaLabel": "View the boss card {{bossName}} full-size",
     "bossDefeatedOverlay": "Defeated",
     "tierInProgress": " · IN PROGRESS",
     "tierRewardCard": "{{rarity}} card",
     "levelBadge": "LVL. {{level}}",
     "levelBadgeTitle": "The boss gets stronger every time the team brings it down, and so do the rewards.",
-    "calibration_one": "The boss is calibrated for {{count}} member. Every team victory adds {{bonusPct}}% health to it and raises the rewards; a week without a kill brings it back down a level.",
-    "calibration_other": "The boss is calibrated for {{count}} members. Every team victory adds {{bonusPct}}% health to it and raises the rewards; a week without a kill brings it back down a level."
+    "calibration_one": "The boss is calibrated for {{count}} member. Every team victory adds {{bonusPct}}% of its base health and raises the rewards; a week without a kill brings it back down a level.",
+    "calibration_other": "The boss is calibrated for {{count}} members. Every team victory adds {{bonusPct}}% of its base health and raises the rewards; a week without a kill brings it back down a level."
   },
   "hpBar": {
     "remainingOfMax": "{{remaining}} / {{max}} HP"
@@ -369,6 +370,7 @@
     "fightLabelDefeated": "Boss defeated",
     "fightLabelNoAttacksToday": "No attacks left today",
     "fightLabelAttack": "Attack",
+    "fightLabelClaim": "Claim rewards",
     "loadError": "Couldn't load this raid.",
     "backToTeam": "Back to team",
     "breadcrumbTeamFallback": "Team",
@@ -387,6 +389,7 @@
     "allTiersReached": "All tiers have been reached.",
     "resultTitle": "Attack result",
     "bossDefeatedExclaim": "Boss defeated!",
+    "rewardsClaimed": "Rewards claimed",
     "damageDealt": "{{count}} damage",
     "tiersCrossed_one": "Tier crossed for the whole team",
     "tiersCrossed_other": "Tiers crossed for the whole team",

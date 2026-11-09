@@ -106,7 +106,7 @@ export type RaidAttackResult = {
   hpAfter: number
   maxHp: number
   killed: boolean
-  /** Paliers franchis PAR CETTE attaque (pour l'écran de résultat). */
+  /** Paliers franchis PAR CETTE attaque — tous ceux reçus, pour la première attaque du joueur sur ce raid (écran de résultat). */
   newTiers: RaidTierView[]
   attacksRemainingToday: number
 }

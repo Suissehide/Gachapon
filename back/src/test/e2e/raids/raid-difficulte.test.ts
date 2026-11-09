@@ -6,6 +6,7 @@ import {
   raidWeekKey,
 } from '../../../main/domain/raid/raid-rules'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { overrideConfig } from '../../helpers/config-overrides'
 
 const WEAK_BOSS_SPEC = {
   baseHp: 100,
@@ -26,6 +27,7 @@ const DAY_MS = 86_400_000
 
 describe('raid — difficulté progressive', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
+  let restoreConfig: () => Promise<void>
   let prisma: any
   let bossId: string
   let cookies: string
@@ -105,10 +107,15 @@ describe('raid — difficulté progressive', () => {
     const { postgresOrm, configService } = (app as any).iocContainer
     prisma = postgresOrm.prisma
 
-    await configService.set('raid.baseHpPerMember', HP_PER_MEMBER)
-    await configService.set('raid.minMembers', 10)
-    await configService.set('raid.levelHpBonusPct', 10)
-    await configService.set('raid.levelRewardPct', 5)
+    // `GlobalConfig` est partagée par tout le run : rendue dans l'`afterAll`,
+    // sinon `economy-config.e2e.test.ts` lit ces valeurs à la place des
+    // DEFAULTS selon l'ordre de Jest.
+    restoreConfig = await overrideConfig(configService, {
+      'raid.baseHpPerMember': HP_PER_MEMBER,
+      'raid.minMembers': 10,
+      'raid.levelHpBonusPct': 10,
+      'raid.levelRewardPct': 5,
+    })
 
     // Paliers de référence pris sur RAID_TIERS
     // (src/main/domain/content/raid.definitions.ts), pas
@@ -155,6 +162,7 @@ describe('raid — difficulté progressive', () => {
   })
 
   afterAll(async () => {
+    await restoreConfig()
     await app.close()
   })
 
@@ -226,7 +234,7 @@ describe('raid — difficulté progressive', () => {
     expect(res.json().maxHp).toBe(HP_PER_MEMBER * 10)
   })
 
-  it('le niveau compose le bonus de PV par-dessus le plancher', async () => {
+  it('le niveau ajoute le bonus de PV par-dessus le plancher, linéairement', async () => {
     const { teamId, cookies } = await freshTeam('HP2')
     await pastRaid(teamId, 1, 1, true) // victoire au niveau 1 → niveau 2
     const res = await app.inject({
@@ -234,8 +242,8 @@ describe('raid — difficulté progressive', () => {
       url: `/teams/${teamId}/raid`,
       headers: { cookie: cookies },
     })
-    // 1000 × 10 × 1,1² = 12 100
-    expect(res.json().maxHp).toBe(12100)
+    // 1000 × 10 × (1 + 0,1 × 2) = 12 000
+    expect(res.json().maxHp).toBe(12000)
   })
 
   it('les lots affichés sont majorés du bonus de niveau', async () => {

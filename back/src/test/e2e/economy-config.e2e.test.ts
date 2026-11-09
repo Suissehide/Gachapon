@@ -86,8 +86,8 @@ describe('GET /economy/config', () => {
       attacksPerDay: 2,
       timeoutTurns: 10,
       minMembers: 10,
-      levelHpBonusPct: 10,
-      levelRewardPct: 5,
+      levelHpBonusPct: 100,
+      levelRewardPct: 50,
     })
   })
 

@@ -204,7 +204,15 @@ export class RaidDomain implements IRaidDomain {
           if (!raid) {
             throw Boom.notFound(errorMessage('raid.notFound'))
           }
-          if (raid.killedAt || raid.hp <= 0) {
+          // Un boss mort reste attaquable UNE fois par membre qui n'a pas
+          // encore frappé ce raid : le coup n'inflige rien (dégâts plafonnés
+          // aux 0 PV restants) mais l'inscrit parmi les participants, donc
+          // lui vaut tous les paliers franchis. Sans cela, un kill le
+          // premier jour privait le reste de l'équipe de toute la semaine.
+          const prior = await tx.raidAttack.count({
+            where: { raidId: raid.id, userId },
+          })
+          if ((raid.killedAt || raid.hp <= 0) && prior > 0) {
             throw Boom.conflict(errorMessage('raid.bossAlreadyDefeated'))
           }
 
@@ -250,7 +258,7 @@ export class RaidDomain implements IRaidDomain {
           // et que la somme des contributions ne dépasse jamais la barre.
           const damage = Math.min(damageDealtToBoss(sim.log), hpBefore)
           const hpAfter = hpBefore - damage
-          const killed = hpAfter === 0
+          const killed = hpBefore > 0 && hpAfter === 0
 
           await tx.teamRaid.update({
             where: { id: raid.id },
@@ -267,6 +275,7 @@ export class RaidDomain implements IRaidDomain {
             raid,
             hpBefore,
             hpAfter,
+            prior === 0,
           )
 
           return {
@@ -287,6 +296,10 @@ export class RaidDomain implements IRaidDomain {
     )
 
     // Après commit : la barre bouge en direct chez les coéquipiers connectés.
+    // Rien à pousser pour un coup sur un boss déjà mort.
+    if (outcome.hpBefore === 0) {
+      return outcome
+    }
     const attacker = team.members.find((m) => m.userId === userId)?.user
     const event: RaidAttackEvent = {
       type: 'raid:attack',
@@ -366,13 +379,15 @@ export class RaidDomain implements IRaidDomain {
 
   /**
    * Verse aux participants les paliers franchis (idempotent) et renvoie
-   * ceux que ce coup vient de franchir.
+   * ceux que ce coup vient de franchir — ou, pour la PREMIÈRE attaque du
+   * joueur sur ce raid, tous ceux qu'il vient de recevoir en rattrapage.
    */
   async #grantCrossedTiers(
     tx: PrimaTransactionClient,
     raid: { id: string; level: number; maxHp: number },
     hpBefore: number,
     hpAfter: number,
+    firstAttack: boolean,
   ): Promise<RaidTierView[]> {
     const tiers = await tx.raidTier.findMany({
       where: { level: raid.level },
@@ -410,7 +425,7 @@ export class RaidDomain implements IRaidDomain {
     }
     const beforePcts = new Set(before.map((t) => t.pct))
     return after
-      .filter((t) => !beforePcts.has(t.pct))
+      .filter((t) => firstAttack || !beforePcts.has(t.pct))
       .map((t) => tierView(t, true))
   }
 

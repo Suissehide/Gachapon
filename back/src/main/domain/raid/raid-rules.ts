@@ -59,7 +59,7 @@ export function raidElementForWeek(weekKey: string): TowerElement {
 export type RaidHpParams = {
   /** Effectif MINIMUM facturé, même si l'équipe est plus petite. */
   minMembers: number
-  /** Points de pourcentage de PV ajoutés par niveau, composés (10 = 10 %). */
+  /** Points de pourcentage de la BASE ajoutés par niveau, linéaires (100 = un boss de plus par niveau). */
   levelBonusPct: number
   level: number
 }
@@ -67,7 +67,11 @@ export type RaidHpParams = {
 /**
  * PV du boss, figés à la création du raid. Le plancher d'effectif empêche
  * l'équipe montée à un joueur d'affronter un boss à sa taille ; le niveau
- * compose par-dessus, sans plafond (voir `nextRaidLevel`).
+ * ajoute une part de la base par cran, linéairement et sans plafond (voir
+ * `nextRaidLevel`). Linéaire et non composé : le boss ne dépend ni des
+ * membres ni de leur progression, et un joueur de fin de jeu inflige ~60 fois
+ * les dégâts du joueur de référence — à +10 % composés, le niveau mettait des
+ * dizaines de semaines à suivre.
  */
 export function raidMaxHp(
   baseHpPerMember: number,
@@ -75,7 +79,7 @@ export function raidMaxHp(
   { minMembers, levelBonusPct, level }: RaidHpParams,
 ): number {
   const members = Math.max(minMembers, memberCount)
-  const levelMult = (1 + levelBonusPct / 100) ** Math.max(0, level)
+  const levelMult = 1 + (levelBonusPct / 100) * Math.max(0, level)
   return Math.max(1, Math.round(baseHpPerMember * members * levelMult))
 }
 

@@ -41,9 +41,11 @@ describe('routes de raid', () => {
   let cookiesC: string
   let userIdA: string
   let userIdB: string
+  let userIdC: string
   let teamId: string
   let cardIdA: string
   let cardIdB: string
+  let cardIdC: string
 
   const suffix = Date.now()
   const password = 'Password123!'
@@ -143,10 +145,12 @@ describe('routes de raid', () => {
     cookiesA = a.cookies
     cookiesB = b.cookies
     cookiesC = c.cookies
+    userIdC = c.userId
 
     for (const [uid, setter] of [
       [userIdA, (id: string) => (cardIdA = id)],
       [userIdB, (id: string) => (cardIdB = id)],
+      [userIdC, (id: string) => (cardIdC = id)],
     ] as const) {
       const uc = await prisma.userCard.create({
         data: { userId: uid, cardId: card.id, quantity: 1, level: 60, palier: 6 },
@@ -441,11 +445,50 @@ describe('routes de raid', () => {
     expect(view.json().killedAt).not.toBeNull()
     expect(view.json().tiers.every((t: any) => t.reached)).toBe(true)
 
-    // B a encore une attaque, mais le boss est mort.
+    // B a encore une attaque, mais le boss est mort et B a déjà frappé.
     const again = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesB },
+    })
+    expect(again.statusCode).toBe(409)
+  })
+
+  it('POST attack : un membre qui n’a jamais frappé peut attaquer le boss mort et reçoit tous les paliers', async () => {
+    await prisma.teamMember.create({
+      data: { teamId, userId: userIdC, role: 'MEMBER' },
+    })
+    await setCombatTeam(app, cookiesC, 'raid', [cardIdC])
+    const raid = await prisma.teamRaid.findFirst({
+      where: { teamId },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/raid/attack`,
+      headers: { cookie: cookiesC },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.damage).toBe(0)
+    expect(body.hpBefore).toBe(0)
+    // Pas un nouveau kill : killedAt ne doit pas être réécrit.
+    expect(body.killed).toBe(false)
+    expect(body.newTiers.map((t: any) => t.pct).sort()).toEqual([100, 25, 50, 75])
+    const after = await prisma.teamRaid.findUnique({ where: { id: raid.id } })
+    expect(after.killedAt.toISOString()).toBe(raid.killedAt.toISOString())
+
+    const rewards = await prisma.userReward.findMany({
+      where: { userId: userIdC, source: 'RAID', sourceId: { startsWith: `${raid.id}:` } },
+    })
+    expect(rewards).toHaveLength(4)
+
+    // Une seule fois : C est désormais participant, le boss reste mort.
+    const again = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/raid/attack`,
+      headers: { cookie: cookiesC },
     })
     expect(again.statusCode).toBe(409)
   })

@@ -209,6 +209,27 @@ function BossPowerBadge({
   )
 }
 
+/** Un bouton grisé muet ne dit rien : le libellé porte lui-même la raison. */
+function attackLabelFor(
+  me: RaidView['me'],
+  killed: boolean,
+  claimable: boolean,
+  t: TFunction<'team'>,
+): string {
+  if (killed) {
+    return claimable
+      ? t('raidPanel.attackClaim')
+      : t('raidPanel.attackDefeated')
+  }
+  if (me.attacksRemainingToday === 0) {
+    return t('raidPanel.attackNoneLeft')
+  }
+  return t('raidPanel.attackAvailable', {
+    remaining: me.attacksRemainingToday,
+    perDay: me.attacksPerDay,
+  })
+}
+
 export function RaidPanel({ teamId }: { teamId: string }) {
   const { t } = useTranslation('team')
   const { data: raid, isLoading, isError } = useRaid(teamId)
@@ -251,15 +272,10 @@ export function RaidPanel({ teamId }: { teamId: string }) {
   const killed = raid.killedAt !== null
   const ended = killed || minutesRemaining(raid.endsAt) <= 0
   const noAttackLeft = raid.me.attacksRemainingToday === 0
-  // Un bouton grisé muet ne dit rien : le libellé porte lui-même la raison.
-  const attackLabel = killed
-    ? t('raidPanel.attackDefeated')
-    : noAttackLeft
-      ? t('raidPanel.attackNoneLeft')
-      : t('raidPanel.attackAvailable', {
-          remaining: raid.me.attacksRemainingToday,
-          perDay: raid.me.attacksPerDay,
-        })
+  // Boss mort : un membre qui n'a pas encore frappé ce raid peut encore
+  // attaquer une fois pour toucher les paliers (règle serveur).
+  const claimable = killed && raid.me.attacks === 0
+  const attackLabel = attackLabelFor(raid.me, killed, claimable, t)
   // « En cours » = le premier palier non atteint. `reached` est servi par le
   // serveur, la position ne l'est pas.
   const nextTierIndex = raid.tiers.findIndex((t) => !t.reached)
@@ -299,7 +315,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
 
           {/* `.tm-btn--amber` : radius 12, padding 11/18, 700 à 14 px, halo
               ambré. La variante `default` du bouton porte déjà le fond. */}
-          {killed || noAttackLeft ? (
+          {(killed && !claimable) || noAttackLeft ? (
             <Button variant="amber" size="action" disabled>
               <Swords className="h-4 w-4" />
               {attackLabel}

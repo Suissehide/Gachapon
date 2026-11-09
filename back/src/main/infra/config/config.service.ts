@@ -204,23 +204,27 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // Calé sur les dégâts de l'équipe de référence (épiques palier 5,
   // équipement réel du harnais balance-calibration.ts), ultimes d'archétype
   // compris : ils ajoutent ~7 % de dégâts au boss (scripts/balance-sim.ts).
-  'raid.baseHpPerMember': 164000,
+  // Compté pour 3 attaques par jour, pas 2 : le bonus d'équipe `raid` au
+  // rang 2 (+1 attaque) s'obtient vite, et les PV par membre valent donc
+  // 16,5 × D_ref (3 × 5,5 jours) au lieu de 11 × D_ref.
+  'raid.baseHpPerMember': 246000,
   // Effectif MINIMUM facturé dans les PV du boss, même pour une équipe plus
   // petite : sans lui, monter une équipe à un joueur donnait un boss à sa
   // taille et les quatre paliers toutes les semaines.
   'raid.minMembers': 10,
-  // Points de pourcentage de PV ajoutés PAR NIVEAU, composés. Le niveau monte
-  // d'un cran par victoire et redescend d'un cran par semaine sans victoire :
-  // le système s'arrête tout seul là où l'équipe ne suit plus, d'où l'absence
-  // de plafond. À 10 et 162000 PV par membre, une équipe assidue plafonnait
-  // vers le niveau 2 (niveau 6 avec le bonus d'équipe `raid` au rang 2) ; à
-  // 113400, il faut ~4 crans de plus pour retrouver les mêmes PV (1,1^4 ≈ 1,46).
-  'raid.levelHpBonusPct': 10,
+  // Points de pourcentage de la BASE ajoutés PAR NIVEAU, linéaires : le
+  // niveau n vaut (1 + n) boss de base. Le niveau monte d'un cran par
+  // victoire et redescend d'un cran par semaine sans victoire : le système
+  // s'arrête tout seul là où l'équipe ne suit plus, d'où l'absence de
+  // plafond. La pente est forte parce que le boss est le même pour tout le
+  // monde : un membre de fin de jeu (tour 20, vernis) inflige ~1,5 M par
+  // attaque, le boss de base 1,64 M — il le tuait seul le premier jour.
+  'raid.levelHpBonusPct': 100,
   // Bonus de lot par niveau, en POINTS DE POURCENTAGE de la base de chaque
   // palier. DOIT rester strictement sous `raid.levelHpBonusPct` : au-dessus,
   // les lots croissent plus vite que les PV et monter en difficulté devient
   // un farm plus rentable. L'invariant est gardé par un test unitaire.
-  'raid.levelRewardPct': 5,
+  'raid.levelRewardPct': 50,
   // Duel de tirage : chaque joueur engage ses `pullCount` prochains tirages,
   // a `acceptHours` pour accepter et `deadlineHours` pour les faire.
   'duel.pullCount': 5,

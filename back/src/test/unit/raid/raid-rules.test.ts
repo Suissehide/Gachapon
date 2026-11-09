@@ -90,14 +90,16 @@ describe('raid-rules — PV', () => {
     expect(raidMaxHp(20000, 14, base)).toBe(280000)
   })
 
-  it('chaque niveau compose le bonus de PV', () => {
+  it('chaque niveau ajoute la même part de la base, sans composer', () => {
     expect(raidMaxHp(20000, 10, { ...base, level: 1 })).toBe(220000)
-    expect(raidMaxHp(20000, 10, { ...base, level: 3 })).toBe(266200)
+    expect(raidMaxHp(20000, 10, { ...base, level: 3 })).toBe(260000)
+    expect(raidMaxHp(20000, 10, { ...base, levelBonusPct: 100, level: 3 })).toBe(800000)
   })
 
   it('arrondit à l’entier', () => {
-    // 162000 × 10 × 1,1^5 = 2 609 026,2
-    expect(raidMaxHp(162000, 10, { ...base, level: 5 })).toBe(2609026)
+    // 164000 × 10 × (1 + 0,25 × 3) = 2 870 000 ; 12345 × 10 × 1,3 = 160 485
+    expect(raidMaxHp(164000, 10, { ...base, levelBonusPct: 25, level: 3 })).toBe(2870000)
+    expect(raidMaxHp(12345, 10, { ...base, levelBonusPct: 15, level: 2 })).toBe(160485)
   })
 })
 
@@ -262,9 +264,10 @@ describe('raid-rules — lots par niveau', () => {
  * signalerait rien — précisément le scénario qui a produit cette tâche.
  * Même patron que `energy-pack-pricing.test.ts`.
  *
- * Les PV du boss croissent de `raid.levelHpBonusPct` % composés par niveau,
- * les lots de `raid.levelRewardPct` % de leur base — donc la récompense par
- * point de dégât doit décroître STRICTEMENT à chaque cran. Sans quoi monter
+ * Les PV du boss croissent de `raid.levelHpBonusPct` % de leur base par
+ * niveau, les lots de `raid.levelRewardPct` % de la leur, tous deux
+ * linéairement — donc la récompense par point de dégât doit décroître
+ * STRICTEMENT à chaque cran. Sans quoi monter
  * en difficulté deviendrait un farm plus rentable, exactement le contraire
  * du but de la mécanique.
  *
