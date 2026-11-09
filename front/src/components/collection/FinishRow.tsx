@@ -77,7 +77,7 @@ export function FinishRow({ finishes, shown, onPick }: Props) {
       </fieldset>
       {bonusPct > 0 && (
         <span
-          className="rounded-full px-2 py-[3px] font-mono text-[10px] font-extrabold leading-none text-text shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]"
+          className="inline-flex h-5 items-center rounded-full px-2 font-mono text-[10px] font-extrabold leading-none text-text shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]"
           style={{
             background: finishes.includes('HOLOGRAPHIC')
               ? FINISH_BG.HOLOGRAPHIC
