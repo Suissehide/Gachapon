@@ -9,7 +9,7 @@ import {
 } from '../../components/collection/EquipmentSlotsPanel.tsx'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useToast } from '../../hooks/useToast.ts'
-import i18n, { currentLocale } from '../../i18n/index.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn, formatNumber } from '../../libs/utils.ts'
 import {
@@ -23,6 +23,7 @@ import {
   statColorVar,
 } from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
+import { PopoverContent, PopoverRoot, PopoverTrigger } from '../ui/popover.tsx'
 
 // Rang de rareté, pour la jauge de 5 pastilles de l'en-tête (Commune 1/5 …
 // Légendaire 5/5). Le handoff la veut lisible d'un coup d'œil, avant même de
@@ -303,100 +304,130 @@ export function EquipmentDropCard({
   )
 }
 
+const LOOT_TILE =
+  'flex h-auto w-[104px] flex-col items-center gap-1 rounded-2xl border-[1.5px] border-border bg-card px-2 py-2.5 text-center whitespace-normal'
+
 /**
- * Confirmation qui remplace la fiche une fois la pièce détruite. Elle se cale
- * sur la place que la fiche occupait (`h-full` + contenu centré) : c'est le
- * gabarit posé par l'appelant qui décide de la taille, pas ce texte.
+ * Tuile compacte d'un gain d'écran de résultat : une icône, un titre, une
+ * ligne de précision. Les pièces et la poussière partagent ce gabarit pour
+ * qu'un balayage de vingt combats tienne en quelques rangées.
  */
-export function EquipmentScrapped({
-  gold,
-  className,
+export function LootTileBody({
+  icon,
+  iconClassName,
+  title,
+  subtitle,
 }: {
-  gold: number
-  className?: string
+  icon: ReactNode
+  iconClassName?: string
+  title: string
+  subtitle: string
 }) {
   return (
-    <div
-      className={cn(
-        'flex h-full items-center justify-center rounded-[14px] border border-emerald-200 bg-emerald-50 p-3.5 text-center font-mono text-xs font-bold tracking-[0.08em] text-emerald-800',
-        className,
-      )}
-    >
-      {i18n.t('equipment:drop.scrapped', {
-        amount: formatNumber(gold, currentLocale()),
-      })}
+    <>
+      <span
+        className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+          iconClassName,
+        )}
+      >
+        {icon}
+      </span>
+      <b className="w-full truncate font-display text-[13px] leading-tight text-text">
+        {title}
+      </b>
+      <span className="w-full truncate font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-text-light">
+        {subtitle}
+      </span>
+    </>
+  )
+}
+
+export function LootTile({
+  className,
+  ...body
+}: Parameters<typeof LootTileBody>[0] & { className?: string }) {
+  return (
+    <div className={cn(LOOT_TILE, className)}>
+      <LootTileBody {...body} />
     </div>
   )
 }
 
 /**
- * Enveloppe pour l'écran de victoire : lit elle-même le barème de revente et
- * la mutation de destruction, porte l'état « détruite » pour céder la place à
- * la confirmation, et rend `null` quand il n'y a pas de drop (la campagne
- * n'en donne pas à tous les combats, la tour si).
+ * Pièce obtenue en fin de combat, en tuile compacte : l'emplacement et le
+ * set suffisent à décider si elle vaut un regard. Un clic ouvre la fiche
+ * complète (stats, bouton « Détruire ») ; une pièce détruite reste à sa place,
+ * estompée, avec l'or rendu.
  */
-export function EquipmentDropReward({
-  drop,
-  className,
-}: {
-  drop: EquipmentDrop | null
-  className?: string
-}) {
+export function EquipmentDropReward({ drop }: { drop: EquipmentDrop | null }) {
+  const { t } = useTranslation(['equipment', 'common'])
   const salvageItems = useSalvageItems()
   const salvageGold = useSalvageGold()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const { toast } = useToast()
+  const [open, setOpen] = useState(false)
   const [scrappedGold, setScrappedGold] = useState<number | null>(null)
 
   if (!drop) {
     return null
   }
 
-  const scrapGold = salvageGold([drop])
-
-  if (scrappedGold !== null) {
-    // La confirmation garde EXACTEMENT l'encombrement de la fiche détruite :
-    // la fiche reste rendue, invisible, comme gabarit, et la confirmation se
-    // superpose dans la même cellule de grille. Sans ce gabarit, une rangée
-    // dont toutes les pièces ont été détruites s'effondrait d'un coup et le
-    // panneau de résultat sautait à une hauteur minuscule sous le curseur.
-    return (
-      <div className={cn('grid w-full', className)}>
-        <div className="invisible [grid-area:1/1]" aria-hidden>
-          <EquipmentDropCard
-            drop={drop}
-            scrapGold={scrapGold}
-            equipLevelScale={economy.equip.levelScale}
-          />
-        </div>
-        <EquipmentScrapped className="[grid-area:1/1]" gold={scrappedGold} />
-      </div>
-    )
-  }
+  const SlotIcon = SLOT_ICONS[drop.slot]
+  const scrapped = scrappedGold !== null
 
   const handleScrap = () => {
     salvageItems.mutate([drop.userEquipmentId], {
       onSuccess: (res) => {
         toast({
-          title: i18n.t('equipment:drop.destroyedToastTitle'),
-          message: i18n.t('common:gold.amountPlus', {
+          title: t('equipment:drop.destroyedToastTitle'),
+          message: t('common:gold.amountPlus', {
             amount: formatNumber(res.goldEarned, currentLocale()),
           }),
           severity: TOAST_SEVERITY.SUCCESS,
         })
         setScrappedGold(res.goldEarned)
+        setOpen(false)
       },
     })
   }
 
   return (
-    <EquipmentDropCard
-      className={className}
-      drop={drop}
-      scrapGold={scrapGold}
-      equipLevelScale={economy.equip.levelScale}
-      isPending={salvageItems.isPending}
-      onScrap={handleScrap}
-    />
+    <PopoverRoot open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          disabled={scrapped}
+          aria-label={t('equipment:drop.seeDetails', { name: drop.name })}
+          className={cn(
+            LOOT_TILE,
+            'border-[color-mix(in_oklab,var(--rar)_42%,transparent)] hover:bg-[color-mix(in_oklab,var(--rar-light)_22%,var(--card))]',
+          )}
+          style={RARITY_VARS[drop.rarity] as React.CSSProperties}
+        >
+          <LootTileBody
+            icon={<SlotIcon className="h-5 w-5" />}
+            iconClassName="bg-[linear-gradient(140deg,var(--rar),var(--rar-dark))] text-white"
+            title={SLOT_LABELS[drop.slot]}
+            subtitle={
+              scrapped
+                ? t('common:gold.amountPlus', {
+                    amount: formatNumber(scrappedGold, currentLocale()),
+                  })
+                : drop.setKey
+            }
+          />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] border-0 bg-transparent p-0 shadow-none">
+        <EquipmentDropCard
+          drop={drop}
+          scrapGold={salvageGold([drop])}
+          equipLevelScale={economy.equip.levelScale}
+          isPending={salvageItems.isPending}
+          onScrap={handleScrap}
+        />
+      </PopoverContent>
+    </PopoverRoot>
   )
 }

@@ -25,8 +25,14 @@ import type { CombatStatsBaseline } from '../combat/combat-stats.domain'
 import type { CombatTeamTx } from '../combat/combat-team.tx'
 import { towerTeamKey } from '../combat/combat-team-keys'
 import {
+  boostRarityWeights,
   type FirstClearLoot,
   pickEquipmentForRarity,
+  rarityShares,
+  rollVictoryDrop,
+  VICTORY_DROP_CONFIG_KEYS,
+  type VictoryDropPreview,
+  victoryDropPreview,
 } from '../combat/equipment-drop.domain'
 import {
   buildEnemySimUnits,
@@ -67,15 +73,11 @@ const towerEnemyTeamSchema = z.array(enemySpecSchema)
 
 // lootTable JSON d'un TowerFloor (prisma/seed/tower.ts:towerFloorLoot).
 // `equipmentDropChance`/`cardChance` existent dans le JSON seedé mais ne
-// pilotent rien ici : en tour, la pièce est TOUJOURS garantie (pas de
-// chance à rouler), et la tour ne drope jamais de carte (cardChance reste
-// à 0 par construction du seed — la campagne garde l'or, la poussière et
-// les cartes). En revanche `firstClear.guaranteedEquipment` PILOTE bien le
-// tirage du premier passage : c'est le plancher de rareté consommé par
-// rollTowerFirstClearDrop (via rollFirstClearEquipmentRarity) — d'où la
-// réutilisation directe du type FirstClearLoot de equipment-drop.domain.ts
-// plutôt qu'une redéfinition locale qui aurait pu (et a, en relecture)
-// oublier ce champ.
+// pilotent rien ici : en farm, le lot (pièce, poussière ou énergie) est tiré
+// par `rollVictoryDrop`, et la tour ne drope jamais de carte.
+// `firstClear.guaranteedEquipment` PILOTE en revanche le tirage du premier
+// passage : c'est le plancher de rareté consommé par rollTowerFirstClearDrop
+// — d'où la réutilisation du type FirstClearLoot de equipment-drop.domain.ts.
 interface TowerFarmLoot {
   gold: number
   dust: number
@@ -112,15 +114,21 @@ export interface TowerBattleRewards {
   xpBefore: number
   levelBefore: number
   isFirstClear: boolean
-  equipmentDrop: TowerEquipmentDrop
+  /** Énergie gagnée quand le lot de la victoire est l'énergie, sinon 0. */
+  energy: number
+  /** `null` quand le lot du farm est la poussière ou l'énergie. */
+  equipmentDrop: TowerEquipmentDrop | null
 }
 
-/** Résultat d'un balayage : les totaux, et une pièce par passage. */
+/** Résultat d'un balayage : les totaux, et les pièces tombées. */
 export interface TowerSweepResult {
   runs: number
   totalGold: number
   totalDust: number
   totalXp: number
+  totalEnergy: number
+  dustDrops: number[]
+  energyDrops: number[]
   // État du joueur AVANT que l'XP du balayage ne soit créditée — de quoi
   // laisser le front détecter la montée de niveau et jouer la célébration,
   // exactement comme `TowerBattleRewards` le permet au combat unique.
@@ -150,6 +158,8 @@ export interface TowerFloorView {
     guaranteedMinRarity: string | null
     /** Farm seulement : poids de rareté de l'étage, en points de pourcentage. */
     rarityWeights: Record<string, number>
+    /** Farm seulement : le lot unique d'une victoire, `null` au premier passage. */
+    farmDrop: VictoryDropPreview | null
   }
   enemies: {
     id: string
@@ -232,10 +242,11 @@ export class TowerDomain {
    * Détail d'une tour : ses étages avec leur statut pour ce joueur.
    */
   async getTower(userId: string, element: TowerElement): Promise<TowerView> {
-    const [floors, progressRows, effects] = await Promise.all([
+    const [floors, progressRows, effects, dropCfg] = await Promise.all([
       this.#towerRepository.listFloors(element),
       this.#towerRepository.getProgress(userId),
       this.#skillTreeRepository.getEffectsForUser(userId),
+      this.#configService.getMany(...VICTORY_DROP_CONFIG_KEYS),
     ])
     const highestFloor =
       progressRows.find((p) => p.element === element)?.highestFloor ?? 0
@@ -273,7 +284,17 @@ export class TowerDomain {
           guaranteedMinRarity: isFirstClear
             ? (loot.firstClear.guaranteedEquipment?.minRarity ?? null)
             : null,
-          rarityWeights: isFirstClear ? {} : loot.farm.equipmentWeights,
+          rarityWeights: isFirstClear
+            ? {}
+            : rarityShares(
+                boostRarityWeights(
+                  loot.farm.equipmentWeights,
+                  effects.dropBonus,
+                ),
+              ),
+          farmDrop: isFirstClear
+            ? null
+            : victoryDropPreview(loot.farm.dust, dropCfg),
         },
         enemies: enemyTeam.map((e, idx) => ({
           id: `B${idx}`,
@@ -314,6 +335,7 @@ export class TowerDomain {
         this.#configService.getMany(
           'combat.battleCost',
           'combat.elementAdvantageMult',
+          'combat.elementAdvantageCritBonus',
           'combat.elementDisadvantageMult',
           'combat.defMitigationRef',
           'combat.baseCritRate',
@@ -324,6 +346,7 @@ export class TowerDomain {
           'xp.slope',
           'xp.levelCap',
           'levelup.refillEnergy',
+          ...VICTORY_DROP_CONFIG_KEYS,
           ...SET_BONUS_CONFIG_KEYS,
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
@@ -377,6 +400,8 @@ export class TowerDomain {
             teamB: enemyUnits,
             seed,
             elementAdvantageMult: battleCfg['combat.elementAdvantageMult'],
+            elementAdvantageCritBonus:
+              battleCfg['combat.elementAdvantageCritBonus'],
             elementDisadvantageMult:
               battleCfg['combat.elementDisadvantageMult'],
             defenseK: battleCfg['combat.defMitigationRef'],
@@ -457,6 +482,7 @@ export class TowerDomain {
           'xp.slope',
           'xp.levelCap',
           'levelup.refillEnergy',
+          ...VICTORY_DROP_CONFIG_KEYS,
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
         this.#getSubstatRanges(),
@@ -495,8 +521,8 @@ export class TowerDomain {
 
           const farm = (towerFloor.lootTable as unknown as TowerLootTable).farm
           // Bonus d'arbre sur or/xp — poussière exclue par design (parité
-          // campagne). La pièce n'étant pas un tirage à chance, `dropBonus`
-          // n'a aucune prise : les deux champs de chance sont passés en
+          // campagne). `dropBonus` relève la rareté des pièces
+          // (`boostRarityWeights`) : les deux champs de chance sont passés en
           // valeurs neutres et ne sont pas relus.
           const bonused = applyCombatBonuses(
             {
@@ -509,19 +535,33 @@ export class TowerDomain {
           )
 
           const equipmentDrops: TowerEquipmentDrop[] = []
+          let totalDust = 0
+          let totalEnergy = 0
+          const dustDrops: number[] = []
+          const energyDrops: number[] = []
           for (let i = 0; i < runs; i++) {
-            equipmentDrops.push(
-              await this.#grantEquipmentDrop(
-                tx,
-                userId,
-                rollTowerDrop({
-                  element,
-                  weights: farm.equipmentWeights,
-                  prng: Math.random,
-                }),
-                substatRanges,
-              ),
-            )
+            const farmDrop = rollVictoryDrop(farm.dust, sweepCfg, Math.random)
+            totalDust += farmDrop.dust
+            totalEnergy += farmDrop.energy
+            dustDrops.push(farmDrop.dust)
+            energyDrops.push(farmDrop.energy)
+            if (farmDrop.equipment) {
+              equipmentDrops.push(
+                await this.#grantEquipmentDrop(
+                  tx,
+                  userId,
+                  rollTowerDrop({
+                    element,
+                    weights: boostRarityWeights(
+                      farm.equipmentWeights,
+                      effects.dropBonus,
+                    ),
+                    prng: Math.random,
+                  }),
+                  substatRanges,
+                ),
+              )
+            }
             // Un passage balayé reste un étage franchi pour les quêtes, sans
             // toucher aux compteurs de campagne (`source: 'TOWER'`). Pas de
             // simulation ici, donc ni sans-faute ni sous-effectif à déduire.
@@ -536,7 +576,6 @@ export class TowerDomain {
           }
 
           const totalGold = bonused.gold * runs
-          const totalDust = farm.dust * runs
           const totalXp = bonused.xp * runs
           const { xpBefore, levelBefore } = await this.#applyRewards(
             tx,
@@ -550,12 +589,21 @@ export class TowerDomain {
             sweepCfg['levelup.refillEnergy'],
             effects,
           )
+          await this.#combatPointsTx.creditInTx(
+            tx,
+            userId,
+            totalEnergy,
+            effects,
+          )
 
           return {
             runs,
             totalGold,
             totalDust,
             totalXp,
+            totalEnergy,
+            dustDrops: dustDrops.filter((amount) => amount > 0),
+            energyDrops: energyDrops.filter((amount) => amount > 0),
             xpBefore,
             levelBefore,
             equipmentDrops,
@@ -628,7 +676,8 @@ export class TowerDomain {
       battleCfg: Record<
         'xp.base' | 'xp.slope' | 'xp.levelCap' | 'levelup.refillEnergy',
         number
-      >
+      > &
+        Parameters<typeof rollVictoryDrop>[1]
       log: Parameters<typeof deriveFlawless>[0]
       teamUnits: SimulatorUnit[]
     },
@@ -636,9 +685,9 @@ export class TowerDomain {
     const isFirstClear = floor > currentHighest
     const rawLoot = isFirstClear ? loot.firstClear : loot.farm
     // Bonus de skill tree sur or/xp — dust exclu par design (parité
-    // campagne). Le drop d'équipement n'est PAS un tirage à chance,
-    // donc dropBonus n'a aucune prise ici : équipementDropChance/
-    // cardChance sont passés en valeurs neutres, non réutilisées.
+    // campagne). dropBonus relève la rareté des pièces
+    // (`boostRarityWeights`) : équipementDropChance/cardChance sont passés en
+    // valeurs neutres, non réutilisées.
     const bonused = applyCombatBonuses(
       {
         gold: rawLoot.gold,
@@ -649,9 +698,14 @@ export class TowerDomain {
       effects,
     )
 
-    // Pièce garantie — jamais de branche « pas de pièce ». Deux
-    // chemins, un seul contrat PRNG (set d'abord, rareté ensuite —
-    // voir tower-drop.ts) :
+    // Premier passage : pièce garantie. Farm : UN lot parmi pièce,
+    // poussière et énergie (`rollVictoryDrop`).
+    const farmDrop = isFirstClear
+      ? null
+      : rollVictoryDrop(loot.farm.dust, battleCfg, Math.random)
+    const dust = farmDrop ? farmDrop.dust : rawLoot.dust
+    // Deux chemins de pièce, un seul contrat PRNG (set d'abord, rareté
+    // ensuite — voir tower-drop.ts) :
     //  - premier passage : rollTowerFirstClearDrop, rareté avec
     //    PLANCHER (firstClear.guaranteedEquipment.minRarity, motif
     //    de la campagne) — ne JAMAIS utiliser farm.equipmentWeights
@@ -666,7 +720,10 @@ export class TowerDomain {
         })
       : rollTowerDrop({
           element,
-          weights: loot.farm.equipmentWeights,
+          weights: boostRarityWeights(
+            loot.farm.equipmentWeights,
+            effects.dropBonus,
+          ),
           prng: Math.random,
         })
     // Un (slot, set, rareté) porte désormais PLUSIEURS pièces, une
@@ -675,12 +732,10 @@ export class TowerDomain {
     // suffisait. Le `dropWeight` du seed est déjà divisé par la
     // taille du pool, donc la probabilité du triplet est inchangée :
     // seule la stat principale est tirée au sort ici.
-    const equipmentDrop = await this.#grantEquipmentDrop(
-      tx,
-      userId,
-      drop,
-      substatRanges,
-    )
+    const equipmentDrop =
+      !farmDrop || farmDrop.equipment
+        ? await this.#grantEquipmentDrop(tx, userId, drop, substatRanges)
+        : null
 
     // Alimente les quêtes (STAGE_CLEARED, filtrées sur le seul
     // `kind` — quest-matching.ts) sans faire progresser les succès
@@ -716,7 +771,7 @@ export class TowerDomain {
       tx,
       userId,
       bonused.gold,
-      rawLoot.dust,
+      dust,
       bonused.xp,
       battleCfg['xp.base'],
       battleCfg['xp.slope'],
@@ -724,14 +779,18 @@ export class TowerDomain {
       battleCfg['levelup.refillEnergy'],
       effects,
     )
+    // Après le plein éventuel de la montée de niveau, par-dessus le plafond.
+    const energy = farmDrop?.energy ?? 0
+    await this.#combatPointsTx.creditInTx(tx, userId, energy, effects)
 
     return {
       gold: bonused.gold,
-      dust: rawLoot.dust,
+      dust,
       xp: bonused.xp,
       xpBefore,
       levelBefore,
       isFirstClear,
+      energy,
       equipmentDrop,
     }
   }

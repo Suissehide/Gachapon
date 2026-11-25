@@ -647,11 +647,11 @@ export async function seedSkills(tx: Tx) {
       posY: -96,
       levels: {
         create: [
-          { level: 1, effect: 5 },
-          { level: 2, effect: 10 },
-          { level: 3, effect: 15 },
-          { level: 4, effect: 20 },
-          { level: 5, effect: 25 },
+          { level: 1, effect: 30 },
+          { level: 2, effect: 60 },
+          { level: 3, effect: 90 },
+          { level: 4, effect: 120 },
+          { level: 5, effect: 160 },
         ],
       },
     },
@@ -667,10 +667,10 @@ export async function seedSkills(tx: Tx) {
       posY: 96,
       levels: {
         create: [
-          { level: 1, effect: 60 },
-          { level: 2, effect: 120 },
-          { level: 3, effect: 180 },
-          { level: 4, effect: 210 },
+          { level: 1, effect: 20 },
+          { level: 2, effect: 40 },
+          { level: 3, effect: 60 },
+          { level: 4, effect: 70 },
         ],
       },
     },

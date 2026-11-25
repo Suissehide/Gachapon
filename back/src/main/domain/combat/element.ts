@@ -55,13 +55,13 @@ export function elementRelation(
 
 /**
  * Multiplicateur de dégâts appliqué selon la relation élémentaire.
- * @param advantageMult   dégâts en avantage (défaut 1.3)
+ * @param advantageMult   dégâts en avantage (défaut 1.25)
  * @param disadvantageMult dégâts en désavantage (défaut 0.75)
  */
 export function elementMultiplier(
   attacker: string | null | undefined,
   target: string | null | undefined,
-  advantageMult = 1.3,
+  advantageMult = 1.25,
   disadvantageMult = 0.75,
 ): number {
   switch (elementRelation(attacker, target)) {

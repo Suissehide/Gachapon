@@ -30,11 +30,12 @@ import type {
 import type { TeamUnit } from '../../api/combat.api.ts'
 import {
   BattlePrepModal,
+  FarmDropPills,
   MultiRunActions,
   RewardPill,
 } from '../../components/battle/BattlePrepModal.tsx'
 import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
-import { FarmResultPopup } from '../../components/battle/resultKit.tsx'
+import { FarmResultPopup, XP_TONE } from '../../components/battle/resultKit.tsx'
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
 import { WandererLevelCard } from '../../components/campaign/WandererLevelCard.tsx'
 import { WandererModal } from '../../components/campaign/WandererModal.tsx'
@@ -379,8 +380,9 @@ function CampaignPage() {
         <FarmResultPopup
           runs={sweepResult.runs}
           totalGold={sweepResult.totalGold}
-          totalDust={sweepResult.totalDust}
           totalXp={sweepResult.totalXp}
+          dustDrops={sweepResult.dustDrops}
+          energyDrops={sweepResult.energyDrops}
           equipmentDrops={sweepResult.equipmentDrops}
           cardDrops={sweepResult.cardDrops}
           onClose={() => setSweepResult(null)}
@@ -737,6 +739,14 @@ function LevelCard({
 
 // ── Prep modal ──────────────────────────────────────────────────────────────
 
+// Ce qu'annonce la fenêtre : le butin fixe du premier passage, ou les
+// montants du farm avec son lot unique.
+function stageLoot(rp: CampaignStage['rewardPreview'], isCleared: boolean) {
+  return isCleared
+    ? { loot: rp.farm, farmDrop: rp.farmDrop }
+    : { loot: rp.firstClear, farmDrop: null }
+}
+
 function PrepModal({
   stage,
   chapter,
@@ -772,7 +782,7 @@ function PrepModal({
   const isBoss = stage.isBoss
   const rp = stage.rewardPreview
   const isCleared = stage.status === 'cleared'
-  const loot = isCleared ? rp.farm : rp.firstClear
+  const { loot, farmDrop } = stageLoot(rp, isCleared)
   // Le libellé dit POURQUOI c'est bloqué : une équipe vide prime sur
   // l'énergie, sinon on annoncerait « énergie insuffisante » à tort.
   const fightLabel = team.length
@@ -783,7 +793,6 @@ function PrepModal({
   // `formatPct` garde deux décimales sous 1 % : une chance à 0,005 s'affiche
   // « 0,5 » au lieu d'être masquée par un arrondi à 0.
   const fmtPct = (frac: number) => formatPct(frac * 100, locale)
-  const equipPct = rp.farmEquipmentChance * 100
   const cardPct = rp.farmCardChance * 100
 
   return (
@@ -815,25 +824,18 @@ function PrepModal({
               label={t('combat:campaign.goldLabel', { amount: loot.gold })}
               icon={Coins}
             />
+            {!farmDrop && (
+              <RewardPill
+                color="#38bdf8"
+                label={t('combat:campaign.dustLabel', { amount: loot.dust })}
+                icon={Sparkles}
+              />
+            )}
             <RewardPill
-              color="#38bdf8"
-              label={t('combat:campaign.dustLabel', { amount: loot.dust })}
-              icon={Sparkles}
-            />
-            <RewardPill
-              color="#8b5cf6"
+              color={XP_TONE}
               label={t('combat:campaign.xpLabel', { amount: loot.xp })}
               icon={Star}
             />
-            {equipPct > 0 && (
-              <RewardPill
-                color="#ec4899"
-                label={t('combat:campaign.equipmentDropChance', {
-                  pct: fmtPct(rp.farmEquipmentChance),
-                })}
-                icon={Shield}
-              />
-            )}
             {cardPct > 0 && (
               <RewardPill
                 color="#10b981"
@@ -858,6 +860,7 @@ function PrepModal({
               />
             )}
           </div>
+          <FarmDropPills drop={farmDrop} />
         </>
       }
       extraActions={

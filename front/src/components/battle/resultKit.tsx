@@ -8,7 +8,10 @@ import type { EquipmentDrop } from '../../api/equipment.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { cn, formatNumber } from '../../libs/utils.ts'
-import { EquipmentDropReward } from '../equipment/EquipmentDropCard.tsx'
+import {
+  EquipmentDropReward,
+  LootTile,
+} from '../equipment/EquipmentDropCard.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
 import { Popup, PopupContent } from '../ui/popup.tsx'
@@ -155,25 +158,63 @@ export function CardDropReward({
   )
 }
 
-// Largeur d'un encart de la rangée. Assez large pour que la fiche de pièce
-// garde ses stats lisibles (elle passe ses sous-stats sur une colonne à cette
-// largeur, cf. la requête de conteneur dans EquipmentDropCard), assez étroite
-// pour qu'un second encart dépasse du bord du panneau et annonce le défilement.
+// L'XP en bleu : le violet est la couleur de l'énergie, et les deux
+// s'affichent côte à côte dans les récompenses de combat.
+export const XP_TONE = '#3b82f6'
+
+/** Poussière gagnée, au même gabarit qu'une pièce d'équipement. */
+export function DustLootTile({ amount }: { amount: number }) {
+  const { t } = useTranslation('combat')
+  return (
+    <LootTile
+      icon={<Sparkles className="h-5 w-5" />}
+      iconClassName="bg-sky-400/15 text-sky-500"
+      title={`+${formatNumber(amount, currentLocale())}`}
+      subtitle={t('combat:battle.rewards.dust')}
+    />
+  )
+}
+
+/** Énergie gagnée, quand c'est elle le lot de la victoire. */
+export function EnergyLootTile({ amount }: { amount: number }) {
+  const { t } = useTranslation('combat')
+  return (
+    <LootTile
+      icon={<Zap className="h-5 w-5" />}
+      iconClassName="bg-violet-500/15 text-violet-500"
+      title={`+${formatNumber(amount, currentLocale())}`}
+      subtitle={t('combat:battle.rewards.energy')}
+    />
+  )
+}
+
+/**
+ * Grille des gains compacts d'un écran de résultat : poussière, énergie, puis
+ * une tuile par pièce. Elle passe à la ligne au lieu de défiler, pour qu'un
+ * balayage se lise d'un coup d'œil.
+ */
+export function LootGrid({ children }: { children: ReactNode }) {
+  if (Children.toArray(children).length === 0) {
+    return null
+  }
+  return (
+    <div className="mt-4 flex w-full flex-wrap justify-center gap-2">
+      {children}
+    </div>
+  )
+}
+
+// Largeur d'un encart de la rangée : assez étroite pour qu'un second encart
+// dépasse du bord du panneau et annonce le défilement.
 const DROP_TILE = 'w-[264px] shrink-0 snap-start [&>*]:w-full'
 
 /**
- * Rangée des récompenses tangibles (pièces, cartes) d'un écran de résultat.
+ * Rangée des cartes obtenues sur un écran de résultat.
  *
- * Empilées verticalement, trois pièces d'équipement repoussaient les boutons
- * du panneau à plusieurs écrans de défilement vertical. À partir de deux
- * récompenses, elles deviennent donc des encarts de largeur fixe qui défilent
- * horizontalement, tous étirés à la même hauteur — une pièce à 4 sous-stats ne
- * doit pas faire une case deux fois plus haute que sa voisine.
- *
- * Une récompense seule prend le même encart, centré : une fiche qui s'étirait
- * sur toute la largeur du panneau n'avait pas le même gabarit que ses voisines
- * dès qu'une deuxième récompense arrivait, et la même pièce changeait de forme
- * d'un combat à l'autre.
+ * À partir de deux, elles deviennent des encarts de largeur fixe qui défilent
+ * horizontalement plutôt que de repousser les boutons du panneau. Une carte
+ * seule prend le même encart, centré, pour garder le même gabarit d'un combat
+ * à l'autre.
  *
  * Les enfants conditionnels (`{drop && <Fiche />}`) sont attendus : `false` ne
  * compte pas comme une récompense. En revanche un composant qui rend `null`
@@ -231,16 +272,18 @@ export function DropRail({ children }: { children: ReactNode }) {
 export function FarmResultPopup({
   runs,
   totalGold,
-  totalDust,
   totalXp,
+  dustDrops,
+  energyDrops,
   equipmentDrops,
   cardDrops = [],
   onClose,
 }: {
   runs: number
   totalGold: number
-  totalDust: number
   totalXp: number
+  dustDrops: number[]
+  energyDrops: number[]
   equipmentDrops: EquipmentDrop[]
   cardDrops?: CardDrop[]
   onClose: () => void
@@ -254,6 +297,12 @@ export function FarmResultPopup({
     seen.set(drop.cardId, occurrence)
     return { drop, key: `${drop.cardId}-${occurrence}` }
   })
+  // Un lot de poussière ou d'énergie par combat : autant de tuiles que de
+  // lots, pour qu'un balayage de dix combats montre dix gains.
+  const flatLots = [
+    ...dustDrops.map((amount) => ({ kind: 'dust' as const, amount })),
+    ...energyDrops.map((amount) => ({ kind: 'energy' as const, amount })),
+  ].map((lot, rank) => ({ ...lot, key: `${lot.kind}-${rank}` }))
   return (
     <Popup
       open
@@ -282,7 +331,7 @@ export function FarmResultPopup({
             {t('combat:farmResult.runs', { count: runs })}
           </p>
 
-          <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
+          <div className="mt-6 grid w-full grid-cols-2 gap-2.5">
             <RewardTile
               icon={<Coins className="h-5 w-5" />}
               label={t('combat:battle.rewards.gold')}
@@ -290,27 +339,28 @@ export function FarmResultPopup({
               tone="#f59e0b"
             />
             <RewardTile
-              icon={<Sparkles className="h-5 w-5" />}
-              label={t('combat:battle.rewards.dust')}
-              value={totalDust}
-              tone="#38bdf8"
-            />
-            <RewardTile
               icon={<Star className="h-5 w-5" />}
               label="XP"
               value={totalXp}
-              tone="#8b5cf6"
+              tone={XP_TONE}
             />
           </div>
 
-          {/* Mêmes fiches que l'écran de victoire : la pièce garde ses stats
-              et son bouton « détruire », la carte se voit. Une rangée par
-              nature de gain, qui défile dès qu'il y en a plusieurs. */}
-          <DropRail>
+          {/* Mêmes tuiles que l'écran de victoire : poussière et pièces en
+              grille compacte, une tuile par lot, la fiche d'une pièce s'ouvre au clic. Les
+              cartes gardent leur rangée, elles se regardent. */}
+          <LootGrid>
+            {flatLots.map(({ kind, amount, key }) =>
+              kind === 'dust' ? (
+                <DustLootTile key={key} amount={amount} />
+              ) : (
+                <EnergyLootTile key={key} amount={amount} />
+              ),
+            )}
             {equipmentDrops.map((e) => (
               <EquipmentDropReward key={e.userEquipmentId} drop={e} />
             ))}
-          </DropRail>
+          </LootGrid>
           <DropRail>
             {keyedCardDrops.map(({ drop, key }) => (
               <CardDropReward key={key} drop={drop} />

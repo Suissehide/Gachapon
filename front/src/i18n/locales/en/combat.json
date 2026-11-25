@@ -74,6 +74,7 @@
     "neutral": "Neutral",
     "disadvantage": "Disadvantage",
     "damageDescription": "The multiplier applies to every hit, based on the attacker's element against the target's. A unit with no element always stays neutral, both ways.",
+    "critDescription": "With the advantage, the attacker also gains +{{bonus}} crit rate points.",
     "targetingTitle": "Targeting priority",
     "targetingRule1": "A unit attacks a dominated enemy <strong>first</strong>. If there are several, the target is picked at random among them.",
     "targetingRule2": "If no enemy is dominated, the target is picked at random among all survivors.",
@@ -127,6 +128,9 @@
     "xpLabel": "{{amount}} XP",
     "equipmentDropChance": "Equipment drop {{pct}}%",
     "cardDropChance": "Card drop {{pct}}%",
+    "dustDropChance": "{{amount}} Dust · {{pct}}%",
+    "energyDropChance": "+{{amount}} Energy · {{pct}}%",
+    "oneDropHint": "One of these per victory",
     "guaranteedEquipment": "Guaranteed equipment",
     "guaranteedCard": "Guaranteed card"
   },
@@ -181,7 +185,8 @@
     "firstClear": "First clear",
     "rewards": {
       "gold": "Coins",
-      "dust": "Dust"
+      "dust": "Dust",
+      "energy": "Energy"
     },
     "replay": "Replay",
     "nextFloor": "Next floor",

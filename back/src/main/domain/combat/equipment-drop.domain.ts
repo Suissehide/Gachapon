@@ -59,6 +59,131 @@ function pickFirstClearRarity(minRarity: Rarity, prng: PRNG): Rarity | null {
 }
 
 /**
+ * Butin d'une victoire de farm (campagne et tours) : UN lot et un seul parmi
+ * une pièce d'équipement, de la poussière ou de l'énergie. Or et XP tombent à
+ * chaque victoire, en dehors de ce tirage.
+ */
+export const VICTORY_DROP_CONFIG_KEYS = [
+  'loot.equipmentPct',
+  'loot.dustPct',
+  'loot.dustMult',
+  'loot.energyAmount',
+] as const
+
+export interface VictoryDrop {
+  equipment: boolean
+  dust: number
+  energy: number
+}
+
+/**
+ * Les trois parts sont fixes : la part d'énergie est le reste après équipement
+ * et poussière. Le bonus de drop de l'arbre n'y touche pas, il relève la
+ * rareté des pièces (`boostRarityWeights`).
+ */
+type VictoryDropConfig = Record<
+  (typeof VICTORY_DROP_CONFIG_KEYS)[number],
+  number
+>
+
+function victoryEnergyPct(cfg: VictoryDropConfig): number {
+  return Math.max(0, 100 - cfg['loot.equipmentPct'] - cfg['loot.dustPct'])
+}
+
+/** Poids de rareté ramenés à des parts en %, au dixième près. */
+export function rarityShares(
+  weights: Record<string, number | undefined>,
+): Record<string, number> {
+  const entries = Object.entries(weights).filter(
+    (entry): entry is [string, number] => (entry[1] ?? 0) > 0,
+  )
+  const total = entries.reduce((acc, [, w]) => acc + w, 0)
+  return Object.fromEntries(
+    entries.map(([rarity, w]) => [rarity, Math.round((w / total) * 1000) / 10]),
+  )
+}
+
+/** Part d'équipement du tirage, en %. */
+export function victoryEquipmentPct(cfg: VictoryDropConfig): number {
+  return Math.min(100 - victoryEnergyPct(cfg), cfg['loot.equipmentPct'])
+}
+
+/**
+ * Bonus de drop de l'arbre de compétences : il relève la RARETÉ des pièces,
+ * pas leur nombre. La plus haute rareté de l'étage voit son poids multiplié
+ * par (1 + bonus), la plus basse ne bouge pas, les autres s'échelonnent entre
+ * les deux. Une rareté absente de l'étage le reste : le bonus ne fait pas
+ * apparaître de légendaire là où il n'y en a pas.
+ */
+export function boostRarityWeights<
+  T extends Record<string, number | undefined>,
+>(weights: T, dropBonusPct: number): T {
+  const present = RARITY_ORDER.filter((r) => (weights[r] ?? 0) > 0)
+  if (dropBonusPct <= 0 || present.length < 2) {
+    return weights
+  }
+  const boosted: Record<string, number | undefined> = { ...weights }
+  present.forEach((rarity, rank) => {
+    const share = rank / (present.length - 1)
+    boosted[rarity] =
+      (weights[rarity] ?? 0) * (1 + (dropBonusPct / 100) * share)
+  })
+  return boosted as T
+}
+
+/**
+ * Le lot unique tel qu'il s'annonce avant le combat : les trois parts (en %)
+ * et les montants de poussière et d'énergie quand ce sont eux qui tombent.
+ */
+export interface VictoryDropPreview {
+  equipmentPct: number
+  dustPct: number
+  dustAmount: number
+  energyPct: number
+  energyAmount: number
+}
+
+export function victoryDropPreview(
+  baseDust: number,
+  cfg: VictoryDropConfig,
+): VictoryDropPreview {
+  const energyPct = victoryEnergyPct(cfg)
+  const equipmentPct = victoryEquipmentPct(cfg)
+  return {
+    equipmentPct,
+    dustPct: 100 - energyPct - equipmentPct,
+    dustAmount: victoryDustAmount(baseDust, cfg),
+    energyPct,
+    energyAmount: cfg['loot.energyAmount'],
+  }
+}
+
+function victoryDustAmount(baseDust: number, cfg: VictoryDropConfig): number {
+  return Math.round(baseDust * cfg['loot.dustMult'])
+}
+
+export function rollVictoryDrop(
+  baseDust: number,
+  cfg: VictoryDropConfig,
+  prng: PRNG,
+): VictoryDrop {
+  const energyPct = victoryEnergyPct(cfg)
+  const equipmentPct = victoryEquipmentPct(cfg)
+  const roll = prng() * 100
+  if (roll < equipmentPct) {
+    return { equipment: true, dust: 0, energy: 0 }
+  }
+  if (roll >= 100 - energyPct) {
+    return { equipment: false, dust: 0, energy: cfg['loot.energyAmount'] }
+  }
+  return {
+    equipment: false,
+    dust: victoryDustAmount(baseDust, cfg),
+    energy: 0,
+  }
+}
+
+/**
  * Roll for an equipment drop in farm mode.
  * Returns the dropped rarity, or null if no drop.
  */

@@ -26,7 +26,7 @@
     "SWEEP_COST": "Reduces the farm cost",
     "GOLD_BONUS": "Gold bonus on victories",
     "COMBAT_XP_BONUS": "Combat XP bonus",
-    "DROP_BONUS": "Chance of bonus equipment in combat",
+    "DROP_BONUS": "Raises the rarity of equipment won in combat",
     "UPGRADE_DUST_DISCOUNT": "Reduces the dust cost of upgrading cards",
     "GOLD_SHOP_DISCOUNT": "Discount on the shop's gold prices",
     "DAILY_SHOP_LUCK": "More rare cards in the market",

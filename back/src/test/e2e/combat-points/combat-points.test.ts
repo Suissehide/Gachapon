@@ -17,6 +17,11 @@ describe('Combat points routes & debit', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
+    // Le lot de farm est un tirage (pièce, poussière ou énergie) : la suite
+    // le fige sur « toujours une pièce » pour rester déterministe. La règle
+    // du tirage elle-même est couverte par victory-drop.test.ts.
+    await (app as any).iocContainer.configService.set('loot.equipmentPct', 100)
+    await (app as any).iocContainer.configService.set('loot.dustPct', 0)
     const { postgresOrm } = (app as any).iocContainer
 
     // Set + winning card
@@ -137,6 +142,8 @@ describe('Combat points routes & debit', () => {
     await configService.set('combat.sweepCost', 5)
     await configService.set('combat.regenSeconds', 900)
     // combat.pointsMax remains 60 (was already the default)
+    await (app as any).iocContainer.configService.set('loot.equipmentPct', 60)
+    await (app as any).iocContainer.configService.set('loot.dustPct', 30)
     await app.close()
   })
 

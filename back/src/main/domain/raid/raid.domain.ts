@@ -174,6 +174,7 @@ export class RaidDomain implements IRaidDomain {
     const [cfg, raidBonus] = await Promise.all([
       this.#configService.getMany(
         'combat.elementAdvantageMult',
+        'combat.elementAdvantageCritBonus',
         'combat.elementDisadvantageMult',
         'combat.defMitigationRef',
         'combat.baseCritRate',
@@ -248,6 +249,7 @@ export class RaidDomain implements IRaidDomain {
             seed,
             timeoutTurns: cfg['raid.timeoutTurns'],
             elementAdvantageMult: cfg['combat.elementAdvantageMult'],
+            elementAdvantageCritBonus: cfg['combat.elementAdvantageCritBonus'],
             elementDisadvantageMult: cfg['combat.elementDisadvantageMult'],
             defenseK: cfg['combat.defMitigationRef'],
           })

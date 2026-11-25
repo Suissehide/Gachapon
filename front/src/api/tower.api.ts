@@ -1,6 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import type { FarmDropPreview } from './campaign.api.ts'
 import type { BattleLogEntry, SimulatorUnit } from './combat.api.ts'
 import type { EquipmentDrop, EquipmentSlot } from './equipment.api.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
@@ -44,6 +45,8 @@ export type TowerFloorView = {
     guaranteedMinRarity: string | null
     /** Farm : poids de rareté de l'étage, en points de pourcentage. */
     rarityWeights: Record<string, number>
+    /** Farm : le lot unique d'une victoire, `null` au premier passage. */
+    farmDrop: FarmDropPreview | null
   }
   enemies: TowerFloorEnemy[]
 }
@@ -62,10 +65,10 @@ export type TowerBattleRewards = {
   xpBefore: number
   levelBefore: number
   isFirstClear: boolean
-  // Toujours présent quand `rewards` n'est pas null : la tour garantit une
-  // pièce par run (§6 design spec), contrairement à la campagne — voir le
-  // commentaire de towerBattleResponseSchema côté back.
-  equipmentDrop: EquipmentDrop
+  /** Énergie gagnée quand le lot de la victoire est l'énergie, sinon 0. */
+  energy: number
+  /** `null` quand le lot du farm est la poussière ou l'énergie. */
+  equipmentDrop: EquipmentDrop | null
 }
 
 /**
@@ -77,6 +80,9 @@ export type TowerSweepResult = {
   runs: number
   totalGold: number
   totalDust: number
+  totalEnergy: number
+  dustDrops: number[]
+  energyDrops: number[]
   totalXp: number
   // État du joueur avant que l'XP du balayage ne soit créditée, pour détecter
   // la montée de niveau (cf. useLevelUpCelebration).

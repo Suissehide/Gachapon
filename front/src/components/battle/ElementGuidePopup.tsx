@@ -275,6 +275,11 @@ export function ElementGuidePopup({
             <p className="m-0 mt-2.5 text-[13px] leading-relaxed text-text-light">
               {t('combat:elementGuide.damageDescription')}
             </p>
+            <p className="m-0 mt-1.5 text-[13px] leading-relaxed text-text-light">
+              {t('combat:elementGuide.critDescription', {
+                bonus: economy.combat.elementAdvantageCritBonus,
+              })}
+            </p>
           </Section>
 
           <Section

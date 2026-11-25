@@ -13,11 +13,21 @@ export type RewardLoot = {
   xp: number
 }
 
+/** Lot unique d'une victoire de farm : parts en %, montants quand ils tombent. */
+export type FarmDropPreview = {
+  equipmentPct: number
+  dustPct: number
+  dustAmount: number
+  energyPct: number
+  energyAmount: number
+}
+
 export type RewardPreview = {
   firstClear: RewardLoot
   farm: RewardLoot
   farmEquipmentChance: number
   farmCardChance: number
+  farmDrop: FarmDropPreview
   guaranteedEquipment: boolean
   guaranteedCard: boolean
 }
@@ -68,6 +78,8 @@ export type BattleRewards = {
   xpBefore: number
   levelBefore: number
   isFirstClear: boolean
+  /** Énergie gagnée quand le lot de la victoire est l'énergie, sinon 0. */
+  energy: number
   equipmentDrop: EquipmentDrop | null
   cardDrop: CardDrop | null
 }
@@ -108,6 +120,9 @@ export type SweepResult = {
   runs: number
   totalGold: number
   totalDust: number
+  totalEnergy: number
+  dustDrops: number[]
+  energyDrops: number[]
   totalXp: number
   // État du joueur avant que l'XP du balayage ne soit créditée, pour détecter
   // la montée de niveau (cf. useLevelUpCelebration).

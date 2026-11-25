@@ -9,6 +9,7 @@ import {
 import {
   ENEMY_DEF_MULT,
   RARITY_BASE,
+  lootTableNormal,
 } from '../../main/domain/content/campaign.definitions'
 import {
   endgameProfileAt,
@@ -77,12 +78,15 @@ describe('seed des tours', () => {
     }
   })
 
-  it('la part de légendaire monte de 6 à 15 % sur les étages 11 à 20', () => {
+  it('la part de légendaire monte de 1 à 2,5 % sur les étages 11 à 20, rien avant', () => {
     expect(
       [11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(
         (f) => (towerFloorLoot(f).farm.equipmentWeights as Record<string, number>).LEGENDARY,
       ),
-    ).toEqual([6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+    ).toEqual([1, 1.2, 1.3, 1.5, 1.7, 1.8, 2, 2.2, 2.3, 2.5])
+    for (let f = 1; f <= 10; f++) {
+      expect(towerFloorLoot(f).farm.equipmentWeights).not.toHaveProperty('LEGENDARY')
+    }
   })
 
   it('de 11 à 20, le joueur de référence avance d’au moins une étape par étage', () => {
@@ -223,15 +227,14 @@ describe('seed des tours', () => {
     expect(towerFloorProfile(TOWER_FLOOR_COUNT).level).toBe(70)
   })
 
-  it('le butin ne suit PAS la difficulté : il reste celui d’avant le recalibrage', () => {
+  it('le butin ne suit PAS la difficulté : il a sa propre échelle', () => {
     // `towerFloorLoot` lisait la même constante que la difficulté. Multiplier
     // les échelles par quatre aurait multiplié or, poussière et XP d'autant —
-    // un rééquilibrage de difficulté n'a pas à déplacer l'économie. Les
-    // valeurs ci-dessous sont celles en production avant le recalibrage.
+    // un rééquilibrage de difficulté n'a pas à déplacer l'économie.
     const attendu: Record<number, [number, number, number, number]> = {
-      1: [200, 120, 40, 25],
-      5: [1720, 1032, 344, 215],
-      10: [3380, 2028, 676, 422],
+      1: [200, 120, 40, 5],
+      5: [1720, 1032, 344, 43],
+      10: [3380, 2028, 676, 85],
     }
     for (const [floor, [fcGold, fcDust, farmGold, farmDust]] of Object.entries(
       attendu,
@@ -242,6 +245,15 @@ describe('seed des tours', () => {
       expect(loot.farm.gold).toBe(farmGold)
       expect(loot.farm.dust).toBe(farmDust)
     }
+  })
+
+  it('la tour farme moins d’XP et de poussière que la fin de campagne', () => {
+    // La tour donne une pièce d'équipement par victoire : si elle payait
+    // aussi plus d'XP et de poussière, la campagne ne servirait plus à rien.
+    const tour = towerFloorLoot(TOWER_FLOOR_COUNT).farm
+    const campagne = lootTableNormal(20, 9).farm
+    expect(tour.xp).toBeLessThan(campagne.xp)
+    expect(tour.dust).toBeLessThan(campagne.dust)
   })
 
   it('le butin monte moins vite que la difficulté', () => {

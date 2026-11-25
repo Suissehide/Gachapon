@@ -1,12 +1,13 @@
 import type { LucideIcon } from 'lucide-react'
-import { Settings, Sparkles, Swords, Zap } from 'lucide-react'
+import { Settings, Shield, Sparkles, Swords, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { FarmDropPreview } from '../../api/campaign.api.ts'
 import type { TeamUnit } from '../../api/combat.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
-import { formatNumber } from '../../libs/utils.ts'
+import { formatNumber, formatPct } from '../../libs/utils.ts'
 import { computePower } from '../../utils/cardStats.ts'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button, type ButtonProps } from '../ui/button.tsx'
@@ -357,6 +358,57 @@ export function RewardPill({
       <Icon className="h-3 w-3" />
       {label}
     </span>
+  )
+}
+
+/**
+ * Lot unique d'une victoire de farm : une pièce, de la poussière OU de
+ * l'énergie. Trois pastilles avec leur chance, précédées de la règle. Rien
+ * au premier passage (`drop` nul), dont le butin est fixe.
+ */
+export function FarmDropPills({ drop }: { drop: FarmDropPreview | null }) {
+  const { t } = useTranslation('combat')
+  if (!drop) {
+    return null
+  }
+  const pct = (value: number) => formatPct(value, currentLocale())
+  return (
+    <div className="mt-3">
+      <p className="mb-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+        {t('combat:campaign.oneDropHint')}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {drop.equipmentPct > 0 && (
+          <RewardPill
+            color="#ec4899"
+            label={t('combat:campaign.equipmentDropChance', {
+              pct: pct(drop.equipmentPct),
+            })}
+            icon={Shield}
+          />
+        )}
+        {drop.dustPct > 0 && (
+          <RewardPill
+            color="#38bdf8"
+            label={t('combat:campaign.dustDropChance', {
+              amount: drop.dustAmount,
+              pct: pct(drop.dustPct),
+            })}
+            icon={Sparkles}
+          />
+        )}
+        {drop.energyPct > 0 && (
+          <RewardPill
+            color="#8b5cf6"
+            label={t('combat:campaign.energyDropChance', {
+              amount: drop.energyAmount,
+              pct: pct(drop.energyPct),
+            })}
+            icon={Zap}
+          />
+        )}
+      </div>
+    </div>
   )
 }
 

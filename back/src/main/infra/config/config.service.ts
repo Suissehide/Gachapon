@@ -32,12 +32,14 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // Multiplie les poids rare+ du Marché (pas du gacha), cumulé à Collection Apex.
   'dailyShop.rareLuck': 1.5,
   xpPerPull: 10,
-  'combat.pointsMax': 60,
-  'combat.regenSeconds': 900,
+  'combat.pointsMax': 120,
+  'combat.regenSeconds': 300,
   'combat.battleCost': 5,
   'combat.sweepCost': 5,
   // Roue élémentaire : dégâts ×1,30 en avantage, ×0,75 en désavantage, ×1 neutre.
-  'combat.elementAdvantageMult': 1.3,
+  'combat.elementAdvantageMult': 1.25,
+  // Points de taux critique ajoutés à l'attaquant en avantage élémentaire.
+  'combat.elementAdvantageCritBonus': 15,
   'combat.elementDisadvantageMult': 0.75,
   // Seuil K de la réduction de dégâts `DEF / (K + DEF)`, commun à toutes les
   // unités : la DEF a un sens absolu (plus de DEF = toujours moins de dégâts)
@@ -56,21 +58,26 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'astral.pityThreshold': 300,
   // Seuil de pitié de la capsule Constellation, compteur propre comme l'astrale.
   'comet.pityThreshold': 300,
-  // Courbe ×5 (2026-09-15) : un joueur actif atteignait le niveau 30 en un
-  // jour. La cause mesurée est `levelup.refillEnergy`, qui remet l'énergie au
-  // max à CHAQUE montée et fait passer la journée de 31 à ~146 combats — la
-  // boucle XP → niveau → énergie → combats → XP. Le refill est conservé par
-  // choix de design, la courbe le compense donc frontalement.
+  // Stock d'énergie de base volontairement court (`combat.pointsMax` ×
+  // `combat.regenSeconds` = 10 h) : il s'agrandit dans l'arbre de compétences
+  // (Endurance). `levelup.refillEnergy` remet le plein à chaque montée de
+  // niveau : la boucle XP → niveau → énergie → combats → XP est voulue, et
+  // c'est la taille du stock qui la borne.
   //
   // Cadence en BORNE HAUTE (`xp-pacing.test.ts`, joueur qui ne perd jamais et
-  // n'est freiné que par l'énergie) : J1 niveau 14, J15 niveau 30, J30 niveau
-  // 45, J90 niveau 76, J200 niveau 100. La borne BASSE
-  // (`economy-progression.test.ts`, joueur freiné par la difficulté) donne
-  // niveau 48 à J90 : la cadence réelle vit entre les deux.
+  // n'est freiné que par l'énergie) et BASSE (`economy-progression.test.ts`,
+  // joueur freiné par la difficulté) : la cadence réelle vit entre les deux.
   'xp.base': 500,
   'xp.slope': 220,
   'xp.levelCap': 100,
   'levelup.refillEnergy': 1,
+  // Lot unique d'une victoire de farm (`rollVictoryDrop`) : équipement,
+  // poussière, et le reste en énergie. La poussière d'un étage est multipliée
+  // puisqu'elle ne tombe plus qu'une fois sur trois environ.
+  'loot.equipmentPct': 60,
+  'loot.dustPct': 30,
+  'loot.dustMult': 3,
+  'loot.energyAmount': 10,
   'card.goldCostBase': 5,
   'card.goldCostExp': 1.6,
   'card.dustCostBase': 0.5,

@@ -25,19 +25,23 @@ import type {
 } from '../../api/tower.api.ts'
 import {
   BattlePrepModal,
+  FarmDropPills,
   MultiRunActions,
   RewardPill,
 } from '../../components/battle/BattlePrepModal.tsx'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
 import {
-  DropRail,
+  DustLootTile,
+  EnergyLootTile,
   FarmResultPopup,
+  LootGrid,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_WIN,
   ResultBadge,
   ResultPanel,
   RewardTile,
+  XP_TONE,
 } from '../../components/battle/resultKit.tsx'
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
 import { SLOT_LABELS } from '../../components/collection/EquipmentSlotsPanel.tsx'
@@ -275,8 +279,9 @@ function TowerFloorsPage() {
         <FarmResultPopup
           runs={sweepResult.runs}
           totalGold={sweepResult.totalGold}
-          totalDust={sweepResult.totalDust}
           totalXp={sweepResult.totalXp}
+          dustDrops={sweepResult.dustDrops}
+          energyDrops={sweepResult.energyDrops}
           equipmentDrops={sweepResult.equipmentDrops}
           onClose={() => setSweepResult(null)}
         />
@@ -313,6 +318,77 @@ function describeTower(
     ? t('combat:towerFloors.subtitleWithSlot', { slot: slotLabel })
     : t('combat:towerFloors.subtitleNoSlot')
   return { segmentOptions, towerName, subtitle }
+}
+
+/** Butin annoncé d'un étage : premier passage ou lot unique du farm. */
+function TowerRewards({ rp }: { rp: TowerFloorView['rewardPreview'] }) {
+  const { t } = useTranslation('combat')
+  // Les poids de rareté ne sont renseignés qu'en farm : au premier passage,
+  // c'est la rareté plancher qui fait foi.
+  const rarityOdds = Object.entries(rp.rarityWeights).filter(([, w]) => w > 0)
+  return (
+    <>
+      <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+        <Sparkles className="h-3 w-3 text-amber-600" />
+        {t('combat:campaign.rewardsLabel')}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <RewardPill
+          color="#f59e0b"
+          label={t('combat:campaign.goldLabel', { amount: rp.gold })}
+          icon={Coins}
+        />
+        {!rp.farmDrop && (
+          <RewardPill
+            color="#38bdf8"
+            label={t('combat:campaign.dustLabel', { amount: rp.dust })}
+            icon={Sparkles}
+          />
+        )}
+        <RewardPill
+          color={XP_TONE}
+          label={t('combat:campaign.xpLabel', { amount: rp.xp })}
+          icon={Star}
+        />
+        {/* Premier passage : une pièce garantie, à rareté plancher.
+            En farm, la pièce n'est qu'un des trois lots possibles. */}
+        {!rp.farmDrop && (
+          <RewardPill
+            color="#ec4899"
+            label={
+              rp.guaranteedMinRarity
+                ? t('combat:towerFloors.guaranteedEquipmentMin', {
+                    rarity:
+                      RARITY_LABEL_FR[rp.guaranteedMinRarity] ??
+                      rp.guaranteedMinRarity,
+                  })
+                : t('combat:campaign.guaranteedEquipment')
+            }
+            icon={Shield}
+          />
+        )}
+      </div>
+      {rp.farmDrop && <FarmDropPills drop={rp.farmDrop} />}
+      {rarityOdds.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {rarityOdds.map(([rarity, pct]) => (
+            <span
+              key={rarity}
+              className="inline-flex items-center gap-1 font-mono text-[10px] text-text-light"
+            >
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{
+                  background: RARITY_COLOR_VAR[rarity] ?? 'currentColor',
+                }}
+              />
+              {pct}%
+            </span>
+          ))}
+        </div>
+      )}
+    </>
+  )
 }
 
 /**
@@ -360,11 +436,6 @@ function TowerPrepPopup({
   // passages, et l'animation de combat avec lui.
   const isCleared = floor.status === 'cleared'
 
-  const rp = floor.rewardPreview
-  // Les poids de rareté ne sont renseignés qu'en farm : au premier passage,
-  // c'est la rareté plancher qui fait foi.
-  const rarityOdds = Object.entries(rp.rarityWeights).filter(([, w]) => w > 0)
-
   // Le libellé dit POURQUOI c'est bloqué, comme en campagne.
   const fightLabel = team.length
     ? currentPC < battleCost
@@ -398,65 +469,7 @@ function TowerPrepPopup({
           team={team}
           currentPC={currentPC}
           energyCost={isCleared ? sweepCost : battleCost}
-          rewards={
-            <>
-              <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-                <Sparkles className="h-3 w-3 text-amber-600" />
-                {t('combat:campaign.rewardsLabel')}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <RewardPill
-                  color="#f59e0b"
-                  label={t('combat:campaign.goldLabel', { amount: rp.gold })}
-                  icon={Coins}
-                />
-                <RewardPill
-                  color="#38bdf8"
-                  label={t('combat:campaign.dustLabel', { amount: rp.dust })}
-                  icon={Sparkles}
-                />
-                <RewardPill
-                  color="#8b5cf6"
-                  label={t('combat:campaign.xpLabel', { amount: rp.xp })}
-                  icon={Star}
-                />
-                {/* La tour garantit TOUJOURS une pièce : ce qui change d'un
-                    étage à l'autre, c'est sa rareté. */}
-                <RewardPill
-                  color="#ec4899"
-                  label={
-                    rp.guaranteedMinRarity
-                      ? t('combat:towerFloors.guaranteedEquipmentMin', {
-                          rarity:
-                            RARITY_LABEL_FR[rp.guaranteedMinRarity] ??
-                            rp.guaranteedMinRarity,
-                        })
-                      : t('combat:campaign.guaranteedEquipment')
-                  }
-                  icon={Shield}
-                />
-              </div>
-              {rarityOdds.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {rarityOdds.map(([rarity, pct]) => (
-                    <span
-                      key={rarity}
-                      className="inline-flex items-center gap-1 font-mono text-[10px] text-text-light"
-                    >
-                      <span
-                        className="h-2 w-2 rounded-full"
-                        style={{
-                          background:
-                            RARITY_COLOR_VAR[rarity] ?? 'currentColor',
-                        }}
-                      />
-                      {pct}%
-                    </span>
-                  ))}
-                </div>
-              )}
-            </>
-          }
+          rewards={<TowerRewards rp={floor.rewardPreview} />}
           extraActions={
             isCleared ? (
               <MultiRunActions
@@ -562,7 +575,7 @@ function BattleResultPopup({
 
           {result.rewards && (
             <>
-              <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
+              <div className="mt-6 grid w-full grid-cols-2 gap-2.5">
                 <RewardTile
                   icon={<Coins className="h-5 w-5" />}
                   label={t('combat:battle.rewards.gold')}
@@ -570,25 +583,24 @@ function BattleResultPopup({
                   tone="#f59e0b"
                 />
                 <RewardTile
-                  icon={<Sparkles className="h-5 w-5" />}
-                  label={t('combat:battle.rewards.dust')}
-                  value={result.rewards.dust}
-                  tone="#38bdf8"
-                />
-                <RewardTile
                   icon={<Star className="h-5 w-5" />}
                   label="XP"
                   value={result.rewards.xp}
-                  tone="#8b5cf6"
+                  tone={XP_TONE}
                 />
               </div>
-              {/* Même rangée que la campagne et la victoire de niveau : seule,
-                  la pièce garde toute la largeur du panneau. */}
-              <DropRail>
+              {/* Mêmes tuiles compactes que la campagne. */}
+              <LootGrid>
+                {result.rewards.dust > 0 && (
+                  <DustLootTile amount={result.rewards.dust} />
+                )}
+                {result.rewards.energy > 0 && (
+                  <EnergyLootTile amount={result.rewards.energy} />
+                )}
                 {result.rewards.equipmentDrop && (
                   <EquipmentDropReward drop={result.rewards.equipmentDrop} />
                 )}
-              </DropRail>
+              </LootGrid>
             </>
           )}
 

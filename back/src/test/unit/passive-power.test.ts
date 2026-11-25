@@ -27,11 +27,11 @@ const BANDE_PCT: Record<
   Record<'EPIC' | 'LEGENDARY', { plancher: number; plafond: number }>
 > = {
   tower: {
-    EPIC: { plancher: 1.5, plafond: 12 },
+    EPIC: { plancher: 1.5, plafond: 13 },
     LEGENDARY: { plancher: 2.5, plafond: 16 },
   },
   campaign: {
-    EPIC: { plancher: 1.5, plafond: 16 },
+    EPIC: { plancher: 1.5, plafond: 20 },
     LEGENDARY: { plancher: 2.5, plafond: 16 },
   },
 }

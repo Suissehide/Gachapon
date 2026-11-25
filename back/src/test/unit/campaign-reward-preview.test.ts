@@ -139,7 +139,8 @@ describe('extractRewardPreview', () => {
     expect(preview.firstClear.xp).toBe(240)
     expect(preview.farm.gold).toBe(165)
     expect(preview.farm.xp).toBe(24)
-    expect(preview.farmEquipmentChance).toBeCloseTo(0.45)
+    // Le bonus de drop ne touche plus la chance de pièce, seulement la rareté.
+    expect(preview.farmEquipmentChance).toBe(0.3)
     expect(preview.farmCardChance).toBe(0.02)
     expect(preview.firstClear.dust).toBe(1000)
   })

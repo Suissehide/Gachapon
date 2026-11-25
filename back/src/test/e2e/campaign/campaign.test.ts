@@ -43,6 +43,11 @@ describe('Campaign routes', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
+    // Le lot de farm est un tirage (pièce, poussière ou énergie) : la suite
+    // le fige sur « toujours une pièce » pour rester déterministe. La règle
+    // du tirage elle-même est couverte par victory-drop.test.ts.
+    await (app as any).iocContainer.configService.set('loot.equipmentPct', 100)
+    await (app as any).iocContainer.configService.set('loot.dustPct', 0)
     const { postgresOrm } = (app as any).iocContainer
 
     // Clean campaign-related tables that aren't in globalSetup TRUNCATE
@@ -392,6 +397,8 @@ describe('Campaign routes', () => {
     })
     await postgresOrm.prisma.userAchievement.deleteMany({ where: { achievementId } })
     await postgresOrm.prisma.achievement.deleteMany({ where: { key: achievementKey } })
+    await (app as any).iocContainer.configService.set('loot.equipmentPct', 60)
+    await (app as any).iocContainer.configService.set('loot.dustPct', 30)
     await app.close()
   })
 
@@ -537,13 +544,19 @@ describe('Campaign routes', () => {
       runs: number
       totalGold: number
       totalDust: number
+      dustDrops: number[]
+      energyDrops: number[]
       totalXp: number
       xpBefore: number
       levelBefore: number
     }
     expect(body.runs).toBe(3)
     expect(body.totalGold).toBe(60)
-    expect(body.totalDust).toBe(9)
+    // Le lot de chaque passage est une pièce (tirage figé) : pas de poussière.
+    expect(body.totalDust).toBe(0)
+    // Un lot par passage : ni poussière ni énergie quand chacun est une pièce.
+    expect(body.dustDrops).toEqual([])
+    expect(body.energyDrops).toEqual([])
     expect(body.totalXp).toBe(9)
     // L'état d'AVANT gain voyage avec la réponse : sans lui le front ne peut
     // pas savoir que le balayage a fait passer un niveau, et la célébration
@@ -572,7 +585,7 @@ describe('Campaign routes', () => {
     const body = sweepRes.json() as {
       equipmentDrops: { equipmentId: string; rarity: string }[]
     }
-    // equipmentDropChance: 1.0 → un drop garanti par run.
+    // Lot de farm figé sur une pièce → un drop par passage.
     expect(body.equipmentDrops).toHaveLength(10)
 
     // Le catalogue de drop de campagne interroge TOUTE la table Equipment
@@ -596,17 +609,16 @@ describe('Campaign routes', () => {
     }
   })
 
-  // 11 = le drop garanti de premier passage de l'étage 1 (vérifié plus haut)
-  // + les 10 drops du balayage de l'étage 2 (equipmentDropChance: 1.0).
-  // Rien d'autre ne droppe entre les deux : le premier passage de l'étage 2
-  // a `guaranteedEquipment: null`, et l'étage 1 est à equipmentDropChance 0
-  // en ferme, donc ni son combat rejoué ni son balayage de 3 runs ne comptent.
+  // 15 = le drop garanti de premier passage de l'étage 1 (vérifié plus haut)
+  // + le combat rejoué de l'étage 1 et son balayage de 3 passages (le lot de
+  // farm est figé sur une pièce) + les 10 drops du balayage de l'étage 2.
+  // Le premier passage de l'étage 2 a `guaranteedEquipment: null`.
   it('les drops de balayage font progresser la quête EQUIPMENT_OBTAINED', async () => {
     const { postgresOrm } = (app as any).iocContainer
     const uq = await postgresOrm.prisma.userQuest.findFirst({
       where: { userId, questId: equipQuestId, periodKey: 'oneshot' },
     })
-    expect(uq!.progress).toBe(11)
+    expect(uq!.progress).toBe(15)
   })
 
   // Troisième chemin de drop : un combat REJOUÉ sur un étage déjà franchi

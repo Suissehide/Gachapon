@@ -145,7 +145,7 @@ function simulate(days: number, { alchemy = 'none' as AlchemyStrategy } = {}): S
     // Énergie : régén continue, réduite par Récupération r3 une fois mature
     const regenSeconds = Math.max(
       60,
-      DEFAULTS['combat.regenSeconds'] - (mature ? 180 : 0),
+      DEFAULTS['combat.regenSeconds'] - (mature ? 60 : 0),
     )
     const sweepCost = DEFAULTS['combat.sweepCost'] - (mature ? 1 : 0) // Logistique r1
     const battles = Math.floor(86400 / regenSeconds / sweepCost)
@@ -240,7 +240,7 @@ function simulate(days: number, { alchemy = 'none' as AlchemyStrategy } = {}): S
     // (card.repository.ts, forceLegendary) — en plus du taux naturel.
     // Approximation additive : le vrai compteur pity se reset à chaque LEGENDARY
     // (surestime ~20 %), et pityReduction (skills) est ignoré (sous-estime) —
-    // directions opposées, acceptable dans la bande [J75, J95].
+    // directions opposées, acceptable dans la bande [J45, J95].
     const legendaryDraws =
       totalPulls * pRarity(POOL[4]) +
       Math.floor(totalPulls / DEFAULTS.pityThreshold) +
@@ -295,25 +295,19 @@ describe('economy-progression — partie complète en ~3 mois', () => {
   /**
    * ATTENTION — ce n'est PAS la cible, c'est la mesure.
    *
-   * La cible d'économie est 55-75 tirages/jour (spec jetons du 2026-07-22).
-   * Une fois la simulation déperimée à 90 étages (2026-09-15), ce modèle n'en
-   * rend plus que ~42 : la campagne étant deux fois plus longue, l'or reste
-   * absorbé par le niveau des cartes bien plus longtemps au lieu de partir en
-   * packs de jetons. L'écart est une QUESTION D'ÉCONOMIE ouverte, pas un effet
-   * du rééquilibrage d'XP — ce dernier ne touche ni l'or ni la poussière.
-   *
-   * La borne ci-dessous garde donc seulement le régime actuel contre une
-   * dérive franche. Refermer l'écart avec la cible se fera en retouchant l'or
-   * ou le coût de leveling, et cette assertion devra alors remonter vers 55.
+   * La recharge d'énergie rapide (`combat.regenSeconds`) multiplie les combats
+   * du jour, donc l'or, donc les jetons achetés : le régime établi dépasse
+   * volontairement l'ancienne cible de 55-75 tirages/jour. La borne garde ce
+   * régime contre une dérive franche, dans un sens comme dans l'autre.
    */
-  it('tirages/jour en régime établi ∈ [35, 50] — sous la cible de 55-75', () => {
+  it('tirages/jour en régime établi ∈ [125, 155]', () => {
     const avgPulls = avg(steady.map((s) => s.pullsToday))
-    expect(avgPulls).toBeGreaterThanOrEqual(35)
-    expect(avgPulls).toBeLessThanOrEqual(50)
+    expect(avgPulls).toBeGreaterThanOrEqual(125)
+    expect(avgPulls).toBeLessThanOrEqual(155)
   })
 
-  it('jetons achetés/jour en régime établi ≤ 45', () => {
-    expect(avg(steady.map((s) => s.boughtTokensToday))).toBeLessThanOrEqual(45)
+  it('jetons achetés/jour en régime établi ≤ 125', () => {
+    expect(avg(steady.map((s) => s.boughtTokensToday))).toBeLessThanOrEqual(125)
   })
 
   // Les bornes J40-J65 dataient du modèle à 50 étages. À 90 étages la campagne
@@ -326,7 +320,7 @@ describe('economy-progression — partie complète en ~3 mois', () => {
     expect(doneDay).toBeLessThanOrEqual(95)
   })
 
-  it('17 LEGENDARY atteints entre J75 et J95', () => {
+  it('17 LEGENDARY atteints entre J45 et J95', () => {
     const doneDay = traj.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
     // undefined accepté si atteint entre J91 et J95 : on simule 95 jours pour vérifier
     if (doneDay == null) {
@@ -335,7 +329,7 @@ describe('economy-progression — partie complète en ~3 mois', () => {
       expect(extDay).toBeDefined()
       expect(extDay).toBeLessThanOrEqual(95)
     } else {
-      expect(doneDay).toBeGreaterThanOrEqual(75)
+      expect(doneDay).toBeGreaterThanOrEqual(45)
     }
   })
 
@@ -354,7 +348,7 @@ describe('economy-progression — partie complète en ~3 mois', () => {
   // légendaires), où ces deux angles morts ne portent pas à conséquence.
 
   for (const alchemy of ['all', 'highOnly'] as const) {
-    it(`avec l’alchimie (${alchemy}) : 17 LEGENDARY atteints entre J75 et J95`, () => {
+    it(`avec l’alchimie (${alchemy}) : 17 LEGENDARY atteints entre J45 et J95`, () => {
       const alch = simulate(90, { alchemy })
       const doneDay = alch.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
       if (doneDay == null) {
@@ -363,7 +357,7 @@ describe('economy-progression — partie complète en ~3 mois', () => {
         expect(extDay).toBeDefined()
         expect(extDay).toBeLessThanOrEqual(95)
       } else {
-        expect(doneDay).toBeGreaterThanOrEqual(75)
+        expect(doneDay).toBeGreaterThanOrEqual(45)
       }
     })
   }

@@ -10,11 +10,20 @@ const rewardAmountsSchema = z.object({
   xp: z.number().int(),
 })
 
+export const farmDropPreviewSchema = z.object({
+  equipmentPct: z.number(),
+  dustPct: z.number(),
+  dustAmount: z.number().int(),
+  energyPct: z.number(),
+  energyAmount: z.number().int(),
+})
+
 export const rewardPreviewSchema = z.object({
   firstClear: rewardAmountsSchema,
   farm: rewardAmountsSchema,
   farmEquipmentChance: z.number(),
   farmCardChance: z.number(),
+  farmDrop: farmDropPreviewSchema,
   guaranteedEquipment: z.boolean(),
   guaranteedCard: z.boolean(),
 })
@@ -88,6 +97,7 @@ export const battleRewardsSchema = z.object({
   xpBefore: z.number().int(),
   levelBefore: z.number().int(),
   isFirstClear: z.boolean(),
+  energy: z.number().int(),
   equipmentDrop: equipmentDropSchema.nullable(),
   cardDrop: cardDropSchema.nullable(),
 })
@@ -127,6 +137,9 @@ export const sweepResponseSchema = z.object({
   runs: z.number().int(),
   totalGold: z.number().int(),
   totalDust: z.number().int(),
+  totalEnergy: z.number().int(),
+  dustDrops: z.array(z.number().int()),
+  energyDrops: z.array(z.number().int()),
   totalXp: z.number().int(),
   xpBefore: z.number().int(),
   levelBefore: z.number().int(),

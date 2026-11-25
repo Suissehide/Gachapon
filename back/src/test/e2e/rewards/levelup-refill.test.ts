@@ -16,6 +16,9 @@ describe('Rewards claim level-up → refill énergie', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
+    // Le plafond d'énergie est un réglage : ces tests fixent celui qu'ils
+    // attendent.
+    await (app as any).iocContainer.configService.set('combat.pointsMax', 60)
     const { postgresOrm, configService } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
     const xp = await xpThresholds(configService)
@@ -45,6 +48,7 @@ describe('Rewards claim level-up → refill énergie', () => {
   })
 
   afterAll(async () => {
+    await (app as any).iocContainer.configService.set('combat.pointsMax', 120)
     await app.close()
   })
 

@@ -77,7 +77,7 @@
     "slotAndLevel": "{{slot}} · NIV. {{level}}",
     "rarityTierTitle": "Rareté {{tier}}/{{max}}",
     "destroy": "Détruire",
-    "scrapped": "✓ Détruit · +{{amount}} or",
+    "seeDetails": "Voir le détail de {{name}}",
     "destroyedToastTitle": "Objet détruit"
   },
   "setGuide": {

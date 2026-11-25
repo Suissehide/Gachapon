@@ -27,6 +27,7 @@ import {
   ResultBadge,
   ResultPanel,
   RewardTile,
+  XP_TONE,
 } from '../../../components/battle/resultKit.tsx'
 import { TeamDock } from '../../../components/battle/TeamDock.tsx'
 import { GuestLockedPanel } from '../../../components/guest/GuestLockedPanel.tsx'
@@ -463,7 +464,7 @@ function RaidResultPopup({
                         icon={<Star className="h-5 w-5" />}
                         label={t('raidPage.xp')}
                         value={tier.reward.xp}
-                        tone="#8b5cf6"
+                        tone={XP_TONE}
                       />
                     )}
                   </div>

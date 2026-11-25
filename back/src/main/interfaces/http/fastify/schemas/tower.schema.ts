@@ -2,6 +2,7 @@ import { z } from 'zod/v4'
 
 import { TOWER_ELEMENTS } from '../../../../domain/tower/tower-slots'
 import { cardArchetypeEnum } from './admin-cards.schema'
+import { farmDropPreviewSchema } from './campaign.schema'
 
 // Élément d'une tour — SEULEMENT les 4 du cycle (§6 design spec), jamais
 // l'énumération Prisma `CardElement` complète (6 valeurs, dont LIGHT/DARK
@@ -62,6 +63,8 @@ const towerRewardPreviewSchema = z.object({
   guaranteedMinRarity: z.string().nullable(),
   /** Farm seulement — vide au premier passage. */
   rarityWeights: z.record(z.string(), z.number()),
+  /** Farm seulement — `null` au premier passage. */
+  farmDrop: farmDropPreviewSchema.nullable(),
 })
 
 export const towerFloorViewSchema = z.object({
@@ -111,7 +114,8 @@ const towerBattleRewardsSchema = z.object({
   // cas de victoire (§6 design spec : « une pièce garantie par run, jamais
   // zéro ») — seul `rewards` lui-même est nullable (défaite = pas de
   // récompense), pas `equipmentDrop` à l'intérieur.
-  equipmentDrop: towerEquipmentDropSchema,
+  energy: z.number().int(),
+  equipmentDrop: towerEquipmentDropSchema.nullable(),
 })
 
 export const towerSweepBodySchema = z.object({
@@ -127,6 +131,9 @@ export const towerSweepResponseSchema = z.object({
   runs: z.number().int(),
   totalGold: z.number().int(),
   totalDust: z.number().int(),
+  totalEnergy: z.number().int(),
+  dustDrops: z.array(z.number().int()),
+  energyDrops: z.array(z.number().int()),
   totalXp: z.number().int(),
   xpBefore: z.number().int(),
   levelBefore: z.number().int(),

@@ -26,6 +26,9 @@ import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
   CardDropReward,
   DropRail,
+  DustLootTile,
+  EnergyLootTile,
+  LootGrid,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_TIMEOUT,
   RESULT_BADGE_WIN,
@@ -663,29 +666,28 @@ function VictoryPanel({
       )}
 
       {rewards && (
-        <div className="mt-6 grid w-full grid-cols-2 gap-2.5">
-          <RewardTile
-            icon={<Coins className="h-5 w-5" />}
-            label={t('combat:battle.rewards.gold')}
-            value={rewards.gold}
-            tone="#f59e0b"
-          />
-          <RewardTile
-            icon={<Sparkles className="h-5 w-5" />}
-            label={t('combat:battle.rewards.dust')}
-            value={rewards.dust}
-            tone="#38bdf8"
-          />
+        <div className="mt-6 flex w-full justify-center">
+          <div className="w-1/2">
+            <RewardTile
+              icon={<Coins className="h-5 w-5" />}
+              label={t('combat:battle.rewards.gold')}
+              value={rewards.gold}
+              tone="#f59e0b"
+            />
+          </div>
         </div>
       )}
 
-      {/* Une rangée par nature de récompense : les pièces, puis les cartes en
-          dessous. Un seul gain garde toute la largeur du panneau. */}
-      <DropRail>
+      {/* Poussière et pièce en tuiles compactes, puis la carte en dessous. */}
+      <LootGrid>
+        {rewards && rewards.dust > 0 && <DustLootTile amount={rewards.dust} />}
+        {rewards && rewards.energy > 0 && (
+          <EnergyLootTile amount={rewards.energy} />
+        )}
         {rewards?.equipmentDrop && (
           <EquipmentDropReward drop={rewards.equipmentDrop} />
         )}
-      </DropRail>
+      </LootGrid>
       <DropRail>
         {rewards?.cardDrop && <CardDropReward drop={rewards.cardDrop} />}
       </DropRail>

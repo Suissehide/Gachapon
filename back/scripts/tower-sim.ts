@@ -61,7 +61,7 @@ import {
 const RUNS = Number(process.env.SIM_RUNS ?? 200)
 const BASE_STATS = { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 }
 const DEFENSE_K = 1000
-const ADV = 1.3
+const ADV = 1.25
 const DISADV = 1 / 1.3
 
 /** Un profil ad hoc pour explorer — `target` n'a de sens que pour le fit. */

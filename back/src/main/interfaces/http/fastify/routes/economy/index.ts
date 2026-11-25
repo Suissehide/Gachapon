@@ -76,6 +76,7 @@ const economyConfigResponseSchema = z.object({
     battleCost: z.number(),
     sweepCost: z.number(),
     elementAdvantageMult: z.number(),
+    elementAdvantageCritBonus: z.number(),
     elementDisadvantageMult: z.number(),
     // Valeurs de base des 4 stats de stuff, communes alliés/ennemis — le
     // front en a besoin pour afficher ces stats même sans équipement.
@@ -180,6 +181,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'combat.battleCost',
         'combat.sweepCost',
         'combat.elementAdvantageMult',
+        'combat.elementAdvantageCritBonus',
         'combat.elementDisadvantageMult',
         'combat.baseCritRate',
         'combat.baseCritDmg',
@@ -274,6 +276,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           battleCost: c['combat.battleCost'],
           sweepCost: c['combat.sweepCost'],
           elementAdvantageMult: c['combat.elementAdvantageMult'],
+          elementAdvantageCritBonus: c['combat.elementAdvantageCritBonus'],
           elementDisadvantageMult: c['combat.elementDisadvantageMult'],
           baseCritRate: c['combat.baseCritRate'],
           baseCritDmg: c['combat.baseCritDmg'],

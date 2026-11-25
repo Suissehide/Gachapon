@@ -57,8 +57,10 @@ import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
 import { Label } from '../ui/label.tsx'
+import { SelectMulti } from '../ui/selectMulti.tsx'
 import { Switch } from '../ui/switch.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
+import { FilterField, RarityDot } from './CollectionFilters.tsx'
 import { SLOT_ICONS, SLOT_LABELS, SLOT_ORDER } from './EquipmentSlotsPanel.tsx'
 
 const STAT_LABEL: Record<LabStat, string> = {
@@ -152,8 +154,14 @@ type Props = {
   onSlotChange: (slot: EquipmentSlot) => void
 }
 
+const RARITY_FILTER_OPTIONS = Object.keys(RARITY_LABEL_FR).map((r) => ({
+  value: r,
+  label: RARITY_LABEL_FR[r] ?? r,
+  icon: <RarityDot color={RARITY_COLOR_VAR[r] ?? ''} />,
+}))
+
 export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
-  const { t } = useTranslation(['collection', 'common'])
+  const { t } = useTranslation(['collection', 'common', 'equipment'])
   const { toast } = useToast()
   const locale = currentLocale()
   const { card } = userCard
@@ -178,6 +186,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
   const [prio, setPrio] = useState<LabStat[]>(advice.prio)
   const [setFilter, setSetFilter] = useState<string[]>([])
   const [mainStatFilter, setMainStatFilter] = useState<SubstatKey[]>([])
+  const [rarityFilter, setRarityFilter] = useState<string[]>([])
   const [hideWornElsewhere, setHideWornElsewhere] = useState(false)
   const [selId, setSelId] = useState<string | null>(null)
   const [hovId, setHovId] = useState<string | null>(null)
@@ -224,6 +233,7 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
     .filter(
       (i) => mainStatFilter.length === 0 || mainStatFilter.includes(i.mainStat),
     )
+    .filter((i) => rarityFilter.length === 0 || rarityFilter.includes(i.rarity))
     .filter(
       (i) =>
         !hideWornElsewhere ||
@@ -511,23 +521,60 @@ export function EquipmentWorkshop({ userCard, slot, onSlotChange }: Props) {
             </Button>
           </div>
 
-          <SetFilter
-            slotItems={slotItems}
-            setDefs={setDefs}
-            setColor={setColor}
-            selected={setFilter}
-            onChange={setSetFilter}
-            wornCount={(k) =>
-              items.filter((i) => i.equippedOnId === ucId && i.setKey === k)
-                .length
-            }
-          />
-
-          <MainStatFilter
-            slotItems={slotItems}
-            selected={mainStatFilter}
-            onChange={setMainStatFilter}
-          />
+          <div className="mb-2 flex flex-wrap items-end gap-x-3 gap-y-2">
+            <FilterField
+              id="workshop-filter-set"
+              label={t('equipment:filters.set')}
+            >
+              <SelectMulti
+                id="workshop-filter-set"
+                options={setDefs.map((def) => {
+                  const worn = Math.min(
+                    items.filter(
+                      (i) => i.equippedOnId === ucId && i.setKey === def.key,
+                    ).length,
+                    def.pieces,
+                  )
+                  return {
+                    value: def.key,
+                    label:
+                      worn > 0
+                        ? `${def.label} · ${worn}/${def.pieces}`
+                        : def.label,
+                    icon: <RarityDot color={setColor.get(def.key) ?? ''} />,
+                  }
+                })}
+                value={setFilter}
+                onChange={setSetFilter}
+              />
+            </FilterField>
+            <FilterField
+              id="workshop-filter-mainstat"
+              label={t('equipment:filters.mainStat')}
+            >
+              <SelectMulti
+                id="workshop-filter-mainstat"
+                // Stats principales présentes dans le slot : la liste se
+                // déduit des pièces, pas d'un barème à maintenir.
+                options={[...new Set(slotItems.map((i) => i.mainStat))].map(
+                  (key) => ({ value: key, label: formatBonusKey(key) }),
+                )}
+                value={mainStatFilter}
+                onChange={(v) => setMainStatFilter(v as SubstatKey[])}
+              />
+            </FilterField>
+            <FilterField
+              id="workshop-filter-rarity"
+              label={t('equipment:filters.rarity')}
+            >
+              <SelectMulti
+                id="workshop-filter-rarity"
+                options={RARITY_FILTER_OPTIONS}
+                value={rarityFilter}
+                onChange={setRarityFilter}
+              />
+            </FilterField>
+          </div>
 
           <div className="mb-1.5 flex items-center gap-2">
             <Switch
@@ -926,145 +973,6 @@ function PieceSummary({
         </span>
       )}
     </span>
-  )
-}
-
-const FILTER_CHIP =
-  'h-8 gap-[7px] rounded-full border-[rgba(27,23,38,0.1)] bg-card pl-3 pr-2.5 text-[13px] text-[rgba(27,23,38,0.65)] hover:bg-card hover:text-text disabled:opacity-35'
-const FILTER_CHIP_ALL =
-  'border-text bg-text text-white hover:bg-text hover:text-white'
-
-// Stats principales présentes dans le slot, dans l'ordre de première
-// apparition : la liste se déduit des pièces, pas d'un barème à maintenir.
-function MainStatFilter({
-  slotItems,
-  selected,
-  onChange,
-}: {
-  slotItems: EquipmentInstance[]
-  selected: SubstatKey[]
-  onChange: (next: SubstatKey[]) => void
-}) {
-  const { t } = useTranslation('collection')
-  const counts = new Map<SubstatKey, number>()
-  for (const i of slotItems) {
-    counts.set(i.mainStat, (counts.get(i.mainStat) ?? 0) + 1)
-  }
-  if (counts.size < 2) {
-    return null
-  }
-  return (
-    <div className="mb-1.5 flex flex-wrap gap-1.5">
-      <Button
-        variant="outline"
-        aria-pressed={selected.length === 0}
-        onClick={() => onChange([])}
-        className={cn(
-          FILTER_CHIP,
-          'px-3',
-          selected.length === 0 && FILTER_CHIP_ALL,
-        )}
-      >
-        {t('collection:workshop.allMainStats')}
-      </Button>
-      {[...counts].map(([key, n]) => {
-        const on = selected.includes(key)
-        return (
-          <Button
-            key={key}
-            variant="outline"
-            aria-pressed={on}
-            onClick={() =>
-              onChange(
-                on ? selected.filter((k) => k !== key) : [...selected, key],
-              )
-            }
-            style={{ '--s': statColorVar(key) } as React.CSSProperties}
-            className={cn(
-              FILTER_CHIP,
-              'hover:border-[var(--s)]',
-              on &&
-                'border-[color-mix(in_oklab,var(--s)_50%,white)] bg-[color-mix(in_oklab,var(--s)_12%,white)] text-text hover:bg-[color-mix(in_oklab,var(--s)_12%,white)]',
-            )}
-          >
-            {formatBonusKey(key)}
-            <span className="h-[18px] min-w-[18px] rounded-full bg-[rgba(27,23,38,0.06)] px-1 text-center font-mono text-[11px] leading-[18px] text-[rgba(27,23,38,0.55)]">
-              {n}
-            </span>
-          </Button>
-        )
-      })}
-    </div>
-  )
-}
-
-function SetFilter({
-  slotItems,
-  setDefs,
-  setColor,
-  selected,
-  onChange,
-  wornCount,
-}: {
-  slotItems: EquipmentInstance[]
-  setDefs: EquipmentSetDefinition[]
-  setColor: Map<string, string>
-  selected: string[]
-  onChange: (next: string[]) => void
-  wornCount: (key: string) => number
-}) {
-  const { t } = useTranslation('collection')
-  const chip = FILTER_CHIP
-  return (
-    <div className="mb-1.5 flex flex-wrap gap-1.5">
-      <Button
-        variant="outline"
-        aria-pressed={selected.length === 0}
-        onClick={() => onChange([])}
-        className={cn(chip, 'px-3', selected.length === 0 && FILTER_CHIP_ALL)}
-      >
-        {t('collection:workshop.allSets')}
-      </Button>
-      {setDefs.map((def) => {
-        const n = slotItems.filter((i) => i.setKey === def.key).length
-        const on = selected.includes(def.key)
-        const worn = Math.min(wornCount(def.key), def.pieces)
-        return (
-          <Button
-            key={def.key}
-            variant="outline"
-            disabled={n === 0 && !on}
-            aria-pressed={on}
-            title={`${def.pieces} pc · ${def.bonus.label}`}
-            onClick={() =>
-              onChange(
-                on
-                  ? selected.filter((k) => k !== def.key)
-                  : [...selected, def.key],
-              )
-            }
-            style={{ '--s': setColor.get(def.key) } as React.CSSProperties}
-            className={cn(
-              chip,
-              'hover:border-[var(--s)]',
-              on &&
-                'border-[color-mix(in_oklab,var(--s)_50%,white)] bg-[color-mix(in_oklab,var(--s)_12%,white)] text-text hover:bg-[color-mix(in_oklab,var(--s)_12%,white)]',
-            )}
-          >
-            <i className="h-2 w-2 rounded-full bg-[var(--s)]" />
-            {def.label}
-            {worn > 0 && (
-              <span className="font-mono text-[10.5px] font-bold text-[color-mix(in_oklab,var(--s)_75%,var(--text))]">
-                {worn}/{def.pieces}
-              </span>
-            )}
-            <span className="h-[18px] min-w-[18px] rounded-full bg-[rgba(27,23,38,0.06)] px-1 text-center font-mono text-[11px] leading-[18px] text-[rgba(27,23,38,0.55)]">
-              {n}
-            </span>
-          </Button>
-        )
-      })}
-    </div>
   )
 }
 

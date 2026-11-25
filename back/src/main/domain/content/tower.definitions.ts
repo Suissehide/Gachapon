@@ -45,8 +45,8 @@ export type { TowerElement }
  * le 20, pas les valeurs fittées une à une. Les étapes du joueur de référence
  * n'ont pas le même poids (une légendaire qui remplace une épique pèse bien
  * plus qu'une pièce) : fittés à 40 % chacun, les étages montaient de +2 % à
- * +27 %. La courbe reste sous le fit de chaque étage (au plus +1 %, au 14)
- * et le rejoint au 20, calibré sur l'équipe cible complète.
+ * +27 %. La courbe reste sous le fit de chaque étage (elle le touche au 17)
+ * et le rejoint presque au 20, calibré sur l'équipe cible complète.
  *
  * POURQUOI ces valeurs et pas les précédentes ([1, 2.2, … 16.9]) : l'ancienne
  * courbe était ancrée sur la JAUGE affichée (`campaign-power.ts`) et non sur
@@ -59,8 +59,8 @@ export type { TowerElement }
  * La jauge reste un outil d'AFFICHAGE. Pour calibrer, le simulateur.
  */
 const FLOOR_SCALE = [
-  2.4, 5.7, 10.7, 16.6, 36.5, 59.4, 70, 81.6, 97, 107.1, 118.5, 131.1, 145,
-  160.4, 177.5, 196.4, 217.3, 240.4, 265.9, 294.2,
+  2.4, 5.7, 10.7, 16.6, 36.5, 59.4, 70, 81.6, 97, 107.1, 118, 129.9, 143.1,
+  157.7, 173.7, 191.3, 210.7, 232.1, 255.7, 281.6,
 ] as const
 
 /**
@@ -231,21 +231,21 @@ const RARITY_WEIGHTS: Record<number, Record<string, number>> = {
   3: { COMMON: 50, UNCOMMON: 38, RARE: 12 },
   4: { COMMON: 40, UNCOMMON: 40, RARE: 19, EPIC: 1 },
   5: { COMMON: 30, UNCOMMON: 42, RARE: 25, EPIC: 3 },
-  6: { COMMON: 22, UNCOMMON: 40, RARE: 31, EPIC: 6, LEGENDARY: 1 },
-  7: { COMMON: 15, UNCOMMON: 36, RARE: 36, EPIC: 11, LEGENDARY: 2 },
-  8: { COMMON: 9, UNCOMMON: 30, RARE: 41, EPIC: 17, LEGENDARY: 3 },
-  9: { COMMON: 4, UNCOMMON: 22, RARE: 45, EPIC: 25, LEGENDARY: 4 },
-  10: { UNCOMMON: 15, RARE: 45, EPIC: 35, LEGENDARY: 5 },
-  11: { UNCOMMON: 10, RARE: 43, EPIC: 41, LEGENDARY: 6 },
-  12: { UNCOMMON: 8, RARE: 41, EPIC: 44, LEGENDARY: 7 },
-  13: { UNCOMMON: 6, RARE: 39, EPIC: 47, LEGENDARY: 8 },
-  14: { UNCOMMON: 4, RARE: 37, EPIC: 50, LEGENDARY: 9 },
-  15: { UNCOMMON: 2, RARE: 36, EPIC: 52, LEGENDARY: 10 },
-  16: { RARE: 35, EPIC: 54, LEGENDARY: 11 },
-  17: { RARE: 33, EPIC: 55, LEGENDARY: 12 },
-  18: { RARE: 31, EPIC: 56, LEGENDARY: 13 },
-  19: { RARE: 29, EPIC: 57, LEGENDARY: 14 },
-  20: { RARE: 27, EPIC: 58, LEGENDARY: 15 },
+  6: { COMMON: 22, UNCOMMON: 40, RARE: 31, EPIC: 7 },
+  7: { COMMON: 15, UNCOMMON: 36, RARE: 36, EPIC: 13 },
+  8: { COMMON: 9, UNCOMMON: 30, RARE: 41, EPIC: 20 },
+  9: { COMMON: 4, UNCOMMON: 22, RARE: 45, EPIC: 29 },
+  10: { UNCOMMON: 15, RARE: 45, EPIC: 40 },
+  11: { UNCOMMON: 10, RARE: 43, EPIC: 46, LEGENDARY: 1 },
+  12: { UNCOMMON: 8, RARE: 41, EPIC: 49.8, LEGENDARY: 1.2 },
+  13: { UNCOMMON: 6, RARE: 39, EPIC: 53.7, LEGENDARY: 1.3 },
+  14: { UNCOMMON: 4, RARE: 37, EPIC: 57.5, LEGENDARY: 1.5 },
+  15: { UNCOMMON: 2, RARE: 36, EPIC: 60.3, LEGENDARY: 1.7 },
+  16: { RARE: 35, EPIC: 63.2, LEGENDARY: 1.8 },
+  17: { RARE: 33, EPIC: 65, LEGENDARY: 2 },
+  18: { RARE: 31, EPIC: 66.8, LEGENDARY: 2.2 },
+  19: { RARE: 29, EPIC: 68.7, LEGENDARY: 2.3 },
+  20: { RARE: 27, EPIC: 70.5, LEGENDARY: 2.5 },
 }
 
 export function towerFloorLoot(floor: number) {
@@ -263,8 +263,11 @@ export function towerFloorLoot(floor: number) {
     },
     farm: {
       gold: Math.round(40 * s),
-      dust: Math.round(25 * s),
-      xp: Math.round(15 * s),
+      // Au sommet, poussière et XP de farm restent SOUS le dernier étage de
+      // campagne : la tour paie en pièces de ses emplacements propres, la
+      // campagne en XP et en poussière — gardé par tower-seed.test.ts.
+      dust: Math.round(5 * s),
+      xp: Math.round(6 * s),
       equipmentDropChance: 1,
       equipmentWeights: RARITY_WEIGHTS[floor],
       cardChance: 0,

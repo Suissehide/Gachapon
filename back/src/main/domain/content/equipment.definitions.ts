@@ -162,7 +162,9 @@ export const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
   hpPct: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },
   atkPct: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },
   defPct: { COMMON: 6, UNCOMMON: 9, RARE: 13, EPIC: 18, LEGENDARY: 24 },
-  critRatePct: { COMMON: 6, UNCOMMON: 9, RARE: 14, EPIC: 21, LEGENDARY: 32 },
+  // Seule stat principale qui s'ajoute telle quelle à une chance : à 32 %
+  // en légendaire, une paire de bottes faisait à elle seule un build critique.
+  critRatePct: { COMMON: 3, UNCOMMON: 5, RARE: 7, EPIC: 11, LEGENDARY: 16 },
   critDmgPct: { COMMON: 12, UNCOMMON: 19, RARE: 30, EPIC: 46, LEGENDARY: 70 },
   armorPenPct: { COMMON: 8, UNCOMMON: 12, RARE: 19, EPIC: 29, LEGENDARY: 45 },
 }

@@ -17,11 +17,17 @@ import {
 import type { CombatStatsBaseline } from '../combat/combat-stats.domain'
 import { CAMPAIGN_TEAM_KEY } from '../combat/combat-team-keys'
 import {
+  boostRarityWeights,
   pickEquipmentForRarity,
   rollFarmCardDrop,
   rollFarmEquipmentDrop,
   rollFirstClearCardRarity,
   rollFirstClearEquipmentRarity,
+  rollVictoryDrop,
+  VICTORY_DROP_CONFIG_KEYS,
+  type VictoryDropPreview,
+  victoryDropPreview,
+  victoryEquipmentPct,
 } from '../combat/equipment-drop.domain'
 import { buildEnemySimUnits, buildPlayerSimUnits } from '../combat/sim-units'
 import { effectiveSweepCost } from '../combat-points/combat-points.tx'
@@ -157,6 +163,8 @@ export interface BattleRewards {
   /** User's account level right before this battle's rewards were applied. */
   levelBefore: number
   isFirstClear: boolean
+  /** Énergie gagnée quand le lot de la victoire est l'énergie, sinon 0. */
+  energy: number
   equipmentDrop: EquipmentDropPayload | null
   cardDrop: CardDropPayload | null
 }
@@ -217,7 +225,8 @@ export interface CampaignStageView {
   isBoss: boolean
   status: 'cleared' | 'current' | 'locked'
   recommendedPower: number
-  rewardPreview: RewardPreview
+  /** `farmDrop` : le lot unique d'une victoire de farm sur cet étage. */
+  rewardPreview: RewardPreview & { farmDrop: VictoryDropPreview }
   enemies: {
     id: string
     imageUrl: string | null
@@ -262,11 +271,11 @@ interface CardCatalogEntry {
  *
  * - gold ×(1 + goldBonus/100), rounded
  * - xp  ×(1 + combatXpBonus/100), rounded
- * - equipmentDropChance ×(1 + dropBonus/100), capped at 1
- * - cardChance is intentionally NOT bonused : une carte gagnée en combat
- *   concurrence directement le gacha (0,20 % de légendaire au tirage), un
- *   nœud d'arbre ne doit pas en doubler le débit. `dropBonus` ne porte
- *   donc que sur l'équipement.
+ * - equipmentDropChance and cardChance are NOT bonused : `dropBonus` relève
+ *   la rareté des pièces (`boostRarityWeights`, appliqué au butin de farm),
+ *   pas leur nombre ; et une carte gagnée en combat concurrence directement
+ *   le gacha (0,20 % de légendaire au tirage), un nœud d'arbre ne doit pas en
+ *   doubler le débit.
  * - dust is intentionally NOT bonused (economy design)
  */
 export function applyCombatBonuses(
@@ -286,10 +295,7 @@ export function applyCombatBonuses(
   return {
     gold: Math.round(loot.gold * (1 + effects.goldBonus / 100)),
     xp: Math.round(loot.xp * (1 + effects.combatXpBonus / 100)),
-    equipmentDropChance: Math.min(
-      1,
-      loot.equipmentDropChance * (1 + effects.dropBonus / 100),
-    ),
+    equipmentDropChance: loot.equipmentDropChance,
     cardChance: loot.cardChance,
   }
 }
@@ -369,6 +375,10 @@ function farmLootWithBonuses(
   return {
     ...rawFarm,
     ...bonusedFarm,
+    equipmentWeights: boostRarityWeights(
+      rawFarm.equipmentWeights,
+      effects.dropBonus,
+    ),
     xp: Math.round(bonusedFarm.xp * (1 + teamXpBonusPct / 100)),
   }
 }
@@ -464,6 +474,7 @@ function toCardCatalogEntry(c: {
 // Clés de config lues avant la transaction pour simuler un combat d'étage.
 const STAGE_SIM_CONFIG_KEYS = [
   'combat.elementAdvantageMult',
+  'combat.elementAdvantageCritBonus',
   'combat.elementDisadvantageMult',
   'combat.defMitigationRef',
   'combat.baseCritRate',
@@ -541,14 +552,20 @@ export class CampaignDomain {
     // Résolu UNE fois pour toute la requête — jamais dans le `.map()` de
     // stages ci-dessous, qui tournerait sinon une requête Postgres par
     // stage sur une route qui rend un chapitre entier.
-    const [progress, stages, teamEffects, effects] = await Promise.all([
-      this.#getOrCreateProgress(userId),
-      orm.prisma.campaignStage.findMany({
-        orderBy: [{ chapter: 'asc' }, { index: 'asc' }],
-      }),
-      this.#teamProgressionDomain.effectsForUser(userId),
-      this.#skillTreeRepository.getEffectsForUser(userId),
-    ])
+    const [progress, stages, teamEffects, effects, dropCfg] = await Promise.all(
+      [
+        this.#getOrCreateProgress(userId),
+        orm.prisma.campaignStage.findMany({
+          orderBy: [{ chapter: 'asc' }, { index: 'asc' }],
+        }),
+        this.#teamProgressionDomain.effectsForUser(userId),
+        this.#skillTreeRepository.getEffectsForUser(userId),
+        this.#configService.getMany(...VICTORY_DROP_CONFIG_KEYS),
+      ],
+    )
+    // La chance de pièce en farm est celle du tirage à lot unique, la même
+    // pour tous les étages — pas celle du `lootTable`, qui ne pilote plus rien.
+    const farmEquipmentChance = victoryEquipmentPct(dropCfg) / 100
 
     const byChapter = new Map<number, typeof stages>()
     for (const s of stages) {
@@ -572,6 +589,11 @@ export class CampaignDomain {
     for (const [chapter, ss] of byChapter) {
       const stageViews = ss.map((s): CampaignStageView => {
         const enemyTeam = enemyTeamSchema.parse(s.enemyTeam)
+        const preview = extractRewardPreview(
+          s.lootTable,
+          effects,
+          teamEffects.xp,
+        )
         return {
           id: s.id,
           chapter: s.chapter,
@@ -580,11 +602,11 @@ export class CampaignDomain {
           isBoss: s.isBoss,
           status: stageStatus(s, progress, previousChapterCleared),
           recommendedPower: computeTeamPower(enemyTeam),
-          rewardPreview: extractRewardPreview(
-            s.lootTable,
-            effects,
-            teamEffects.xp,
-          ),
+          rewardPreview: {
+            ...preview,
+            farmEquipmentChance,
+            farmDrop: victoryDropPreview(preview.farm.dust, dropCfg),
+          },
           enemies: enemyTeam.map((e, idx) => ({
             id: `B${idx}`,
             imageUrl: this.#resolveEnemyImage(e.appearance),
@@ -628,6 +650,7 @@ export class CampaignDomain {
             'xp.slope',
             'xp.levelCap',
             'levelup.refillEnergy',
+            ...VICTORY_DROP_CONFIG_KEYS,
             ...SET_BONUS_CONFIG_KEYS,
           ),
           this.#skillTreeRepository.getEffectsForUser(userId),
@@ -684,6 +707,7 @@ export class CampaignDomain {
               substatRanges,
               battleCfg['levelup.refillEnergy'],
               effects,
+              battleCfg,
             )
 
             if (isFirstClear) {
@@ -881,6 +905,9 @@ export class CampaignDomain {
     totalGold: number
     totalDust: number
     totalXp: number
+    totalEnergy: number
+    dustDrops: number[]
+    energyDrops: number[]
     // État du joueur AVANT que l'XP du balayage ne soit créditée — de quoi
     // laisser le front détecter la montée de niveau et jouer la célébration,
     // comme `BattleRewards` le permet au combat unique.
@@ -903,6 +930,7 @@ export class CampaignDomain {
             'xp.slope',
             'xp.levelCap',
             'levelup.refillEnergy',
+            ...VICTORY_DROP_CONFIG_KEYS,
           ),
           this.#skillTreeRepository.getEffectsForUser(userId),
           this.#getSubstatRanges(),
@@ -947,15 +975,24 @@ export class CampaignDomain {
             effects,
             teamEffects.xp,
           )
-          const { totalGold, totalDust, totalXp, equipmentDrops, cardDrops } =
-            await this.#runSweeps(
-              tx,
-              userId,
-              stage.isBoss,
-              loot,
-              runs,
-              substatRanges,
-            )
+          const {
+            totalGold,
+            totalDust,
+            totalXp,
+            totalEnergy,
+            dustDrops,
+            energyDrops,
+            equipmentDrops,
+            cardDrops,
+          } = await this.#runSweeps(
+            tx,
+            userId,
+            stage.isBoss,
+            loot,
+            runs,
+            substatRanges,
+            (dust) => rollVictoryDrop(dust, sweepCfg, Math.random),
+          )
 
           // Bump XP and recompute level (parity with applyRewards / gacha).
           const { xpBefore, levelBefore } = await this.#creditGainsAndLevel(
@@ -970,12 +1007,21 @@ export class CampaignDomain {
             sweepCfg['levelup.refillEnergy'],
             effects,
           )
+          await this.#combatPointsTx.creditInTx(
+            tx,
+            userId,
+            totalEnergy,
+            effects,
+          )
 
           return {
             runs,
             totalGold,
             totalDust,
             totalXp,
+            totalEnergy,
+            dustDrops,
+            energyDrops,
             xpBefore,
             levelBefore,
             equipmentDrops,
@@ -1000,30 +1046,45 @@ export class CampaignDomain {
     loot: FarmLoot,
     runs: number,
     substatRanges: SubstatRanges,
+    rollDrop: (baseDust: number) => ReturnType<typeof rollVictoryDrop>,
   ): Promise<{
     totalGold: number
     totalDust: number
     totalXp: number
+    totalEnergy: number
+    dustDrops: number[]
+    energyDrops: number[]
     equipmentDrops: EquipmentDropPayload[]
     cardDrops: CardDropPayload[]
   }> {
     let totalGold = 0
     let totalDust = 0
     let totalXp = 0
+    let totalEnergy = 0
+    const dustDrops: number[] = []
+    const energyDrops: number[] = []
     const equipmentDrops: EquipmentDropPayload[] = []
     const cardDrops: CardDropPayload[] = []
 
     const { equipmentCatalog, activeCards } = await this.#loadSweepCatalogs(tx)
 
     for (let i = 0; i < runs; i++) {
+      const drop = rollDrop(loot.dust)
       totalGold += loot.gold
-      totalDust += loot.dust
+      totalDust += drop.dust
       totalXp += loot.xp
+      totalEnergy += drop.energy
+      if (drop.dust > 0) {
+        dustDrops.push(drop.dust)
+      }
+      if (drop.energy > 0) {
+        energyDrops.push(drop.energy)
+      }
 
       const equipmentDrop = await this.#rollSweepEquipmentDrop(
         tx,
         userId,
-        loot,
+        { ...loot, equipmentDropChance: drop.equipment ? 1 : 0 },
         equipmentCatalog,
         substatRanges,
       )
@@ -1050,7 +1111,16 @@ export class CampaignDomain {
         understaffed: false,
       })
     }
-    return { totalGold, totalDust, totalXp, equipmentDrops, cardDrops }
+    return {
+      totalGold,
+      totalDust,
+      totalXp,
+      totalEnergy,
+      dustDrops,
+      energyDrops,
+      equipmentDrops,
+      cardDrops,
+    }
   }
 
   async #applyRewards(
@@ -1064,17 +1134,27 @@ export class CampaignDomain {
     substatRanges: SubstatRanges,
     refillEnergy: number,
     effects: SkillEffects,
+    dropCfg: Parameters<typeof rollVictoryDrop>[1],
   ): Promise<BattleRewards> {
-    const gains = isFirstClear ? loot.firstClear : loot.farm
-    const { gold, dust, xp } = gains
-    const { equipmentDrop, cardDrop } = isFirstClear
-      ? await this.#grantFirstClearDrops(
+    // Le premier passage garde son butin fixe ; le farm tire UN lot.
+    const drop = isFirstClear
+      ? null
+      : rollVictoryDrop(loot.farm.dust, dropCfg, Math.random)
+    const { gold, xp } = isFirstClear ? loot.firstClear : loot.farm
+    const dust = drop ? drop.dust : loot.firstClear.dust
+    const { equipmentDrop, cardDrop } = drop
+      ? await this.#grantFarmDrops(
+          tx,
+          userId,
+          { ...loot.farm, equipmentDropChance: drop.equipment ? 1 : 0 },
+          substatRanges,
+        )
+      : await this.#grantFirstClearDrops(
           tx,
           userId,
           loot.firstClear,
           substatRanges,
         )
-      : await this.#grantFarmDrops(tx, userId, loot.farm, substatRanges)
 
     // Increment XP, then recompute User.level so threshold crossings actually
     // bump the level (parity with gacha.domain). Without this, campaign XP
@@ -1087,6 +1167,10 @@ export class CampaignDomain {
       refillEnergy,
       effects,
     )
+    // Après le plein éventuel de la montée de niveau : l'énergie gagnée
+    // s'ajoute par-dessus le plafond au lieu d'être absorbée par lui.
+    const energy = drop?.energy ?? 0
+    await this.#combatPointsTx.creditInTx(tx, userId, energy, effects)
 
     return {
       gold,
@@ -1095,6 +1179,7 @@ export class CampaignDomain {
       xpBefore,
       levelBefore,
       isFirstClear,
+      energy,
       equipmentDrop,
       cardDrop,
     }
@@ -1576,6 +1661,7 @@ export class CampaignDomain {
       teamB: enemyUnits,
       seed,
       elementAdvantageMult: cfg['combat.elementAdvantageMult'],
+      elementAdvantageCritBonus: cfg['combat.elementAdvantageCritBonus'],
       elementDisadvantageMult: cfg['combat.elementDisadvantageMult'],
       defenseK: cfg['combat.defMitigationRef'],
     })

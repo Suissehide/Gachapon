@@ -74,6 +74,7 @@
     "neutral": "Neutre",
     "disadvantage": "Désavantage",
     "damageDescription": "Le multiplicateur s'applique à chaque coup, selon l'élément de l'attaquant face à celui de sa cible. Une unité sans élément reste toujours neutre, dans les deux sens.",
+    "critDescription": "En avantage, l'attaquant gagne aussi +{{bonus}} points de taux critique.",
     "targetingTitle": "Priorité de ciblage",
     "targetingRule1": "Une unité attaque <strong>en priorité</strong> un ennemi qu'elle domine. S'il y en a plusieurs, la cible est tirée au hasard parmi eux.",
     "targetingRule2": "Si aucun ennemi n'est dominé, la cible est tirée au hasard parmi tous les survivants.",
@@ -127,6 +128,9 @@
     "xpLabel": "{{amount}} XP",
     "equipmentDropChance": "Drop équipement {{pct}}%",
     "cardDropChance": "Drop carte {{pct}}%",
+    "dustDropChance": "{{amount}} Poussière · {{pct}}%",
+    "energyDropChance": "+{{amount}} Énergie · {{pct}}%",
+    "oneDropHint": "Un de ces lots par victoire",
     "guaranteedEquipment": "Équipement garanti",
     "guaranteedCard": "Carte garantie"
   },
@@ -181,7 +185,8 @@
     "firstClear": "Premier passage",
     "rewards": {
       "gold": "Pièces",
-      "dust": "Poussière"
+      "dust": "Poussière",
+      "energy": "Énergie"
     },
     "replay": "Rejouer",
     "nextFloor": "Etage suivant",

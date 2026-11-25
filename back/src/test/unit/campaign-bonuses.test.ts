@@ -1,21 +1,15 @@
 import { applyCombatBonuses } from '../../main/domain/campaign/campaign.domain'
 
 describe('applyCombatBonuses', () => {
-  it('applique les trois bonus', () => {
+  it('applique les bonus d’or et d’XP, sans toucher aux chances de drop', () => {
     const out = applyCombatBonuses(
       { gold: 100, xp: 10, equipmentDropChance: 0.2, cardChance: 0.01 },
       { goldBonus: 30, combatXpBonus: 10, dropBonus: 100 },
     )
-    expect(out).toEqual({ gold: 130, xp: 11, equipmentDropChance: 0.4, cardChance: 0.01 })
+    expect(out).toEqual({ gold: 130, xp: 11, equipmentDropChance: 0.2, cardChance: 0.01 })
   })
-  it('cap des chances à 1', () => {
-    const out = applyCombatBonuses(
-      { gold: 0, xp: 0, equipmentDropChance: 0.8, cardChance: 0 },
-      { goldBonus: 0, combatXpBonus: 0, dropBonus: 100 },
-    )
-    expect(out.equipmentDropChance).toBe(1)
-  })
-  // `dropBonus` ne porte QUE sur l'équipement : une carte gagnée en combat
+  // `dropBonus` relève la rareté des pièces, pas leur nombre ; et une carte
+  // gagnée en combat
   // concurrence directement le gacha (0,20 % de légendaire au tirage), un
   // nœud d'arbre ne doit pas en doubler le débit.
   it('la chance de carte est insensible au bonus de drop', () => {

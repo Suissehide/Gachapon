@@ -71,7 +71,7 @@ import { setBonusesFromConfig } from '../../src/main/domain/equipment/set-bonuse
 const BASE_STATS = { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 }
 /** Seuil de défense K (GlobalConfig `combat.defMitigationRef`). */
 const DEFENSE_K = 1000
-const ELEMENT_ADVANTAGE_MULT = 1.3
+const ELEMENT_ADVANTAGE_MULT = 1.25
 const ELEMENT_DISADVANTAGE_MULT = 1 / 1.3
 
 const SET_DEFS = setBonusesFromConfig({

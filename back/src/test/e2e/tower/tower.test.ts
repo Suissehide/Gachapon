@@ -50,6 +50,11 @@ describe('routes de tour', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
+    // Le lot de farm est un tirage (pièce, poussière ou énergie) : la suite
+    // le fige sur « toujours une pièce » pour rester déterministe. La règle
+    // du tirage elle-même est couverte par victory-drop.test.ts.
+    await (app as any).iocContainer.configService.set('loot.equipmentPct', 100)
+    await (app as any).iocContainer.configService.set('loot.dustPct', 0)
     const { postgresOrm } = (app as any).iocContainer
 
     // Carte + équipe très forte pour garantir la victoire (motif de
@@ -389,6 +394,8 @@ describe('routes de tour', () => {
     })
     await postgresOrm.prisma.userAchievement.deleteMany({ where: { achievementId } })
     await postgresOrm.prisma.achievement.deleteMany({ where: { key: achievementKey } })
+    await (app as any).iocContainer.configService.set('loot.equipmentPct', 60)
+    await (app as any).iocContainer.configService.set('loot.dustPct', 30)
     await app.close()
   })
 
@@ -699,7 +706,8 @@ describe('routes de tour', () => {
     expect(body.won).toBe(true)
     expect(body.rewards?.isFirstClear).toBe(false)
     expect(body.rewards?.gold).toBe(20)
-    expect(body.rewards?.dust).toBe(5)
+    // Le lot de farm est une pièce (tirage figé) : pas de poussière.
+    expect(body.rewards?.dust).toBe(0)
     expect(body.rewards?.xp).toBe(3)
   })
 
@@ -744,6 +752,8 @@ describe('routes de tour', () => {
       runs: number
       totalGold: number
       totalDust: number
+      dustDrops: number[]
+      energyDrops: number[]
       totalXp: number
       xpBefore: number
       levelBefore: number
@@ -758,7 +768,10 @@ describe('routes de tour', () => {
     // Butin de FARM (20/5/3), jamais celui de premier passage (200/50/30) :
     // un étage déjà franchi ne redonne pas sa prime de découverte.
     expect(body.totalGold).toBe(60)
-    expect(body.totalDust).toBe(15)
+    expect(body.totalDust).toBe(0)
+    // Un lot par passage : ni poussière ni énergie quand chacun est une pièce.
+    expect(body.dustDrops).toEqual([])
+    expect(body.energyDrops).toEqual([])
     expect(body.totalXp).toBe(9)
     // L'état d'AVANT gain voyage avec la réponse : sans lui le front ne peut
     // pas savoir que le balayage a fait passer un niveau, et la célébration

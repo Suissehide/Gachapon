@@ -202,8 +202,8 @@ export const SKILL_NODE_TEXT = {
   apexCombat: {
     nameFr: 'Apogée de Combat',
     nameEn: 'Combat Apex',
-    descriptionFr: "Bonus de chance d'équipement en combat",
-    descriptionEn: 'Bonus to equipment drop chance in battle',
+    descriptionFr: "Relève la rareté des pièces d'équipement gagnées en combat",
+    descriptionEn: 'Raises the rarity of equipment won in battle',
   },
   forgeron: {
     nameFr: 'Forgeron',

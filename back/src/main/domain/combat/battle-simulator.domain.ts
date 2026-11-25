@@ -65,8 +65,10 @@ export interface SimulatorInput {
   timeoutTurns?: number
   /** Seuil de défense K, commun à toutes les unités (défaut DEFAULT_DEFENSE_K). */
   defenseK?: number
-  /** Multiplicateur de dégâts en avantage élémentaire (défaut 1.3). */
+  /** Multiplicateur de dégâts en avantage élémentaire (défaut 1.25). */
   elementAdvantageMult?: number
+  /** Points de taux critique gagnés en avantage élémentaire (défaut 15). */
+  elementAdvantageCritBonus?: number
   /** Multiplicateur de dégâts en désavantage élémentaire (défaut 0.75). */
   elementDisadvantageMult?: number
 }
@@ -77,6 +79,7 @@ export const DEFAULT_DEFENSE_K = 1000
 /** Règles de dégâts communes au combat : roue élémentaire et seuil de défense. */
 interface DamageRules {
   adv: number
+  advCrit: number
   dis: number
   defenseK: number
 }
@@ -659,15 +662,27 @@ function resolveEffectiveDef(attacker: BattleUnit, target: BattleUnit): number {
  * cadence (une attaque sur CRIT_CADENCE) : sinon la séquence PRNG diverge selon que
  * l'unité porte le passif ou non, et le déterminisme à seed égal casse.
  */
+/** Avantage élémentaire : en plus des dégâts, l'attaquant crite plus souvent. */
+function elementCritBonus(
+  attacker: BattleUnit,
+  target: BattleUnit,
+  rules: DamageRules,
+): number {
+  return elementRelation(attacker.element, target.element) === 'ADVANTAGE'
+    ? rules.advCrit
+    : 0
+}
+
 function resolveCrit(
   attacker: BattleUnit,
+  critBonus: number,
   prng: () => number,
   log: LogEntry[],
 ): { crit: boolean; mult: number } {
   const cadenceCrit =
     attacker.passiveKey === 'CRIT' &&
     (attacker.attackCount + 1) % CRIT_CADENCE === 0
-  const tirageCrit = prng() < attacker.critRate / 100
+  const tirageCrit = prng() < (attacker.critRate + critBonus) / 100
   if (cadenceCrit) {
     log.push({
       type: 'PASSIVE',
@@ -865,7 +880,12 @@ function resolveAttackOnTarget(
     patternMultiplier,
   )
 
-  const { crit, mult } = resolveCrit(attacker, prng, log)
+  const { crit, mult } = resolveCrit(
+    attacker,
+    elementCritBonus(attacker, target, rules),
+    prng,
+    log,
+  )
   raw *= mult
 
   raw = applyPassiveDamageModifiers(attacker, target, raw, log)
@@ -1846,7 +1866,8 @@ export function simulateBattle(input: SimulatorInput): SimulatorResult {
   const prng = mulberry32(hashSeed(input.seed))
 
   const rules: DamageRules = {
-    adv: input.elementAdvantageMult ?? 1.3,
+    adv: input.elementAdvantageMult ?? 1.25,
+    advCrit: input.elementAdvantageCritBonus ?? 15,
     dis: input.elementDisadvantageMult ?? 0.75,
     defenseK: input.defenseK ?? DEFAULT_DEFENSE_K,
   }

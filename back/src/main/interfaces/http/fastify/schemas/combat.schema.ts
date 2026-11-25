@@ -92,6 +92,7 @@ export const combatDebugBattleBodySchema = z.object({
   seed: z.string().min(1).max(64),
   timeoutTurns: z.number().int().min(1).max(100).optional(),
   elementAdvantageMult: z.number().positive().optional(),
+  elementAdvantageCritBonus: z.number().nonnegative().optional(),
   elementDisadvantageMult: z.number().positive().optional(),
 })
 

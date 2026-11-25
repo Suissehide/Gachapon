@@ -30,6 +30,7 @@ export const DUMMY_TURNS = 20
 
 const DUMMY_CONFIG_KEYS = [
   'combat.elementAdvantageMult',
+  'combat.elementAdvantageCritBonus',
   'combat.elementDisadvantageMult',
   'combat.defMitigationRef',
   'combat.baseCritRate',
@@ -144,6 +145,7 @@ export class TrainingDummyDomain {
       timeoutTurns: DUMMY_TURNS,
       defenseK: c['combat.defMitigationRef'],
       elementAdvantageMult: c['combat.elementAdvantageMult'],
+      elementAdvantageCritBonus: c['combat.elementAdvantageCritBonus'],
       elementDisadvantageMult: c['combat.elementDisadvantageMult'],
     })
     return {

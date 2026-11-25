@@ -77,7 +77,7 @@
     "slotAndLevel": "{{slot}} · LVL. {{level}}",
     "rarityTierTitle": "Rarity {{tier}}/{{max}}",
     "destroy": "Destroy",
-    "scrapped": "✓ Destroyed · +{{amount}} gold",
+    "seeDetails": "See details of {{name}}",
     "destroyedToastTitle": "Item destroyed"
   },
   "setGuide": {

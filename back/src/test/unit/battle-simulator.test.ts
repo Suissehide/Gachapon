@@ -744,7 +744,7 @@ describe('simulateBattle', () => {
   // Roue élémentaire
   // -----------------------------------------------------------------------
 
-  it('ADVANTAGE element deals ~1.3x vs a neutral matchup on the same seed', () => {
+  it('ADVANTAGE element deals ~1.25x vs a neutral matchup on the same seed', () => {
     const seed = 'element-adv'
     const neutral = simulateBattle({
       teamA: [makeUnit('A0', { atk: 50, spd: 999 })],
@@ -759,17 +759,38 @@ describe('simulateBattle', () => {
       ],
       seed,
       timeoutTurns: 1,
+      elementAdvantageCritBonus: 0,
     })
     const base = firstAttackRawDamage(neutral.log, 'A0')
     const adv = firstAttackRawDamage(advantage.log, 'A0')
     expect(adv).toBeGreaterThan(base)
-    expect(Math.abs(adv / base - 1.3)).toBeLessThan(0.001)
+    expect(Math.abs(adv / base - 1.25)).toBeLessThan(0.001)
     const dmg = advantage.log.find(
       (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
     )
     if (dmg?.type === 'ATTACK') {
-      expect(dmg.damages[0]?.elementMult).toBe(1.3)
+      expect(dmg.damages[0]?.elementMult).toBe(1.25)
     }
+  })
+
+  it('ADVANTAGE element adds crit rate: a 0 % unit crits with a 100-point bonus', () => {
+    const run = (bonus: number) => {
+      const res = simulateBattle({
+        teamA: [makeUnit('A0', { atk: 50, spd: 999, element: 'FIRE', critRate: 0 })],
+        teamB: [
+          makeUnit('B0', { hp: 100000, def: 10, spd: 1, element: 'NATURE' }),
+        ],
+        seed: 'element-crit',
+        timeoutTurns: 1,
+        elementAdvantageCritBonus: bonus,
+      })
+      const atk = res.log.find(
+        (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+      )
+      return atk?.type === 'ATTACK' ? atk.damages[0]?.crit : undefined
+    }
+    expect(run(0)).toBe(false)
+    expect(run(100)).toBe(true)
   })
 
   it('DISADVANTAGE element deals ~0.75x vs a neutral matchup', () => {

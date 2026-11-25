@@ -71,6 +71,7 @@ export interface EconomyConfig {
     battleCost: number
     sweepCost: number
     elementAdvantageMult: number
+    elementAdvantageCritBonus: number
     elementDisadvantageMult: number
     // Valeurs de base des 4 stats de stuff — affichées même sans équipement.
     baseCritRate: number
