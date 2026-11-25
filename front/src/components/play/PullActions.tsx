@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ChevronDown, ShoppingBag, Sparkles, Ticket } from 'lucide-react'
+import { ChevronDown, ShoppingBag, Ticket } from 'lucide-react'
 import { DropdownMenu } from 'radix-ui'
 import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -58,7 +58,6 @@ export function PullActions({
   const classic = kind === 'classic'
   const funds = classic ? tokens : capsuleStock(capsules, kind)
   const unitCost = classic ? pullCost : 1
-  const CostIcon = classic ? Ticket : Sparkles
   const tint = capsuleTint(kind)
   const anyEmpty = CAPSULE_KINDS.some(
     (k) => k !== 'classic' && capsuleStock(capsules, k) === 0,
@@ -88,6 +87,18 @@ export function PullActions({
               <CapsuleSwatch kind={kind} />
             </span>
             {t('gacha:page.pull')}
+            <span
+              role="img"
+              aria-label={
+                classic
+                  ? t('gacha:page.tokenBalance', { count: funds })
+                  : t('gacha:page.capsuleBalance', { count: funds })
+              }
+              className="inline-flex items-center gap-0.5 rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[12px] font-bold tabular-nums text-text-light"
+            >
+              <Ticket className="h-3 w-3" />
+              {funds}
+            </span>
             <span className="ml-0.5 border-l border-border pl-2 text-text-light transition-colors duration-300 group-hover/trigger:text-text">
               <ChevronDown className="h-4 w-4 transition-transform duration-300 ease-out group-hover/trigger:translate-y-0.5" />
             </span>
@@ -140,7 +151,7 @@ export function PullActions({
         >
           ×{count}
           <span className="inline-flex items-center gap-0.5 rounded bg-white/25 px-1.5 py-0.5 font-mono text-[12px] font-bold tabular-nums transition-[transform,background-color] duration-300 ease-out group-hover/seg:-translate-y-px group-hover/seg:bg-white/40 group-disabled/seg:translate-y-0 group-disabled/seg:bg-white/25">
-            <CostIcon className="h-3 w-3" />
+            <Ticket className="h-3 w-3" />
             {unitCost * count}
           </span>
         </Button>
