@@ -549,7 +549,12 @@ describe('Campaign routes', () => {
       totalXp: number
       xpBefore: number
       levelBefore: number
-      runLots: { dust: number; energy: number; equipmentIndex: number | null }[]
+      runLots: {
+        outcome: string
+        dust: number
+        energy: number
+        equipmentIndex: number | null
+      }[]
       energySpent: number
     }
     expect(body.runs).toBe(3)
@@ -568,6 +573,8 @@ describe('Campaign routes', () => {
     // Un lot par passage, dans l'ordre : chacun est une pièce ici.
     expect(body.runLots).toHaveLength(3)
     for (const lot of body.runLots) {
+      // Le balayage ne simule pas encore : chaque passage est une victoire.
+      expect(lot.outcome).toBe('WIN')
       expect(lot.dust).toBe(0)
       expect(lot.energy).toBe(0)
     }

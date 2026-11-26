@@ -140,6 +140,8 @@ export interface TowerSweepResult {
   runLots: SweepRunLot[]
   /** Énergie débitée pour l'ensemble du balayage. */
   energySpent: number
+  /** Énergie rendue pour les passages non joués (arrêt sur défaites). */
+  energyRefunded: number
 }
 
 export interface TowerFloorView {
@@ -589,6 +591,7 @@ export class TowerDomain {
             equipmentDrops,
             runLots,
             energySpent: sweepCostPerRun * runs,
+            energyRefunded: 0,
           }
         },
         { isolationLevel: 'Serializable' },
@@ -819,6 +822,7 @@ export class TowerDomain {
       dustDrops.push(farmDrop.dust)
       energyDrops.push(farmDrop.energy)
       runLots.push({
+        outcome: 'WIN',
         dust: farmDrop.dust,
         energy: farmDrop.energy,
         equipmentIndex: farmDrop.equipment ? equipmentDrops.length : null,

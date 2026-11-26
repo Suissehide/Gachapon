@@ -1,11 +1,17 @@
+import type { TFunction } from 'i18next'
 import {
   ArrowRight,
+  Check,
   ChevronDown,
   Coins,
+  Pause,
   RotateCcw,
   Sparkles,
   Star,
   Swords,
+  TriangleAlert,
+  Users,
+  X,
   Zap,
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
@@ -19,6 +25,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { CardDrop, SweepRunLot } from '../../api/campaign.api.ts'
+import type { TeamUnit } from '../../api/combat.api.ts'
 import type { EquipmentDrop } from '../../api/equipment.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
@@ -37,6 +44,7 @@ import {
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
 import { Popup, PopupContent } from '../ui/popup.tsx'
+import { TeamPowerVerdict } from './BattlePrepModal.tsx'
 
 // Shared visual language for the battle-result popups (victory / defeat) and the
 // campaign farm-result popup, so they stay uniform. The animations referenced
@@ -296,6 +304,7 @@ export function FarmResultPopup({
   result,
   place,
   replay,
+  defeat,
   onClose,
 }: {
   result: FarmResult
@@ -303,9 +312,15 @@ export function FarmResultPopup({
   place?: string
   /** « Relancer » : absent, le bouton n'est pas proposé. */
   replay?: FarmReplay
+  /**
+   * De quoi réagir à un farm interrompu par les défaites : la puissance de
+   * l'équipe face à la recommandée, et l'accès à l'éditeur d'équipe.
+   */
+  defeat?: FarmDefeatContext
   onClose: () => void
 }) {
   const { t } = useTranslation('combat')
+  const summary = summarizeRuns(result.runLots ?? [])
   return (
     <Popup
       open
@@ -320,14 +335,24 @@ export function FarmResultPopup({
         className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
       >
         <Dialog.Title className="sr-only">
-          {t('combat:farmResult.title')}
+          {t(
+            summary.stopped
+              ? 'combat:farmResult.stoppedTitle'
+              : 'combat:farmResult.title',
+          )}
         </Dialog.Title>
-        <ResultPanel halo>
+        <ResultPanel halo={!summary.stopped}>
           <FarmHeader
             place={place}
             runs={result.runs}
+            summary={summary}
+            runLots={result.runLots ?? []}
             energySpent={result.energySpent}
+            energyRefunded={result.energyRefunded}
           />
+          {summary.stopped && (
+            <FarmStoppedNotice summary={summary} defeat={defeat} />
+          )}
           <div className="mt-6 grid w-full grid-cols-1 gap-2.5 sm:grid-cols-2">
             <TotalTile
               icon={<Coins className="h-5 w-5" />}
@@ -350,11 +375,15 @@ export function FarmResultPopup({
           <FarmRunDetails
             runLots={result.runLots ?? []}
             equipmentDrops={result.equipmentDrops}
+            // Avec des défaites, le détail s'ouvre de lui-même : c'est là
+            // qu'on voit lesquelles.
+            defaultOpen={summary.losses > 0}
           />
           <FarmActions
             runs={result.runs}
             energySpent={result.energySpent}
-            replay={replay}
+            replay={summary.stopped ? undefined : replay}
+            onEditTeam={summary.stopped ? defeat?.onEditTeam : undefined}
             onClose={onClose}
           />
         </ResultPanel>
@@ -363,26 +392,69 @@ export function FarmResultPopup({
   )
 }
 
+type FarmDefeatContext = {
+  team: TeamUnit[]
+  recommendedPower: number
+  onEditTeam: () => void
+}
+
+type RunSummary = {
+  wins: number
+  losses: number
+  played: number
+  skipped: number
+  /** Le balayage s'est arrêté avant la fin (passages `SKIPPED`). */
+  stopped: boolean
+}
+
+function summarizeRuns(runLots: SweepRunLot[]): RunSummary {
+  const count = (o: SweepRunLot['outcome']) =>
+    runLots.filter((lot) => lot.outcome === o).length
+  const skipped = count('SKIPPED')
+  return {
+    wins: count('WIN'),
+    losses: count('LOSS'),
+    played: runLots.length - skipped,
+    skipped,
+    stopped: skipped > 0,
+  }
+}
+
 type FarmReplay = { onReplay: () => void; disabled: boolean; pending: boolean }
 
 function FarmHeader({
   place,
   runs,
+  summary,
+  runLots,
   energySpent,
+  energyRefunded,
 }: {
   place?: string
   runs: number
+  summary: RunSummary
+  runLots: SweepRunLot[]
   energySpent?: number
+  energyRefunded?: number
 }) {
   const { t } = useTranslation('combat')
+  const locale = currentLocale()
+  const { stopped } = summary
   return (
     <>
       <ResultBadge
-        className={RESULT_BADGE_WIN}
-        icon={<Zap className="h-8 w-8" />}
+        className={stopped ? RESULT_BADGE_LOSS : RESULT_BADGE_WIN}
+        icon={
+          stopped ? <Pause className="h-8 w-8" /> : <Zap className="h-8 w-8" />
+        }
       />
       {place && (
-        <p className="mt-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+        <p
+          className={cn(
+            'mt-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em]',
+            stopped ? 'text-text-light' : 'text-primary',
+          )}
+        >
           {place}
         </p>
       )}
@@ -392,11 +464,29 @@ function FarmHeader({
           place ? 'mt-1.5' : 'mt-4',
         )}
       >
-        {t('combat:farmResult.title')}
+        {t(
+          stopped
+            ? 'combat:farmResult.stoppedTitle'
+            : 'combat:farmResult.title',
+        )}
       </h2>
+      {stopped && (
+        <p className="mt-2 text-[14.5px] text-text-light">
+          {t('combat:farmResult.stoppedLead', {
+            n: summary.played,
+            total: runs,
+          })}
+        </p>
+      )}
+      <OutcomeStrip runLots={runLots} />
       <div className="mt-3.5 flex flex-wrap justify-center gap-1.5">
         <FarmChip icon={<Swords className="h-3.5 w-3.5" />}>
-          {t('combat:farmResult.runs', { count: runs })}
+          {stopped
+            ? t('combat:farmResult.runsPlayed', {
+                played: summary.played,
+                total: runs,
+              })
+            : t('combat:farmResult.runs', { count: runs })}
         </FarmChip>
         {energySpent !== undefined && energySpent > 0 && (
           <FarmChip
@@ -404,12 +494,109 @@ function FarmHeader({
             className="border-violet-500/25 bg-violet-500/8 text-violet-600"
           >
             {t('combat:farmResult.energySpent', {
-              count: formatNumber(energySpent, currentLocale()),
+              count: formatNumber(energySpent, locale),
+            })}
+          </FarmChip>
+        )}
+        {energyRefunded !== undefined && energyRefunded > 0 && (
+          <FarmChip
+            icon={<Zap className="h-3.5 w-3.5" />}
+            className="border-emerald-500/25 bg-emerald-500/8 text-emerald-700"
+          >
+            {t('combat:farmResult.energyRefunded', {
+              count: formatNumber(energyRefunded, locale),
             })}
           </FarmChip>
         )}
       </div>
     </>
+  )
+}
+
+/**
+ * Frise des combats sous le titre : vert pour une victoire, rouge pour une
+ * défaite, pointillés pour un combat non joué. Masquée quand tout est gagné :
+ * elle n'apprendrait rien de plus que le titre.
+ */
+function OutcomeStrip({ runLots }: { runLots: SweepRunLot[] }) {
+  const { t } = useTranslation('combat')
+  if (runLots.every((lot) => lot.outcome === 'WIN')) {
+    return null
+  }
+  const cells = runLots.map((lot, i) => ({
+    outcome: lot.outcome,
+    key: `strip-${i + 1}`,
+    title: t(OUTCOME_TITLE[lot.outcome], { n: i + 1 }),
+  }))
+  return (
+    <ul
+      aria-label={t('combat:farmResult.outcomeStrip')}
+      className="mt-3.5 flex flex-wrap justify-center gap-1"
+    >
+      {cells.map(({ outcome, key, title }) => (
+        <li
+          key={key}
+          title={title}
+          className={cn(
+            'flex h-[22px] w-[22px] items-center justify-center rounded-[7px] text-white',
+            outcome === 'WIN' && 'bg-emerald-500',
+            outcome === 'LOSS' && 'bg-red-500',
+            outcome === 'SKIPPED' &&
+              'border-[1.5px] border-dashed border-border',
+          )}
+        >
+          <span className="sr-only">{title}</span>
+          {outcome === 'WIN' && <Check className="h-3 w-3" strokeWidth={3} />}
+          {outcome === 'LOSS' && <X className="h-3 w-3" strokeWidth={3} />}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+const OUTCOME_TITLE = {
+  WIN: 'combat:farmResult.outcomeWin',
+  LOSS: 'combat:farmResult.outcomeLoss',
+  SKIPPED: 'combat:farmResult.outcomeSkipped',
+} as const
+
+/**
+ * Encart d'un farm interrompu : pourquoi il s'est arrêté, ce qui a été rendu,
+ * et la puissance de l'équipe face à la recommandée (même verdict que
+ * l'aperçu de combat).
+ */
+function FarmStoppedNotice({
+  summary,
+  defeat,
+}: {
+  summary: RunSummary
+  defeat?: FarmDefeatContext
+}) {
+  const { t } = useTranslation('combat')
+  return (
+    <div className="mt-5 w-full rounded-2xl border border-red-200 bg-red-50 p-3.5 text-left">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/12 text-red-600">
+          <TriangleAlert className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <b className="block text-[14.5px] text-text">
+            {t('combat:farmResult.stoppedCardTitle', { count: summary.losses })}
+          </b>
+          <p className="mt-0.5 text-[13px] leading-snug text-text-light">
+            {t('combat:farmResult.stoppedCardText', {
+              count: summary.skipped,
+            })}
+          </p>
+        </div>
+      </div>
+      {defeat && (
+        <TeamPowerVerdict
+          team={defeat.team}
+          recommendedPower={defeat.recommendedPower}
+        />
+      )}
+    </div>
   )
 }
 
@@ -507,12 +694,14 @@ function FarmCards({ drops }: { drops: CardDrop[] }) {
 function FarmRunDetails({
   runLots,
   equipmentDrops,
+  defaultOpen,
 }: {
   runLots: SweepRunLot[]
   equipmentDrops: EquipmentDrop[]
+  defaultOpen: boolean
 }) {
   const { t } = useTranslation('combat')
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
   if (runLots.length === 0) {
     return null
   }
@@ -554,39 +743,48 @@ function FarmActions({
   runs,
   energySpent,
   replay,
+  onEditTeam,
   onClose,
 }: {
   runs: number
   energySpent?: number
   replay?: FarmReplay
+  /** Farm interrompu : « Revoir mon équipe » prend la place de « Relancer ». */
+  onEditTeam?: () => void
   onClose: () => void
 }) {
   const { t } = useTranslation('combat')
+  const secondary = onEditTeam ? (
+    <Button variant="outline" size="lg" onClick={onEditTeam} className="gap-2">
+      <Users className="h-4 w-4" />
+      {t('combat:battle.defeat.reviewTeam')}
+    </Button>
+  ) : replay ? (
+    <Button
+      variant="outline"
+      size="lg"
+      onClick={replay.onReplay}
+      disabled={replay.disabled || replay.pending}
+      className="gap-2"
+    >
+      <RotateCcw className="h-4 w-4" />
+      {t('combat:farmResult.replay', { count: runs })}
+      {energySpent !== undefined && energySpent > 0 && (
+        <span className="inline-flex items-center gap-0.5 font-mono text-[11px] font-bold text-violet-600">
+          <Zap className="h-3 w-3" />
+          {formatNumber(energySpent, currentLocale())}
+        </span>
+      )}
+    </Button>
+  ) : null
   return (
     <div
       className={cn(
         'mt-6 grid w-full gap-2.5',
-        replay && 'sm:grid-cols-[1fr_1.25fr]',
+        secondary && 'sm:grid-cols-[1fr_1.25fr]',
       )}
     >
-      {replay && (
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={replay.onReplay}
-          disabled={replay.disabled || replay.pending}
-          className="gap-2"
-        >
-          <RotateCcw className="h-4 w-4" />
-          {t('combat:farmResult.replay', { count: runs })}
-          {energySpent !== undefined && energySpent > 0 && (
-            <span className="inline-flex items-center gap-0.5 font-mono text-[11px] font-bold text-violet-600">
-              <Zap className="h-3 w-3" />
-              {formatNumber(energySpent, currentLocale())}
-            </span>
-          )}
-        </Button>
-      )}
+      {secondary}
       <Button size="lg" onClick={onClose} className="gap-2">
         {t('combat:farmResult.continue')}
         <ArrowRight className="h-4 w-4" />
@@ -608,6 +806,7 @@ export type FarmResult = {
   cardDrops?: CardDrop[]
   runLots?: SweepRunLot[]
   energySpent?: number
+  energyRefunded?: number
 }
 
 const RARITY_RANK: Record<string, number> = {
@@ -836,53 +1035,49 @@ function RunCell({
   equipment: EquipmentDrop | null
 }) {
   const { t } = useTranslation('combat')
-  let icon: ReactNode
-  let iconStyle: React.CSSProperties | undefined
-  let iconClassName = ''
-  let value: string
-  let caption: string
-  let captionStyle: React.CSSProperties | undefined
-  if (equipment) {
-    const SlotIcon = SLOT_ICONS[equipment.slot]
-    icon = <SlotIcon className="h-4 w-4" />
-    iconStyle = { background: RARITY_TOKEN[equipment.rarity] }
-    iconClassName = 'text-white'
-    value = SLOT_LABELS[equipment.slot]
-    caption = RARITY_LABEL_FR[equipment.rarity] ?? equipment.rarity
-    captionStyle = { color: RARITY_TOKEN[equipment.rarity] }
-  } else if (lot.energy > 0) {
-    icon = <Zap className="h-4 w-4" />
-    iconClassName = 'bg-violet-500/15 text-violet-500'
-    value = `+${formatNumber(lot.energy, currentLocale())}`
-    caption = t('combat:battle.rewards.energy')
-  } else {
-    icon = <Sparkles className="h-4 w-4" />
-    iconClassName = 'bg-sky-400/15 text-sky-500'
-    value = `+${formatNumber(lot.dust, currentLocale())}`
-    caption = t('combat:battle.rewards.dust')
-  }
+  const c = runCellContent(lot, equipment, t)
   return (
-    <div className="flex min-w-0 flex-col items-center gap-1 rounded-xl border border-border bg-white px-1 pt-2 pb-2.5">
-      <span className="font-mono text-[9.5px] font-bold tracking-[0.1em] text-text-light/70">
+    <div
+      className={cn(
+        'flex min-w-0 flex-col items-center gap-1 rounded-xl border px-1 pt-2 pb-2.5',
+        lot.outcome === 'WIN' && 'border-border bg-white',
+        lot.outcome === 'LOSS' && 'border-red-200 bg-red-50',
+        lot.outcome === 'SKIPPED' &&
+          'border-[1.5px] border-dashed border-border',
+      )}
+    >
+      <span
+        className={cn(
+          'font-mono text-[9.5px] font-bold tracking-[0.1em]',
+          lot.outcome === 'SKIPPED'
+            ? 'text-text-light/40'
+            : 'text-text-light/70',
+        )}
+      >
         {t('combat:farmResult.runShort', { n })}
       </span>
       <span
         className={cn(
           'flex h-7 w-7 items-center justify-center rounded-lg',
-          iconClassName,
+          c.iconClassName,
         )}
-        style={iconStyle}
+        style={c.iconStyle}
       >
-        {icon}
+        {c.icon}
       </span>
-      <b className="max-w-full truncate font-display text-[12.5px] leading-tight text-text">
-        {value}
+      <b
+        className={cn(
+          'max-w-full truncate font-display text-[12.5px] leading-tight',
+          c.valueClassName ?? 'text-text',
+        )}
+      >
+        {c.value}
       </b>
       <span
         className="max-w-full truncate font-mono text-[9.5px] text-text-light/80"
-        style={captionStyle}
+        style={c.captionStyle}
       >
-        {caption}
+        {c.caption}
       </span>
       {lot.cardIndex !== null && (
         <span className="font-mono text-[9px] font-bold text-emerald-600">
@@ -891,4 +1086,65 @@ function RunCell({
       )}
     </div>
   )
+}
+
+type RunCellContent = {
+  icon: ReactNode
+  iconClassName: string
+  iconStyle?: React.CSSProperties
+  value: string
+  valueClassName?: string
+  caption: string
+  captionStyle?: React.CSSProperties
+}
+
+/** Ce que montre une case selon l'issue du passage et son lot. */
+function runCellContent(
+  lot: SweepRunLot,
+  equipment: EquipmentDrop | null,
+  t: TFunction<'combat'>,
+): RunCellContent {
+  if (lot.outcome === 'SKIPPED') {
+    return {
+      icon: <Pause className="h-4 w-4" />,
+      iconClassName: 'text-text-light/40',
+      value: '—',
+      valueClassName: 'text-text-light/40',
+      caption: t('combat:farmResult.skipped'),
+    }
+  }
+  if (lot.outcome === 'LOSS') {
+    return {
+      icon: <X className="h-4 w-4" strokeWidth={3} />,
+      iconClassName: 'bg-red-500/12 text-red-600',
+      value: t('combat:farmResult.loss'),
+      valueClassName: 'text-red-700',
+      caption: t('combat:farmResult.noLot'),
+    }
+  }
+  if (equipment) {
+    const SlotIcon = SLOT_ICONS[equipment.slot]
+    return {
+      icon: <SlotIcon className="h-4 w-4" />,
+      iconClassName: 'text-white',
+      iconStyle: { background: RARITY_TOKEN[equipment.rarity] },
+      value: SLOT_LABELS[equipment.slot],
+      caption: RARITY_LABEL_FR[equipment.rarity] ?? equipment.rarity,
+      captionStyle: { color: RARITY_TOKEN[equipment.rarity] },
+    }
+  }
+  if (lot.energy > 0) {
+    return {
+      icon: <Zap className="h-4 w-4" />,
+      iconClassName: 'bg-violet-500/15 text-violet-500',
+      value: `+${formatNumber(lot.energy, currentLocale())}`,
+      caption: t('combat:battle.rewards.energy'),
+    }
+  }
+  return {
+    icon: <Sparkles className="h-4 w-4" />,
+    iconClassName: 'bg-sky-400/15 text-sky-500',
+    value: `+${formatNumber(lot.dust, currentLocale())}`,
+    caption: t('combat:battle.rewards.dust'),
+  }
 }

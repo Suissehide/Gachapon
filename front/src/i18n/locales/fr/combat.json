@@ -221,7 +221,21 @@
     "details": "Détail par combat",
     "runShort": "C{{n}}",
     "plusCard": "+ carte",
-    "replay": "Relancer ×{{count}}"
+    "replay": "Relancer ×{{count}}",
+    "stoppedTitle": "Farm interrompu",
+    "stoppedLead": "Arrêté au combat {{n}} sur {{total}}.",
+    "runsPlayed": "{{played}}/{{total}} combats",
+    "energyRefunded": "+{{count}} rendue",
+    "stoppedCardTitle": "Arrêt après {{count}} défaites",
+    "stoppedCardText_one": "Ton équipe ne tient pas sur cet étage. Le combat restant n'a pas été joué et son énergie t'est rendue.",
+    "stoppedCardText_other": "Ton équipe ne tient pas sur cet étage. Les {{count}} combats restants n'ont pas été joués et leur énergie t'est rendue.",
+    "outcomeStrip": "Issue de chaque combat",
+    "outcomeWin": "Combat {{n}} : victoire",
+    "outcomeLoss": "Combat {{n}} : défaite",
+    "outcomeSkipped": "Combat {{n}} : non joué",
+    "loss": "Défaite",
+    "noLot": "aucun lot",
+    "skipped": "non joué"
   },
   "battlePrep": {
     "verdict": {

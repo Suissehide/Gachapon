@@ -93,6 +93,8 @@ export type TowerSweepResult = {
   runLots: SweepRunLot[]
   /** Énergie débitée pour l'ensemble du balayage. */
   energySpent: number
+  /** Énergie rendue pour les passages non joués. */
+  energyRefunded: number
 }
 
 export type TowerBattleResult = {

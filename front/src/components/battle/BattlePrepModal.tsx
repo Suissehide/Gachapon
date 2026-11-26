@@ -89,11 +89,6 @@ export function BattlePrepModal({
   onClose: () => void
 }) {
   const { t } = useTranslation('combat')
-  const totalPower = team.reduce((acc, u) => acc + computePower(u.stats), 0)
-  const ratio = recommendedPower === 0 ? 1 : totalPower / recommendedPower
-  const tone: 'good' | 'ok' | 'low' =
-    ratio >= 1.05 ? 'good' : ratio >= 0.9 ? 'ok' : 'low'
-  const verdictLabel = t(`combat:battlePrep.verdict.${tone}`)
 
   return (
     <>
@@ -159,13 +154,7 @@ export function BattlePrepModal({
           </div>
         </div>
 
-        <PowerVerdict
-          mine={totalPower}
-          rec={recommendedPower}
-          tone={tone}
-          label={verdictLabel}
-          ratio={ratio}
-        />
+        <TeamPowerVerdict team={team} recommendedPower={recommendedPower} />
 
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -409,6 +398,33 @@ export function FarmDropPills({ drop }: { drop: FarmDropPreview | null }) {
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * Puissance de l'équipe face à la puissance recommandée, avec le même verdict
+ * que l'aperçu de combat. Exporté pour la fenêtre de farm interrompu.
+ */
+export function TeamPowerVerdict({
+  team,
+  recommendedPower,
+}: {
+  team: TeamUnit[]
+  recommendedPower: number
+}) {
+  const { t } = useTranslation('combat')
+  const totalPower = team.reduce((acc, u) => acc + computePower(u.stats), 0)
+  const ratio = recommendedPower === 0 ? 1 : totalPower / recommendedPower
+  const tone: 'good' | 'ok' | 'low' =
+    ratio >= 1.05 ? 'good' : ratio >= 0.9 ? 'ok' : 'low'
+  return (
+    <PowerVerdict
+      mine={totalPower}
+      rec={recommendedPower}
+      tone={tone}
+      label={t(`combat:battlePrep.verdict.${tone}`)}
+      ratio={ratio}
+    />
   )
 }
 

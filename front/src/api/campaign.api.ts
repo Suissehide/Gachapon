@@ -121,6 +121,12 @@ export type WandererBattleResult = Omit<BattleResult, 'rewards'> & {
  * index pointent dans `equipmentDrops` / `cardDrops` du même résultat.
  */
 export type SweepRunLot = {
+  /**
+   * Issue du passage. Tout est `WIN` tant que le balayage ne simule pas les
+   * combats ; `LOSS` et `SKIPPED` (passages non joués après l'arrêt sur
+   * défaites) arriveront avec la simulation.
+   */
+  outcome: 'WIN' | 'LOSS' | 'SKIPPED'
   dust: number
   energy: number
   equipmentIndex: number | null
@@ -145,6 +151,8 @@ export type SweepResult = {
   runLots: SweepRunLot[]
   /** Énergie débitée pour l'ensemble du balayage. */
   energySpent: number
+  /** Énergie rendue pour les passages non joués. */
+  energyRefunded: number
 }
 
 export const CampaignApi = {

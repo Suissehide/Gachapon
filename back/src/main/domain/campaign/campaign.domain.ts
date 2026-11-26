@@ -920,6 +920,8 @@ export class CampaignDomain {
     runLots: SweepRunLot[]
     /** Énergie débitée pour l'ensemble du balayage. */
     energySpent: number
+    /** Énergie rendue pour les passages non joués (arrêt sur défaites). */
+    energyRefunded: number
   }> {
     if (runs < 1 || runs > 10) {
       throw Boom.badRequest(errorMessage('campaign.sweepRunsOutOfRange'))
@@ -1034,6 +1036,7 @@ export class CampaignDomain {
             cardDrops,
             runLots,
             energySpent: sweepCostPerRun * runs,
+            energyRefunded: 0,
           }
         },
         { isolationLevel: 'Serializable' },
@@ -1114,6 +1117,7 @@ export class CampaignDomain {
         cardDrops.push(cardDrop)
       }
       runLots.push({
+        outcome: 'WIN',
         dust: drop.dust,
         energy: drop.energy,
         equipmentIndex,

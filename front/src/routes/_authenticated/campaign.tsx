@@ -129,9 +129,8 @@ function CampaignPage() {
   // De quoi relancer le même balayage depuis la fenêtre de résultat, une fois
   // l'aperçu d'étape refermé.
   const [sweepCtx, setSweepCtx] = useState<{
-    stageId: string
+    stage: CampaignStage
     runs: number
-    place: string
   } | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
   const [elementsOpen, setElementsOpen] = useState(false)
@@ -217,10 +216,10 @@ function CampaignPage() {
     }
     navigate({ to: '/battle/$stageId', params: { stageId: prep.id } })
   }
-  const runSweep = (ctx: { stageId: string; runs: number; place: string }) => {
+  const runSweep = (ctx: { stage: CampaignStage; runs: number }) => {
     setSweepCtx(ctx)
     sweep.mutate(
-      { stageId: ctx.stageId, runs: ctx.runs },
+      { stageId: ctx.stage.id, runs: ctx.runs },
       {
         onSuccess: (result) => {
           setSweepResult(result)
@@ -236,7 +235,7 @@ function CampaignPage() {
     if (!prep) {
       return
     }
-    runSweep({ stageId: prep.id, runs, place: prep.label })
+    runSweep({ stage: prep, runs })
   }
 
   return (
@@ -390,13 +389,30 @@ function CampaignPage() {
       {sweepResult && (
         <FarmResultPopup
           result={sweepResult}
-          place={sweepCtx?.place}
+          place={sweepCtx?.stage.label}
           replay={
             sweepCtx
               ? {
                   onReplay: () => runSweep(sweepCtx),
                   disabled: currentPC < sweepResult.energySpent,
                   pending: sweep.isPending,
+                }
+              : undefined
+          }
+          defeat={
+            sweepCtx
+              ? {
+                  team: teamUnits,
+                  recommendedPower: sweepCtx.stage.recommendedPower,
+                  // Même parcours que « Modifier » dans l'aperçu : l'éditeur
+                  // rouvre l'aperçu de l'étape en se fermant.
+                  onEditTeam: () => {
+                    const stage = sweepCtx.stage
+                    setSweepResult(null)
+                    setReopenAfterEditor(() => () => setPrep(stage))
+                    setEditorEnemies(stage.enemies)
+                    setEditorOpen(true)
+                  },
                 }
               : undefined
           }

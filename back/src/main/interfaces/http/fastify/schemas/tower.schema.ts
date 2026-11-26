@@ -131,6 +131,7 @@ export const towerSweepBodySchema = z.object({
 // equipment-drop.domain.ts) : les index pointent dans `equipmentDrops` /
 // `cardDrops`.
 const sweepRunLotSchema = z.object({
+  outcome: z.enum(['WIN', 'LOSS', 'SKIPPED']),
   dust: z.number().int(),
   energy: z.number().int(),
   equipmentIndex: z.number().int().nullable(),
@@ -150,6 +151,7 @@ export const towerSweepResponseSchema = z.object({
   equipmentDrops: z.array(towerEquipmentDropSchema),
   runLots: z.array(sweepRunLotSchema),
   energySpent: z.number().int(),
+  energyRefunded: z.number().int(),
 })
 
 // Même forme que `simulatorUnitSchema` de campaign.schema.ts (type

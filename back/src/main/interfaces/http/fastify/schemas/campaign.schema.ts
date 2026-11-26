@@ -137,6 +137,7 @@ export const sweepBodySchema = z.object({
 // equipment-drop.domain.ts) : les index pointent dans `equipmentDrops` /
 // `cardDrops`.
 const sweepRunLotSchema = z.object({
+  outcome: z.enum(['WIN', 'LOSS', 'SKIPPED']),
   dust: z.number().int(),
   energy: z.number().int(),
   equipmentIndex: z.number().int().nullable(),
@@ -157,4 +158,5 @@ export const sweepResponseSchema = z.object({
   cardDrops: z.array(cardDropSchema),
   runLots: z.array(sweepRunLotSchema),
   energySpent: z.number().int(),
+  energyRefunded: z.number().int(),
 })
