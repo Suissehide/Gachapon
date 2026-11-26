@@ -78,7 +78,11 @@
     "rarityTierTitle": "Rareté {{tier}}/{{max}}",
     "destroy": "Détruire",
     "seeDetails": "Voir le détail de {{name}}",
-    "destroyedToastTitle": "Objet détruit"
+    "destroyedToastTitle": "Objet détruit",
+    "substats_one": "+{{count}} sous-stat",
+    "substats_other": "+{{count}} sous-stats",
+    "noSubstats": "aucune sous-stat",
+    "levelShort": "Niv. {{level}}"
   },
   "setGuide": {
     "infoTitle": "Comprendre les bonus de sets",

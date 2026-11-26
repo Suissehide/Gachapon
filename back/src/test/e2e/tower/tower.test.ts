@@ -763,6 +763,15 @@ describe('routes de tour', () => {
         slot: string
         substats: { key: string; value: number }[]
       }[]
+      runLots: {
+        outcome: string
+        dust: number
+        energy: number
+        equipmentIndex: number | null
+        cardIndex: number | null
+      }[]
+      energySpent: number
+      energyRefunded: number
     }
     expect(body.runs).toBe(3)
     // Butin de FARM (20/5/3), jamais celui de premier passage (200/50/30) :
@@ -789,6 +798,15 @@ describe('routes de tour', () => {
       expect(drop.userEquipmentId).toEqual(expect.any(String))
       expect(drop.substats.length).toBeGreaterThan(0)
     }
+    // Détail combat par combat : un lot par passage, dans l'ordre, chaque
+    // pièce pointée par son index dans `equipmentDrops`.
+    expect(body.runLots).toEqual([
+      { outcome: 'WIN', dust: 0, energy: 0, equipmentIndex: 0, cardIndex: null },
+      { outcome: 'WIN', dust: 0, energy: 0, equipmentIndex: 1, cardIndex: null },
+      { outcome: 'WIN', dust: 0, energy: 0, equipmentIndex: 2, cardIndex: null },
+    ])
+    expect(body.energySpent).toBeGreaterThan(0)
+    expect(body.energyRefunded).toBe(0)
   })
 
   it('refuse un balayage que le joueur ne peut pas payer', async () => {

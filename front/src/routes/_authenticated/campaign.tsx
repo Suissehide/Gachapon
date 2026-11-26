@@ -126,6 +126,12 @@ function CampaignPage() {
   const [activeChapter, setActiveChapter] = useState<number | null>(null)
   const [prep, setPrep] = useState<CampaignStage | null>(null)
   const [sweepResult, setSweepResult] = useState<SweepResult | null>(null)
+  // De quoi relancer le même balayage depuis la fenêtre de résultat, une fois
+  // l'aperçu d'étape refermé.
+  const [sweepCtx, setSweepCtx] = useState<{
+    stage: CampaignStage
+    runs: number
+  } | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
   const [elementsOpen, setElementsOpen] = useState(false)
   const [wandererOpen, setWandererOpen] = useState(false)
@@ -210,12 +216,10 @@ function CampaignPage() {
     }
     navigate({ to: '/battle/$stageId', params: { stageId: prep.id } })
   }
-  const handleSweep = (runs: number) => {
-    if (!prep) {
-      return
-    }
+  const runSweep = (ctx: { stage: CampaignStage; runs: number }) => {
+    setSweepCtx(ctx)
     sweep.mutate(
-      { stageId: prep.id, runs },
+      { stageId: ctx.stage.id, runs: ctx.runs },
       {
         onSuccess: (result) => {
           setSweepResult(result)
@@ -226,6 +230,12 @@ function CampaignPage() {
         },
       },
     )
+  }
+  const handleSweep = (runs: number) => {
+    if (!prep) {
+      return
+    }
+    runSweep({ stage: prep, runs })
   }
 
   return (
@@ -378,13 +388,34 @@ function CampaignPage() {
       {/* Fin de combat multiple — même fenêtre que les tours. */}
       {sweepResult && (
         <FarmResultPopup
-          runs={sweepResult.runs}
-          totalGold={sweepResult.totalGold}
-          totalXp={sweepResult.totalXp}
-          dustDrops={sweepResult.dustDrops}
-          energyDrops={sweepResult.energyDrops}
-          equipmentDrops={sweepResult.equipmentDrops}
-          cardDrops={sweepResult.cardDrops}
+          result={sweepResult}
+          place={sweepCtx?.stage.label}
+          replay={
+            sweepCtx
+              ? {
+                  onReplay: () => runSweep(sweepCtx),
+                  disabled: currentPC < sweepResult.energySpent,
+                  pending: sweep.isPending,
+                }
+              : undefined
+          }
+          defeat={
+            sweepCtx
+              ? {
+                  team: teamUnits,
+                  recommendedPower: sweepCtx.stage.recommendedPower,
+                  // Même parcours que « Modifier » dans l'aperçu : l'éditeur
+                  // rouvre l'aperçu de l'étape en se fermant.
+                  onEditTeam: () => {
+                    const stage = sweepCtx.stage
+                    setSweepResult(null)
+                    setReopenAfterEditor(() => () => setPrep(stage))
+                    setEditorEnemies(stage.enemies)
+                    setEditorOpen(true)
+                  },
+                }
+              : undefined
+          }
           onClose={() => setSweepResult(null)}
         />
       )}

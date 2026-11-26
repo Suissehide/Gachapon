@@ -104,6 +104,12 @@ function TowerFloorsPage() {
   // simule rien à l'écran —, donc pas de `sceneDone` ici : la fenêtre s'ouvre
   // dès la réponse.
   const [sweepResult, setSweepResult] = useState<TowerSweepResult | null>(null)
+  // De quoi relancer le même balayage depuis la fenêtre de résultat, une fois
+  // l'aperçu d'étage refermé.
+  const [sweepCtx, setSweepCtx] = useState<{
+    floor: TowerFloorView
+    runs: number
+  } | null>(null)
   // Le combat de tour se joue SUR PLACE, contrairement à la campagne qui part
   // sur sa propre route : tout ce qui appartient à l'écran de sélection doit
   // donc se retirer explicitement pendant l'animation.
@@ -127,10 +133,11 @@ function TowerFloorsPage() {
     )
   }
 
-  const handleSweep = (floor: number, runs: number) => {
+  const handleSweep = (floor: TowerFloorView, runs: number) => {
     setPrep(null)
+    setSweepCtx({ floor, runs })
     sweep.mutate(
-      { element, floor, runs },
+      { element, floor: floor.index, runs },
       {
         onSuccess: (res) => {
           setSweepResult(res)
@@ -229,7 +236,7 @@ function TowerFloorsPage() {
         sweepPending={sweep.isPending}
         hasTeam={hasTeam}
         onFight={() => prep && handleFight(prep.index)}
-        onSweep={(runs) => prep && handleSweep(prep.index, runs)}
+        onSweep={(runs) => prep && handleSweep(prep, runs)}
         onEditTeam={() => {
           setPrepBeforeEditor(prep)
           setPrep(null)
@@ -275,18 +282,56 @@ function TowerFloorsPage() {
       />
 
       {/* Fin de combat multiple — même fenêtre que la campagne. */}
-      {sweepResult && (
-        <FarmResultPopup
-          runs={sweepResult.runs}
-          totalGold={sweepResult.totalGold}
-          totalXp={sweepResult.totalXp}
-          dustDrops={sweepResult.dustDrops}
-          energyDrops={sweepResult.energyDrops}
-          equipmentDrops={sweepResult.equipmentDrops}
+      {sweepResult && sweepCtx && (
+        <TowerFarmResult
+          result={sweepResult}
+          floor={sweepCtx.floor}
+          team={team.data?.team ?? []}
+          canReplay={currentPC >= sweepResult.energySpent}
+          replayPending={sweep.isPending}
+          onReplay={() => handleSweep(sweepCtx.floor, sweepCtx.runs)}
+          onEditTeam={() => {
+            // L'éditeur rouvre l'aperçu de l'étage en se fermant : on revoit
+            // l'équipe, puis on relance de là.
+            setSweepResult(null)
+            setPrepBeforeEditor(sweepCtx.floor)
+            setEditorOpen(true)
+          }}
           onClose={() => setSweepResult(null)}
         />
       )}
     </PageShell>
+  )
+}
+
+/** Fenêtre de fin de farm d'un étage de tour. */
+function TowerFarmResult({
+  result,
+  floor,
+  team,
+  canReplay,
+  replayPending,
+  onReplay,
+  onEditTeam,
+  onClose,
+}: {
+  result: TowerSweepResult
+  floor: TowerFloorView
+  team: TeamUnit[]
+  canReplay: boolean
+  replayPending: boolean
+  onReplay: () => void
+  onEditTeam: () => void
+  onClose: () => void
+}) {
+  return (
+    <FarmResultPopup
+      result={result}
+      place={floor.label}
+      replay={{ onReplay, disabled: !canReplay, pending: replayPending }}
+      defeat={{ team, recommendedPower: floor.recommendedPower, onEditTeam }}
+      onClose={onClose}
+    />
   )
 }
 

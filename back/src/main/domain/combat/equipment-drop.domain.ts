@@ -76,6 +76,29 @@ export interface VictoryDrop {
   energy: number
 }
 
+export type SweepRunOutcome = 'WIN' | 'LOSS' | 'SKIPPED'
+
+/**
+ * Ce qu'un passage de balayage a rapporté, dans l'ordre des passages : de quoi
+ * afficher le détail combat par combat. Les gains eux-mêmes restent dans les
+ * listes du résultat ; les index pointent dedans.
+ */
+export interface SweepRunLot {
+  /**
+   * Issue du passage. Le balayage ne simule pas encore les combats : tout
+   * passage joué est une victoire. Les défaites (et l'arrêt du balayage après
+   * plusieurs d'entre elles, passages restants `SKIPPED`) viendront avec la
+   * simulation ; le contrat est prêt pour elles.
+   */
+  outcome: SweepRunOutcome
+  dust: number
+  energy: number
+  /** Index dans `equipmentDrops`, `null` quand le lot n'était pas une pièce. */
+  equipmentIndex: number | null
+  /** Index dans `cardDrops` (campagne seulement), `null` sans carte. */
+  cardIndex: number | null
+}
+
 /**
  * Les trois parts sont fixes : la part d'énergie est le reste après équipement
  * et poussière. Le bonus de drop de l'arbre n'y touche pas, il relève la
