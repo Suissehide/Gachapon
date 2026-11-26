@@ -24,6 +24,7 @@ import {
   rollFirstClearCardRarity,
   rollFirstClearEquipmentRarity,
   rollVictoryDrop,
+  type SweepRunLot,
   VICTORY_DROP_CONFIG_KEYS,
   type VictoryDropPreview,
   victoryDropPreview,
@@ -915,6 +916,10 @@ export class CampaignDomain {
     levelBefore: number
     equipmentDrops: EquipmentDropPayload[]
     cardDrops: CardDropPayload[]
+    /** Un lot par passage, dans l'ordre. */
+    runLots: SweepRunLot[]
+    /** Énergie débitée pour l'ensemble du balayage. */
+    energySpent: number
   }> {
     if (runs < 1 || runs > 10) {
       throw Boom.badRequest(errorMessage('campaign.sweepRunsOutOfRange'))
@@ -984,6 +989,7 @@ export class CampaignDomain {
             energyDrops,
             equipmentDrops,
             cardDrops,
+            runLots,
           } = await this.#runSweeps(
             tx,
             userId,
@@ -1026,6 +1032,8 @@ export class CampaignDomain {
             levelBefore,
             equipmentDrops,
             cardDrops,
+            runLots,
+            energySpent: sweepCostPerRun * runs,
           }
         },
         { isolationLevel: 'Serializable' },
@@ -1056,6 +1064,7 @@ export class CampaignDomain {
     energyDrops: number[]
     equipmentDrops: EquipmentDropPayload[]
     cardDrops: CardDropPayload[]
+    runLots: SweepRunLot[]
   }> {
     let totalGold = 0
     let totalDust = 0
@@ -1065,6 +1074,7 @@ export class CampaignDomain {
     const energyDrops: number[] = []
     const equipmentDrops: EquipmentDropPayload[] = []
     const cardDrops: CardDropPayload[] = []
+    const runLots: SweepRunLot[] = []
 
     const { equipmentCatalog, activeCards } = await this.#loadSweepCatalogs(tx)
 
@@ -1088,6 +1098,7 @@ export class CampaignDomain {
         equipmentCatalog,
         substatRanges,
       )
+      const equipmentIndex = equipmentDrop ? equipmentDrops.length : null
       if (equipmentDrop) {
         equipmentDrops.push(equipmentDrop)
       }
@@ -1098,9 +1109,16 @@ export class CampaignDomain {
         loot,
         activeCards,
       )
+      const cardIndex = cardDrop ? cardDrops.length : null
       if (cardDrop) {
         cardDrops.push(cardDrop)
       }
+      runLots.push({
+        dust: drop.dust,
+        energy: drop.energy,
+        equipmentIndex,
+        cardIndex,
+      })
 
       await this.#achievementsDomain.track(tx, userId, {
         kind: 'STAGE_CLEARED',
@@ -1120,6 +1138,7 @@ export class CampaignDomain {
       energyDrops,
       equipmentDrops,
       cardDrops,
+      runLots,
     }
   }
 

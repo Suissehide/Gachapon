@@ -116,6 +116,17 @@ export type WandererBattleResult = Omit<BattleResult, 'rewards'> & {
   loot: WandererLootView | null
 }
 
+/**
+ * Ce qu'un passage de balayage a rapporté, dans l'ordre des passages. Les
+ * index pointent dans `equipmentDrops` / `cardDrops` du même résultat.
+ */
+export type SweepRunLot = {
+  dust: number
+  energy: number
+  equipmentIndex: number | null
+  cardIndex: number | null
+}
+
 export type SweepResult = {
   runs: number
   totalGold: number
@@ -130,6 +141,10 @@ export type SweepResult = {
   levelBefore: number
   equipmentDrops: EquipmentDrop[]
   cardDrops: CardDrop[]
+  /** Un lot par passage, dans l'ordre. */
+  runLots: SweepRunLot[]
+  /** Énergie débitée pour l'ensemble du balayage. */
+  energySpent: number
 }
 
 export const CampaignApi = {

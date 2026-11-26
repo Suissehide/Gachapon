@@ -549,6 +549,8 @@ describe('Campaign routes', () => {
       totalXp: number
       xpBefore: number
       levelBefore: number
+      runLots: { dust: number; energy: number; equipmentIndex: number | null }[]
+      energySpent: number
     }
     expect(body.runs).toBe(3)
     expect(body.totalGold).toBe(60)
@@ -563,6 +565,13 @@ describe('Campaign routes', () => {
     // ne se jouait qu'au tirage de cartes.
     expect(body.xpBefore).toBe(before.xp)
     expect(body.levelBefore).toBe(before.level)
+    // Un lot par passage, dans l'ordre : chacun est une pièce ici.
+    expect(body.runLots).toHaveLength(3)
+    for (const lot of body.runLots) {
+      expect(lot.dust).toBe(0)
+      expect(lot.energy).toBe(0)
+    }
+    expect(body.energySpent).toBeGreaterThan(0)
   })
 
   it('POST /sweep on stage 2 — never drops a tower-slot equipment (G1)', async () => {

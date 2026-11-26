@@ -104,6 +104,13 @@ function TowerFloorsPage() {
   // simule rien à l'écran —, donc pas de `sceneDone` ici : la fenêtre s'ouvre
   // dès la réponse.
   const [sweepResult, setSweepResult] = useState<TowerSweepResult | null>(null)
+  // De quoi relancer le même balayage depuis la fenêtre de résultat, une fois
+  // l'aperçu d'étage refermé.
+  const [sweepCtx, setSweepCtx] = useState<{
+    floor: number
+    runs: number
+    place: string
+  } | null>(null)
   // Le combat de tour se joue SUR PLACE, contrairement à la campagne qui part
   // sur sa propre route : tout ce qui appartient à l'écran de sélection doit
   // donc se retirer explicitement pendant l'animation.
@@ -127,8 +134,9 @@ function TowerFloorsPage() {
     )
   }
 
-  const handleSweep = (floor: number, runs: number) => {
+  const handleSweep = (floor: number, runs: number, place: string) => {
     setPrep(null)
+    setSweepCtx({ floor, runs, place })
     sweep.mutate(
       { element, floor, runs },
       {
@@ -229,7 +237,7 @@ function TowerFloorsPage() {
         sweepPending={sweep.isPending}
         hasTeam={hasTeam}
         onFight={() => prep && handleFight(prep.index)}
-        onSweep={(runs) => prep && handleSweep(prep.index, runs)}
+        onSweep={(runs) => prep && handleSweep(prep.index, runs, prep.label)}
         onEditTeam={() => {
           setPrepBeforeEditor(prep)
           setPrep(null)
@@ -277,12 +285,18 @@ function TowerFloorsPage() {
       {/* Fin de combat multiple — même fenêtre que la campagne. */}
       {sweepResult && (
         <FarmResultPopup
-          runs={sweepResult.runs}
-          totalGold={sweepResult.totalGold}
-          totalXp={sweepResult.totalXp}
-          dustDrops={sweepResult.dustDrops}
-          energyDrops={sweepResult.energyDrops}
-          equipmentDrops={sweepResult.equipmentDrops}
+          result={sweepResult}
+          place={sweepCtx?.place}
+          replay={
+            sweepCtx
+              ? {
+                  onReplay: () =>
+                    handleSweep(sweepCtx.floor, sweepCtx.runs, sweepCtx.place),
+                  disabled: currentPC < sweepResult.energySpent,
+                  pending: sweep.isPending,
+                }
+              : undefined
+          }
           onClose={() => setSweepResult(null)}
         />
       )}

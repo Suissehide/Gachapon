@@ -133,6 +133,16 @@ export const sweepBodySchema = z.object({
   runs: z.number().int().min(1).max(10),
 })
 
+// Un lot par passage du balayage, dans l'ordre (`SweepRunLot`,
+// equipment-drop.domain.ts) : les index pointent dans `equipmentDrops` /
+// `cardDrops`.
+const sweepRunLotSchema = z.object({
+  dust: z.number().int(),
+  energy: z.number().int(),
+  equipmentIndex: z.number().int().nullable(),
+  cardIndex: z.number().int().nullable(),
+})
+
 export const sweepResponseSchema = z.object({
   runs: z.number().int(),
   totalGold: z.number().int(),
@@ -145,4 +155,6 @@ export const sweepResponseSchema = z.object({
   levelBefore: z.number().int(),
   equipmentDrops: z.array(equipmentDropSchema),
   cardDrops: z.array(cardDropSchema),
+  runLots: z.array(sweepRunLotSchema),
+  energySpent: z.number().int(),
 })

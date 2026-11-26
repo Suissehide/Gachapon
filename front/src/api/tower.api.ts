@@ -1,7 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
-import type { FarmDropPreview } from './campaign.api.ts'
+import type { FarmDropPreview, SweepRunLot } from './campaign.api.ts'
 import type { BattleLogEntry, SimulatorUnit } from './combat.api.ts'
 import type { EquipmentDrop, EquipmentSlot } from './equipment.api.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
@@ -89,6 +89,10 @@ export type TowerSweepResult = {
   xpBefore: number
   levelBefore: number
   equipmentDrops: EquipmentDrop[]
+  /** Un lot par passage, dans l'ordre. */
+  runLots: SweepRunLot[]
+  /** Énergie débitée pour l'ensemble du balayage. */
+  energySpent: number
 }
 
 export type TowerBattleResult = {

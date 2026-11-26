@@ -126,6 +126,13 @@ function CampaignPage() {
   const [activeChapter, setActiveChapter] = useState<number | null>(null)
   const [prep, setPrep] = useState<CampaignStage | null>(null)
   const [sweepResult, setSweepResult] = useState<SweepResult | null>(null)
+  // De quoi relancer le même balayage depuis la fenêtre de résultat, une fois
+  // l'aperçu d'étape refermé.
+  const [sweepCtx, setSweepCtx] = useState<{
+    stageId: string
+    runs: number
+    place: string
+  } | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
   const [elementsOpen, setElementsOpen] = useState(false)
   const [wandererOpen, setWandererOpen] = useState(false)
@@ -210,12 +217,10 @@ function CampaignPage() {
     }
     navigate({ to: '/battle/$stageId', params: { stageId: prep.id } })
   }
-  const handleSweep = (runs: number) => {
-    if (!prep) {
-      return
-    }
+  const runSweep = (ctx: { stageId: string; runs: number; place: string }) => {
+    setSweepCtx(ctx)
     sweep.mutate(
-      { stageId: prep.id, runs },
+      { stageId: ctx.stageId, runs: ctx.runs },
       {
         onSuccess: (result) => {
           setSweepResult(result)
@@ -226,6 +231,12 @@ function CampaignPage() {
         },
       },
     )
+  }
+  const handleSweep = (runs: number) => {
+    if (!prep) {
+      return
+    }
+    runSweep({ stageId: prep.id, runs, place: prep.label })
   }
 
   return (
@@ -378,13 +389,17 @@ function CampaignPage() {
       {/* Fin de combat multiple — même fenêtre que les tours. */}
       {sweepResult && (
         <FarmResultPopup
-          runs={sweepResult.runs}
-          totalGold={sweepResult.totalGold}
-          totalXp={sweepResult.totalXp}
-          dustDrops={sweepResult.dustDrops}
-          energyDrops={sweepResult.energyDrops}
-          equipmentDrops={sweepResult.equipmentDrops}
-          cardDrops={sweepResult.cardDrops}
+          result={sweepResult}
+          place={sweepCtx?.place}
+          replay={
+            sweepCtx
+              ? {
+                  onReplay: () => runSweep(sweepCtx),
+                  disabled: currentPC < sweepResult.energySpent,
+                  pending: sweep.isPending,
+                }
+              : undefined
+          }
           onClose={() => setSweepResult(null)}
         />
       )}

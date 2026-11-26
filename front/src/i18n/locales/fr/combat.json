@@ -207,7 +207,21 @@
     "title": "Farm terminé",
     "runs_one": "× {{count}} combat",
     "runs_other": "× {{count}} combats",
-    "continue": "Continuer"
+    "continue": "Continuer",
+    "energySpent": "−{{count}} énergie",
+    "resources": "Ressources",
+    "equipment": "Équipement",
+    "pieces_one": "{{count}} pièce",
+    "pieces_other": "{{count}} pièces",
+    "cards": "Cartes",
+    "lots_one": "{{count}} lot",
+    "lots_other": "{{count}} lots",
+    "levelUp": "Niveau {{level}} !",
+    "levelShort": "Niv. {{level}}",
+    "details": "Détail par combat",
+    "runShort": "C{{n}}",
+    "plusCard": "+ carte",
+    "replay": "Relancer ×{{count}}"
   },
   "battlePrep": {
     "verdict": {

@@ -30,6 +30,7 @@ import {
   pickEquipmentForRarity,
   rarityShares,
   rollVictoryDrop,
+  type SweepRunLot,
   VICTORY_DROP_CONFIG_KEYS,
   type VictoryDropPreview,
   victoryDropPreview,
@@ -135,6 +136,10 @@ export interface TowerSweepResult {
   xpBefore: number
   levelBefore: number
   equipmentDrops: TowerEquipmentDrop[]
+  /** Un lot par passage, dans l'ordre. */
+  runLots: SweepRunLot[]
+  /** Énergie débitée pour l'ensemble du balayage. */
+  energySpent: number
 }
 
 export interface TowerFloorView {
@@ -534,46 +539,21 @@ export class TowerDomain {
             effects,
           )
 
-          const equipmentDrops: TowerEquipmentDrop[] = []
-          let totalDust = 0
-          let totalEnergy = 0
-          const dustDrops: number[] = []
-          const energyDrops: number[] = []
-          for (let i = 0; i < runs; i++) {
-            const farmDrop = rollVictoryDrop(farm.dust, sweepCfg, Math.random)
-            totalDust += farmDrop.dust
-            totalEnergy += farmDrop.energy
-            dustDrops.push(farmDrop.dust)
-            energyDrops.push(farmDrop.energy)
-            if (farmDrop.equipment) {
-              equipmentDrops.push(
-                await this.#grantEquipmentDrop(
-                  tx,
-                  userId,
-                  rollTowerDrop({
-                    element,
-                    weights: boostRarityWeights(
-                      farm.equipmentWeights,
-                      effects.dropBonus,
-                    ),
-                    prng: Math.random,
-                  }),
-                  substatRanges,
-                ),
-              )
-            }
-            // Un passage balayé reste un étage franchi pour les quêtes, sans
-            // toucher aux compteurs de campagne (`source: 'TOWER'`). Pas de
-            // simulation ici, donc ni sans-faute ni sous-effectif à déduire.
-            await this.#achievementsDomain.track(tx, userId, {
-              kind: 'STAGE_CLEARED',
-              source: 'TOWER',
-              isBoss: false,
-              viaSweep: true,
-              flawless: false,
-              understaffed: false,
-            })
-          }
+          const {
+            totalDust,
+            totalEnergy,
+            dustDrops,
+            energyDrops,
+            equipmentDrops,
+            runLots,
+          } = await this.#rollSweepRuns(tx, userId, {
+            element,
+            farm,
+            runs,
+            rollDrop: (dust) => rollVictoryDrop(dust, sweepCfg, Math.random),
+            effects,
+            substatRanges,
+          })
 
           const totalGold = bonused.gold * runs
           const totalXp = bonused.xp * runs
@@ -607,6 +587,8 @@ export class TowerDomain {
             xpBefore,
             levelBefore,
             equipmentDrops,
+            runLots,
+            energySpent: sweepCostPerRun * runs,
           }
         },
         { isolationLevel: 'Serializable' },
@@ -800,6 +782,87 @@ export class TowerDomain {
    * la crée chez le joueur, alimente les succès, et renvoie la charge utile
    * que le front affiche. Chemin unique du combat unique ET du balayage.
    */
+  /**
+   * Joue les passages d'un balayage : un lot par passage (poussière, énergie
+   * ou pièce garantie), dans l'ordre, et le suivi de quête de chacun.
+   */
+  async #rollSweepRuns(
+    tx: PrimaTransactionClient,
+    userId: string,
+    opts: {
+      element: TowerElement
+      farm: TowerLootTable['farm']
+      runs: number
+      rollDrop: (baseDust: number) => ReturnType<typeof rollVictoryDrop>
+      effects: Awaited<ReturnType<ISkillTreeRepository['getEffectsForUser']>>
+      substatRanges: SubstatRanges
+    },
+  ): Promise<{
+    totalDust: number
+    totalEnergy: number
+    dustDrops: number[]
+    energyDrops: number[]
+    equipmentDrops: TowerEquipmentDrop[]
+    runLots: SweepRunLot[]
+  }> {
+    const { element, farm, runs, rollDrop, effects, substatRanges } = opts
+    const equipmentDrops: TowerEquipmentDrop[] = []
+    let totalDust = 0
+    let totalEnergy = 0
+    const dustDrops: number[] = []
+    const energyDrops: number[] = []
+    const runLots: SweepRunLot[] = []
+    for (let i = 0; i < runs; i++) {
+      const farmDrop = rollDrop(farm.dust)
+      totalDust += farmDrop.dust
+      totalEnergy += farmDrop.energy
+      dustDrops.push(farmDrop.dust)
+      energyDrops.push(farmDrop.energy)
+      runLots.push({
+        dust: farmDrop.dust,
+        energy: farmDrop.energy,
+        equipmentIndex: farmDrop.equipment ? equipmentDrops.length : null,
+        cardIndex: null,
+      })
+      if (farmDrop.equipment) {
+        equipmentDrops.push(
+          await this.#grantEquipmentDrop(
+            tx,
+            userId,
+            rollTowerDrop({
+              element,
+              weights: boostRarityWeights(
+                farm.equipmentWeights,
+                effects.dropBonus,
+              ),
+              prng: Math.random,
+            }),
+            substatRanges,
+          ),
+        )
+      }
+      // Un passage balayé reste un étage franchi pour les quêtes, sans
+      // toucher aux compteurs de campagne (`source: 'TOWER'`). Pas de
+      // simulation ici, donc ni sans-faute ni sous-effectif à déduire.
+      await this.#achievementsDomain.track(tx, userId, {
+        kind: 'STAGE_CLEARED',
+        source: 'TOWER',
+        isBoss: false,
+        viaSweep: true,
+        flawless: false,
+        understaffed: false,
+      })
+    }
+    return {
+      totalDust,
+      totalEnergy,
+      dustDrops,
+      energyDrops,
+      equipmentDrops,
+      runLots,
+    }
+  }
+
   async #grantEquipmentDrop(
     tx: PrimaTransactionClient,
     userId: string,

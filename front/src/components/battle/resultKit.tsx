@@ -1,13 +1,35 @@
-import { ArrowRight, Coins, Sparkles, Star, Zap } from 'lucide-react'
+import {
+  ArrowRight,
+  ChevronDown,
+  Coins,
+  RotateCcw,
+  Sparkles,
+  Star,
+  Swords,
+  Zap,
+} from 'lucide-react'
 import { Dialog } from 'radix-ui'
-import { Children, isValidElement, type ReactNode } from 'react'
+import {
+  Children,
+  isValidElement,
+  type ReactNode,
+  useEffect,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { CardDrop } from '../../api/campaign.api.ts'
+import type { CardDrop, SweepRunLot } from '../../api/campaign.api.ts'
 import type { EquipmentDrop } from '../../api/equipment.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
+import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn, formatNumber } from '../../libs/utils.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
+import { computeLevel, xpForLevel } from '../../utils/level.ts'
+import { SLOT_ICONS, SLOT_LABELS } from '../collection/EquipmentSlotsPanel.tsx'
 import {
   EquipmentDropReward,
   LootTile,
@@ -264,45 +286,26 @@ export function DropRail({ children }: { children: ReactNode }) {
 /**
  * Fenêtre de fin de combat multiple, partagée par la campagne et les tours.
  *
- * Les deux annoncent la même chose — le nombre de passages, les trois totaux,
- * puis les gains en rangées — et ne divergent que sur ce qui peut tomber : la
- * tour ne droppe pas de carte, elle passe donc `cardDrops` vide (ou pas du
- * tout) et la rangée correspondante disparaît d'elle-même.
+ * De haut en bas : où l'on a farmé et ce que ça a coûté, les deux totaux
+ * (pièces, XP avec sa jauge de niveau), les ressources regroupées par type,
+ * l'équipement en lignes triées par rareté, les cartes (campagne seulement),
+ * puis le détail repliable combat par combat. La tour ne droppe pas de carte :
+ * elle passe `cardDrops` vide et la rangée disparaît d'elle-même.
  */
 export function FarmResultPopup({
-  runs,
-  totalGold,
-  totalXp,
-  dustDrops,
-  energyDrops,
-  equipmentDrops,
-  cardDrops = [],
+  result,
+  place,
+  replay,
   onClose,
 }: {
-  runs: number
-  totalGold: number
-  totalXp: number
-  dustDrops: number[]
-  energyDrops: number[]
-  equipmentDrops: EquipmentDrop[]
-  cardDrops?: CardDrop[]
+  result: FarmResult
+  /** Où l'on a farmé : nom de l'étage ou de l'étape. */
+  place?: string
+  /** « Relancer » : absent, le bouton n'est pas proposé. */
+  replay?: FarmReplay
   onClose: () => void
 }) {
   const { t } = useTranslation('combat')
-  // Une même carte peut tomber plusieurs fois dans un balayage : la clé est
-  // l'id de la carte suivi de son rang d'apparition (1re, 2e, …).
-  const seen = new Map<string, number>()
-  const keyedCardDrops = cardDrops.map((drop) => {
-    const occurrence = (seen.get(drop.cardId) ?? 0) + 1
-    seen.set(drop.cardId, occurrence)
-    return { drop, key: `${drop.cardId}-${occurrence}` }
-  })
-  // Un lot de poussière ou d'énergie par combat : autant de tuiles que de
-  // lots, pour qu'un balayage de dix combats montre dix gains.
-  const flatLots = [
-    ...dustDrops.map((amount) => ({ kind: 'dust' as const, amount })),
-    ...energyDrops.map((amount) => ({ kind: 'energy' as const, amount })),
-  ].map((lot, rank) => ({ ...lot, key: `${lot.kind}-${rank}` }))
   return (
     <Popup
       open
@@ -320,61 +323,572 @@ export function FarmResultPopup({
           {t('combat:farmResult.title')}
         </Dialog.Title>
         <ResultPanel halo>
-          <ResultBadge
-            className={RESULT_BADGE_WIN}
-            icon={<Zap className="h-8 w-8" />}
+          <FarmHeader
+            place={place}
+            runs={result.runs}
+            energySpent={result.energySpent}
           />
-          <h2 className="mt-4 font-display text-3xl font-bold text-text">
-            {t('combat:farmResult.title')}
-          </h2>
-          <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
-            {t('combat:farmResult.runs', { count: runs })}
-          </p>
-
-          <div className="mt-6 grid w-full grid-cols-2 gap-2.5">
-            <RewardTile
+          <div className="mt-6 grid w-full grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <TotalTile
               icon={<Coins className="h-5 w-5" />}
-              label={t('combat:battle.rewards.gold')}
-              value={totalGold}
               tone="#f59e0b"
+              label={t('combat:battle.rewards.gold')}
+              value={result.totalGold}
             />
-            <RewardTile
-              icon={<Star className="h-5 w-5" />}
-              label="XP"
-              value={totalXp}
-              tone={XP_TONE}
+            <XpTotalTile
+              totalXp={result.totalXp}
+              xpBefore={result.xpBefore}
+              levelBefore={result.levelBefore}
             />
           </div>
-
-          {/* Mêmes tuiles que l'écran de victoire : poussière et pièces en
-              grille compacte, une tuile par lot, la fiche d'une pièce s'ouvre au clic. Les
-              cartes gardent leur rangée, elles se regardent. */}
-          <LootGrid>
-            {flatLots.map(({ kind, amount, key }) =>
-              kind === 'dust' ? (
-                <DustLootTile key={key} amount={amount} />
-              ) : (
-                <EnergyLootTile key={key} amount={amount} />
-              ),
-            )}
-            {equipmentDrops.map((e) => (
-              <EquipmentDropReward key={e.userEquipmentId} drop={e} />
-            ))}
-          </LootGrid>
-          <DropRail>
-            {keyedCardDrops.map(({ drop, key }) => (
-              <CardDropReward key={key} drop={drop} />
-            ))}
-          </DropRail>
-
-          <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-            <Button onClick={onClose} className="gap-2">
-              {t('combat:farmResult.continue')}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <FarmResources
+            dustDrops={result.dustDrops}
+            energyDrops={result.energyDrops}
+          />
+          <FarmEquipment drops={result.equipmentDrops} />
+          <FarmCards drops={result.cardDrops ?? []} />
+          <FarmRunDetails
+            runLots={result.runLots ?? []}
+            equipmentDrops={result.equipmentDrops}
+          />
+          <FarmActions
+            runs={result.runs}
+            energySpent={result.energySpent}
+            replay={replay}
+            onClose={onClose}
+          />
         </ResultPanel>
       </PopupContent>
     </Popup>
+  )
+}
+
+type FarmReplay = { onReplay: () => void; disabled: boolean; pending: boolean }
+
+function FarmHeader({
+  place,
+  runs,
+  energySpent,
+}: {
+  place?: string
+  runs: number
+  energySpent?: number
+}) {
+  const { t } = useTranslation('combat')
+  return (
+    <>
+      <ResultBadge
+        className={RESULT_BADGE_WIN}
+        icon={<Zap className="h-8 w-8" />}
+      />
+      {place && (
+        <p className="mt-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+          {place}
+        </p>
+      )}
+      <h2
+        className={cn(
+          'font-display text-3xl font-bold text-text',
+          place ? 'mt-1.5' : 'mt-4',
+        )}
+      >
+        {t('combat:farmResult.title')}
+      </h2>
+      <div className="mt-3.5 flex flex-wrap justify-center gap-1.5">
+        <FarmChip icon={<Swords className="h-3.5 w-3.5" />}>
+          {t('combat:farmResult.runs', { count: runs })}
+        </FarmChip>
+        {energySpent !== undefined && energySpent > 0 && (
+          <FarmChip
+            icon={<Zap className="h-3.5 w-3.5" />}
+            className="border-violet-500/25 bg-violet-500/8 text-violet-600"
+          >
+            {t('combat:farmResult.energySpent', {
+              count: formatNumber(energySpent, currentLocale()),
+            })}
+          </FarmChip>
+        )}
+      </div>
+    </>
+  )
+}
+
+/** Poussière et énergie regroupées par type : un total, et le nombre de lots. */
+function FarmResources({
+  dustDrops,
+  energyDrops,
+}: {
+  dustDrops: number[]
+  energyDrops: number[]
+}) {
+  const { t } = useTranslation('combat')
+  const totalDust = dustDrops.reduce((sum, amount) => sum + amount, 0)
+  const totalEnergy = energyDrops.reduce((sum, amount) => sum + amount, 0)
+  if (totalDust <= 0 && totalEnergy <= 0) {
+    return null
+  }
+  return (
+    <FarmSection title={t('combat:farmResult.resources')}>
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        {totalDust > 0 && (
+          <ResourceTile
+            icon={<Sparkles className="h-[18px] w-[18px]" />}
+            iconClassName="bg-sky-400/15 text-sky-500"
+            label={t('combat:battle.rewards.dust')}
+            value={totalDust}
+            lots={dustDrops.length}
+          />
+        )}
+        {totalEnergy > 0 && (
+          <ResourceTile
+            icon={<Zap className="h-[18px] w-[18px]" />}
+            iconClassName="bg-violet-500/15 text-violet-500"
+            label={t('combat:battle.rewards.energy')}
+            value={totalEnergy}
+            lots={energyDrops.length}
+          />
+        )}
+      </div>
+    </FarmSection>
+  )
+}
+
+/** Pièces en lignes, les plus rares d'abord : c'est ce qu'on cherche du regard. */
+function FarmEquipment({ drops }: { drops: EquipmentDrop[] }) {
+  const { t } = useTranslation('combat')
+  if (drops.length === 0) {
+    return null
+  }
+  const sorted = [...drops].sort(
+    (a, b) => (RARITY_RANK[b.rarity] ?? 0) - (RARITY_RANK[a.rarity] ?? 0),
+  )
+  return (
+    <FarmSection
+      title={t('combat:farmResult.equipment')}
+      count={t('combat:farmResult.pieces', { count: sorted.length })}
+    >
+      <div className="flex flex-col gap-2">
+        {sorted.map((e) => (
+          <EquipmentDropReward key={e.userEquipmentId} drop={e} variant="row" />
+        ))}
+      </div>
+    </FarmSection>
+  )
+}
+
+function FarmCards({ drops }: { drops: CardDrop[] }) {
+  const { t } = useTranslation('combat')
+  if (drops.length === 0) {
+    return null
+  }
+  // Une même carte peut tomber plusieurs fois dans un balayage : la clé est
+  // l'id de la carte suivi de son rang d'apparition (1re, 2e, …).
+  const seen = new Map<string, number>()
+  const keyed = drops.map((drop) => {
+    const occurrence = (seen.get(drop.cardId) ?? 0) + 1
+    seen.set(drop.cardId, occurrence)
+    return { drop, key: `${drop.cardId}-${occurrence}` }
+  })
+  return (
+    <FarmSection
+      title={t('combat:farmResult.cards')}
+      count={String(keyed.length)}
+    >
+      <DropRail>
+        {keyed.map(({ drop, key }) => (
+          <CardDropReward key={key} drop={drop} />
+        ))}
+      </DropRail>
+    </FarmSection>
+  )
+}
+
+/** Détail repliable : ce que chaque passage a rapporté, dans l'ordre. */
+function FarmRunDetails({
+  runLots,
+  equipmentDrops,
+}: {
+  runLots: SweepRunLot[]
+  equipmentDrops: EquipmentDrop[]
+}) {
+  const { t } = useTranslation('combat')
+  const [open, setOpen] = useState(false)
+  if (runLots.length === 0) {
+    return null
+  }
+  // Les passages sont figés et ordonnés : leur rang est leur identité.
+  const cells = runLots.map((lot, i) => ({
+    lot,
+    n: i + 1,
+    key: `run-${i + 1}`,
+    equipment:
+      lot.equipmentIndex === null
+        ? null
+        : (equipmentDrops[lot.equipmentIndex] ?? null),
+  }))
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="mt-5 flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-text-light transition-colors hover:bg-text/5 hover:text-text"
+      >
+        {t('combat:farmResult.details')}
+        <ChevronDown
+          className={cn('h-4 w-4 transition-transform', open && 'rotate-180')}
+        />
+      </button>
+      {open && (
+        <div className="mt-2.5 grid w-full grid-cols-5 gap-1.5">
+          {cells.map(({ key, n, lot, equipment }) => (
+            <RunCell key={key} n={n} lot={lot} equipment={equipment} />
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
+
+function FarmActions({
+  runs,
+  energySpent,
+  replay,
+  onClose,
+}: {
+  runs: number
+  energySpent?: number
+  replay?: FarmReplay
+  onClose: () => void
+}) {
+  const { t } = useTranslation('combat')
+  return (
+    <div
+      className={cn(
+        'mt-6 grid w-full gap-2.5',
+        replay && 'sm:grid-cols-[1fr_1.25fr]',
+      )}
+    >
+      {replay && (
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={replay.onReplay}
+          disabled={replay.disabled || replay.pending}
+          className="gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          {t('combat:farmResult.replay', { count: runs })}
+          {energySpent !== undefined && energySpent > 0 && (
+            <span className="inline-flex items-center gap-0.5 font-mono text-[11px] font-bold text-violet-600">
+              <Zap className="h-3 w-3" />
+              {formatNumber(energySpent, currentLocale())}
+            </span>
+          )}
+        </Button>
+      )}
+      <Button size="lg" onClick={onClose} className="gap-2">
+        {t('combat:farmResult.continue')}
+        <ArrowRight className="h-4 w-4" />
+      </Button>
+    </div>
+  )
+}
+
+/** Ce que la fenêtre de farm lit d'un balayage, tour ou campagne. */
+export type FarmResult = {
+  runs: number
+  totalGold: number
+  totalXp: number
+  xpBefore: number
+  levelBefore: number
+  dustDrops: number[]
+  energyDrops: number[]
+  equipmentDrops: EquipmentDrop[]
+  cardDrops?: CardDrop[]
+  runLots?: SweepRunLot[]
+  energySpent?: number
+}
+
+const RARITY_RANK: Record<string, number> = {
+  COMMON: 1,
+  UNCOMMON: 2,
+  RARE: 3,
+  EPIC: 4,
+  LEGENDARY: 5,
+}
+
+function FarmChip({
+  icon,
+  className,
+  children,
+}: {
+  icon: ReactNode
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-white px-3 font-mono text-[11.5px] font-bold tracking-[0.04em] text-text-light',
+        className,
+      )}
+    >
+      {icon}
+      {children}
+    </span>
+  )
+}
+
+/** Titre de section aligné à gauche, compteur discret, filet jusqu'au bord. */
+function FarmSection({
+  title,
+  count,
+  children,
+}: {
+  title: string
+  count?: string
+  children: ReactNode
+}) {
+  return (
+    <section className="mt-5 w-full text-left">
+      <div className="mb-2.5 flex items-center gap-2.5">
+        <h3 className="whitespace-nowrap font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light">
+          {title}
+        </h3>
+        {count && (
+          <span className="whitespace-nowrap font-mono text-[11px] text-text-light/60">
+            {count}
+          </span>
+        )}
+        <span className="h-px flex-1 bg-border" aria-hidden />
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function TileIcon({ icon, tone }: { icon: ReactNode; tone: string }) {
+  return (
+    <span
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+      style={{ backgroundColor: `${tone}1f`, color: tone }}
+    >
+      {icon}
+    </span>
+  )
+}
+
+function TotalTile({
+  icon,
+  tone,
+  label,
+  value,
+}: {
+  icon: ReactNode
+  tone: string
+  label: string
+  value: number
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-border bg-white p-3.5 text-left">
+      <TileIcon icon={icon} tone={tone} />
+      <div className="min-w-0 flex-1">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-text-light/80">
+          {label}
+        </span>
+        <b className="mt-1 block font-display text-2xl leading-none tabular-nums text-text">
+          +{formatNumber(value, currentLocale())}
+        </b>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Total d'XP avec la jauge du niveau atteint. La part déjà acquise avant le
+ * farm reste en clair, le gain se remplit par-dessus ; après une montée de
+ * niveau la jauge repart de zéro et un badge annonce le nouveau niveau.
+ */
+function XpTotalTile({
+  totalXp,
+  xpBefore,
+  levelBefore,
+}: {
+  totalXp: number
+  xpBefore: number
+  levelBefore: number
+}) {
+  const { t } = useTranslation('combat')
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const curve = economy.xp
+  const xpAfter = xpBefore + totalXp
+  const levelAfter = computeLevel(xpAfter, curve)
+  const leveledUp = levelAfter > levelBefore
+  const atCap = levelAfter >= curve.levelCap
+  const share = (xp: number, level: number) => {
+    const start = xpForLevel(level, curve)
+    const span = xpForLevel(level + 1, curve) - start
+    return span > 0
+      ? Math.min(100, Math.max(0, ((xp - start) / span) * 100))
+      : 100
+  }
+  const pctBefore = leveledUp ? 0 : share(xpBefore, levelBefore)
+  const pctAfter = atCap ? 100 : share(xpAfter, levelAfter)
+  // La jauge part de l'état d'avant puis se remplit : l'œil voit le gain.
+  const [shown, setShown] = useState(pctBefore)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(pctAfter))
+    return () => cancelAnimationFrame(id)
+  }, [pctAfter])
+
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-border bg-white p-3.5 text-left">
+      <TileIcon icon={<Star className="h-5 w-5" />} tone={XP_TONE} />
+      <div className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-text-light/80">
+          XP
+          {leveledUp && (
+            <span className="rounded-full bg-gradient-to-br from-blue-400 to-blue-600 px-1.5 py-0.5 text-[9.5px] tracking-[0.08em] text-white">
+              {t('combat:farmResult.levelUp', { level: levelAfter })}
+            </span>
+          )}
+        </span>
+        <b className="mt-1 block font-display text-2xl leading-none tabular-nums text-text">
+          +{formatNumber(totalXp, currentLocale())}
+        </b>
+        <div className="relative mt-2.5 h-1.5 overflow-hidden rounded-full bg-blue-500/10">
+          <span
+            className="absolute inset-y-0 left-0 rounded-full bg-blue-500/25"
+            style={{ width: `${pctBefore}%` }}
+          />
+          <span
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 transition-[width] delay-200 duration-900 ease-out motion-reduce:transition-none"
+            style={{ width: `${shown}%` }}
+          />
+        </div>
+        <div className="mt-1 flex justify-between font-mono text-[10.5px] text-text-light/80">
+          <span>
+            {t('combat:farmResult.levelShort', { level: levelAfter })}
+          </span>
+          <span>{Math.round(pctAfter)} %</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ResourceTile({
+  icon,
+  iconClassName,
+  label,
+  value,
+  lots,
+}: {
+  icon: ReactNode
+  iconClassName: string
+  label: string
+  value: number
+  lots: number
+}) {
+  const { t } = useTranslation('combat')
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-white py-2.5 pr-3.5 pl-2.5 text-left">
+      <span
+        className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+          iconClassName,
+        )}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-text-light/80">
+          {label}
+        </span>
+        <b className="block font-display text-lg leading-tight tabular-nums text-text">
+          +{formatNumber(value, currentLocale())}
+        </b>
+      </div>
+      <span className="ml-auto whitespace-nowrap font-mono text-[10.5px] text-text-light/70">
+        {t('combat:farmResult.lots', { count: lots })}
+      </span>
+    </div>
+  )
+}
+
+const RARITY_TOKEN: Record<string, string> = {
+  COMMON: 'var(--rarity-common)',
+  UNCOMMON: 'var(--rarity-uncommon)',
+  RARE: 'var(--rarity-rare)',
+  EPIC: 'var(--rarity-epic)',
+  LEGENDARY: 'var(--rarity-legendary)',
+}
+
+/** Une case du détail par combat : ce que ce passage-là a rapporté. */
+function RunCell({
+  n,
+  lot,
+  equipment,
+}: {
+  n: number
+  lot: SweepRunLot
+  equipment: EquipmentDrop | null
+}) {
+  const { t } = useTranslation('combat')
+  let icon: ReactNode
+  let iconStyle: React.CSSProperties | undefined
+  let iconClassName = ''
+  let value: string
+  let caption: string
+  let captionStyle: React.CSSProperties | undefined
+  if (equipment) {
+    const SlotIcon = SLOT_ICONS[equipment.slot]
+    icon = <SlotIcon className="h-4 w-4" />
+    iconStyle = { background: RARITY_TOKEN[equipment.rarity] }
+    iconClassName = 'text-white'
+    value = SLOT_LABELS[equipment.slot]
+    caption = RARITY_LABEL_FR[equipment.rarity] ?? equipment.rarity
+    captionStyle = { color: RARITY_TOKEN[equipment.rarity] }
+  } else if (lot.energy > 0) {
+    icon = <Zap className="h-4 w-4" />
+    iconClassName = 'bg-violet-500/15 text-violet-500'
+    value = `+${formatNumber(lot.energy, currentLocale())}`
+    caption = t('combat:battle.rewards.energy')
+  } else {
+    icon = <Sparkles className="h-4 w-4" />
+    iconClassName = 'bg-sky-400/15 text-sky-500'
+    value = `+${formatNumber(lot.dust, currentLocale())}`
+    caption = t('combat:battle.rewards.dust')
+  }
+  return (
+    <div className="flex min-w-0 flex-col items-center gap-1 rounded-xl border border-border bg-white px-1 pt-2 pb-2.5">
+      <span className="font-mono text-[9.5px] font-bold tracking-[0.1em] text-text-light/70">
+        {t('combat:farmResult.runShort', { n })}
+      </span>
+      <span
+        className={cn(
+          'flex h-7 w-7 items-center justify-center rounded-lg',
+          iconClassName,
+        )}
+        style={iconStyle}
+      >
+        {icon}
+      </span>
+      <b className="max-w-full truncate font-display text-[12.5px] leading-tight text-text">
+        {value}
+      </b>
+      <span
+        className="max-w-full truncate font-mono text-[9.5px] text-text-light/80"
+        style={captionStyle}
+      >
+        {caption}
+      </span>
+      {lot.cardIndex !== null && (
+        <span className="font-mono text-[9px] font-bold text-emerald-600">
+          {t('combat:farmResult.plusCard')}
+        </span>
+      )}
+    </div>
   )
 }

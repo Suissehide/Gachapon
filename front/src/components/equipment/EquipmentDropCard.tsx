@@ -1,5 +1,5 @@
-import { Trash2 } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { ChevronRight, Trash2 } from 'lucide-react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { EquipmentDrop } from '../../api/equipment.api.ts'
@@ -16,7 +16,11 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
-import { useSalvageGold, useSalvageItems } from '../../queries/useEquipment.ts'
+import {
+  useEquipmentSets,
+  useSalvageGold,
+  useSalvageItems,
+} from '../../queries/useEquipment.ts'
 import {
   formatBonusKey,
   scaledBaseBonus,
@@ -343,6 +347,99 @@ export function LootTileBody({
   )
 }
 
+const LOOT_ROW =
+  'flex h-auto w-full items-center justify-start gap-3 rounded-2xl border-[1.5px] bg-card px-3 py-2.5 text-left whitespace-normal'
+
+/**
+ * Corps d'une ligne de pièce (fenêtre de farm) : icône d'emplacement teintée
+ * par la rareté, « Arme · Sangsue », rareté + jauge + niveau, puis la stat
+ * principale et le nombre de sous-stats. Une pièce détruite affiche l'or rendu
+ * à la place des stats.
+ */
+function LootRowBody({
+  drop,
+  equipLevelScale,
+  scrappedGold,
+}: {
+  drop: EquipmentDrop
+  equipLevelScale: number
+  scrappedGold: number | null
+}) {
+  const { t } = useTranslation(['equipment', 'common'])
+  const { data: sets } = useEquipmentSets()
+  const setLabel = useMemo(
+    () => sets?.sets.find((s) => s.key === drop.setKey)?.label ?? drop.setKey,
+    [sets, drop.setKey],
+  )
+  const SlotIcon = SLOT_ICONS[drop.slot]
+  const tier = RARITY_TIER[drop.rarity] ?? 1
+  const main = mainStat(drop, equipLevelScale)
+  const subCount = drop.substats.length
+  return (
+    <>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(140deg,var(--rar),var(--rar-dark))] text-white shadow-[0_5px_14px_-6px_color-mix(in_oklab,var(--rar)_70%,transparent)]">
+        <SlotIcon className="h-5 w-5" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="truncate text-[15px] font-bold leading-tight text-text">
+          {SLOT_LABELS[drop.slot]}
+          <span className="font-medium text-text-light"> · {setLabel}</span>
+        </span>
+        <span className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.08em]">
+          <span className="text-[var(--rar)]">
+            {RARITY_LABEL_FR[drop.rarity]}
+          </span>
+          <span className="inline-flex gap-0.5" aria-hidden>
+            {Array.from({ length: TIER_MAX }, (_, i) => i + 1).map((i) => (
+              <span
+                key={i}
+                className={cn(
+                  'h-[5px] w-[5px] rounded-full',
+                  i <= tier ? 'bg-[var(--rar)]' : 'bg-border',
+                )}
+              />
+            ))}
+          </span>
+          <span className="text-text-light/70">
+            {t('equipment:drop.levelShort', { level: drop.level })}
+          </span>
+        </span>
+      </span>
+      <span className="flex shrink-0 flex-col items-end gap-1">
+        {scrappedGold !== null ? (
+          <span className="font-display text-[13px] font-extrabold text-primary">
+            {t('common:gold.amountPlus', {
+              amount: formatNumber(scrappedGold, currentLocale()),
+            })}
+          </span>
+        ) : (
+          <>
+            {main && (
+              <span
+                className="whitespace-nowrap rounded-md px-2 py-0.5 font-display text-[13px] font-extrabold"
+                style={{
+                  color: statColorVar(main.key),
+                  backgroundColor: `color-mix(in oklab, ${statColorVar(main.key)} 12%, var(--card))`,
+                }}
+              >
+                {formatValue(main.key, main.value)}{' '}
+                {/* « +12% ATQ » : le libellé seul, son % est déjà dans la valeur. */}
+                {formatBonusKey(main.key).replace(/^% /, '')}
+              </span>
+            )}
+            <span className="hidden whitespace-nowrap font-mono text-[10px] text-text-light/70 sm:block">
+              {subCount > 0
+                ? t('equipment:drop.substats', { count: subCount })
+                : t('equipment:drop.noSubstats')}
+            </span>
+          </>
+        )}
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-text-light/50" />
+    </>
+  )
+}
+
 export function LootTile({
   className,
   ...body
@@ -360,7 +457,17 @@ export function LootTile({
  * complète (stats, bouton « Détruire ») ; une pièce détruite reste à sa place,
  * estompée, avec l'or rendu.
  */
-export function EquipmentDropReward({ drop }: { drop: EquipmentDrop | null }) {
+export function EquipmentDropReward({
+  drop,
+  variant = 'tile',
+}: {
+  drop: EquipmentDrop | null
+  /**
+   * `tile` : tuile compacte (écran de victoire). `row` : ligne pleine largeur
+   * avec set, rareté et stat principale (fenêtre de farm).
+   */
+  variant?: 'tile' | 'row'
+}) {
   const { t } = useTranslation(['equipment', 'common'])
   const salvageItems = useSalvageItems()
   const salvageGold = useSalvageGold()
@@ -395,29 +502,48 @@ export function EquipmentDropReward({ drop }: { drop: EquipmentDrop | null }) {
   return (
     <PopoverRoot open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          disabled={scrapped}
-          aria-label={t('equipment:drop.seeDetails', { name: drop.name })}
-          className={cn(
-            LOOT_TILE,
-            'border-[color-mix(in_oklab,var(--rar)_42%,transparent)] hover:bg-[color-mix(in_oklab,var(--rar-light)_22%,var(--card))]',
-          )}
-          style={RARITY_VARS[drop.rarity] as React.CSSProperties}
-        >
-          <LootTileBody
-            icon={<SlotIcon className="h-5 w-5" />}
-            iconClassName="bg-[linear-gradient(140deg,var(--rar),var(--rar-dark))] text-white"
-            title={SLOT_LABELS[drop.slot]}
-            subtitle={
-              scrapped
-                ? t('common:gold.amountPlus', {
-                    amount: formatNumber(scrappedGold, currentLocale()),
-                  })
-                : drop.setKey
-            }
-          />
-        </Button>
+        {variant === 'row' ? (
+          <Button
+            variant="outline"
+            disabled={scrapped}
+            aria-label={t('equipment:drop.seeDetails', { name: drop.name })}
+            className={cn(
+              LOOT_ROW,
+              'border-[color-mix(in_oklab,var(--rar)_30%,transparent)] hover:bg-[color-mix(in_oklab,var(--rar-light)_16%,var(--card))]',
+            )}
+            style={RARITY_VARS[drop.rarity] as React.CSSProperties}
+          >
+            <LootRowBody
+              drop={drop}
+              equipLevelScale={economy.equip.levelScale}
+              scrappedGold={scrappedGold}
+            />
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            disabled={scrapped}
+            aria-label={t('equipment:drop.seeDetails', { name: drop.name })}
+            className={cn(
+              LOOT_TILE,
+              'border-[color-mix(in_oklab,var(--rar)_42%,transparent)] hover:bg-[color-mix(in_oklab,var(--rar-light)_22%,var(--card))]',
+            )}
+            style={RARITY_VARS[drop.rarity] as React.CSSProperties}
+          >
+            <LootTileBody
+              icon={<SlotIcon className="h-5 w-5" />}
+              iconClassName="bg-[linear-gradient(140deg,var(--rar),var(--rar-dark))] text-white"
+              title={SLOT_LABELS[drop.slot]}
+              subtitle={
+                scrapped
+                  ? t('common:gold.amountPlus', {
+                      amount: formatNumber(scrappedGold, currentLocale()),
+                    })
+                  : drop.setKey
+              }
+            />
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-[300px] border-0 bg-transparent p-0 shadow-none">
         <EquipmentDropCard
