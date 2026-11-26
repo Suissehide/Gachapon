@@ -86,7 +86,10 @@
       "social": "Social"
     },
     "groupBadgeAriaLabel": "{{section}}, new",
-    "nextInSuffix": " · next in {{timer}}"
+    "nextInSuffix": " · next in {{timer}}",
+    "myTeams": "My teams",
+    "allTeams": "All my teams",
+    "teamMeta": "Lv. {{level}} · {{count}}/{{max}} members"
   },
   "localeSwitcher": {
     "menuTitle": "Change language"
