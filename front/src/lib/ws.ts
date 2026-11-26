@@ -134,7 +134,11 @@ class WsClient {
   #intentionalClose = false
 
   connect(baseUrl: string) {
-    if (this.#ws?.readyState === WebSocket.OPEN) {
+    // CONNECTING compris : deux appels rapprochés ouvriraient deux sockets.
+    if (
+      this.#ws?.readyState === WebSocket.CONNECTING ||
+      this.#ws?.readyState === WebSocket.OPEN
+    ) {
       return
     }
     this.#intentionalClose = false

@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { DailyShopApi } from '../../api/dailyShop.api.ts'
+import { apiUrl } from '../../constants/config.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
+import { wsClient } from '../../lib/ws.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useWanderer } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -85,6 +87,17 @@ export function Navbar() {
   const isGuest = useIsGuest()
   const user = useAuthStore((s) => s.user)
   const { data: orders } = useOrders({ enabled: Boolean(user) })
+  // La socket vit tant qu'un joueur est connecté, sur toutes les pages :
+  // ouverte seulement sur /play, les lots de raid versés par un coéquipier
+  // n'allumaient la pastille qu'en revenant sur la page d'équipe.
+  const userId = user?.id
+  useEffect(() => {
+    if (!userId) {
+      return
+    }
+    wsClient.connect(apiUrl)
+    return () => wsClient.disconnect()
+  }, [userId])
   useRewardsLive()
   // Le cap journalier ne se voit pas dans `deliverable` (le serveur l'ignore
   // volontairement) : la pastille doit donc le recroiser elle-même, sinon

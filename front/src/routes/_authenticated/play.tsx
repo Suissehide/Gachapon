@@ -46,7 +46,6 @@ import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { InfoButton } from '../../components/shared/InfoButton.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
-import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import type {
   Capsule,
   CapsulePullResult,
@@ -57,7 +56,6 @@ import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
 import { useToast } from '../../hooks/useToast'
 import i18n from '../../i18n/index.ts'
-import { wsClient } from '../../lib/ws'
 import { preloadImages } from '../../libs/preloadImages.ts'
 import { cn } from '../../libs/utils.ts'
 import {
@@ -654,11 +652,6 @@ function Play() {
       setUser({ ...user, tokens: balanceTokens })
     }
   }, [balanceTokens])
-
-  useEffect(() => {
-    wsClient.connect(API_URL)
-    return () => wsClient.disconnect()
-  }, [])
 
   // Séquence capsule : toute la chorégraphie (pop → shake → charge → inhale
   // → burst) est orchestrée par la timeline gsap de CapsuleScene — plus de
