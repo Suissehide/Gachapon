@@ -71,7 +71,9 @@ export function ResultPanel({
           className="pointer-events-none absolute inset-x-0 top-0 h-48"
           style={{
             background:
-              'radial-gradient(50% 60% at 50% 50%, rgba(245,158,11,0.3), transparent 70%)',
+              // Centré sur le badge (rembourrage 32 px + moitié du badge
+              // 64 px) : centré sur la boîte, la brume tombait sous l'icône.
+              'radial-gradient(50% 60% at 50% 64px, rgba(245,158,11,0.3), transparent 70%)',
           }}
           aria-hidden
         />
@@ -531,14 +533,14 @@ function OutcomeStrip({ runLots }: { runLots: SweepRunLot[] }) {
   return (
     <ul
       aria-label={t('combat:farmResult.outcomeStrip')}
-      className="mt-3.5 flex flex-wrap justify-center gap-1"
+      className="mt-3.5 flex flex-wrap justify-center gap-[3px] sm:gap-1"
     >
       {cells.map(({ outcome, key, title }) => (
         <li
           key={key}
           title={title}
           className={cn(
-            'flex h-[22px] w-[22px] items-center justify-center rounded-[7px] text-white',
+            'flex h-5 w-5 items-center justify-center rounded-md text-white sm:h-[22px] sm:w-[22px] sm:rounded-[7px]',
             outcome === 'WIN' && 'bg-emerald-500',
             outcome === 'LOSS' && 'bg-red-500',
             outcome === 'SKIPPED' &&
@@ -754,14 +756,15 @@ function FarmActions({
   onClose: () => void
 }) {
   const { t } = useTranslation('combat')
-  const secondary = onEditTeam ? (
-    <Button variant="outline" size="lg" onClick={onEditTeam} className="gap-2">
+  // L'action qui enchaîne (relancer, ou revoir l'équipe après un arrêt) est
+  // en couleur et à droite ; « Continuer », qui ferme, reste en retrait.
+  const primary = onEditTeam ? (
+    <Button size="lg" onClick={onEditTeam} className="gap-2">
       <Users className="h-4 w-4" />
       {t('combat:battle.defeat.reviewTeam')}
     </Button>
   ) : replay ? (
     <Button
-      variant="outline"
       size="lg"
       onClick={replay.onReplay}
       disabled={replay.disabled || replay.pending}
@@ -770,25 +773,39 @@ function FarmActions({
       <RotateCcw className="h-4 w-4" />
       {t('combat:farmResult.replay', { count: runs })}
       {energySpent !== undefined && energySpent > 0 && (
-        <span className="inline-flex items-center gap-0.5 font-mono text-[11px] font-bold text-violet-600">
+        <span className="inline-flex items-center gap-0.5 font-mono text-[11px] font-bold opacity-85">
           <Zap className="h-3 w-3" />
           {formatNumber(energySpent, currentLocale())}
         </span>
       )}
     </Button>
   ) : null
+  // Encart collé au bas de la fenêtre : un farm de dix combats remplit
+  // largement l'écran d'un téléphone, et les boutons ne doivent jamais partir
+  // sous le pli. Il déborde du rembourrage de `ResultPanel` (marges négatives)
+  // pour couvrir toute la largeur et toucher le bord bas — d'où `-bottom-8` :
+  // l'accroche se calcule depuis le bas du rembourrage, pas du bord. Il tient
+  // compte de la zone de geste des iPhone.
   return (
-    <div
-      className={cn(
-        'mt-6 grid w-full gap-2.5',
-        secondary && 'sm:grid-cols-[1fr_1.25fr]',
-      )}
-    >
-      {secondary}
-      <Button size="lg" onClick={onClose} className="gap-2">
-        {t('combat:farmResult.continue')}
-        <ArrowRight className="h-4 w-4" />
-      </Button>
+    <div className="sticky -bottom-8 z-10 -mx-6 -mb-8 mt-6 w-[calc(100%+3rem)] border-t border-border bg-[#fbf8f3]/95 px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-12px_24px_-20px_rgba(27,23,38,0.45)] backdrop-blur-sm sm:-mx-8 sm:w-[calc(100%+4rem)] sm:px-8 sm:pt-4 sm:pb-5">
+      <div
+        className={cn(
+          'grid w-full gap-2 sm:gap-2.5',
+          primary && 'sm:grid-cols-[1fr_1.25fr]',
+        )}
+      >
+        {/* Sans action à enchaîner, « Continuer » reste le bouton principal. */}
+        <Button
+          variant={primary ? 'outline' : 'default'}
+          size="lg"
+          onClick={onClose}
+          className={cn('gap-2', primary && 'text-text-light')}
+        >
+          {t('combat:farmResult.continue')}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+        {primary}
+      </div>
     </div>
   )
 }
@@ -1065,16 +1082,19 @@ function RunCell({
       >
         {c.icon}
       </span>
+      {/* Sur téléphone, cinq cases tiennent dans 240 px : l'icône dit déjà
+          l'issue et le type de lot, seul un montant court reste écrit. */}
       <b
         className={cn(
           'max-w-full truncate font-display text-[12.5px] leading-tight',
           c.valueClassName ?? 'text-text',
+          !c.amount && 'hidden sm:block',
         )}
       >
         {c.value}
       </b>
       <span
-        className="max-w-full truncate font-mono text-[9.5px] text-text-light/80"
+        className="hidden max-w-full truncate font-mono text-[9.5px] text-text-light/80 sm:block"
         style={c.captionStyle}
       >
         {c.caption}
@@ -1094,6 +1114,8 @@ type RunCellContent = {
   iconStyle?: React.CSSProperties
   value: string
   valueClassName?: string
+  /** Valeur courte (un montant), gardée même sur téléphone. */
+  amount?: boolean
   caption: string
   captionStyle?: React.CSSProperties
 }
@@ -1138,6 +1160,7 @@ function runCellContent(
       icon: <Zap className="h-4 w-4" />,
       iconClassName: 'bg-violet-500/15 text-violet-500',
       value: `+${formatNumber(lot.energy, currentLocale())}`,
+      amount: true,
       caption: t('combat:battle.rewards.energy'),
     }
   }
@@ -1145,6 +1168,7 @@ function runCellContent(
     icon: <Sparkles className="h-4 w-4" />,
     iconClassName: 'bg-sky-400/15 text-sky-500',
     value: `+${formatNumber(lot.dust, currentLocale())}`,
+    amount: true,
     caption: t('combat:battle.rewards.dust'),
   }
 }
