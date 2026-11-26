@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ArrowRight, ChevronDown, Lock } from 'lucide-react'
+import { ChevronDown, Lock } from 'lucide-react'
 import { DropdownMenu } from 'radix-ui'
 import { type PointerEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -173,13 +173,10 @@ export function NavGroup({
                 {item.label}
               </DropdownMenuCustomSubTrigger>
               <DropdownMenuCustomSubContent
-                className="w-[260px] p-1.5"
+                className="w-[240px]"
                 onPointerEnter={hoverOpen}
                 onPointerLeave={hoverClose}
               >
-                <DropdownMenu.Label className="px-2.5 pt-1 pb-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-text-light/60">
-                  {t('layout:appNav.myTeams')}
-                </DropdownMenu.Label>
                 {item.teams.map((team) => (
                   <DropdownMenuCustomItem
                     key={team.id}
@@ -211,17 +208,6 @@ export function NavGroup({
                     </Link>
                   </DropdownMenuCustomItem>
                 ))}
-                <DropdownMenu.Separator className="mx-1 my-1.5 h-px bg-border" />
-                <DropdownMenuCustomItem asChild className={NAV_ROW_HOVER}>
-                  <Link
-                    to={item.to}
-                    activeOptions={{ exact: true }}
-                    className="justify-between rounded-lg px-2.5 py-2 text-[13px] font-semibold text-text-light"
-                  >
-                    {t('layout:appNav.allTeams')}
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </DropdownMenuCustomItem>
               </DropdownMenuCustomSubContent>
             </DropdownMenu.Sub>
           ) : (
