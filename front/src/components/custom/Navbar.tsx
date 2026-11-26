@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { DailyShopApi } from '../../api/dailyShop.api.ts'
+import { TeamsApi } from '../../api/teams.api.ts'
 import { apiUrl } from '../../constants/config.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { wsClient } from '../../lib/ws.ts'
@@ -81,6 +82,18 @@ function useDailyShopIsNew(enabled: boolean) {
 const tabClass =
   'relative flex cursor-pointer items-center whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span:last-child]:bg-linear-to-r [&.active>span:last-child]:from-primary [&.active>span:last-child]:to-secondary'
 
+/** Équipes du sous-menu Social. `useQuery` direct plutôt que `useMyTeams` :
+    même cache, sans le loader global qu'allumerait une requête désactivée. */
+function useNavTeams() {
+  const isGuest = useIsGuest()
+  const signedIn = useAuthStore((s) => Boolean(s.user))
+  return useQuery({
+    queryKey: ['teams'],
+    queryFn: () => TeamsApi.getMyTeams(),
+    enabled: signedIn && !isGuest,
+  }).data?.teams
+}
+
 export function Navbar() {
   const { t } = useTranslation(['layout', 'combat', 'home', 'guest'])
 
@@ -108,6 +121,7 @@ export function Navbar() {
       : 0
   const shopIsNew = useDailyShopIsNew(Boolean(user))
   const hasWanderer = useWanderer().data.wanderer !== null
+  const myTeams = useNavTeams()
 
   // Source unique de la navigation : barre desktop (déroulants) et menu
   // mobile (sections) lisent tous deux ce tableau.
@@ -170,6 +184,7 @@ export function Navbar() {
           to: '/team',
           label: t('home:community.teams.title'),
           locked: isGuest,
+          teams: myTeams,
         },
         { to: '/leaderboard', label: t('layout:appNav.leaderboard') },
       ],
@@ -178,11 +193,17 @@ export function Navbar() {
 
   // Entrées du menu mobile dans l'ordre d'affichage (titres de section
   // compris), pour un index d'animation continu.
-  const mobileEntries = [
+  const mobileEntries: MobileEntryDef[] = [
     { kind: 'link' as const, item: playItem },
     ...navGroups.flatMap((g) => [
       { kind: 'heading' as const, id: g.id, label: g.label },
-      ...g.items.map((item) => ({ kind: 'link' as const, item })),
+      ...g.items.flatMap((item) => [
+        { kind: 'link' as const, item },
+        ...(item.teams ?? []).map((team) => ({
+          kind: 'team' as const,
+          team,
+        })),
+      ]),
     ]),
   ]
 
@@ -324,29 +345,15 @@ export function Navbar() {
         onClose={closeMenu}
         topOffset="var(--topbar-h)"
       >
-        {mobileEntries.map((entry, i) =>
-          entry.kind === 'heading' ? (
-            <MobileNavHeading
-              key={entry.id}
-              label={entry.label}
-              index={i}
-              open={menuOpen}
-            />
-          ) : (
-            <MobileNavLink
-              key={entry.item.to}
-              to={entry.item.to}
-              label={entry.item.label}
-              index={i}
-              open={menuOpen}
-              onClick={closeMenu}
-              badgeCount={entry.item.badge}
-              badgeTone={entry.item.badgeTone}
-              badgeDot={entry.item.badgeDot}
-              locked={entry.item.locked}
-            />
-          ),
-        )}
+        {mobileEntries.map((entry, i) => (
+          <MobileEntry
+            key={mobileEntryKey(entry)}
+            entry={entry}
+            index={i}
+            open={menuOpen}
+            onNavigate={closeMenu}
+          />
+        ))}
 
         <div
           className={`mt-1 flex items-center justify-between border-t border-border/60 pt-3 transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
@@ -395,6 +402,59 @@ export function Navbar() {
         onConfirm={() => void doLogout()}
       />
     </>
+  )
+}
+
+type MobileEntryDef =
+  | { kind: 'heading'; id: string; label: string }
+  | { kind: 'link'; item: NavItem }
+  | { kind: 'team'; team: { id: string; name: string } }
+
+function mobileEntryKey(entry: MobileEntryDef): string {
+  if (entry.kind === 'heading') {
+    return entry.id
+  }
+  return entry.kind === 'team' ? entry.team.id : entry.item.to
+}
+
+function MobileEntry({
+  entry,
+  index,
+  open,
+  onNavigate,
+}: {
+  entry: MobileEntryDef
+  index: number
+  open: boolean
+  onNavigate: () => void
+}) {
+  if (entry.kind === 'heading') {
+    return <MobileNavHeading label={entry.label} index={index} open={open} />
+  }
+  if (entry.kind === 'team') {
+    return (
+      <MobileNavLink
+        to={`/team/${entry.team.id}`}
+        label={entry.team.name}
+        index={index}
+        open={open}
+        onClick={onNavigate}
+        nested
+      />
+    )
+  }
+  return (
+    <MobileNavLink
+      to={entry.item.to}
+      label={entry.item.label}
+      index={index}
+      open={open}
+      onClick={onNavigate}
+      badgeCount={entry.item.badge}
+      badgeTone={entry.item.badgeTone}
+      badgeDot={entry.item.badgeDot}
+      locked={entry.item.locked}
+    />
   )
 }
 

@@ -1,4 +1,4 @@
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { ChevronDown, Lock } from 'lucide-react'
 import { DropdownMenu } from 'radix-ui'
 import { type PointerEvent, useRef, useState } from 'react'
@@ -9,6 +9,8 @@ import { NotificationBadge } from '../notifications/NotificationBadge.tsx'
 import {
   DropdownMenuCustomContent,
   DropdownMenuCustomItem,
+  DropdownMenuCustomSubContent,
+  DropdownMenuCustomSubTrigger,
 } from '../ui/dropdownMenu.tsx'
 
 /** Sens d'un compteur : `alert` (rouge, à traiter) ou `gain` (ambre, à
@@ -37,6 +39,8 @@ export type NavItem = {
       nouveauté, pas une quantité. */
   badgeDot?: boolean
   locked?: boolean
+  /** Équipes du joueur, listées en sous-menu sous l'entrée `/team`. */
+  teams?: { id: string; name: string }[]
 }
 
 export type NavGroupDef = { id: string; label: string; items: NavItem[] }
@@ -75,6 +79,7 @@ export function NavGroup({
   const [open, setOpen] = useState(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const navigate = useNavigate()
 
   // Survol à la souris seulement : au tactile, le clic garde la main.
   const hoverOpen = (e: PointerEvent) => {
@@ -133,37 +138,73 @@ export function NavGroup({
           }
         }}
       >
-        {group.items.map((item) => (
-          <DropdownMenuCustomItem key={item.to} asChild>
-            <Link
-              to={item.to}
-              className="justify-between gap-2 px-3 py-2 text-sm font-semibold text-text-light [&.active]:bg-primary/15 [&.active]:text-primary-dark"
-            >
-              <span className="inline-flex items-center gap-1.5">
+        {group.items.map((item) =>
+          item.teams?.length ? (
+            <DropdownMenu.Sub key={item.to}>
+              <DropdownMenuCustomSubTrigger
+                // Le libellé reste un lien : un clic ouvre la page des équipes.
+                onClick={() => {
+                  setOpen(false)
+                  void navigate({ to: item.to })
+                }}
+                className={cn(
+                  'gap-2 px-3 py-2 font-semibold text-text-light',
+                  isUnder(pathname, item.to) &&
+                    'bg-primary/15 text-primary-dark',
+                )}
+              >
                 {item.label}
-                {item.locked && <Lock className="h-3 w-3 text-text-light" />}
-              </span>
-              {item.badgeDot ? (
-                (item.badge ?? 0) > 0 && (
+              </DropdownMenuCustomSubTrigger>
+              <DropdownMenuCustomSubContent
+                className="min-w-[180px]"
+                onPointerEnter={hoverOpen}
+                onPointerLeave={hoverClose}
+              >
+                {item.teams.map((team) => (
+                  <DropdownMenuCustomItem key={team.id} asChild>
+                    <Link
+                      to="/team/$id"
+                      params={{ id: team.id }}
+                      className="px-3 py-2 text-sm font-semibold text-text-light [&.active]:bg-primary/15 [&.active]:text-primary-dark"
+                    >
+                      {team.name}
+                    </Link>
+                  </DropdownMenuCustomItem>
+                ))}
+              </DropdownMenuCustomSubContent>
+            </DropdownMenu.Sub>
+          ) : (
+            <DropdownMenuCustomItem key={item.to} asChild>
+              <Link
+                to={item.to}
+                className="justify-between gap-2 px-3 py-2 text-sm font-semibold text-text-light [&.active]:bg-primary/15 [&.active]:text-primary-dark"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  {item.label}
+                  {item.locked && <Lock className="h-3 w-3 text-text-light" />}
+                </span>
+                {item.badgeDot ? (
+                  (item.badge ?? 0) > 0 && (
+                    <NotificationBadge
+                      shape="dot"
+                      tone={item.badgeTone ?? 'alert'}
+                      ariaLabel={t('notifications:newAriaLabel')}
+                    />
+                  )
+                ) : (
                   <NotificationBadge
-                    shape="dot"
+                    shape="pill"
                     tone={item.badgeTone ?? 'alert'}
-                    ariaLabel={t('notifications:newAriaLabel')}
+                    count={item.badge ?? 0}
+                    ariaLabel={t('notifications:pendingAriaLabel', {
+                      count: item.badge ?? 0,
+                    })}
                   />
-                )
-              ) : (
-                <NotificationBadge
-                  shape="pill"
-                  tone={item.badgeTone ?? 'alert'}
-                  count={item.badge ?? 0}
-                  ariaLabel={t('notifications:pendingAriaLabel', {
-                    count: item.badge ?? 0,
-                  })}
-                />
-              )}
-            </Link>
-          </DropdownMenuCustomItem>
-        ))}
+                )}
+              </Link>
+            </DropdownMenuCustomItem>
+          ),
+        )}
       </DropdownMenuCustomContent>
     </DropdownMenu.Root>
   )

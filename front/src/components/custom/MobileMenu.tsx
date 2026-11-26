@@ -126,6 +126,7 @@ export function MobileNavLink({
   badgeTone,
   badgeDot,
   locked,
+  nested = false,
 }: {
   to: string
   label: string
@@ -136,6 +137,8 @@ export function MobileNavLink({
   badgeTone?: BadgeTone
   badgeDot?: boolean
   locked?: boolean
+  /** Sous-entrée (une équipe sous « Équipes ») : en retrait, plus petite. */
+  nested?: boolean
 }) {
   const { t } = useTranslation('notifications')
   return (
@@ -145,6 +148,7 @@ export function MobileNavLink({
       className={`flex items-center justify-between gap-4 px-2 py-3 rounded-xl text-text-light hover:text-text
         transition-[opacity,transform] duration-300 ease-spring-pop
         [&.active]:text-primary [&.active]:font-semibold
+        ${nested ? 'pl-10' : ''}
         ${open ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}
       style={{ transitionDelay: staggerDelay(index) }}
     >
@@ -152,7 +156,9 @@ export function MobileNavLink({
         <span
           className={`w-4 h-4 rounded-full shrink-0 bg-linear-to-br ${dotGradients[index % 3]}`}
         />
-        <span className="flex items-center gap-2 text-3xl font-semibold uppercase tracking-wide">
+        <span
+          className={`flex items-center gap-2 font-semibold uppercase tracking-wide ${nested ? 'text-xl' : 'text-3xl'}`}
+        >
           {label}
           {locked && <Lock className="h-3 w-3 text-text-light" />}
         </span>

@@ -103,7 +103,7 @@ const DropdownMenuCustomSubTrigger = React.forwardRef<
   <DropdownMenu.SubTrigger
     ref={ref}
     className={cn(
-      'flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-primary focus:bg-primary',
+      'flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-primary/60 focus:bg-primary/60 data-[state=open]:bg-primary/60',
       className,
     )}
     {...props}
@@ -117,15 +117,21 @@ DropdownMenuCustomSubTrigger.displayName = 'DropdownMenuSubTrigger'
 const DropdownMenuCustomSubContent = React.forwardRef<
   React.ComponentRef<typeof DropdownMenu.SubContent>,
   React.ComponentPropsWithoutRef<typeof DropdownMenu.SubContent>
->(({ className, ...props }, ref) => (
-  <DropdownMenu.SubContent
-    ref={ref}
-    className={cn(
-      'z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 slide-in-from-left-1',
-      className,
-    )}
-    {...props}
-  />
+>(({ className, sideOffset = 3, alignOffset = -5, ...props }, ref) => (
+  <DropdownMenu.Portal>
+    {/* Accolé au panneau parent et décalé de son
+        padding + bordure, pour que sa première ligne prolonge le déclencheur. */}
+    <DropdownMenu.SubContent
+      ref={ref}
+      sideOffset={sideOffset}
+      alignOffset={alignOffset}
+      className={cn(
+        'z-50 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 slide-in-from-left-1',
+        className,
+      )}
+      {...props}
+    />
+  </DropdownMenu.Portal>
 ))
 DropdownMenuCustomSubContent.displayName = 'DropdownMenuSubContent'
 
