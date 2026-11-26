@@ -75,6 +75,16 @@ const RARITY_VARS: Record<string, Record<string, string>> = {
  * Valeur affichée d'une stat, arrondie. Un `Pct` s'affiche avec son signe
  * pourcent ; tout le reste est un plat.
  */
+/**
+ * Libellé d'une stat affichée avec sa valeur : « ATQ » plutôt que « % ATQ »,
+ * puisque la valeur porte déjà son « % » (« ATQ +18% »). Les filtres, qui
+ * listent les clés sans valeur, gardent `formatBonusKey` pour distinguer
+ * « ATQ » de « % ATQ ».
+ */
+function statLabel(key: string): string {
+  return formatBonusKey(key).replace(/^% /, '')
+}
+
 function formatValue(key: string, value: number): string {
   const rounded = Math.round(value)
   return key.endsWith('Pct') ? `+${rounded}%` : `+${rounded}`
@@ -234,8 +244,8 @@ export function EquipmentDropCard({
             } as React.CSSProperties
           }
         >
-          <span className="font-mono text-[11px] font-bold tracking-[0.16em] text-[color-mix(in_oklab,var(--sc)_70%,var(--text))]">
-            {formatBonusKey(main.key)}
+          <span className="font-display text-[15px] font-bold text-[color-mix(in_oklab,var(--sc)_70%,var(--text))]">
+            {statLabel(main.key)}
           </span>
           <span className="ml-auto font-display text-[26px] font-extrabold leading-none tabular-nums text-text">
             {formatValue(main.key, main.value)}
@@ -262,10 +272,10 @@ export function EquipmentDropCard({
                   (« % PÉNÉTRATION ARMURE ») et passaient à la ligne, ce qui
                   décalait la hauteur des tuiles voisines. */}
               <span
-                className="min-w-0 truncate font-mono text-[9px] whitespace-nowrap tracking-[0.08em] text-text-light"
-                title={formatBonusKey(s.key)}
+                className="min-w-0 truncate font-display text-[12px] font-semibold whitespace-nowrap text-text-light"
+                title={statLabel(s.key)}
               >
-                {formatBonusKey(s.key)}
+                {statLabel(s.key)}
               </span>
               <span className="ml-auto shrink-0 font-display text-sm font-extrabold tabular-nums text-text">
                 {formatValue(s.key, s.value)}
@@ -375,6 +385,26 @@ function LootRowBody({
   const tier = RARITY_TIER[drop.rarity] ?? 1
   const main = mainStat(drop, equipLevelScale)
   const subCount = drop.substats.length
+  // Stat principale, ou l'or rendu une fois la pièce détruite. Sur téléphone
+  // elle passe sous la rareté : à côté, elle écrasait le nom de la pièce.
+  const statNode =
+    scrappedGold !== null ? (
+      <span className="font-display text-[13px] font-extrabold text-primary">
+        {t('common:gold.amountPlus', {
+          amount: formatNumber(scrappedGold, currentLocale()),
+        })}
+      </span>
+    ) : main ? (
+      <span
+        className="w-fit whitespace-nowrap rounded-md px-2 py-0.5 font-display text-[13px] font-extrabold"
+        style={{
+          color: statColorVar(main.key),
+          backgroundColor: `color-mix(in oklab, ${statColorVar(main.key)} 12%, var(--card))`,
+        }}
+      >
+        {statLabel(main.key)} {formatValue(main.key, main.value)}
+      </span>
+    ) : null
   return (
     <>
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(140deg,var(--rar),var(--rar-dark))] text-white shadow-[0_5px_14px_-6px_color-mix(in_oklab,var(--rar)_70%,transparent)]">
@@ -404,35 +434,16 @@ function LootRowBody({
             {t('equipment:drop.levelShort', { level: drop.level })}
           </span>
         </span>
+        <span className="flex sm:hidden">{statNode}</span>
       </span>
-      <span className="flex shrink-0 flex-col items-end gap-1">
-        {scrappedGold !== null ? (
-          <span className="font-display text-[13px] font-extrabold text-primary">
-            {t('common:gold.amountPlus', {
-              amount: formatNumber(scrappedGold, currentLocale()),
-            })}
+      <span className="hidden shrink-0 flex-col items-end gap-1 sm:flex">
+        {statNode}
+        {scrappedGold === null && (
+          <span className="whitespace-nowrap font-mono text-[10px] text-text-light/70">
+            {subCount > 0
+              ? t('equipment:drop.substats', { count: subCount })
+              : t('equipment:drop.noSubstats')}
           </span>
-        ) : (
-          <>
-            {main && (
-              <span
-                className="whitespace-nowrap rounded-md px-2 py-0.5 font-display text-[13px] font-extrabold"
-                style={{
-                  color: statColorVar(main.key),
-                  backgroundColor: `color-mix(in oklab, ${statColorVar(main.key)} 12%, var(--card))`,
-                }}
-              >
-                {formatValue(main.key, main.value)}{' '}
-                {/* « +12% ATQ » : le libellé seul, son % est déjà dans la valeur. */}
-                {formatBonusKey(main.key).replace(/^% /, '')}
-              </span>
-            )}
-            <span className="hidden whitespace-nowrap font-mono text-[10px] text-text-light/70 sm:block">
-              {subCount > 0
-                ? t('equipment:drop.substats', { count: subCount })
-                : t('equipment:drop.noSubstats')}
-            </span>
-          </>
         )}
       </span>
       <ChevronRight className="h-4 w-4 shrink-0 text-text-light/50" />
@@ -545,7 +556,10 @@ export function EquipmentDropReward({
           </Button>
         )}
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] border-0 bg-transparent p-0 shadow-none">
+      {/* Sur un petit écran la fiche est plus haute que la place disponible
+          au-dessus comme au-dessous de la ligne : elle se limite à la hauteur
+          offerte par Radix et défile, au lieu de sortir de l'écran. */}
+      <PopoverContent className="max-h-[var(--radix-popover-content-available-height)] w-[300px] overflow-y-auto overscroll-contain rounded-[18px] border-0 bg-transparent p-0 shadow-none">
         <EquipmentDropCard
           drop={drop}
           scrapGold={salvageGold([drop])}
